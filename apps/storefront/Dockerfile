@@ -26,8 +26,8 @@ COPY packages/ui/package.json ./packages/ui/package.json
 COPY packages/types/package.json ./packages/types/package.json
 COPY packages/config-tailwind/package.json ./packages/config-tailwind/package.json
 
-# Install dependencies
-RUN pnpm install --ignore-scripts=false
+# Install dependencies (frozen lockfile for reproducible builds)
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY apps/storefront ./apps/storefront
