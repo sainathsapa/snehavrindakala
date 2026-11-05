@@ -10,6 +10,8 @@ allowBuilds:
   protobufjs: true
   sharp: true
   "@img/sharp-*": true
+  core-js: true
+  medusa-telemetry: true
 
 # Allow lifecycle/build scripts (pnpm 12 defaults to blocking them)
 ignoreScripts: false

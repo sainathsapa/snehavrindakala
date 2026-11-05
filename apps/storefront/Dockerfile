@@ -27,7 +27,7 @@ COPY packages/types/package.json ./packages/types/package.json
 COPY packages/config-tailwind/package.json ./packages/config-tailwind/package.json
 
 # Install dependencies (frozen lockfile for reproducible builds)
-RUN pnpm install --frozen-lockfile
+RUN pnpm approve-builds core-js medusa-telemetry && pnpm install --frozen-lockfile
 
 # Copy source code
 COPY apps/storefront ./apps/storefront
