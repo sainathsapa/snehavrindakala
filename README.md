@@ -1,18 +1,18 @@
 # SnehaVrinda Kala
 
 <div align="center">
-  <img src="assets/images/diya-lamp.svg" alt="SnehaVrinda Kala — Diya Lamp Brand Mark" width="600"/>
+  <img src="assets/images/brand-mark.svg" alt="SnehaVrinda Kala — Diya Lamp & Lotus Brand Mark" width="800"/>
 </div>
 
 <div align="center">
-  <img src="assets/images/rangoli-border.svg" alt="Rangoli decorative border" width="100%"/>
+  <img src="assets/images/mandala-border.svg" alt="Traditional Indian Rangoli Border" width="100%"/>
 </div>
 
 ---
 
 <div align="center">
 
-## 🎨 Every art has a place.
+## 🪔 Every art has a place.
 
 **SnehaVrinda Kala** — A home for art in all its forms — made, curated, personalized, and shared by creators.
 
@@ -23,7 +23,7 @@ Ready-to-ship artwork, handmade décor, made-to-order pieces, custom commissions
 </div>
 
 <div align="center">
-  <img src="assets/images/brand-divider.svg" alt="Decorative divider" width="100%"/>
+  <img src="assets/images/brand-divider.svg" alt="Decorative Diya Divider" width="100%"/>
 </div>
 
 ---
@@ -49,7 +49,7 @@ Ready-to-ship artwork, handmade décor, made-to-order pieces, custom commissions
 </div>
 
 <div align="center">
-  <img src="assets/images/brand-divider.svg" alt="Decorative divider" width="100%"/>
+  <img src="assets/images/brand-divider.svg" alt="Decorative Diya Divider" width="100%"/>
 </div>
 
 ---
@@ -67,7 +67,7 @@ snehavrinda-kala/
 │   ├── types/        # Shared API/domain types
 │   └── config-*      # Lint / TypeScript / Tailwind config
 ├── assets/
-│   └── images/       # Decorative SVG illustrations
+│   └── images/       # Traditional Indian SVG illustrations
 ├── infra/
 │   └── terraform/    # AWS Mumbai infrastructure
 ├── docs/
@@ -202,9 +202,9 @@ The complete business, product, design, engineering, operations, security, and p
 ---
 
 <div align="center">
-  <img src="assets/images/rangoli-border.svg" alt="Rangoli decorative border" width="100%"/>
+  <img src="assets/images/mandala-border.svg" alt="Traditional Indian Rangoli Border" width="100%"/>
 </div>
 
 <div align="center">
-  <sub>Built with terracotta, indigo, and saffron. 🎨</sub>
+  <sub>Built with terracotta, indigo, and saffron. 🪔</sub>
 </div>

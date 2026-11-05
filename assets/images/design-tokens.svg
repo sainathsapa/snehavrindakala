@@ -1,54 +1,70 @@
-<svg width="700" height="320" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+<svg width="700" height="420" viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:#242321;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#343C67;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#4B0082;stop-opacity:1"/>
     </linearGradient>
   </defs>
-  
-  <rect width="700" height="320" fill="#F7F4ED" rx="12"/>
-  <rect x="1" y="1" width="698" height="318" fill="none" stroke="#E4DED3" stroke-width="1" rx="11"/>
-  
+
+  <rect width="700" height="420" fill="#FAF5EA" rx="16"/>
+  <rect x="1" y="1" width="698" height="418" fill="none" stroke="#E4DED3" stroke-width="1" rx="15"/>
+
   <!-- Title -->
-  <text x="40" y="50" font-family="'Cormorant Garamond', Georgia, serif" font-size="26" font-weight="700" fill="url(#titleGrad)" letter-spacing="1">Design Tokens</text>
-  <line x1="40" y1="58" x2="140" y2="58" stroke="#B96545" stroke-width="2"/>
-  
-  <!-- Token rows -->
-  <g transform="translate(40, 80)">
+  <text x="40" y="55" font-family="'Cormorant Garamond', Georgia, serif" font-size="28" font-weight="700" fill="url(#titleGrad)" letter-spacing="1">Design Tokens</text>
+  <line x1="40" y1="64" x2="150" y2="64" stroke="#FF9933" stroke-width="2"/>
+
+  <!-- Token rows with Indian swatch shapes -->
+  <g transform="translate(40, 90)">
     <!-- Terracotta -->
-    <rect x="0" y="0" width="40" height="40" fill="#B96545" rx="6"/>
-    <text x="52" y="28" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Terracotta</text>
-    <text x="52" y="48" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#B96545</text>
+    <circle cx="20" cy="20" r="18" fill="#B7410E"/>
+    <circle cx="20" cy="20" r="12" fill="#D2691E" opacity="0.7"/>
+    <text x="52" y="28" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Terracotta</text>
+    <text x="52" y="48" font-family="'Manrope', sans-serif" font-size="12" fill="#5D4037">#B7410E</text>
     <text x="400" y="28" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Primary brand accent</text>
-    
+
     <!-- Indigo -->
-    <rect x="0" y="50" width="40" height="40" fill="#343C67" rx="6"/>
-    <text x="52" y="78" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Indigo</text>
-    <text x="52" y="98" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#343C67</text>
+    <circle cx="20" cy="70" r="18" fill="#4B0082"/>
+    <circle cx="20" cy="70" r="12" fill="#6A0DAD" opacity="0.7"/>
+    <text x="52" y="78" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Indigo</text>
+    <text x="52" y="98" font-family="'Manrope', sans-serif" font-size="12" fill="#4A235A">#4B0082</text>
     <text x="400" y="78" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Secondary accent</text>
-    
+
     <!-- Saffron -->
-    <rect x="0" y="100" width="40" height="40" fill="#D8A441" rx="6"/>
-    <text x="52" y="128" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Saffron</text>
-    <text x="52" y="148" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#D8A441</text>
+    <circle cx="20" cy="120" r="18" fill="#FF9933"/>
+    <circle cx="20" cy="120" r="12" fill="#FFB74D" opacity="0.7"/>
+    <text x="52" y="128" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Saffron</text>
+    <text x="52" y="148" font-family="'Manrope', sans-serif" font-size="12" fill="#E68A2E">#FF9933</text>
     <text x="400" y="128" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Small highlights</text>
-    
+
     <!-- Sage -->
-    <rect x="0" y="150" width="40" height="40" fill="#78856B" rx="6"/>
-    <text x="52" y="178" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Sage</text>
-    <text x="52" y="198" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#78856B</text>
+    <circle cx="20" cy="170" r="18" fill="#78856B"/>
+    <circle cx="20" cy="170" r="12" fill="#9AA06D" opacity="0.7"/>
+    <text x="52" y="178" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Sage</text>
+    <text x="52" y="198" font-family="'Manrope', sans-serif" font-size="12" fill="#5D6D5E">#78856B</text>
     <text x="400" y="178" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Supporting, natural</text>
-    
+
     <!-- Paper -->
-    <rect x="0" y="200" width="40" height="40" fill="#F7F4ED" rx="6" stroke="#E4DED3" stroke-width="1"/>
-    <text x="52" y="228" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Paper</text>
-    <text x="52" y="248" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#F7F4ED</text>
+    <circle cx="20" cy="220" r="18" fill="#FAF5EA" stroke="#E4DED3" stroke-width="1"/>
+    <circle cx="20" cy="220" r="12" fill="#FFF5E6" opacity="0.8"/>
+    <text x="52" y="228" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Paper</text>
+    <text x="52" y="248" font-family="'Manrope', sans-serif" font-size="12" fill="#8D8072">#FAF5EA</text>
     <text x="400" y="228" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Warm background</text>
-    
+
     <!-- Ink -->
-    <rect x="0" y="250" width="40" height="40" fill="#242321" rx="6"/>
-    <text x="52" y="278" font-family="'Manrope', sans-serif" font-size="14" fill="#FFFDF0" font-weight="600">Ink</text>
+    <circle cx="20" cy="270" r="18" fill="#242321"/>
+    <circle cx="20" cy="270" r="12" fill="#4A4441" opacity="0.7"/>
+    <text x="52" y="278" font-family="'Manrope', sans-serif" font-size="15" fill="#FFFDF0" font-weight="600">Ink</text>
     <text x="52" y="298" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#242321</text>
     <text x="400" y="278" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Primary text</text>
+  </g>
+
+  <!-- Decorative corner motifs -->
+  <g transform="translate(580, 340)">
+    <path d="M0,0 Q-15,-15 -30,0 Q-15,15 0,0 Q15,15 30,0 Q15,-15 0,0 Z" fill="#FF9933" opacity="0.6"/>
+    <circle cx="0" cy="0" r="3" fill="#B7410E"/>
+  </g>
+  <g transform="translate(40, 340)">
+    <path d="M0,0 Q-15,-15 -30,0 Q-15,15 0,0 Q15,15 30,0 Q15,-15 0,0 Z" fill="#4B0082" opacity="0.6"/>
+    <circle cx="0" cy="0" r="3" fill="#6A0DAD"/>
   </g>
 </svg>

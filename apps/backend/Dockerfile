@@ -30,7 +30,7 @@ COPY packages/config-typescript/package.json ./packages/config-typescript/packag
 COPY packages/config-tailwind/package.json ./packages/config-tailwind/package.json
 
 # Install dependencies (production only for backend build)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts=false
 
 # Copy source code
 COPY apps/backend ./apps/backend

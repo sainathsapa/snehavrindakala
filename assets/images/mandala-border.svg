@@ -1,0 +1,102 @@
+<svg width="1200" height="200" viewBox="0 0 1200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mandalaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF9933;stop-opacity:0.8"/>
+      <stop offset="25%" style="stop-color:#FFB74D;stop-opacity:0.6"/>
+      <stop offset="50%" style="stop-color:#4B0082;stop-opacity:0.7"/>
+      <stop offset="75%" style="stop-color:#FFB74D;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#FF9933;stop-opacity:0.8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="200" fill="#FAF5EA"/>
+
+  <!-- Top mandala band -->
+  <g transform="translate(0, 30)">
+    <!-- Repeating paisley motifs -->
+    <g id="paisleyRow">
+      <!-- Paisley 1 -->
+      <g transform="translate(100, 40)">
+        <path d="M0,0 Q-20,-30 -40,0 Q-20,30 0,0 Q20,30 40,0 Q20,-30 0,0 Z" fill="url(#mandalaGrad)" opacity="0.85"/>
+        <path d="M-10,-10 Q0,-20 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
+        <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+      </g>
+      <!-- Paisley 2 -->
+      <g transform="translate(300, 40)">
+        <path d="M0,0 Q-20,-30 -40,0 Q-20,30 0,0 Q20,30 40,0 Q20,-30 0,0 Z" fill="url(#mandalaGrad)" opacity="0.85"/>
+        <path d="M-10,-10 Q0,-20 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
+        <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+      </g>
+      <!-- Paisley 3 -->
+      <g transform="translate(500, 40)">
+        <path d="M0,0 Q-20,-30 -40,0 Q-20,30 0,0 Q20,30 40,0 Q20,-30 0,0 Z" fill="url(#mandalaGrad)" opacity="0.85"/>
+        <path d="M-10,-10 Q0,-20 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
+        <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+      </g>
+      <!-- Paisley 4 -->
+      <g transform="translate(700, 40)">
+        <path d="M0,0 Q-20,-30 -40,0 Q-20,30 0,0 Q20,30 40,0 Q20,-30 0,0 Z" fill="url(#mandalaGrad)" opacity="0.85"/>
+        <path d="M-10,-10 Q0,-20 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
+        <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+      </g>
+      <!-- Paisley 5 -->
+      <g transform="translate(900, 40)">
+        <path d="M0,0 Q-20,-30 -40,0 Q-20,30 0,0 Q20,30 40,0 Q20,-30 0,0 Z" fill="url(#mandalaGrad)" opacity="0.85"/>
+        <path d="M-10,-10 Q0,-20 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
+        <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+      </g>
+      <!-- Paisley 6 -->
+      <g transform="translate(1100, 40)">
+        <path d="M0,0 Q-20,-30 -40,0 Q-20,30 0,0 Q20,30 40,0 Q20,-30 0,0 Z" fill="url(#mandalaGrad)" opacity="0.85"/>
+        <path d="M-10,-10 Q0,-20 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
+        <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+      </g>
+    </g>
+
+    <!-- Dot patterns -->
+    <g id="dotRow">
+      <circle cx="50" cy="90" r="4" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="150" cy="90" r="4" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="250" cy="90" r="4" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="350" cy="90" r="4" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="450" cy="90" r="4" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="550" cy="90" r="4" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="650" cy="90" r="4" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="750" cy="90" r="4" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="850" cy="90" r="4" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="950" cy="90" r="4" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="1050" cy="90" r="4" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="1150" cy="90" r="4" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Bottom mandala band (mirrored) -->
+  <g transform="translate(0, 130)">
+    <use href="#paisleyRow" transform="scale(1, -1) translate(0, -80)"/>
+    <use href="#dotRow" transform="translate(0, -20)"/>
+  </g>
+</svg>

@@ -25,7 +25,7 @@ COPY packages/ui/package.json ./packages/ui/package.json
 COPY packages/types/package.json ./packages/types/package.json
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts=false
 
 # Copy source code
 COPY apps/storefront ./apps/storefront

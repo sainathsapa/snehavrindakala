@@ -1,0 +1,74 @@
+<svg width="800" height="300" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="saffronGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF9933;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#E68A2E;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="indigoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4B0082;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#3A0CA3;stop-opacity:1"/>
+    </linearGradient>
+    <filter id="diyaGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="300" fill="#FAF5EA"/>
+
+  <!-- Central Mandala Lotus -->
+  <g transform="translate(120, 150)">
+    <!-- Outer lotus petals -->
+    <g id="outerPetals">
+      <path d="M0,-40 Q15,-20 30,0 Q15,20 0,40 Q-15,20 -30,0 Q-15,-20 0,-40 Z" fill="#FFB74D" opacity="0.9"/>
+      <path d="M-40,0 Q-20,-15 0,-30 Q20,-15 40,0 Q20,15 0,30 Q-20,15 -40,0 Z" fill="#FFB74D" opacity="0.9"/>
+      <path d="M-28,-28 Q-20,-20 0,-28 Q20,-20 28,-28 Q28,-20 28,0 Q28,20 28,28 Q20,28 0,28 Q-20,28 -28,28 Q-28,20 -28,0 Q-28,-20 -28,-28 Z" fill="#FFB74D" opacity="0.9"/>
+    </g>
+    <!-- Inner petals -->
+    <g id="innerPetals">
+      <path d="M0,-25 Q10,-12 20,0 Q10,12 0,25 Q-10,12 -20,0 Q-10,-12 0,-25 Z" fill="#FFE0B2" opacity="0.95"/>
+      <path d="M-25,0 Q-12,-10 0,-25 Q12,-10 25,0 Q12,10 0,25 Q-12,10 -25,0 Z" fill="#FFE0B2" opacity="0.95"/>
+    </g>
+    <!-- Center bindi -->
+    <circle cx="0" cy="0" r="8" fill="#FF5722" filter="url(#diyaGlow)">
+      <animate attributeName="r" values="7;9;7" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="fill-opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="0" r="4" fill="#FFF9C4">
+      <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Diya (oil lamp) on right -->
+  <g transform="translate(420, 130)">
+    <!-- Lamp base -->
+    <path d="M-20,40 Q0,10 20,40 Q0,70 -20,40 Z" fill="#B7410E"/>
+    <path d="M-15,40 Q0,25 15,40 Q0,55 -15,40 Z" fill="#D2691E"/>
+    <!-- Flame -->
+    <path d="M0,40 Q-10,20 0,0 Q10,20 0,40 Z" fill="#FFF176" filter="url(#diyaGlow)">
+      <animate attributeName="d" values="M0,40 Q-10,20 0,0 Q10,20 0,40 Z; M0,40 Q-8,18 0,-2 Q8,18 0,40 Z; M0,40 Q-10,20 0,0 Q10,20 0,40 Z" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="fill-opacity" values="0.9;1;0.85" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,40 Q-6,28 0,10 Q6,28 0,40 Z" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="d" values="M0,40 Q-6,28 0,10 Q6,28 0,40 Z; M0,40 Q-4,25 0,5 Q4,25 0,40 Z; M0,40 Q-6,28 0,10 Q6,28 0,40 Z" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="0" cy="20" r="5" fill="#FFD700" filter="url(#diyaGlow)">
+      <animate attributeName="r" values="4;6;4" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Brand text -->
+  <text x="560" y="110" font-family="'Cormorant Garamond', Georgia, serif" font-size="52" font-weight="700" fill="#B7410E" letter-spacing="2">SnehaVrinda</text>
+  <text x="560" y="155" font-family="'Manrope', sans-serif" font-size="18" fill="#5D4037" letter-spacing="4">A home for art in all its forms</text>
+
+  <!-- Decorative dots -->
+  <circle cx="740" cy="60" r="5" fill="#FF9933" opacity="0.9">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="760" cy="200" r="5" fill="#4B0082" opacity="0.9">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="720" cy="250" r="5" fill="#FF9933" opacity="0.9">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>
