@@ -41,6 +41,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+    command: ["pnpm", "dev"] # medusa develop — handles TypeScript source for local dev
     environment:
       DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa
       REDIS_URL: redis://redis:6379

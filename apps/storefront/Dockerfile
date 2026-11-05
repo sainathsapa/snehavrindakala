@@ -1,5 +1,4 @@
 # Next.js storefront Dockerfile (production-grade)
-# Build: docker build -t snehavrinda-storefront . --build-arg NODE_ENV=production
 FROM node:24-alpine AS builder
 
 WORKDIR /app
@@ -41,8 +40,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN pnpm run build
 
-# Runtime stage
-FROM node:24-alpine AS runner
+FROM node:24-alpine AS runtime
 
 WORKDIR /app
 
@@ -53,9 +51,8 @@ RUN corepack enable && corepack prepare pnpm@12 --activate
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built storefront (monorepo preserves directory structure)
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone/apps/storefront ./standalone
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone/node_modules ./standalone/node_modules
+# Create pnpm wrapper script
+RUN if [ ! -f ./pnpm-wrapper ]; then echo '#!/bin/sh\nexec pnpm "$@"' > ./pnpm-wrapper && chmod +x ./pnpm-wrapper; fi
 
 # Environment variables (overridden at runtime)
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -71,13 +68,10 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Make all files readable by the nextjs user
-RUN chmod -R a+rX /app
-
 USER nextjs
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-CMD ["node", "standalone/server.js"]
+CMD ["node", "-r", "./pnpm-wrapper", "./pnpm-wrapper", "./standalone/server.js"]

@@ -2,7 +2,7 @@
 // supply-chain policy blocking them by default (ERR_PNPM_IGNORED_BUILDS).
 // Packages that need compilation: sharp, esbuild, msgpackr-extract,
 // protobufjs, @medusajs/telemetry, medusa-telemetry, core-js,
-// and @img/sharp-* platform binaries.
+// next, and @img/sharp-* platform binaries.
 module.exports = {
   hooks: {
     readPackage: (pkg) => {
@@ -14,6 +14,7 @@ module.exports = {
         pkg.name === 'core-js' ||
         pkg.name === 'medusa-telemetry' ||
         pkg.name === '@medusajs/telemetry' ||
+        pkg.name === 'next' ||
         pkg.name?.startsWith('@img/sharp-') ||
         pkg.name?.startsWith('@msgpackr-extract-')
       ) {

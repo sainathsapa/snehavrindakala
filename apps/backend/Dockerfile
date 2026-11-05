@@ -1,5 +1,5 @@
 # Medusa v2 backend Dockerfile (production-grade)
-FROM node:24-alpine
+FROM node:24-alpine AS base
 
 WORKDIR /app
 
@@ -15,29 +15,24 @@ COPY pnpmfile.js ./
 
 # Copy workspace files for dependency installation
 COPY pnpm-workspace.yaml ./
-COPY turbo.json ./
 COPY pnpm-lock.yaml ./
 
-# Copy package manifests for all workspace members (for hoisting)
+# Only the backend is needed in this image (it imports no workspace packages).
 COPY apps/backend/package.json ./apps/backend/package.json
-COPY apps/storefront/package.json ./apps/storefront/package.json
-COPY apps/studio/package.json ./apps/studio/package.json
-COPY packages/ui/package.json ./packages/ui/package.json
-COPY packages/types/package.json ./packages/types/package.json
-COPY packages/config-eslint/package.json ./packages/config-eslint/package.json
-COPY packages/config-typescript/package.json ./packages/config-typescript/package.json
-COPY packages/config-tailwind/package.json ./packages/config-tailwind/package.json
 
 # Install dependencies (frozen lockfile for reproducible builds)
 RUN pnpm approve-builds core-js medusa-telemetry && pnpm install --frozen-lockfile
 
-# Copy source code
-COPY apps/backend ./apps/backend
-COPY packages/ui ./packages/ui
-COPY packages/types ./packages/types
-COPY packages/config-eslint ./packages/config-eslint
-COPY packages/config-typescript ./packages/config-typescript
-COPY packages/config-tailwind ./packages/config-tailwind
+# Remove build tools to reduce image size
+RUN apk del python3 make g++
+
+FROM base AS runtime
+
+WORKDIR /app/apps/backend
+
+# Copy application source. node_modules/dist are excluded via .dockerignore so the
+# linux node_modules installed in the `base` stage is preserved intact.
+COPY apps/backend/ ./
 
 # Create non-root user
 RUN addgroup --system --gid 1001 medusa && \
@@ -67,13 +62,11 @@ ENV NODE_ENV="production"
 
 EXPOSE 9000
 
-# Make all files readable by the medusa user
-RUN chmod -R a+rX /app
-
 USER medusa
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:9000/health || exit 1
 
-CMD ["node", "apps/backend/node_modules/@medusajs/medusa-cli/dist/index.js", "start"]
+# Production server (no file watching / HMR).
+CMD ["node", "server.js"]
