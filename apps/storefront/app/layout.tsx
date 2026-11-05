@@ -57,6 +57,32 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
+        <script
+          id="schema-organization"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "SnehaVrinda Kala",
+              url: process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000",
+              logo: "/images/logo.png",
+              sameAs: [],
+            }),
+          }}
+        />
+        <script
+          id="schema-website"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              url: process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000",
+              name: "SnehaVrinda Kala",
+            }),
+          }}
+        />
       </body>
     </html>
   );

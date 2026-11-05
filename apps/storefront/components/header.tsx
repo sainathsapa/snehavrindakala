@@ -45,7 +45,7 @@ export function Header() {
             ))}
             <Link
               href="/cart"
-              className="ml-6 flex items-center gap-2 text-muted hover:text-terracotta transition-colors"
+              className="ml-6 flex items-center gap-2 text-muted hover:text-terracotta transition-colors relative"
               aria-label="Cart"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -57,6 +57,9 @@ export function Header() {
                 />
               </svg>
               <span className="hidden sm:inline">Cart</span>
+              <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-terracotta flex items-center justify-center text-xs font-bold text-white">
+                0
+              </span>
             </Link>
             <Link
               href="/account"

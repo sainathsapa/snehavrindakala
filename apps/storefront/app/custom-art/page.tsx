@@ -1,3 +1,6 @@
+import { medusa } from "@/lib/medusa";
+import Link from "next/link";
+
 export default function CustomArtPage() {
   return (
     <main className="py-10">
@@ -10,6 +13,7 @@ export default function CustomArtPage() {
           upload references, and receive a versioned quote with milestones and
           proofs before production begins.
         </p>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <section className="space-y-6">
             <h2 className="text-2xl font-serif font-semibold text-ink">
@@ -39,6 +43,7 @@ export default function CustomArtPage() {
               </li>
             </ol>
           </section>
+
           <section className="rounded-xl border border-border bg-surface p-8">
             <h2 className="text-2xl font-serif font-semibold text-ink mb-4">
               Start your request
@@ -49,7 +54,6 @@ export default function CustomArtPage() {
                   Art form
                 </label>
                 <select
-                  defaultValue=""
                   className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                 >
                   <option value="">Select an art form</option>
@@ -67,10 +71,10 @@ export default function CustomArtPage() {
                   Brief / description
                 </label>
                 <textarea
-                  defaultValue=""
                   rows={4}
                   className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                   placeholder="Describe the piece you have in mind…"
+                  required
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -80,7 +84,6 @@ export default function CustomArtPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue=""
                     className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                     placeholder="e.g. 5,000 – 15,000"
                   />
@@ -91,10 +94,19 @@ export default function CustomArtPage() {
                   </label>
                   <input
                     type="date"
-                    defaultValue=""
                     className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1">
+                  Delivery PIN code
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                  placeholder="XXXXXX"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink mb-1">
