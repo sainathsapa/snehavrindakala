@@ -11,23 +11,26 @@
     "test": "playwright test"
   },
   "dependencies": {
+    "@snehavrinda-kala/types": "workspace:*",
+    "@snehavrinda-kala/ui": "workspace:*",
     "next": "15.2.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "@snehavrinda-kala/ui": "workspace:*",
-    "@snehavrinda-kala/types": "workspace:*"
+    "sanity": "^6.22.0",
+    "next-sanity": "^9.4.0",
+    "@sanity/image-url": "^1.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@types/node": "22.15.0",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.0",
-    "typescript": "5.8.3",
-    "tailwindcss": "3.4.17",
-    "postcss": "8.5.6",
     "autoprefixer": "10.4.21",
     "eslint": "9.26.0",
     "eslint-config-next": "15.2.3",
-    "@playwright/test": "^1.49.0",
-    "playwright": "^1.49.0"
+    "playwright": "^1.49.0",
+    "postcss": "8.5.6",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.8.3"
   }
 }
