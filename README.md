@@ -28,6 +28,12 @@ Ready-to-ship artwork, handmade décor, made-to-order pieces, custom commissions
 
 ---
 
+<div align="center">
+  <img src="assets/images/peacock-plume.svg" alt="Animated Peacock Feather — Colorful traditional Indian art with animated patterns" width="900"/>
+</div>
+
+---
+
 ## 🏛️ The Stack
 
 <div align="center">
@@ -114,7 +120,7 @@ pnpm --filter @snehavrinda-kala/backend run seed
 ## 🎨 Design Tokens
 
 <div align="center">
-  <img src="assets/images/design-tokens.svg" alt="SnehaVrinda Kala design tokens — terracotta, indigo, saffron, sage, paper, ink" width="700"/>
+  <img src="assets/images/lotus-bloom.svg" alt="Animated Lotus — Rich Indian art with animated petals and traditional color palette" width="800"/>
 </div>
 
 ---
@@ -200,6 +206,10 @@ The complete business, product, design, engineering, operations, security, and p
 **`SnehaVrinda_Kala_Full_Build_Plan.md`**
 
 ---
+
+<div align="center">
+  <img src="assets/images/rangoli-celestial.svg" alt="Animated Rangoli — Vibrant traditional Indian patterns with animated celestial motion" width="800"/>
+</div>
 
 <div align="center">
   <img src="assets/images/mandala-border.svg" alt="Traditional Indian Rangoli Border" width="100%"/>

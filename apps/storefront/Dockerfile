@@ -11,8 +11,9 @@ RUN corepack enable && corepack prepare pnpm@12 --activate
 # platform binaries, msgpackr-extract, etc.)
 RUN apk add --no-cache python3 make g++
 
-# Copy npmrc (allows dependency build scripts required by pnpm supply-chain policy)
+# Copy npmrc + pnpmfile (allows dependency build scripts required by pnpm supply-chain policy)
 COPY .npmrc ./
+COPY pnpmfile.js ./
 
 # Copy workspace files for dependency installation
 COPY pnpm-workspace.yaml ./
@@ -23,14 +24,16 @@ COPY pnpm-lock.yaml ./
 COPY apps/storefront/package.json ./apps/storefront/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
 COPY packages/types/package.json ./packages/types/package.json
+COPY packages/config-tailwind/package.json ./packages/config-tailwind/package.json
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile --ignore-scripts=false
+RUN pnpm install --ignore-scripts=false
 
 # Copy source code
 COPY apps/storefront ./apps/storefront
 COPY packages/ui ./packages/ui
 COPY packages/types ./packages/types
+COPY packages/config-tailwind ./packages/config-tailwind
 
 # Build the storefront (Next.js standalone output)
 WORKDIR /app/apps/storefront

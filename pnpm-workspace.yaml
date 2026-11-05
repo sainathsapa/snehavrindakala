@@ -1,3 +1,16 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Allow build scripts for native modules (pnpm 12 supply-chain policy)
+allowBuilds:
+  "@medusajs/telemetry": true
+  esbuild: true
+  msgpackr-extract: true
+  protobufjs: true
+  sharp: true
+  "@img/sharp-*": true
+
+# Allow lifecycle/build scripts (pnpm 12 defaults to blocking them)
+ignoreScripts: false
+unsafePerm: true

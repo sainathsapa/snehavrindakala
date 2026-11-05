@@ -11,8 +11,9 @@ RUN corepack enable && corepack prepare pnpm@12 --activate
 # esbuild platform binaries, @medusajs/telemetry, etc.)
 RUN apk add --no-cache python3 make g++
 
-# Copy npmrc (allows dependency build scripts required by pnpm supply-chain policy)
+# Copy npmrc + pnpmfile (allows dependency build scripts required by pnpm supply-chain policy)
 COPY .npmrc ./
+COPY pnpmfile.js ./
 
 # Copy workspace files for dependency installation
 COPY pnpm-workspace.yaml ./
@@ -30,7 +31,7 @@ COPY packages/config-typescript/package.json ./packages/config-typescript/packag
 COPY packages/config-tailwind/package.json ./packages/config-tailwind/package.json
 
 # Install dependencies (production only for backend build)
-RUN pnpm install --frozen-lockfile --ignore-scripts=false
+RUN pnpm install --ignore-scripts=false
 
 # Copy source code
 COPY apps/backend ./apps/backend
@@ -42,7 +43,7 @@ COPY packages/config-tailwind ./packages/config-tailwind
 
 # Build the backend
 WORKDIR /app/apps/backend
-RUN pnpm run build
+RUN pnpm exec medusa build
 
 # Remove dev dependencies to keep image small
 RUN pnpm prune --prod
@@ -100,4 +101,4 @@ USER medusa
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:9000/health || exit 1
 
-CMD ["pnpm", "run", "start"]
+CMD ["pnpm", "exec", "medusa", "start"]
