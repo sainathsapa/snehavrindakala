@@ -7,6 +7,13 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@12 --activate
 
+# Install build tools needed to compile native modules (sharp, msgpackr-extract,
+# esbuild platform binaries, @medusajs/telemetry, etc.)
+RUN apk add --no-cache python3 make g++
+
+# Copy npmrc (allows dependency build scripts required by pnpm supply-chain policy)
+COPY .npmrc ./
+
 # Copy workspace files for dependency installation
 COPY pnpm-workspace.yaml ./
 COPY turbo.json ./

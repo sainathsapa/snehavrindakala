@@ -1,0 +1,71 @@
+<svg width="700" height="400" viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F7F4ED;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:1"/>
+    </linearGradient>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#B96545"/>
+    </marker>
+  </defs>
+  
+  <rect width="700" height="400" fill="#F7F4ED" rx="12"/>
+  <rect x="1" y="1" width="698" height="398" fill="none" stroke="#E4DED3" stroke-width="1" rx="11"/>
+  
+  <text x="40" y="45" font-family="'Cormorant Garamond', Georgia, serif" font-size="24" font-weight="700" fill="#242321">Commission Journey</text>
+  <text x="40" y="70" font-family="'Manrope', sans-serif" font-size="13" fill="#6B6862">Brief → Quote → Create → Approve → Deliver</text>
+  
+  <!-- Step nodes -->
+  <g transform="translate(60, 100)">
+    <circle cx="0" cy="0" r="28" fill="url(#stepGrad)" stroke="#B96545" stroke-width="2"/>
+    <text x="-8" y="5" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" text-anchor="middle" font-weight="600">Brief</text>
+    <text x="-8" y="20" font-family="'Manrope', sans-serif" font-size="10" fill="#6B6862" text-anchor="middle">Customer submits</text>
+  </g>
+  
+  <line x1="88" y1="0" x2="152" y2="0" stroke="#B96545" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(180, 100)">
+    <circle cx="0" cy="0" r="28" fill="url(#stepGrad)" stroke="#343C67" stroke-width="2"/>
+    <text x="-8" y="5" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" text-anchor="middle" font-weight="600">Quote</text>
+    <text x="-8" y="20" font-family="'Manrope', sans-serif" font-size="10" fill="#6B6862" text-anchor="middle">Versioned quote</text>
+  </g>
+  
+  <line x1="208" y1="0" x2="272" y2="0" stroke="#343C67" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(300, 100)">
+    <circle cx="0" cy="0" r="28" fill="url(#stepGrad)" stroke="#D8A441" stroke-width="2"/>
+    <text x="-8" y="5" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" text-anchor="middle" font-weight="600">Create</text>
+    <text x="-8" y="20" font-family="'Manrope', sans-serif" font-size="10" fill="#6B6862" text-anchor="middle">Artist produces</text>
+  </g>
+  
+  <line x1="328" y1="0" x2="392" y2="0" stroke="#D8A441" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(420, 100)">
+    <circle cx="0" cy="0" r="28" fill="url(#stepGrad)" stroke="#78856B" stroke-width="2"/>
+    <text x="-8" y="5" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" text-anchor="middle" font-weight="600">Approve</text>
+    <text x="-8" y="20" font-family="'Manrope', sans-serif" font-size="10" fill="#6B6862" text-anchor="middle">Proof approval</text>
+  </g>
+  
+  <line x1="448" y1="0" x2="512" y2="0" stroke="#78856B" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(540, 100)">
+    <circle cx="0" cy="0" r="28" fill="url(#stepGrad)" stroke="#B96545" stroke-width="2"/>
+    <text x="-8" y="5" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" text-anchor="middle" font-weight="600">Deliver</text>
+    <text x="-8" y="20" font-family="'Manrope', sans-serif" font-size="10" fill="#6B6862" text-anchor="middle">Shipped &amp; tracked</text>
+  </g>
+  
+  <!-- Status machine below -->
+  <text x="40" y="210" font-family="'Cormorant Garamond', Georgia, serif" font-size="20" font-weight="700" fill="#242321">Status Machine</text>
+  <line x1="40" y1="218" x2="160" y2="218" stroke="#B96545" stroke-width="2"/>
+  
+  <text x="40" y="245" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" font-weight="600">New →</text>
+  <text x="85" y="245" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Needs clarification →</text>
+  <text x="205" y="245" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Feasibility review →</text>
+  <text x="325" y="245" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Quote drafted →</text>
+  <text x="425" y="245" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Quote sent →</text>
+  <text x="510" y="245" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Accepted →</text>
+  <text x="40" y="270" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" font-weight="600">In production →</text>
+  <text x="130" y="270" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Proof review →</text>
+  <text x="220" y="270" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Approved →</text>
+  <text x="295" y="270" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Shipped → Completed</text>
+</svg>

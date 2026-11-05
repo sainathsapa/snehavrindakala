@@ -1,0 +1,54 @@
+<svg width="700" height="320" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#242321;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#343C67;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="700" height="320" fill="#F7F4ED" rx="12"/>
+  <rect x="1" y="1" width="698" height="318" fill="none" stroke="#E4DED3" stroke-width="1" rx="11"/>
+  
+  <!-- Title -->
+  <text x="40" y="50" font-family="'Cormorant Garamond', Georgia, serif" font-size="26" font-weight="700" fill="url(#titleGrad)" letter-spacing="1">Design Tokens</text>
+  <line x1="40" y1="58" x2="140" y2="58" stroke="#B96545" stroke-width="2"/>
+  
+  <!-- Token rows -->
+  <g transform="translate(40, 80)">
+    <!-- Terracotta -->
+    <rect x="0" y="0" width="40" height="40" fill="#B96545" rx="6"/>
+    <text x="52" y="28" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Terracotta</text>
+    <text x="52" y="48" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#B96545</text>
+    <text x="400" y="28" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Primary brand accent</text>
+    
+    <!-- Indigo -->
+    <rect x="0" y="50" width="40" height="40" fill="#343C67" rx="6"/>
+    <text x="52" y="78" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Indigo</text>
+    <text x="52" y="98" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#343C67</text>
+    <text x="400" y="78" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Secondary accent</text>
+    
+    <!-- Saffron -->
+    <rect x="0" y="100" width="40" height="40" fill="#D8A441" rx="6"/>
+    <text x="52" y="128" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Saffron</text>
+    <text x="52" y="148" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#D8A441</text>
+    <text x="400" y="128" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Small highlights</text>
+    
+    <!-- Sage -->
+    <rect x="0" y="150" width="40" height="40" fill="#78856B" rx="6"/>
+    <text x="52" y="178" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Sage</text>
+    <text x="52" y="198" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#78856B</text>
+    <text x="400" y="178" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Supporting, natural</text>
+    
+    <!-- Paper -->
+    <rect x="0" y="200" width="40" height="40" fill="#F7F4ED" rx="6" stroke="#E4DED3" stroke-width="1"/>
+    <text x="52" y="228" font-family="'Manrope', sans-serif" font-size="14" fill="#242321" font-weight="600">Paper</text>
+    <text x="52" y="248" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#F7F4ED</text>
+    <text x="400" y="228" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Warm background</text>
+    
+    <!-- Ink -->
+    <rect x="0" y="250" width="40" height="40" fill="#242321" rx="6"/>
+    <text x="52" y="278" font-family="'Manrope', sans-serif" font-size="14" fill="#FFFDF0" font-weight="600">Ink</text>
+    <text x="52" y="298" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#242321</text>
+    <text x="400" y="278" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Primary text</text>
+  </g>
+</svg>

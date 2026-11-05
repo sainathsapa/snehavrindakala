@@ -1,84 +1,30 @@
 # SnehaVrinda Kala
 
 <div align="center">
+  <img src="assets/images/diya-lamp.svg" alt="SnehaVrinda Kala — Diya Lamp Brand Mark" width="600"/>
+</div>
 
-```svg
-<svg width="600" height="120" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120">
-  <defs>
-    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#B96545;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#D8A441;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#343C67;stop-opacity:1" />
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-
-  <!-- Decorative diya (lamp) motif -->
-  <g transform="translate(40, 40)">
-    <path d="M20,40 Q30,20 40,40 Q30,60 20,40 Z" fill="url(#brandGradient)" filter="url(#glow)"/>
-    <circle cx="30" cy="35" r="6" fill="#FFF" opacity="0.9">
-      <animate attributeName="r" values="6;7;6" dur="3s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
-    </circle>
-    <path d="M25,40 L35,40" stroke="#F7F4ED" stroke-width="2" stroke-linecap="round">
-      <animate attributeName="stroke-dasharray" values="0 20; 20 0" dur="2s" repeatCount="indefinite"/>
-    </path>
-  </g>
-
-  <!-- Brand wordmark -->
-  <text x="110" y="55" font-family="'Cormorant Garamond', serif" font-size="42" font-weight="700" fill="url(#brandGradient)" letter-spacing="2">
-    SnehaVrinda
-  </text>
-  <text x="110" y="95" font-family="'Manrope', sans-serif" font-size="18" fill="#6B6862" letter-spacing="4">
-    A home for art in all its forms
-  </text>
-
-  <!-- Rangoli-inspired decorative dots -->
-  <circle cx="520" cy="40" r="3" fill="#B96545" opacity="0.8">
-    <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
-  </circle>
-  <circle cx="540" cy="80" r="3" fill="#D8A441" opacity="0.8">
-    <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/>
-  </circle>
-  <circle cx="500" cy="100" r="3" fill="#343C67" opacity="0.8">
-    <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
-  </circle>
-</svg>
-```
-
+<div align="center">
+  <img src="assets/images/rangoli-border.svg" alt="Rangoli decorative border" width="100%"/>
 </div>
 
 ---
 
-## 🎨 The Vision
+<div align="center">
 
-**SnehaVrinda Kala** — Every art has a place.
+## 🎨 Every art has a place.
 
-An art-first creative-commerce platform where the maker stays visible. Ready-to-ship artwork, handmade décor, made-to-order pieces, custom commissions, artist profiles, and creative kits — built on a custom **Next.js + Medusa v2 + Sanity** stack, rooted in Indian craft traditions and designed for a global audience.
+**SnehaVrinda Kala** — A home for art in all its forms — made, curated, personalized, and shared by creators.
+
+Ready-to-ship artwork, handmade décor, made-to-order pieces, custom commissions, artist profiles, and creative kits — built on a custom **Next.js + Medusa v2 + Sanity** stack, rooted in Indian craft traditions and designed for a global audience.
 
 > _Not a marketplace on day one. A curated, centrally managed creative brand with a real custom-commission workflow — brief → quote → create → approve → deliver._
 
----
+</div>
 
-```svg
-<svg width="100%" height="60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 60" preserveAspectRatio="none">
-  <defs>
-    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#B96545;stop-opacity:0.6" />
-      <stop offset="50%" style="stop-color:#343C67;stop-opacity:0.4" />
-      <stop offset="100%" style="stop-color:#D8A441;stop-opacity:0.6" />
-    </linearGradient>
-  </defs>
-  <path d="M0,30 Q250,10 500,30 T1000,30" fill="none" stroke="url(#borderGrad)" stroke-width="3"/>
-  <path d="M0,30 Q250,50 500,30 T1000,30" fill="none" stroke="url(#borderGrad)" stroke-width="1" opacity="0.4"/>
-</svg>
-```
+<div align="center">
+  <img src="assets/images/brand-divider.svg" alt="Decorative divider" width="100%"/>
+</div>
 
 ---
 
@@ -102,9 +48,13 @@ An art-first creative-commerce platform where the maker stays visible. Ready-to-
 
 </div>
 
+<div align="center">
+  <img src="assets/images/brand-divider.svg" alt="Decorative divider" width="100%"/>
+</div>
+
 ---
 
-## 📁 Repository
+## 📁 Repository Structure
 
 ```
 snehavrinda-kala/
@@ -116,6 +66,8 @@ snehavrinda-kala/
 │   ├── ui/           # Shared design system (terracotta · indigo · saffron)
 │   ├── types/        # Shared API/domain types
 │   └── config-*      # Lint / TypeScript / Tailwind config
+├── assets/
+│   └── images/       # Decorative SVG illustrations
 ├── infra/
 │   └── terraform/    # AWS Mumbai infrastructure
 ├── docs/
@@ -159,6 +111,14 @@ pnpm --filter @snehavrinda-kala/backend run seed
 
 ---
 
+## 🎨 Design Tokens
+
+<div align="center">
+  <img src="assets/images/design-tokens.svg" alt="SnehaVrinda Kala design tokens — terracotta, indigo, saffron, sage, paper, ink" width="700"/>
+</div>
+
+---
+
 ## 🧭 Core Flows
 
 ### Standard Product Order
@@ -170,28 +130,12 @@ pnpm --filter @snehavrinda-kala/backend run seed
 6. Customer receives tracking
 
 ### Custom Commission (The Heart)
-```
-Brief → Feasibility Review → Quote → Accept → Pay → Create → Proofs → Approve → Deliver
-```
+<div align="center">
+  <img src="assets/images/commission-flow.svg" alt="SnehaVrinda Kala commission journey and status machine" width="700"/>
+</div>
 
 Commission status machine:
 `New → Needs clarification → Feasibility review → Awaiting artist/capacity → Quote drafted → Quote sent → Awaiting payment → Accepted → In production → Proof review → Approved → Ready to dispatch → Shipped → Completed`
-
----
-
-## 🎨 Design Tokens
-
-| Token | Hex | Use |
-|---|---|---|
-| **Terracotta** | `#B96545` | Primary brand accent |
-| **Indigo** | `#343C67` | Secondary accent, collections |
-| **Saffron** | `#D8A441` | Small highlights |
-| **Sage** | `#78856B` | Supporting, natural |
-| **Paper** | `#F7F4ED` | Warm background |
-| **Ink** | `#242321` | Primary text |
-| **Border** | `#E4DED3` | Dividers |
-
-Typography: **Cormorant Garamond** (editorial headings) · **Manrope** (body, forms, commerce UI)
 
 ---
 
@@ -205,7 +149,7 @@ Typography: **Cormorant Garamond** (editorial headings) · **Manrope** (body, fo
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest + Playwright |
 
-**Backend** (port 9000): `pnpm --filter @snehavrinda-kala/backend run dev`
+**Backend** (port 9000): `pnpm --filter @snehavrinda-kala/backend run dev`  
 **Storefront** (port 3000): `pnpm --filter @snehavrinda-kala/storefront run dev`
 
 ---
@@ -258,20 +202,9 @@ The complete business, product, design, engineering, operations, security, and p
 ---
 
 <div align="center">
+  <img src="assets/images/rangoli-border.svg" alt="Rangoli decorative border" width="100%"/>
+</div>
 
-```svg
-<svg width="100%" height="40" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 40">
-  <defs>
-    <linearGradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#343C67;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#B96545;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#343C67;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <text x="500" y="28" font-family="'Cormorant Garamond', serif" font-size="16" fill="url(#footerGrad)" text-anchor="middle" letter-spacing="3">
-    SnehaVrinda Kala — Art made, curated, personalized, and shared
-  </text>
-</svg>
-```
-
+<div align="center">
+  <sub>Built with terracotta, indigo, and saffron. 🎨</sub>
 </div>
