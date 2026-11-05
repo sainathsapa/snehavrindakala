@@ -1,0 +1,47 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "MEDUSA_BACKEND_URL",
+    "STOREFRONT_URL",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "SANITY_PROJECT_ID",
+    "SANITY_DATASET",
+    "SANITY_API_TOKEN",
+    "RAZORPAY_KEY_ID",
+    "RAZORPAY_KEY_SECRET",
+    "SHIPROCKET_API_TOKEN",
+    "AWS_REGION",
+    "SENTRY_DSN"
+  ],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["apps/**/.next/**", "apps/**/dist/**", "dist/**"],
+      "cache": true
+    },
+    "lint": {
+      "outputs": [],
+      "cache": true
+    },
+    "test": {
+      "outputs": [],
+      "cache": false
+    },
+    "typecheck": {
+      "outputs": [],
+      "cache": true
+    },
+    "dev": {
+      "cache": false
+    },
+    "db:push": {
+      "outputs": [],
+      "cache": false
+    },
+    "db:migrate": {
+      "outputs": [],
+      "cache": false
+    }
+  }
+}

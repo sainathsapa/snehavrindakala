@@ -1,0 +1,33 @@
+{
+  "name": "@snehavrinda-kala/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Medusa v2 commerce backend with custom business modules for SnehaVrinda Kala",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "medusa develop",
+    "start": "medusa start",
+    "build": "medusa build",
+    "seed": "medusa seed -f ./data/seed.json",
+    "migrations:run": "medusa migrations run",
+    "migrations:generate": "medusa migrations generate",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "studio": "medusa develop"
+  },
+  "dependencies": {
+    "@medusajs/medusa": "^2.3.0",
+    "@medusajs/types": "^2.3.0",
+    "@medusajs/utils": "^2.3.0",
+    "pg": "^8.15.0",
+    "ioredis": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.0",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

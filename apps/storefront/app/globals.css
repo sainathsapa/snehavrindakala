@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Design tokens — SnehaVrinda Kala */
+    --background: 240 48% 96%;      /* #F7F4ED paper */
+    --foreground: 20 9% 13%;        /* #242321 ink */
+    --card: 0 0% 100%;              /* #FFFFFF surface */
+    --card-foreground: 20 9% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 9% 13%;
+    --primary: 20 56% 51%;          /* #B96545 terracotta */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 28% 20%;       /* #343C67 indigo */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 20 8% 42%;             /* #6B6862 muted ink */
+    --muted-foreground: 20 6% 46%;
+    --accent: 38 55% 60%;           /* #D8A441 saffron */
+    --accent-foreground: 20 9% 13%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 38 18% 89%;           /* #E4DED3 border */
+    --input: 38 18% 89%;
+    --ring: 20 56% 51%;
+    --radius: 0.6rem;
+
+    --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+    --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+  }
+
+  .dark {
+    --background: 20 12% 8%;
+    --foreground: 40 8% 90%;
+    --card: 20 10% 12%;
+    --card-foreground: 40 8% 90%;
+    --popover: 20 10% 12%;
+    --popover-foreground: 40 8% 90%;
+    --primary: 20 56% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 28% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 20 6% 55%;
+    --muted-foreground: 20 4% 65%;
+    --accent: 38 55% 60%;
+    --accent-foreground: 20 9% 13%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 20 8% 18%;
+    --input: 20 8% 18%;
+    --ring: 20 56% 51%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    @apply text-4xl md:text-6xl font-semibold text-foreground tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-semibold text-foreground tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold text-foreground;
+  }
+
+  p {
+    font-family: var(--font-sans);
+  }
+
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
