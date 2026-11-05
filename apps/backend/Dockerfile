@@ -1,17 +1,15 @@
 # Medusa v2 backend Dockerfile (production-grade)
-# Build: docker build -t snehavrinda-backend . --build-arg NODE_ENV=production
-FROM node:24-alpine AS builder
+FROM node:24-alpine
 
 WORKDIR /app
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@12 --activate
 
-# Install build tools needed to compile native modules (sharp, msgpackr-extract,
-# esbuild platform binaries, @medusajs/telemetry, etc.)
+# Install build tools needed to compile native modules
 RUN apk add --no-cache python3 make g++
 
-# Copy npmrc + pnpmfile (allows dependency build scripts required by pnpm supply-chain policy)
+# Copy npmrc + pnpmfile (allows dependency build scripts)
 COPY .npmrc ./
 COPY pnpmfile.js ./
 
@@ -41,35 +39,9 @@ COPY packages/config-eslint ./packages/config-eslint
 COPY packages/config-typescript ./packages/config-typescript
 COPY packages/config-tailwind ./packages/config-tailwind
 
-# Build the backend
-WORKDIR /app/apps/backend
-RUN pnpm exec medusa build
-
-# Remove dev dependencies to keep image small
-RUN pnpm prune --prod
-
-# Runtime stage
-FROM node:24-alpine AS runner
-
-WORKDIR /app
-
-# Install pnpm for runtime
-RUN corepack enable && corepack prepare pnpm@12 --activate
-
 # Create non-root user
 RUN addgroup --system --gid 1001 medusa && \
     adduser --system --uid 1001 medusa
-
-# Copy built backend
-COPY --from=builder --chown=medusa:medusa /app/apps/backend/dist ./dist
-COPY --from=builder --chown=medusa:medusa /app/apps/backend/node_modules ./node_modules
-COPY --from=builder --chown=medusa:medusa /app/apps/backend/package.json ./package.json
-COPY --from=builder --chown=medusa:medusa /app/apps/backend/tsconfig.json ./tsconfig.json
-COPY --from=builder --chown=medusa:medusa /app/apps/backend/medusa-config.ts ./medusa-config.ts
-
-# Copy shared packages
-COPY --from=builder --chown=medusa:medusa /app/packages/ui ./packages/ui
-COPY --from=builder --chown=medusa:medusa /app/packages/types ./packages/types
 
 # Environment variables (overridden at runtime)
 ENV DATABASE_URL=""
