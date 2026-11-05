@@ -112,6 +112,13 @@ importers:
       '@snehavrinda-kala/config-tailwind':
         specifier: workspace:*
         version: link:../config-tailwind
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
+    devDependencies:
+      '@types/react':
+        specifier: ^19.1.0
+        version: 19.1.0
 
 packages:
 

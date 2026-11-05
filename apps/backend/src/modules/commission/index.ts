@@ -1,13 +1,11 @@
-import type { Module } from "@medusajs/framework/types";
+import type { ModuleExports } from "@medusajs/types";
 import { CommissionService } from "./service";
 import { CommissionRequest } from "./models/commission_request";
 
 export const COMMISSION_MODULE = "commission";
 
-export const commissionModule: Module = {
-  name: COMMISSION_MODULE,
+export const commissionModule: ModuleExports<typeof CommissionService> = {
   service: CommissionService,
-  models: [CommissionRequest],
 };
 
 export { CommissionService, CommissionRequest };

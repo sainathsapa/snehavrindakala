@@ -91,7 +91,6 @@ export default function Home() {
                   alt={form.name}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
-                  decoration="decorative"
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                 <div className="absolute inset-0 flex items-end p-6">

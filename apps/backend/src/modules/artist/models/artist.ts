@@ -1,11 +1,9 @@
-import { Entity, Property } from "@mikro-orm/core";
-
 /**
- * Artist domain model.
+ * Artist domain entity.
  * Public profile data is exposed through controlled API; private business
- * fields remain internal.
+ * fields remain internal. Medusa manages persistence; this is the entity
+ * shape custom modules expose.
  */
-@Entity({ tableName: "artist" })
 export class Artist {
   id!: string;
   display_name!: string;
@@ -20,3 +18,11 @@ export class Artist {
   created_at!: Date;
   updated_at!: Date;
 }
+
+export type ArtistInput = Partial<
+  Omit<Artist, "id" | "created_at" | "updated_at">
+> & { id?: string };
+
+export type ArtistUpdate = Partial<
+  Omit<Artist, "id" | "created_at">
+>;

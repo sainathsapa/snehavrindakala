@@ -1,13 +1,11 @@
-import type { Module } from "@medusajs/framework/types";
+import type { ModuleExports } from "@medusajs/types";
 import { PartnerService } from "./service";
 import { PartnerApplication } from "./models/partner_application";
 
 export const PARTNER_MODULE = "partner";
 
-export const partnerModule: Module = {
-  name: PARTNER_MODULE,
+export const partnerModule: ModuleExports<typeof PartnerService> = {
   service: PartnerService,
-  models: [PartnerApplication],
 };
 
 export { PartnerService, PartnerApplication };

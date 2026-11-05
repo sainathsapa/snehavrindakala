@@ -1,6 +1,8 @@
-import { Entity, Property } from "@mikro-orm/core";
+/**
+ * Immutable earnings ledger entry for partner payout reconciliation.
+ */
+export type LedgerEntryState = "pending" | "paid" | "reversed";
 
-@Entity({ tableName: "earnings_ledger_entry" })
 export class EarningsLedgerEntry {
   id!: string;
   partner_id!: string;
@@ -10,7 +12,11 @@ export class EarningsLedgerEntry {
   deductions!: number;
   fee_share!: number;
   currency!: string;
-  state!: "pending" | "paid" | "reversed";
+  state!: LedgerEntryState;
   audit_metadata?: string | null;
   created_at!: Date;
 }
+
+export type EarningsLedgerEntryInput = Partial<
+  Omit<EarningsLedgerEntry, "id" | "created_at">
+> & { id?: string };

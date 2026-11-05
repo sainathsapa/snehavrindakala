@@ -1,6 +1,7 @@
-import { Entity, Property } from "@mikro-orm/core";
-
-@Entity({ tableName: "partner_application" })
+/**
+ * Partner application entity. Reviewed by admin before a partner record is
+ * activated.
+ */
 export class PartnerApplication {
   id!: string;
   applicant_name!: string;
@@ -15,3 +16,7 @@ export class PartnerApplication {
   created_at!: Date;
   updated_at!: Date;
 }
+
+export type PartnerApplicationInput = Partial<
+  Omit<PartnerApplication, "id" | "created_at" | "updated_at">
+> & { id?: string };

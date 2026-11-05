@@ -1,5 +1,7 @@
-import { Entity, Property } from "@mikro-orm/core";
-
+/**
+ * Commission request entity. Follows the status state machine defined in the
+ * build plan (Section 11.3).
+ */
 export type CommissionStatus =
   | "New"
   | "Needs clarification"
@@ -23,7 +25,6 @@ export type CommissionStatus =
   | "Refunded"
   | "Disputed";
 
-@Entity({ tableName: "commission_request" })
 export class CommissionRequest {
   id!: string;
   customer_id!: string;
@@ -41,3 +42,7 @@ export class CommissionRequest {
   created_at!: Date;
   updated_at!: Date;
 }
+
+export type CommissionRequestInput = Partial<
+  Omit<CommissionRequest, "id" | "created_at" | "updated_at">
+> & { id?: string };

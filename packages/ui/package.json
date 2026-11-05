@@ -9,6 +9,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@snehavrinda-kala/config-tailwind": "workspace:*"
+    "@snehavrinda-kala/config-tailwind": "workspace:*",
+    "react": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0"
   }
 }

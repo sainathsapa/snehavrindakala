@@ -1,12 +1,29 @@
-import type { MedusaRequest, MedusaResponse } from "@medusajs/medusa";
+import type { MedusaRequest, MedusaResponse } from "@medusajs/types";
+import type { CommissionService } from "../../../../modules/commission/service";
+
+type CommissionCreateBody = {
+  customer_id: string;
+  art_form: string;
+  brief: string;
+  intended_use?: string;
+  dimensions?: string;
+  budget_range?: string;
+  target_date?: string;
+  delivery_region?: string;
+  delivery_pin?: string;
+};
 
 /**
  * POST /store/commissions
  * Create a new commission request (customer-facing).
+ * Wired to the commission module via Medusa's dependency injection scope.
  */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const commissionModuleService = req.scope.resolve("commissionModuleService");
+  const commissionModuleService = req.scope.resolve(
+    "commissionModule"
+  ) as CommissionService;
 
+  const body = req.body as CommissionCreateBody;
   const {
     customer_id,
     art_form,
@@ -17,11 +34,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     target_date,
     delivery_region,
     delivery_pin,
-  } = req.body as Record<string, unknown>;
+  } = body;
 
   const referenceId = `COM-${Date.now()}`;
 
-  const commission = await commissionModuleService.createCommissionRequest({
+  const commission = await commissionModuleService.create({
     customer_id,
     reference_id: referenceId,
     art_form,
@@ -29,7 +46,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     intended_use,
     dimensions,
     budget_range,
-    target_date,
+    target_date: target_date ? new Date(target_date) : undefined,
     delivery_region,
     delivery_pin,
     status: "New",
@@ -47,11 +64,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { referenceId } = req.params as { referenceId: string };
-  const commissionModuleService = req.scope.resolve("commissionModuleService");
+  const commissionModuleService = req.scope.resolve(
+    "commissionModule"
+  ) as CommissionService;
 
-  const commission = await commissionModuleService.getCommissionRequest(
-    referenceId
-  );
+  const commission = await commissionModuleService.findOne({
+    reference_id: referenceId,
+  });
 
   if (!commission) {
     return res.status(404).json({ message: "Commission request not found" });
