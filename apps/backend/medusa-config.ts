@@ -1,5 +1,4 @@
 import { defineConfig } from "@medusajs/medusa";
-import { Modules } from "@medusajs/utils";
 
 module.exports = defineConfig({
   projectConfig: {
@@ -20,14 +19,37 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },
   },
+  // Custom business modules (Medusa v2 module system)
   modules: [
-    {
-      resolve: "@medusajs/medusa/flavor/modules",
-    },
-    // Custom business modules (defined below)
     { resolve: "./src/modules/artist" },
-    { resolve: "./src/modules/partner" },
     { resolve: "./src/modules/commission" },
     { resolve: "./src/modules/ledger" },
+    { resolve: "./src/modules/audit" },
+    { resolve: "./src/modules/integration_event" },
+    { resolve: "./src/modules/notification" },
+  ],
+  // Payment provider: Razorpay (adapter boundary per build plan Section 12.2)
+  payment_providers: [
+    {
+      resolve: "./src/providers/payment/razorpay",
+      id: "razorpay",
+      options: {
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+        webhook_secret: process.env.RAZORPAY_WEBHOOK_SECRET,
+      },
+    },
+  ],
+  // Fulfilment provider: Shiprocket (adapter boundary per build plan Section 12.4)
+  fulfillment_providers: [
+    {
+      resolve: "./src/providers/fulfilment/shiprocket",
+      id: "shiprocket",
+      options: {
+        email: process.env.SHIPROCKET_EMAIL,
+        password: process.env.SHIPROCKET_PASSWORD,
+        api_token: process.env.SHIPROCKET_API_TOKEN,
+      },
+    },
   ],
 });
