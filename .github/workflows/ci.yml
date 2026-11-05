@@ -63,3 +63,41 @@ jobs:
 
       - name: Build all apps
         run: pnpm turbo run build
+
+  deploy:
+    needs: builds
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Build and push Docker image
+        run: |
+          cd apps/backend
+          docker build -t ${{ secrets.ECR_REGISTRY }}/snehavrinda-backend:${{ github.sha }} .
+          docker push ${{ secrets.ECR_REGISTRY }}/snehavrinda-backend:${{ github.sha }}
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ENVIRONMENT }}-snehavrinda-backend \
+            --service ${{ env.ENVIRONMENT }}-snehavrinda-backend-api \
+            --force-new-deployment
+
+      - name: Deploy storefront to Vercel
+        run: |
+          cd apps/storefront
+          npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}

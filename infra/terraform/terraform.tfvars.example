@@ -1,0 +1,31 @@
+# Terraform variables (copy to terraform.tfvars and fill in values)
+# Never commit real secrets to version control
+
+environment = "production"
+aws_region  = "ap-south-1"
+
+# RDS
+db_password = "CHANGE_ME"
+db_instance_class = "db.t3.micro"
+
+# Backend
+backend_image = "public.ecr.aws/snehavrinda/backend:latest"
+backend_url   = "https://api.snehavrindakala.example"
+backend_desired_count = 2
+
+# Payments & shipping (test keys first)
+razorpay_key_id = "CHANGE_ME"
+razorpay_key_secret = "CHANGE_ME"
+shiprocket_api_token = "CHANGE_ME"
+
+# Secrets (generate strong random values)
+razorpay_webhook_secret = "CHANGE_ME"
+jwt_secret = "CHANGE_ME"
+cookie_secret = "CHANGE_ME"
+sanity_api_token = "CHANGE_ME"
+
+# ACM certificate for ALB
+acm_certificate_arn = "CHANGE_ME"
+
+# CloudFront domain (optional)
+cloudfront_domain = ""
