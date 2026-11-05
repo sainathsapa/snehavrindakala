@@ -1,91 +1,70 @@
 <svg width="700" height="700" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="lotusGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#FFF9C4;stop-opacity:1"/>
-      <stop offset="60%" style="stop-color:#FFE0B2;stop-opacity:1"/>
+    <radialGradient id="lotusRadial" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FFFDE7;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#FFE0B2;stop-opacity:1"/>
       <stop offset="100%" style="stop-color:#FFB74D;stop-opacity:1"/>
     </radialGradient>
-    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#689F38;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#4CAF50;stop-opacity:1"/>
-    </linearGradient>
-    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
       <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
   </defs>
 
   <rect width="700" height="700" fill="#FAF5EA"/>
 
-  <!-- Background mandala circle -->
-  <circle cx="350" cy="350" r="300" fill="#FFF8E1" opacity="0.6"/>
-  <circle cx="350" cy="350" r="280" fill="none" stroke="#FFB74D" stroke-width="2" stroke-dasharray="10,5" opacity="0.5"/>
+  <!-- Background mandala circles -->
+  <circle cx="350" cy="350" r="320" fill="#FFF3E0" opacity="0.4"/>
+  <circle cx="350" cy="350" r="300" fill="none" stroke="#FFB74D" stroke-width="2" stroke-dasharray="14,7" opacity="0.4"/>
+  <circle cx="350" cy="350" r="280" fill="none" stroke="#E68A2E" stroke-width="1" stroke-dasharray="7,5" opacity="0.3"/>
 
-  <!-- Outer decorative ring -->
+  <!-- Rotating Lotus Mandala -->
   <g transform="translate(350, 350)">
-    <g id="outerRing">
-      <circle r="260" fill="none" stroke="#E68A2E" stroke-width="3" opacity="0.4"/>
-      <!-- Decorative arcs -->
-      <g id="arcs">
-        <path d="M0,-260 A260,260 0 0,1 184,184" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M184,184 A260,260 0 0,1 260,0" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M260,0 A260,260 0 0,1 184,-184" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M184,-184 A260,260 0 0,1 0,-260" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M0,-260 A260,260 0 0,0 -184,-184" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M-184,-184 A260,260 0 0,0 -260,0" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M-260,0 A260,260 0 0,0 -184,184" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M-184,184 A260,260 0 0,0 0,260" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-        <path d="M0,260 A260,260 0 0,1 184,184" fill="none" stroke="#FFB74D" stroke-width="2" opacity="0.6"/>
-      </g>
+    <!-- Outer layer - 12 rounded lotus petals in full circle -->
+    <g id="outerPetals">
+      <path d="M0,-120 Q60,-60 120,0 Q60,60 0,120 Q-60,60 -120,0 Q-60,-60 0,-120 Z" fill="url(#lotusRadial)" filter="url(#softGlow)" opacity="0.9"/>
+      <path d="M-120,0 Q-60,-60 0,-120 Q60,-60 120,0 Q60,60 0,120 Q-60,60 -120,0 Z" fill="url(#lotusRadial)" filter="url(#softGlow)" opacity="0.9"/>
     </g>
-
-    <!-- Rotating lotus petals -->
-    <g id="lotus">
-      <path d="M0,-120 Q60,-60 80,0 Q60,60 0,120 Q-60,60 -80,0 Q-60,-60 0,-120 Z" fill="url(#lotusGrad)" filter="url(#softGlow)">
-        <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
-      </path>
-      <path d="M-120,0 Q-60,60 0,120 Q60,60 120,0 Q60,-60 0,-120 Q-60,-60 -120,0 Z" fill="url(#lotusGrad)" filter="url(#softGlow)">
-        <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="-360 0 0" dur="25s" repeatCount="indefinite"/>
-      </path>
+    <!-- Inner layer -->
+    <g id="innerPetals">
+      <path d="M0,-70 Q35,-35 70,0 Q35,35 0,70 Q-35,35 -70,0 Q-35,-35 0,-70 Z" fill="#FFF8E1" filter="url(#softGlow)" opacity="0.95"/>
+      <path d="M-70,0 Q-35,-35 0,-70 Q35,-35 70,0 Q35,35 0,70 Q-35,35 -70,0 Z" fill="#FFF8E1" filter="url(#softGlow)" opacity="0.95"/>
     </g>
+    <!-- Center bindi -->
+    <circle r="18" fill="#FF5722" filter="url(#softGlow)">
+      <animate attributeName="r" values="16;22;16" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="fill-opacity" values="0.9;1;0.9" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="12" fill="#FFF9C4">
+      <animate attributeName="r" values="10;15;10" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="6" fill="#FFFFFF">
+      <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite"/>
+    </circle>
 
-    <!-- Inner bindi circle with rotation -->
-    <g transform="translate(0, 0)">
-      <circle r="40" fill="#FF5722" filter="url(#softGlow)">
-        <animate attributeName="r" values="35;45;35" dur="4s" repeatCount="indefinite"/>
-        <animate attributeName="fill-opacity" values="0.9;1;0.9" dur="4s" repeatCount="indefinite"/>
-      </circle>
-      <circle r="25" fill="#FFF9C4">
-        <animate attributeName="r" values="20;30;20" dur="3s" repeatCount="indefinite"/>
-      </circle>
-      <circle r="12" fill="#FFFFFF">
-        <animate attributeName="r" values="10;15;10" dur="2s" repeatCount="indefinite"/>
-      </circle>
-    </g>
-
-    <!-- Sanskrit "Om" inspired decorative element -->
-    <text x="0" y="380" font-family="serif" font-size="48" fill="#E68A2E" text-anchor="middle" opacity="0.3" style="font-style: italic;">ॐ</text>
+    <!-- Sanskrit Om symbol -->
+    <text x="0" y="400" font-family="serif" font-size="60" fill="#E68A2E" text-anchor="middle" opacity="0.25" style="font-style: italic;">ॐ</text>
   </g>
 
-  <!-- Corner lotus buds -->
+  <!-- Four corner lotus buds -->
   <g transform="translate(100, 100)">
-    <path d="M0,0 Q-30,-30 -60,0 Q-30,30 0,0 Q30,30 60,0 Q30,-30 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
-    <path d="M-30,-15 Q0,-25 30,-15 Q0,0 -30,-15 Z" fill="#FFF3E0" opacity="0.9"/>
-    <circle cx="0" cy="0" r="4" fill="#FF5722"/>
+    <path d="M0,0 Q-35,-40 -70,0 Q-35,40 0,0 Q35,40 70,0 Q35,-40 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
+    <path d="M-35,-20 Q0,-30 35,-20 Q0,0 -35,-20 Z" fill="#FFF3E0" opacity="0.9"/>
+    <circle cx="0" cy="0" r="6" fill="#FF5722"/>
   </g>
   <g transform="translate(600, 100) scale(-1, 1)">
-    <path d="M0,0 Q-30,-30 -60,0 Q-30,30 0,0 Q30,30 60,0 Q30,-30 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
-    <path d="M-30,-15 Q0,-25 30,-15 Q0,0 -30,-15 Z" fill="#FFF3E0" opacity="0.9"/>
-    <circle cx="0" cy="0" r="4" fill="#FF5722"/>
+    <path d="M0,0 Q-35,-40 -70,0 Q-35,40 0,0 Q35,40 70,0 Q35,-40 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
+    <path d="M-35,-20 Q0,-30 35,-20 Q0,0 -35,-20 Z" fill="#FFF3E0" opacity="0.9"/>
+    <circle cx="0" cy="0" r="6" fill="#FF5722"/>
   </g>
   <g transform="translate(100, 600) scale(1, -1)">
-    <path d="M0,0 Q-30,-30 -60,0 Q-30,30 0,0 Q30,30 60,0 Q30,-30 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
-    <path d="M-30,-15 Q0,-25 30,-15 Q0,0 -30,-15 Z" fill="#FFF3E0" opacity="0.9"/>
-    <circle cx="0" cy="0" r="4" fill="#FF5722"/>
+    <path d="M0,0 Q-35,-40 -70,0 Q-35,40 0,0 Q35,40 70,0 Q35,-40 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
+    <path d="M-35,-20 Q0,-30 35,-20 Q0,0 -35,-20 Z" fill="#FFF3E0" opacity="0.9"/>
+    <circle cx="0" cy="0" r="6" fill="#FF5722"/>
   </g>
   <g transform="translate(600, 600) scale(-1, -1)">
-    <path d="M0,0 Q-30,-30 -60,0 Q-30,30 0,0 Q30,30 60,0 Q30,-30 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
-    <path d="M-30,-15 Q0,-25 30,-15 Q0,0 -30,-15 Z" fill="#FFF3E0" opacity="0.9"/>
-    <circle cx="0" cy="0" r="4" fill="#FF5722"/>
+    <path d="M0,0 Q-35,-40 -70,0 Q-35,40 0,0 Q35,40 70,0 Q35,-40 0,0 Z" fill="#FFE0B2" opacity="0.8"/>
+    <path d="M-35,-20 Q0,-30 35,-20 Q0,0 -35,-20 Z" fill="#FFF3E0" opacity="0.9"/>
+    <circle cx="0" cy="0" r="6" fill="#FF5722"/>
   </g>
 </svg>

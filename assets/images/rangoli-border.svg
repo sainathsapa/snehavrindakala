@@ -1,95 +1,93 @@
-<svg width="1200" height="160" viewBox="0 0 1200 160" xmlns="http://www.w3.org/2000/svg">
+<svg width="1200" height="180" viewBox="0 0 1200 180" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#FF9933;stop-opacity:0.7"/>
-      <stop offset="25%" style="stop-color:#4B0082;stop-opacity:0.6"/>
-      <stop offset="50%" style="stop-color:#FFB74D;stop-opacity:0.7"/>
-      <stop offset="75%" style="stop-color:#4B0082;stop-opacity:0.6"/>
-      <stop offset="100%" style="stop-color:#FF9933;stop-opacity:0.7"/>
+    <linearGradient id="rangoliGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF9933;stop-opacity:0.8"/>
+      <stop offset="25%" style="stop-color:#4B0082;stop-opacity:0.7"/>
+      <stop offset="50%" style="stop-color:#FFB74D;stop-opacity:0.8"/>
+      <stop offset="75%" style="stop-color:#4B0082;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#FF9933;stop-opacity:0.8"/>
     </linearGradient>
   </defs>
 
-  <rect width="1200" height="160" fill="#FAF5EA"/>
+  <rect width="1200" height="180" fill="#FAF5EA"/>
 
-  <!-- Top wave band -->
-  <path d="M0,50 Q150,10 300,50 T600,50 T900,50 T1200,50" fill="none" stroke="url(#borderGrad)" stroke-width="4" stroke-linecap="round"/>
-  
-  <!-- Bottom wave band -->
-  <path d="M0,110 Q150,150 300,110 T600,110 T900,110 T1200,110" fill="none" stroke="url(#borderGrad)" stroke-width="4" stroke-linecap="round"/>
+  <!-- Top & bottom waves -->
+  <path d="M0,45 Q150,5 300,45 T600,45 T900,45 T1200,45" fill="none" stroke="url(#rangoliGrad)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M0,135 Q150,175 300,135 T600,135 T900,135 T1200,135" fill="none" stroke="url(#rangoliGrad)" stroke-width="4" stroke-linecap="round"/>
 
-  <!-- Traditional Indian motifs -->
+  <!-- Indian motifs -->
   <g id="motifRow">
-    <!-- Motif 1 - Lotus bud -->
-    <g transform="translate(100, 80)">
-      <path d="M0,0 Q-15,-20 -30,0 Q-15,20 0,0 Q15,20 30,0 Q15,-20 0,0 Z" fill="#FFE0B2" opacity="0.85"/>
-      <path d="M-10,-10 Q0,-18 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
-      <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+    <!-- Lotus bud -->
+    <g transform="translate(100, 90)">
+      <path d="M0,0 Q-25,-45 -50,0 Q-25,45 0,0 Q25,45 50,0 Q25,-45 0,0 Z" fill="#FFE0B2" opacity="0.85"/>
+      <path d="M-18,-22 Q0,-32 18,-22 Q0,0 -18,-22 Z" fill="#FFF3E0" opacity="0.9"/>
+      <circle cx="0" cy="0" r="5" fill="#FF5722"/>
     </g>
-    <!-- Motif 2 - Diya -->
-    <g transform="translate(300, 80)">
-      <path d="M-10,15 Q0,5 10,15 Q0,25 -10,15 Z" fill="#D2691E"/>
-      <path d="M0,15 Q-6,8 0,2 Q6,8 0,15 Z" fill="#FFF176" opacity="0.9">
-        <animate attributeName="d" values="M0,15 Q-6,8 0,2 Q6,8 0,15 Z; M0,15 Q-5,7 0,-1 Q5,7 0,15 Z; M0,15 Q-6,8 0,2 Q6,8 0,15 Z" dur="4s" repeatCount="indefinite"/>
+    <!-- Diya -->
+    <g transform="translate(300, 90)">
+      <path d="M-14,20 Q0,10 14,20 Q0,30 -14,20 Z" fill="#CD853F"/>
+      <path d="M0,20 Q-7,14 0,4 Q7,14 0,20 Z" fill="#FFF176" opacity="0.9">
+        <animate attributeName="d" values="M0,20 Q-7,14 0,4 Q7,14 0,20 Z; M0,20 Q-5,12 0,2 Q5,12 0,20 Z; M0,20 Q-7,14 0,4 Q7,14 0,20 Z" dur="4s" repeatCount="indefinite"/>
       </path>
-      <circle cx="0" cy="10" r="2.5" fill="#FFD700"/>
+      <circle cx="0" cy="14" r="3.5" fill="#FFD700"/>
     </g>
-    <!-- Motif 3 - Om swirl -->
-    <g transform="translate(500, 80)">
-      <path d="M0,0 Q-10,-15 0,-30 Q10,-15 0,0 Q10,15 0,30 Q-10,15 0,0 Z" fill="none" stroke="#4B0082" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="0" cy="0" r="4" fill="#4B0082" opacity="0.8"/>
+    <!-- Om swirl -->
+    <g transform="translate(500, 90)">
+      <path d="M0,0 Q-14,-26 0,-52 Q14,-26 0,0 Q14,26 0,52 Q-14,26 0,0 Z" fill="none" stroke="#4B0082" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="6" fill="#4B0082" opacity="0.85"/>
     </g>
-    <!-- Motif 4 - Lotus bud -->
-    <g transform="translate(700, 80)">
-      <path d="M0,0 Q-15,-20 -30,0 Q-15,20 0,0 Q15,20 30,0 Q15,-20 0,0 Z" fill="#FFE0B2" opacity="0.85"/>
-      <path d="M-10,-10 Q0,-18 10,-10 Q0,0 -10,-10 Z" fill="#FFF3E0" opacity="0.9"/>
-      <circle cx="0" cy="0" r="3" fill="#FF5722"/>
+    <!-- Lotus bud -->
+    <g transform="translate(700, 90)">
+      <path d="M0,0 Q-25,-45 -50,0 Q-25,45 0,0 Q25,45 50,0 Q25,-45 0,0 Z" fill="#FFE0B2" opacity="0.85"/>
+      <path d="M-18,-22 Q0,-32 18,-22 Q0,0 -18,-22 Z" fill="#FFF3E0" opacity="0.9"/>
+      <circle cx="0" cy="0" r="5" fill="#FF5722"/>
     </g>
-    <!-- Motif 5 - Diya -->
-    <g transform="translate(900, 80)">
-      <path d="M-10,15 Q0,5 10,15 Q0,25 -10,15 Z" fill="#D2691E"/>
-      <path d="M0,15 Q-6,8 0,2 Q6,8 0,15 Z" fill="#FFF176" opacity="0.9">
-        <animate attributeName="d" values="M0,15 Q-6,8 0,2 Q6,8 0,15 Z; M0,15 Q-5,7 0,-1 Q5,7 0,15 Z; M0,15 Q-6,8 0,2 Q6,8 0,15 Z" dur="3.5s" repeatCount="indefinite"/>
+    <!-- Diya -->
+    <g transform="translate(900, 90)">
+      <path d="M-14,20 Q0,10 14,20 Q0,30 -14,20 Z" fill="#CD853F"/>
+      <path d="M0,20 Q-7,14 0,4 Q7,14 0,20 Z" fill="#FFF176" opacity="0.9">
+        <animate attributeName="d" values="M0,20 Q-7,14 0,4 Q7,14 0,20 Z; M0,20 Q-5,12 0,2 Q5,12 0,20 Z; M0,20 Q-7,14 0,4 Q7,14 0,20 Z" dur="3.2s" repeatCount="indefinite"/>
       </path>
-      <circle cx="0" cy="10" r="2.5" fill="#FFD700"/>
+      <circle cx="0" cy="14" r="3.5" fill="#FFD700"/>
     </g>
-    <!-- Motif 6 - Om swirl -->
-    <g transform="translate(1100, 80)">
-      <path d="M0,0 Q-10,-15 0,-30 Q10,-15 0,0 Q10,15 0,30 Q-10,15 0,0 Z" fill="none" stroke="#4B0082" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="0" cy="0" r="4" fill="#4B0082" opacity="0.8"/>
+    <!-- Om swirl -->
+    <g transform="translate(1100, 90)">
+      <path d="M0,0 Q-14,-26 0,-52 Q14,-26 0,0 Q14,26 0,52 Q-14,26 0,0 Z" fill="none" stroke="#4B0082" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="6" fill="#4B0082" opacity="0.85"/>
     </g>
   </g>
 
-  <!-- Animated dots row -->
-  <g id="dots">
-    <circle cx="60" cy="120" r="3.5" fill="#FF9933" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="2.5s" repeatCount="indefinite"/>
+  <!-- Animated alternating dots -->
+  <g id="dotSequence">
+    <circle cx="55" cy="150" r="4" fill="#FF9933" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="2.5s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="180" cy="120" r="3.5" fill="#4B0082" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+    <circle cx="175" cy="150" r="4" fill="#4B0082" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="3s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="300" cy="120" r="3.5" fill="#FF9933" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="2.5s" repeatCount="indefinite"/>
+    <circle cx="295" cy="150" r="4" fill="#FF9933" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="2.5s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="420" cy="120" r="3.5" fill="#4B0082" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+    <circle cx="415" cy="150" r="4" fill="#4B0082" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="3s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="540" cy="120" r="3.5" fill="#FF9933" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="2.5s" repeatCount="indefinite"/>
+    <circle cx="535" cy="150" r="4" fill="#FF9933" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="2.5s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="660" cy="120" r="3.5" fill="#4B0082" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+    <circle cx="655" cy="150" r="4" fill="#4B0082" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="3s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="780" cy="120" r="3.5" fill="#FF9933" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="2.5s" repeatCount="indefinite"/>
+    <circle cx="775" cy="150" r="4" fill="#FF9933" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="2.5s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="900" cy="120" r="3.5" fill="#4B0082" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+    <circle cx="895" cy="150" r="4" fill="#4B0082" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="3s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="1020" cy="120" r="3.5" fill="#FF9933" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="2.5s" repeatCount="indefinite"/>
+    <circle cx="1015" cy="150" r="4" fill="#FF9933" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="2.5s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="1140" cy="120" r="3.5" fill="#4B0082" opacity="0.9">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+    <circle cx="1135" cy="150" r="4" fill="#4B0082" opacity="0.9">
+      <animate attributeName="opacity" values="0.15;1;0.15" dur="3s" repeatCount="indefinite"/>
     </circle>
   </g>
 </svg>

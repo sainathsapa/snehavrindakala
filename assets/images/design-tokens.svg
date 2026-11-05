@@ -1,70 +1,80 @@
-<svg width="700" height="420" viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+<svg width="700" height="480" viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="tokenTitle" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:#242321;stop-opacity:1"/>
       <stop offset="100%" style="stop-color:#4B0082;stop-opacity:1"/>
     </linearGradient>
   </defs>
 
-  <rect width="700" height="420" fill="#FAF5EA" rx="16"/>
-  <rect x="1" y="1" width="698" height="418" fill="none" stroke="#E4DED3" stroke-width="1" rx="15"/>
+  <rect width="700" height="480" fill="#FAF5EA" rx="24"/>
+  <rect x="1" y="1" width="698" height="478" fill="none" stroke="#E4DED3" stroke-width="1" rx="23"/>
 
   <!-- Title -->
-  <text x="40" y="55" font-family="'Cormorant Garamond', Georgia, serif" font-size="28" font-weight="700" fill="url(#titleGrad)" letter-spacing="1">Design Tokens</text>
-  <line x1="40" y1="64" x2="150" y2="64" stroke="#FF9933" stroke-width="2"/>
+  <text x="40" y="65" font-family="'Cormorant Garamond', Georgia, serif" font-size="32" font-weight="700" fill="url(#tokenTitle)" letter-spacing="1">Design Tokens</text>
+  <line x1="40" y1="73" x2="170" y2="73" stroke="#FF9933" stroke-width="2"/>
 
-  <!-- Token rows with Indian swatch shapes -->
-  <g transform="translate(40, 90)">
+  <!-- Token rows - circular Indian swatches -->
+  <g transform="translate(40, 105)">
     <!-- Terracotta -->
-    <circle cx="20" cy="20" r="18" fill="#B7410E"/>
-    <circle cx="20" cy="20" r="12" fill="#D2691E" opacity="0.7"/>
-    <text x="52" y="28" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Terracotta</text>
-    <text x="52" y="48" font-family="'Manrope', sans-serif" font-size="12" fill="#5D4037">#B7410E</text>
-    <text x="400" y="28" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Primary brand accent</text>
+    <circle cx="28" cy="28" r="22" fill="#B7410E"/>
+    <circle cx="28" cy="28" r="16" fill="#D2691E" opacity="0.7"/>
+    <circle cx="28" cy="28" r="10" fill="#8B4513" opacity="0.4"/>
+    <text x="65" y="38" font-family="'Manrope', sans-serif" font-size="17" fill="#242321" font-weight="600">Terracotta</text>
+    <text x="65" y="58" font-family="'Manrope', sans-serif" font-size="14" fill="#5D4037">#B7410E</text>
+    <text x="420" y="38" font-family="'Manrope', sans-serif" font-size="14" fill="#6B6862">Primary brand accent</text>
 
     <!-- Indigo -->
-    <circle cx="20" cy="70" r="18" fill="#4B0082"/>
-    <circle cx="20" cy="70" r="12" fill="#6A0DAD" opacity="0.7"/>
-    <text x="52" y="78" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Indigo</text>
-    <text x="52" y="98" font-family="'Manrope', sans-serif" font-size="12" fill="#4A235A">#4B0082</text>
-    <text x="400" y="78" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Secondary accent</text>
+    <circle cx="28" cy="80" r="22" fill="#4B0082"/>
+    <circle cx="28" cy="80" r="16" fill="#6A0DAD" opacity="0.7"/>
+    <circle cx="28" cy="80" r="10" fill="#3A0CA3" opacity="0.4"/>
+    <text x="65" y="90" font-family="'Manrope', sans-serif" font-size="17" fill="#242321" font-weight="600">Indigo</text>
+    <text x="65" y="110" font-family="'Manrope', sans-serif" font-size="14" fill="#4A235A">#4B0082</text>
+    <text x="420" y="90" font-family="'Manrope', sans-serif" font-size="14" fill="#6B6862">Secondary accent</text>
 
     <!-- Saffron -->
-    <circle cx="20" cy="120" r="18" fill="#FF9933"/>
-    <circle cx="20" cy="120" r="12" fill="#FFB74D" opacity="0.7"/>
-    <text x="52" y="128" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Saffron</text>
-    <text x="52" y="148" font-family="'Manrope', sans-serif" font-size="12" fill="#E68A2E">#FF9933</text>
-    <text x="400" y="128" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Small highlights</text>
+    <circle cx="28" cy="132" r="22" fill="#FF9933"/>
+    <circle cx="28" cy="132" r="16" fill="#FFB74D" opacity="0.7"/>
+    <circle cx="28" cy="132" r="10" fill="#FFD54F" opacity="0.4"/>
+    <text x="65" y="142" font-family="'Manrope', sans-serif" font-size="17" fill="#242321" font-weight="600">Saffron</text>
+    <text x="65" y="162" font-family="'Manrope', sans-serif" font-size="14" fill="#E68A2E">#FF9933</text>
+    <text x="420" y="142" font-family="'Manrope', sans-serif" font-size="14" fill="#6B6862">Small highlights</text>
 
     <!-- Sage -->
-    <circle cx="20" cy="170" r="18" fill="#78856B"/>
-    <circle cx="20" cy="170" r="12" fill="#9AA06D" opacity="0.7"/>
-    <text x="52" y="178" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Sage</text>
-    <text x="52" y="198" font-family="'Manrope', sans-serif" font-size="12" fill="#5D6D5E">#78856B</text>
-    <text x="400" y="178" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Supporting, natural</text>
+    <circle cx="28" cy="184" r="22" fill="#78856B"/>
+    <circle cx="28" cy="184" r="16" fill="#9AA06D" opacity="0.7"/>
+    <circle cx="28" cy="184" r="10" fill="#5D6D5E" opacity="0.4"/>
+    <text x="65" y="194" font-family="'Manrope', sans-serif" font-size="17" fill="#242321" font-weight="600">Sage</text>
+    <text x="65" y="214" font-family="'Manrope', sans-serif" font-size="14" fill="#5D6D5E">#78856B</text>
+    <text x="420" y="194" font-family="'Manrope', sans-serif" font-size="14" fill="#6B6862">Supporting, natural</text>
 
     <!-- Paper -->
-    <circle cx="20" cy="220" r="18" fill="#FAF5EA" stroke="#E4DED3" stroke-width="1"/>
-    <circle cx="20" cy="220" r="12" fill="#FFF5E6" opacity="0.8"/>
-    <text x="52" y="228" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" font-weight="600">Paper</text>
-    <text x="52" y="248" font-family="'Manrope', sans-serif" font-size="12" fill="#8D8072">#FAF5EA</text>
-    <text x="400" y="228" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Warm background</text>
+    <circle cx="28" cy="236" r="22" fill="#FAF5EA" stroke="#E4DED3" stroke-width="1"/>
+    <circle cx="28" cy="236" r="16" fill="#FFF5E6" opacity="0.8"/>
+    <circle cx="28" cy="236" r="10" fill="#FFFFFF" opacity="0.4"/>
+    <text x="65" y="246" font-family="'Manrope', sans-serif" font-size="17" fill="#242321" font-weight="600">Paper</text>
+    <text x="65" y="266" font-family="'Manrope', sans-serif" font-size="14" fill="#8D8072">#FAF5EA</text>
+    <text x="420" y="246" font-family="'Manrope', sans-serif" font-size="14" fill="#6B6862">Warm background</text>
 
     <!-- Ink -->
-    <circle cx="20" cy="270" r="18" fill="#242321"/>
-    <circle cx="20" cy="270" r="12" fill="#4A4441" opacity="0.7"/>
-    <text x="52" y="278" font-family="'Manrope', sans-serif" font-size="15" fill="#FFFDF0" font-weight="600">Ink</text>
-    <text x="52" y="298" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">#242321</text>
-    <text x="400" y="278" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Primary text</text>
+    <circle cx="28" cy="288" r="22" fill="#242321"/>
+    <circle cx="28" cy="288" r="16" fill="#4A4441" opacity="0.7"/>
+    <circle cx="28" cy="288" r="10" fill="#1A1918" opacity="0.4"/>
+    <text x="65" y="298" font-family="'Manrope', sans-serif" font-size="17" fill="#FFFDF0" font-weight="600">Ink</text>
+    <text x="65" y="318" font-family="'Manrope', sans-serif" font-size="14" fill="#6B6862">#242321</text>
+    <text x="420" y="298" font-family="'Manrope', sans-serif" font-size="14" fill="#6B6862">Primary text</text>
   </g>
 
-  <!-- Decorative corner motifs -->
-  <g transform="translate(580, 340)">
-    <path d="M0,0 Q-15,-15 -30,0 Q-15,15 0,0 Q15,15 30,0 Q15,-15 0,0 Z" fill="#FF9933" opacity="0.6"/>
-    <circle cx="0" cy="0" r="3" fill="#B7410E"/>
+  <!-- Decorative corner kalka -->
+  <g transform="translate(560, 355)">
+    <path d="M0,0 Q-25,-45 -50,0 Q-25,45 0,0 Q25,45 50,0 Q25,-45 0,0 Z" fill="#FF9933" opacity="0.6"/>
+    <circle cx="0" cy="0" r="5" fill="#B7410E"/>
+    <circle cx="-18" cy="-18" r="3" fill="#FFF3E0"/>
+    <circle cx="18" cy="-18" r="3" fill="#FFF3E0"/>
   </g>
-  <g transform="translate(40, 340)">
-    <path d="M0,0 Q-15,-15 -30,0 Q-15,15 0,0 Q15,15 30,0 Q15,-15 0,0 Z" fill="#4B0082" opacity="0.6"/>
-    <circle cx="0" cy="0" r="3" fill="#6A0DAD"/>
+  <g transform="translate(40, 355)">
+    <path d="M0,0 Q-25,-45 -50,0 Q-25,45 0,0 Q25,45 50,0 Q25,-45 0,0 Z" fill="#4B0082" opacity="0.6"/>
+    <circle cx="0" cy="0" r="5" fill="#6A0DAD"/>
+    <circle cx="-18" cy="-18" r="3" fill="#FFF3E0"/>
+    <circle cx="18" cy="-18" r="3" fill="#FFF3E0"/>
   </g>
 </svg>

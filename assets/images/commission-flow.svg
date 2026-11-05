@@ -1,99 +1,107 @@
-<svg width="700" height="480" viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg">
+<svg width="700" height="520" viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#FFF9C4;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#FFE0B2;stop-opacity:1"/>
+    <linearGradient id="flowNodeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFDE7;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#FFF3E0;stop-opacity:1"/>
     </linearGradient>
-    <marker id="arrowHead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+    <marker id="flowArrow" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
       <polygon points="0 0, 10 3.5, 0 7" fill="#B7410E"/>
     </marker>
-    <filter id="nodeShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
+    <filter id="nodeShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
       <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
   </defs>
 
-  <rect width="700" height="480" fill="#FAF5EA" rx="16"/>
-  <rect x="1" y="1" width="698" height="478" fill="none" stroke="#E4DED3" stroke-width="1" rx="15"/>
+  <rect width="700" height="520" fill="#FAF5EA" rx="24"/>
+  <rect x="1" y="1" width="698" height="518" fill="none" stroke="#E4DED3" stroke-width="1" rx="23"/>
 
-  <text x="40" y="50" font-family="'Cormorant Garamond', Georgia, serif" font-size="26" font-weight="700" fill="#242321">Commission Journey</text>
-  <text x="40" y="76" font-family="'Manrope', sans-serif" font-size="13" fill="#6B6862">Brief → Quote → Create → Approve → Deliver</text>
+  <text x="40" y="60" font-family="'Cormorant Garamond', Georgia, serif" font-size="30" font-weight="700" fill="#242321">Commission Journey</text>
+  <text x="40" y="88" font-family="'Manrope', sans-serif" font-size="15" fill="#6B6862">Brief → Quote → Create → Approve → Deliver</text>
 
   <!-- Step nodes -->
-  <g id="step1" transform="translate(60, 140)">
-    <circle cx="0" cy="0" r="30" fill="url(#nodeGrad)" stroke="#B7410E" stroke-width="3" filter="url(#nodeShadow)"/>
-    <text x="-10" y="5" font-family="'Manrope', sans-serif" font-size="13" fill="#242321" text-anchor="middle" font-weight="600">Brief</text>
-    <text x="-10" y="22" font-family="'Manrope', sans-serif" font-size="10" fill="#5D4037" text-anchor="middle">Customer submits</text>
-    <animate attributeName="r" values="28;32;28" dur="4s" repeatCount="indefinite"/>
+  <g id="step1" transform="translate(60, 180)">
+    <circle cx="0" cy="0" r="34" fill="url(#flowNodeGrad)" stroke="#B7410E" stroke-width="3" filter="url(#nodeShadow)"/>
+    <text x="-14" y="6" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" text-anchor="middle" font-weight="600">Brief</text>
+    <text x="-14" y="26" font-family="'Manrope', sans-serif" font-size="12" fill="#5D4037" text-anchor="middle">Customer submits</text>
+    <animate attributeName="r" values="32;36;32" dur="4s" repeatCount="indefinite"/>
   </g>
 
-  <line x1="90" y1="0" x2="160" y2="0" stroke="#B7410E" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowHead)"/>
+  <line x1="94" y1="0" x2="166" y2="0" stroke="#B7410E" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#flowArrow)"/>
 
-  <g id="step2" transform="translate(190, 140)">
-    <circle cx="0" cy="0" r="30" fill="url(#nodeGrad)" stroke="#4B0082" stroke-width="3" filter="url(#nodeShadow)"/>
-    <text x="-10" y="5" font-family="'Manrope', sans-serif" font-size="13" fill="#242321" text-anchor="middle" font-weight="600">Quote</text>
-    <text x="-10" y="22" font-family="'Manrope', sans-serif" font-size="10" fill="#4A235A" text-anchor="middle">Versioned quote</text>
+  <g id="step2" transform="translate(200, 180)">
+    <circle cx="0" cy="0" r="34" fill="url(#flowNodeGrad)" stroke="#4B0082" stroke-width="3" filter="url(#nodeShadow)"/>
+    <text x="-14" y="6" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" text-anchor="middle" font-weight="600">Quote</text>
+    <text x="-14" y="26" font-family="'Manrope', sans-serif" font-size="12" fill="#4A235A" text-anchor="middle">Versioned quote</text>
   </g>
 
-  <line x1="220" y1="0" x2="290" y2="0" stroke="#4B0082" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowHead)"/>
+  <line x1="234" y1="0" x2="306" y2="0" stroke="#4B0082" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#flowArrow)"/>
 
-  <g id="step3" transform="translate(320, 140)">
-    <circle cx="0" cy="0" r="30" fill="url(#nodeGrad)" stroke="#FF9933" stroke-width="3" filter="url(#nodeShadow)"/>
-    <text x="-10" y="5" font-family="'Manrope', sans-serif" font-size="13" fill="#242321" text-anchor="middle" font-weight="600">Create</text>
-    <text x="-10" y="22" font-family="'Manrope', sans-serif" font-size="10" fill="#E68A2E" text-anchor="middle">Artist produces</text>
+  <g id="step3" transform="translate(340, 180)">
+    <circle cx="0" cy="0" r="34" fill="url(#flowNodeGrad)" stroke="#FF9933" stroke-width="3" filter="url(#nodeShadow)"/>
+    <text x="-14" y="6" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" text-anchor="middle" font-weight="600">Create</text>
+    <text x="-14" y="26" font-family="'Manrope', sans-serif" font-size="12" fill="#E68A2E" text-anchor="middle">Artist produces</text>
   </g>
 
-  <line x1="350" y1="0" x2="420" y2="0" stroke="#FF9933" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowHead)"/>
+  <line x1="374" y1="0" x2="446" y2="0" stroke="#FF9933" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#flowArrow)"/>
 
-  <g id="step4" transform="translate(450, 140)">
-    <circle cx="0" cy="0" r="30" fill="url(#nodeGrad)" stroke="#78856B" stroke-width="3" filter="url(#nodeShadow)"/>
-    <text x="-10" y="5" font-family="'Manrope', sans-serif" font-size="13" fill="#242321" text-anchor="middle" font-weight="600">Approve</text>
-    <text x="-10" y="22" font-family="'Manrope', sans-serif" font-size="10" fill="#5D6D5E" text-anchor="middle">Proof approval</text>
+  <g id="step4" transform="translate(480, 180)">
+    <circle cx="0" cy="0" r="34" fill="url(#flowNodeGrad)" stroke="#78856B" stroke-width="3" filter="url(#nodeShadow)"/>
+    <text x="-14" y="6" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" text-anchor="middle" font-weight="600">Approve</text>
+    <text x="-14" y="26" font-family="'Manrope', sans-serif" font-size="12" fill="#5D6D5E" text-anchor="middle">Proof approval</text>
   </g>
 
-  <line x1="480" y1="0" x2="550" y2="0" stroke="#78856B" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowHead)"/>
+  <line x1="514" y1="0" x2="586" y2="0" stroke="#78856B" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#flowArrow)"/>
 
-  <g id="step5" transform="translate(580, 140)">
-    <circle cx="0" cy="0" r="30" fill="url(#nodeGrad)" stroke="#B7410E" stroke-width="3" filter="url(#nodeShadow)"/>
-    <text x="-10" y="5" font-family="'Manrope', sans-serif" font-size="13" fill="#242321" text-anchor="middle" font-weight="600">Deliver</text>
-    <text x="-10" y="22" font-family="'Manrope', sans-serif" font-size="10" fill="#8D5A3C" text-anchor="middle">Shipped &amp; tracked</text>
+  <g id="step5" transform="translate(620, 180)">
+    <circle cx="0" cy="0" r="34" fill="url(#flowNodeGrad)" stroke="#B7410E" stroke-width="3" filter="url(#nodeShadow)"/>
+    <text x="-14" y="6" font-family="'Manrope', sans-serif" font-size="15" fill="#242321" text-anchor="middle" font-weight="600">Deliver</text>
+    <text x="-14" y="26" font-family="'Manrope', sans-serif" font-size="12" fill="#8D5A3C" text-anchor="middle">Shipped &amp; tracked</text>
   </g>
 
   <!-- Status machine -->
-  <text x="40" y="260" font-family="'Cormorant Garamond', Georgia, serif" font-size="22" font-weight="700" fill="#242321">Status Machine</text>
-  <line x1="40" y1="268" x2="170" y2="268" stroke="#B7410E" stroke-width="2"/>
+  <text x="40" y="300" font-family="'Cormorant Garamond', Georgia, serif" font-size="26" font-weight="700" fill="#242321">Status Machine</text>
+  <line x1="40" y1="308" x2="175" y2="308" stroke="#B7410E" stroke-width="2"/>
 
-  <text x="40" y="296" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" font-weight="600">New →</text>
-  <text x="78" y="296" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Needs clarification →</text>
-  <text x="200" y="296" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Feasibility review →</text>
-  <text x="320" y="296" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Quote drafted →</text>
-  <text x="425" y="296" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Quote sent →</text>
-  <text x="510" y="296" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Accepted →</text>
+  <text x="40" y="336" font-family="'Manrope', sans-serif" font-size="12" fill="#242321" font-weight="600">New →</text>
+  <text x="82" y="336" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Needs clarification →</text>
+  <text x="215" y="336" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Feasibility review →</text>
+  <text x="340" y="336" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Quote drafted →</text>
+  <text x="450" y="336" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Quote sent →</text>
+  <text x="540" y="336" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Accepted →</text>
 
-  <text x="40" y="322" font-family="'Manrope', sans-serif" font-size="11" fill="#242321" font-weight="600">In production →</text>
-  <text x="134" y="322" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Proof review →</text>
-  <text x="228" y="322" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Approved →</text>
-  <text x="305" y="322" font-family="'Manrope', sans-serif" font-size="11" fill="#6B6862">Shipped → Completed</text>
+  <text x="40" y="364" font-family="'Manrope', sans-serif" font-size="12" fill="#242321" font-weight="600">In production →</text>
+  <text x="142" y="364" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Proof review →</text>
+  <text x="240" y="364" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Approved →</text>
+  <text x="320" y="364" font-family="'Manrope', sans-serif" font-size="12" fill="#6B6862">Shipped → Completed</text>
 
-  <!-- Decorative small diyas along bottom -->
-  <g transform="translate(40, 360)">
-    <path d="M0,20 Q10,0 20,20 Q10,40 0,20 Z" fill="#B7410E"/>
-    <path d="M5,10 Q10,5 15,10 Q10,15 5,10 Z" fill="#FFD700"/>
-    <circle cx="10" cy="15" r="2" fill="#FFF9C4"/>
+  <!-- Decorative diyas along bottom -->
+  <g transform="translate(40, 410)">
+    <path d="M0,24 Q14,2 28,24 Q14,46 0,24 Z" fill="#8B4513"/>
+    <path d="M0,24 Q-7,16 0,7 Q7,16 0,24 Z" fill="#FFD700" filter="url(#flameGlow)">
+      <animate attributeName="d" values="M0,24 Q-7,16 0,7 Q7,16 0,24 Z; M0,24 Q-5,14 0,4 Q5,14 0,24 Z; M0,24 Q-7,16 0,7 Q7,16 0,24 Z" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="0" cy="16" r="4" fill="#FFF9C4"/>
   </g>
-  <g transform="translate(200, 360)">
-    <path d="M0,20 Q10,0 20,20 Q10,40 0,20 Z" fill="#B7410E"/>
-    <path d="M5,10 Q10,5 15,10 Q10,15 5,10 Z" fill="#FFD700"/>
-    <circle cx="10" cy="15" r="2" fill="#FFF9C4"/>
+  <g transform="translate(190, 410)">
+    <path d="M0,24 Q14,2 28,24 Q14,46 0,24 Z" fill="#8B4513"/>
+    <path d="M0,24 Q-7,16 0,7 Q7,16 0,24 Z" fill="#FFD700" filter="url(#flameGlow)">
+      <animate attributeName="d" values="M0,24 Q-7,16 0,7 Q7,16 0,24 Z; M0,24 Q-5,14 0,4 Q5,14 0,24 Z; M0,24 Q-7,16 0,7 Q7,16 0,24 Z" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="0" cy="16" r="4" fill="#FFF9C4"/>
   </g>
-  <g transform="translate(360, 360)">
-    <path d="M0,20 Q10,0 20,20 Q10,40 0,20 Z" fill="#B7410E"/>
-    <path d="M5,10 Q10,5 15,10 Q10,15 5,10 Z" fill="#FFD700"/>
-    <circle cx="10" cy="15" r="2" fill="#FFF9C4"/>
+  <g transform="translate(340, 410)">
+    <path d="M0,24 Q14,2 28,24 Q14,46 0,24 Z" fill="#8B4513"/>
+    <path d="M0,24 Q-7,16 0,7 Q7,16 0,24 Z" fill="#FFD700" filter="url(#flameGlow)">
+      <animate attributeName="d" values="M0,24 Q-7,16 0,7 Q7,16 0,24 Z; M0,24 Q-5,14 0,4 Q5,14 0,24 Z; M0,24 Q-7,16 0,7 Q7,16 0,24 Z" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="0" cy="16" r="4" fill="#FFF9C4"/>
   </g>
-  <g transform="translate(520, 360)">
-    <path d="M0,20 Q10,0 20,20 Q10,40 0,20 Z" fill="#B7410E"/>
-    <path d="M5,10 Q10,5 15,10 Q10,15 5,10 Z" fill="#FFD700"/>
-    <circle cx="10" cy="15" r="2" fill="#FFF9C4"/>
+  <g transform="translate(490, 410)">
+    <path d="M0,24 Q14,2 28,24 Q14,46 0,24 Z" fill="#8B4513"/>
+    <path d="M0,24 Q-7,16 0,7 Q7,16 0,24 Z" fill="#FFD700" filter="url(#flameGlow)">
+      <animate attributeName="d" values="M0,24 Q-7,16 0,7 Q7,16 0,24 Z; M0,24 Q-5,14 0,4 Q5,14 0,24 Z; M0,24 Q-7,16 0,7 Q7,16 0,24 Z" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="0" cy="16" r="4" fill="#FFF9C4"/>
   </g>
 </svg>
