@@ -6,16 +6,16 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "medusa develop",
-    "start": "medusa start",
-    "build": "medusa build",
-    "seed": "medusa seed -f ./data/seed.json",
-    "migrations:run": "medusa migrations run",
-    "migrations:generate": "medusa migrations generate",
+    "dev": "pnpm exec medusa develop",
+    "start": "pnpm exec medusa start",
+    "build": "pnpm exec medusa build",
+    "seed": "pnpm exec medusa seed -f ./data/seed.json",
+    "migrations:run": "pnpm exec medusa migrations run",
+    "migrations:generate": "pnpm exec medusa migrations generate",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
-    "studio": "medusa develop"
+    "studio": "pnpm exec medusa develop"
   },
   "dependencies": {
     "@medusajs/medusa": "^2.3.0",
