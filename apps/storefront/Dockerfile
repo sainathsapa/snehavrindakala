@@ -10,7 +10,6 @@ RUN corepack enable && corepack prepare pnpm@12 --activate
 # Copy workspace files for dependency installation
 COPY pnpm-workspace.yaml ./
 COPY turbo.json ./
-COPY package.json ./
 COPY pnpm-lock.yaml ./
 
 # Copy package manifests for all workspace members
