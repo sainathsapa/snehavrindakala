@@ -71,6 +71,9 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Make all files readable by the nextjs user
+RUN chmod -R a+rX /app
+
 USER nextjs
 
 # Health check

@@ -67,6 +67,9 @@ ENV NODE_ENV="production"
 
 EXPOSE 9000
 
+# Make all files readable by the medusa user
+RUN chmod -R a+rX /app
+
 USER medusa
 
 # Health check
