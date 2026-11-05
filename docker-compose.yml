@@ -1,5 +1,6 @@
 # Local development services for SnehaVrinda Kala
 # Start with: docker compose up -d
+# Requires: .env file populated (copy from .env.example)
 services:
   postgres:
     image: postgres:16-alpine
@@ -17,6 +18,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - snehavrinda
 
   redis:
     image: redis:7-alpine
@@ -30,7 +33,66 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - snehavrinda
+
+  backend:
+    container_name: snehavrinda-backend
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa
+      REDIS_URL: redis://redis:6379
+      MEDUSA_BACKEND_URL: http://localhost:9000
+      MEDUSA_ADMIN_URL: http://localhost:9000/app
+      STORE_CORS: http://localhost:3000
+      ADMIN_CORS: http://localhost:7000,http://localhost:3000
+      AUTH_CORS: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      COOKIE_SECRET: ${COOKIE_SECRET:-dev-secret-change-me}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      SHIPROCKET_API_TOKEN: ${SHIPROCKET_API_TOKEN:-}
+      SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}
+      SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
+      SANITY_PROJECT_ID: ${SANITY_PROJECT_ID:-}
+      SANITY_DATASET: ${SANITY_DATASET:-production}
+      SANITY_API_TOKEN: ${SANITY_API_TOKEN:-}
+      AWS_REGION: ap-south-1
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - snehavrinda
+
+  storefront:
+    container_name: snehavrinda-storefront
+    build:
+      context: .
+      dockerfile: apps/storefront/Dockerfile
+    environment:
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://localhost:9000
+      NEXT_PUBLIC_STOREFRONT_URL: http://localhost:3000
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${SANITY_PROJECT_ID:-}
+      NEXT_PUBLIC_SANITY_DATASET: ${SANITY_DATASET:-production}
+      NEXT_PUBLIC_SANITY_API_VERSION: 2026-01-01
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - snehavrinda
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  snehavrinda:
+    driver: bridge
