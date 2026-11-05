@@ -56,7 +56,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy built storefront
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./.next/standalone
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./.next/standalone/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/public ./public
 
 # Environment variables (overridden at runtime)
 ENV NEXT_TELEMETRY_DISABLED=1
