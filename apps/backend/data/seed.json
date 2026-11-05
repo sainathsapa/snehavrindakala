@@ -1,0 +1,184 @@
+{
+  "seed": {
+    "description": "SnehaVrinda Kala launch catalogue seed data",
+    "categories": [
+      {
+        "name": "Painting & Drawing",
+        "slug": "painting-drawing",
+        "description": "Original paintings, sketches, portraits, prints, illustration.",
+        "is_active": true
+      },
+      {
+        "name": "Traditional & Folk Art",
+        "slug": "traditional-folk-art",
+        "description": "Region- and technique-led work with careful cultural attribution.",
+        "is_active": true
+      },
+      {
+        "name": "Home & Decorative Art",
+        "slug": "home-decor",
+        "description": "Wall décor, sculpture, ceramics, lamps, decorative objects.",
+        "is_active": true
+      },
+      {
+        "name": "Textile & Fibre Art",
+        "slug": "textile-fibre",
+        "description": "Embroidery, weaving, crochet, macramé, textile décor.",
+        "is_active": true
+      },
+      {
+        "name": "Paper, Stationery & Books",
+        "slug": "paper-stationery",
+        "description": "Paper art, cards, journals, calligraphy, creative stationery.",
+        "is_active": true
+      },
+      {
+        "name": "Wearable Art",
+        "slug": "wearable-art",
+        "description": "Art jewellery, accessories, painted apparel, wearable craft.",
+        "is_active": true
+      }
+    ],
+    "products": [
+      {
+        "title": "Hand-painted Terracotta Vase",
+        "subtitle": "Ceramic vase with hand-painted folk motifs",
+        "description": "A hand-thrown terracotta vase painted with traditional motifs. Ready to ship.",
+        "category": "Home & Decorative Art",
+        "artist": "Lakshmi Rajan",
+        "type": "ready_to_ship",
+        "price": 2200,
+        "stock": 5,
+        "weight_kg": 1.2,
+        "dimensions_cm": "20 x 20 x 30",
+        "materials": ["terracotta", "natural pigments"],
+        "care_instructions": "Wipe clean with a dry cloth. Avoid water soaking.",
+        "images": ["/images/products/terracotta-vase.jpg"],
+        "is_new": true
+      },
+      {
+        "title": "Madhubani Folk Painting",
+        "subtitle": "Original Madhubani artwork on handmade paper",
+        "description": "Original Madhubani folk painting depicting nature and mythology. One-of-a-kind piece.",
+        "category": "Traditional & Folk Art",
+        "artist": "Arjun Mehta",
+        "type": "ready_to_ship",
+        "price": 8500,
+        "stock": 1,
+        "weight_kg": 0.8,
+        "dimensions_cm": "30 x 40",
+        "materials": ["handmade paper", "natural dyes"],
+        "care_instructions": "Keep away from direct sunlight and moisture. Frame behind glass.",
+        "images": ["/images/products/madhubani-painting.jpg"]
+      },
+      {
+        "title": "Embroidered Cotton Throw",
+        "subtitle": "Hand-embroidered cotton throw, made to order",
+        "description": "Hand-embroidered cotton throw in natural fibres. Production lead time 2-3 weeks.",
+        "category": "Textile & Fibre Art",
+        "artist": "Fatima Sheikh",
+        "type": "made_to_order",
+        "price": 4200,
+        "stock": 0,
+        "lead_time_weeks": 3,
+        "weight_kg": 0.9,
+        "dimensions_cm": "150 x 200",
+        "materials": ["cotton", "cotton thread"],
+        "care_instructions": "Hand wash cold. Dry in shade.",
+        "images": ["/images/products/cotton-throw.jpg"]
+      },
+      {
+        "title": "Custom Portrait Commission",
+        "subtitle": "Bespoke portrait commissioned from an artist",
+        "description": "Custom commission: submit a brief, receive a quote, approve proofs, and receive the finished portrait.",
+        "category": "Personalized & Commissioned",
+        "artist": "Commission only",
+        "type": "custom_only",
+        "price": 15000,
+        "stock": 0,
+        "lead_time_weeks": 4,
+        "materials": ["artist's choice of medium"],
+        "care_instructions": "Per artist's care guidance.",
+        "images": ["/images/products/commission-portrait.jpg"]
+      },
+      {
+        "title": "Block-Printed Journal Set",
+        "subtitle": "Hand block-printed journals and notecards",
+        "description": "Set of three hand block-printed journals with matching notecards. Ready to ship.",
+        "category": "Paper, Stationery & Books",
+        "artist": "Rohan Das",
+        "type": "ready_to_ship",
+        "price": 1100,
+        "stock": 20,
+        "weight_kg": 0.5,
+        "dimensions_cm": "14 x 20 x 3",
+        "materials": ["recycled paper", "natural dyes"],
+        "care_instructions": "Keep dry.",
+        "images": ["/images/products/journal-set.jpg"],
+        "is_new": true
+      },
+      {
+        "title": "Wearable Art Pendant",
+        "subtitle": "Hand-painted ceramic pendant on cotton cord",
+        "description": "One-of-a-kind wearable art pendant. Ready to ship.",
+        "category": "Wearable Art",
+        "artist": "Sita Nair",
+        "type": "ready_to_ship",
+        "price": 3400,
+        "stock": 8,
+        "weight_kg": 0.1,
+        "dimensions_cm": "4 x 4 x 1",
+        "materials": ["ceramic", "cotton cord"],
+        "care_instructions": "Avoid contact with water and perfume.",
+        "images": ["/images/products/art-pendant.jpg"]
+      }
+    ],
+    "artists": [
+      {
+        "display_name": "Lakshmi Rajan",
+        "slug": "lakshmi-rajan",
+        "bio": "Ceramic artist working with terracotta and natural pigments.",
+        "disciplines": ["ceramics", "pottery"],
+        "techniques": ["hand-throwing", "hand-painting"],
+        "status": "approved",
+        "commission_available": false
+      },
+      {
+        "display_name": "Arjun Mehta",
+        "slug": "arjun-mehta",
+        "bio": "Madhubani folk painter from Bihar, working with natural dyes on handmade paper.",
+        "disciplines": ["painting", "folk art"],
+        "techniques": ["Madhubani", "natural dye"],
+        "status": "approved",
+        "commission_available": true
+      },
+      {
+        "display_name": "Fatima Sheikh",
+        "slug": "fatima-sheikh",
+        "bio": "Textile artist specializing in hand embroidery on natural fibres.",
+        "disciplines": ["textile", "embroidery"],
+        "techniques": ["hand embroidery"],
+        "status": "approved",
+        "commission_available": true
+      },
+      {
+        "display_name": "Rohan Das",
+        "slug": "rohan-das",
+        "bio": "Paper artist and block-printer creating stationery and books.",
+        "disciplines": ["paper art", "printmaking"],
+        "techniques": ["block printing"],
+        "status": "approved",
+        "commission_available": false
+      },
+      {
+        "display_name": "Sita Nair",
+        "slug": "sita-nair",
+        "bio": "Jewellery artist making hand-painted ceramic wearables.",
+        "disciplines": ["jewellery", "ceramics"],
+        "techniques": ["hand-painting", "ceramic"],
+        "status": "approved",
+        "commission_available": false
+      }
+    ]
+  }
+}
