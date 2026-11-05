@@ -76,4 +76,4 @@ USER medusa
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:9000/health || exit 1
 
-CMD ["node", "node_modules/@medusajs/medusa-cli/dist/index.js", "start"]
+CMD ["node", "apps/backend/node_modules/@medusajs/medusa-cli/dist/index.js", "start"]

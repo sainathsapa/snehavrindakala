@@ -53,9 +53,9 @@ RUN corepack enable && corepack prepare pnpm@12 --activate
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built storefront
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./.next/standalone
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./.next/standalone/.next/static
+# Copy built storefront (monorepo preserves directory structure)
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone/apps/storefront ./standalone
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone/node_modules ./standalone/node_modules
 
 # Environment variables (overridden at runtime)
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -80,4 +80,4 @@ USER nextjs
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-CMD ["node", ".next/standalone/server.js"]
+CMD ["node", "standalone/server.js"]
