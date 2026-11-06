@@ -1,17 +1,18 @@
 import Link from "next/link";
+import { formatPrice } from "@/lib/medusa";
 
 interface ProductCardProps {
-  id: string;
+  handle: string;
   title: string;
   artist: string;
-  price: number;
-  stockType: "ready_to_ship" | "made_to_order" | "custom_only";
+  price: number | null;
+  stockType: string;
   image: string;
   isNew?: boolean;
 }
 
 export function ProductCard({
-  id,
+  handle,
   title,
   artist,
   price,
@@ -26,13 +27,13 @@ export function ProductCard({
   };
 
   return (
-    <article className="group rounded-xl border border-border bg-surface overflow-hidden transition-all hover:shadow-md">
+    <article className="group relative rounded-xl border border-border bg-surface overflow-hidden transition-all hover:shadow-md">
       {isNew && (
-        <span className="absolute top-3 left-3 px-2 py-1 text-[10px] font-semibold text-terracotta uppercase tracking-wider bg-white/80 backdrop-blur rounded">
+        <span className="absolute top-3 left-3 z-10 px-2 py-1 text-[10px] font-semibold text-terracotta uppercase tracking-wider bg-white/80 backdrop-blur rounded">
           New
         </span>
       )}
-      <div className="relative aspect-square overflow-hidden">
+      <div className="relative aspect-square overflow-hidden bg-paper">
         <img
           src={image}
           alt={title}
@@ -40,11 +41,11 @@ export function ProductCard({
           loading="lazy"
         />
         <span className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-ink/90 text-[11px] text-white font-sans font-medium">
-          {stockLabels[stockType]}
+          {stockLabels[stockType] ?? stockType.replace(/_/g, " ")}
         </span>
       </div>
       <div className="p-4">
-        <Link href={`/products/${id}`} className="block">
+        <Link href={`/products/${handle}`} className="block">
           <h3 className="text-lg font-serif font-semibold text-ink leading-tight">
             {title}
           </h3>
@@ -52,7 +53,7 @@ export function ProductCard({
         </Link>
         <div className="mt-3 flex items-baseline gap-2">
           <span className="text-lg font-sans font-bold text-ink">
-            ₹{price.toLocaleString("en-IN")}
+            {formatPrice(price)}
           </span>
         </div>
       </div>

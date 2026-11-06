@@ -49,7 +49,7 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-6 text-xs text-muted font-sans">
             <a href="mailto:hello@snehavrindakala.example" className="hover:text-terracotta transition-colors">Contact</a>
-            <a href="/partner-with-us" className="hover:text-terracotta transition-colors">Partner with us</a>
+            <a href="/about" className="hover:text-terracotta transition-colors">Partner with us</a>
           </div>
         </div>
       </div>

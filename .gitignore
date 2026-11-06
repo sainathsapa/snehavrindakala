@@ -52,3 +52,6 @@ sanity-debug.log
 # Coverage
 coverage/
 *.lcov
+
+# Sanity generated cache
+.sanity/

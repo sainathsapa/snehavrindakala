@@ -1,0 +1,106 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="rangoliCenterGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FFFDE7"/>
+      <stop offset="70%" style="stop-color:#FFECB3"/>
+      <stop offset="100%" style="stop-color:#FFE0B2"/>
+    </radialGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF9933"/>
+      <stop offset="50%" style="stop-color:#4B0082"/>
+      <stop offset="100%" style="stop-color:#FF9933"/>
+    </linearGradient>
+    <filter id="rangoliGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="600" fill="#FAF5EA"/>
+
+  <!-- Central rangoli circle -->
+  <circle cx="400" cy="300" r="150" fill="url(#rangoliCenterGrad)" filter="url(#rangoliGlow)" opacity="0.95"/>
+
+  <!-- Outer decorative rangoli rings -->
+  <circle cx="400" cy="300" r="220" fill="none" stroke="#FFB74D" stroke-width="3" stroke-dasharray="10,5" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="0 400 300" to="360 400 300" dur="20s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="400" cy="300" r="190" fill="none" stroke="#FF9933" stroke-width="2" stroke-dasharray="6,4" opacity="0.5">
+    <animateTransform attributeName="transform" type="rotate" from="0 400 300" to="-360 400 300" dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Rangoli floral patterns -->
+  <g transform="translate(400, 300)">
+    <path d="M0,-150 Q75,-75 150,0 Q75,75 0,150 Q-75,75 -150,0 Q-75,-75 0,-150 Z" fill="#FF8A65" filter="url(#rangoliGlow)" opacity="0.9">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="10 0 0" dur="10s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="rotate" from="10 0 0" to="0 0 0" dur="10s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,-130 Q60,-60 120,0 Q60,60 0,130 Q-60,60 -120,0 Q-60,-60 0,-130 Z" fill="#FFB74D" filter="url(#rangoliGlow)" opacity="0.85">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="-8 0 0" dur="9s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="rotate" from="-8 0 0" to="0 0 0" dur="9s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,-110 Q45,-50 90,0 Q45,50 0,110 Q-45,50 -90,0 Q-45,-50 0,-110 Z" fill="#FFCC80" filter="url(#rangoliGlow)" opacity="0.8">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="10 0 0" dur="8s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="rotate" from="10 0 0" to="0 0 0" dur="8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,-90 Q30,-40 60,0 Q30,40 0,90 Q-30,40 -60,0 Q-30,-40 0,-90 Z" fill="#FFE0B2" filter="url(#rangoliGlow)" opacity="0.75">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="-6 0 0" dur="7s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="rotate" from="-6 0 0" to="0 0 0" dur="7s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,-70 Q20,-30 40,0 Q20,30 0,70 Q-20,30 -40,0 Q-20,-30 0,-70 Z" fill="#FFF3E0" filter="url(#rangoliGlow)" opacity="0.7">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="8 0 0" dur="6s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="rotate" from="8 0 0" to="0 0 0" dur="6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Decorative dots / bindis around rangoli -->
+  <g stroke="#FFB74D" stroke-width="3" fill="none">
+    <circle cx="400" cy="120" r="6" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="680" cy="300" r="6" fill="#FFD54F" opacity="0.9">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="400" cy="480" r="6" fill="#FFD54F" opacity="0.9">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="120" cy="300" r="6" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="400" cy="460" r="6" fill="#FFD54F" opacity="0.9">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="400" cy="140" r="6" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Rangoli corner motifs -->
+  <g transform="translate(100, 100)">
+    <path d="M0,-40 Q40,-20 80,0 Q40,20 0,40 Q-40,20 -80,0 Q-40,-20 0,-40 Z" fill="#FFB74D" opacity="0.7"/>
+    <circle cx="0" cy="0" r="4" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <g transform="translate(700, 100) scale(-1,1)">
+    <path d="M0,-40 Q40,-20 80,0 Q40,20 0,40 Q-40,20 -80,0 Q-40,-20 0,-40 Z" fill="#FFB74D" opacity="0.7"/>
+    <circle cx="0" cy="0" r="4" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <g transform="translate(100, 500) scale(1,-1)">
+    <path d="M0,-40 Q40,-20 80,0 Q40,20 0,40 Q-40,20 -80,0 Q-40,-20 0,-40 Z" fill="#FFB74D" opacity="0.7"/>
+    <circle cx="0" cy="0" r="4" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <g transform="translate(700, 500) scale(-1,-1)">
+    <path d="M0,-40 Q40,-20 80,0 Q40,20 0,40 Q-40,20 -80,0 Q-40,-20 0,-40 Z" fill="#FFB74D" opacity="0.7"/>
+    <circle cx="0" cy="0" r="4" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Title text -->
+  <text x="400" y="560" font-family="'Cormorant Garamond', Georgia, serif" font-size="34" font-weight="700" fill="#B7410E" text-anchor="middle" letter-spacing="2">The Rangoli Sun</text>
+</svg>

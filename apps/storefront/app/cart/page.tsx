@@ -1,15 +1,13 @@
-import { medusa } from "@/lib/medusa";
+import { getCart } from "@/lib/cart";
+import { formatPrice } from "@/lib/medusa";
+import { removeCartItemAction, updateCartItemAction } from "./actions";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function CartPage() {
-  let cart: any = null;
-  try {
-    // In production, cart ID would come from customer session/cookie
-    const carts = await medusa.listOrders?.({ limit: 1 });
-    cart = null;
-  } catch (err) {
-    console.error("Failed to load cart", err);
-  }
+  const cart = await getCart();
+  const items = cart?.items ?? [];
 
   return (
     <main className="py-10">
@@ -18,7 +16,7 @@ export default async function CartPage() {
           Your cart
         </h1>
 
-        {!cart || cart.items.length === 0 ? (
+        {items.length === 0 ? (
           <div className="rounded-xl border border-border bg-surface p-8 text-center">
             <p className="text-lg text-muted font-sans mb-6">
               Your cart is empty.
@@ -37,25 +35,93 @@ export default async function CartPage() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="py-4 text-muted font-sans">Item</th>
-                    <th className="py-4 text-muted font-sans text-right">Price</th>
-                    <th className="py-4 text-muted font-sans text-right">Qty</th>
-                    <th className="py-4 text-muted font-sans text-right">Total</th>
+                    <th className="py-4 text-muted font-sans text-right">
+                      Price
+                    </th>
+                    <th className="py-4 text-muted font-sans text-center">
+                      Qty
+                    </th>
+                    <th className="py-4 text-muted font-sans text-right">
+                      Total
+                    </th>
+                    <th className="py-4" />
                   </tr>
                 </thead>
                 <tbody>
-                  {cart.items.map((item: any) => (
+                  {items.map((item) => (
                     <tr key={item.id} className="border-b border-border">
                       <td className="py-4 text-muted font-sans">
-                        {item.title || "Product"}
+                        {item.product_title || item.title || "Product"}
+                        {item.variant_title && (
+                          <span className="block text-xs text-muted">
+                            {item.variant_title}
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 text-muted font-sans text-right">
-                        ₹{(item.unit_price || 0) / 100}
+                        {formatPrice(item.unit_price, cart?.currency_code)}
+                      </td>
+                      <td className="py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <form action={updateCartItemAction}>
+                            <input
+                              type="hidden"
+                              name="line_id"
+                              value={item.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="quantity"
+                              value={Math.max(1, item.quantity - 1)}
+                            />
+                            <button
+                              type="submit"
+                              aria-label="Decrease quantity"
+                              className="h-8 w-8 rounded border border-border text-muted hover:text-terracotta"
+                            >
+                              −
+                            </button>
+                          </form>
+                          <span className="w-6 text-center text-sm text-ink">
+                            {item.quantity}
+                          </span>
+                          <form action={updateCartItemAction}>
+                            <input
+                              type="hidden"
+                              name="line_id"
+                              value={item.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="quantity"
+                              value={item.quantity + 1}
+                            />
+                            <button
+                              type="submit"
+                              aria-label="Increase quantity"
+                              className="h-8 w-8 rounded border border-border text-muted hover:text-terracotta"
+                            >
+                              +
+                            </button>
+                          </form>
+                        </div>
                       </td>
                       <td className="py-4 text-muted font-sans text-right">
-                        {item.quantity}
+                        {formatPrice(
+                          item.total ?? item.unit_price * item.quantity,
+                          cart?.currency_code
+                        )}
                       </td>
-                      <td className="py-4 text-muted font-sans text-right">
-                        ₹{(((item.unit_price || 0) * item.quantity) / 100).toLocaleString("en-IN")}
+                      <td className="py-4 text-right">
+                        <form action={removeCartItemAction}>
+                          <input type="hidden" name="line_id" value={item.id} />
+                          <button
+                            type="submit"
+                            className="text-xs text-muted hover:text-terracotta"
+                          >
+                            Remove
+                          </button>
+                        </form>
                       </td>
                     </tr>
                   ))}
@@ -63,18 +129,18 @@ export default async function CartPage() {
               </table>
             </div>
 
-            <div className="mt-8 flex justify-between">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
               <div className="text-lg font-serif font-semibold text-ink">
-                Total:{""}
+                Total:
                 <span className="ml-2 text-terracotta font-bold">
-                  ₹{(cart.total / 100).toLocaleString("en-IN")}
+                  {formatPrice(cart?.total ?? 0, cart?.currency_code)}
                 </span>
               </div>
               <Link
                 href="/checkout"
                 className="px-6 py-3 bg-terracotta text-white rounded-xl font-semibold hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2 transition-colors"
               >
-                Proceed to Checkout
+                Continue to Checkout
               </Link>
             </div>
           </>

@@ -1,77 +1,66 @@
-# Next.js storefront Dockerfile (production-grade)
-FROM node:24-alpine AS builder
+# Next.js storefront production image.
+# Build from the repository root:
+#   docker build -f apps/storefront/Dockerfile .
+
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
-# Install pnpm
 RUN corepack enable && corepack prepare pnpm@12 --activate
 
-# Install build tools needed to compile native modules (sharp, esbuild, next
-# platform binaries, msgpackr-extract, etc.)
+# Native build tooling required while installing the workspace.
 RUN apk add --no-cache python3 make g++
 
-# Copy npmrc + pnpmfile (allows dependency build scripts required by pnpm supply-chain policy)
-COPY .npmrc ./
-COPY pnpmfile.js ./
-
-# Copy workspace files for dependency installation
-COPY pnpm-workspace.yaml ./
-COPY turbo.json ./
-COPY pnpm-lock.yaml ./
-
-# Copy package manifests for all workspace members
+# Workspace metadata is needed so pnpm links workspace packages correctly.
+COPY .npmrc pnpmfile.js pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/storefront/package.json ./apps/storefront/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
 COPY packages/types/package.json ./packages/types/package.json
 COPY packages/config-tailwind/package.json ./packages/config-tailwind/package.json
 
-# Install dependencies (frozen lockfile for reproducible builds)
-RUN pnpm approve-builds core-js medusa-telemetry && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
-# Copy source code
+FROM deps AS builder
+
+WORKDIR /app
+
 COPY apps/storefront ./apps/storefront
 COPY packages/ui ./packages/ui
 COPY packages/types ./packages/types
 COPY packages/config-tailwind ./packages/config-tailwind
 
-# Build the storefront (Next.js standalone output)
-WORKDIR /app/apps/storefront
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_STANDALONE=true
+
+WORKDIR /app/apps/storefront
+
 RUN pnpm run build
 
-FROM node:24-alpine AS runtime
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
-# Install pnpm for runtime
-RUN corepack enable && corepack prepare pnpm@12 --activate
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# Create pnpm wrapper script
-RUN if [ ! -f ./pnpm-wrapper ]; then echo '#!/bin/sh\nexec pnpm "$@"' > ./pnpm-wrapper && chmod +x ./pnpm-wrapper; fi
-
-# Environment variables (overridden at runtime)
-ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_MEDUSA_BACKEND_URL="http://localhost:9000"
-ENV NEXT_PUBLIC_STOREFRONT_URL="http://localhost:3000"
-ENV NEXT_PUBLIC_SANITY_PROJECT_ID=""
-ENV NEXT_PUBLIC_SANITY_DATASET="production"
-ENV NEXT_PUBLIC_SANITY_API_VERSION="2026-01-01"
-
-EXPOSE 3000
-
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+ENV HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
+
+# Copy the complete standalone tree. In a pnpm monorepo the server lives at
+# apps/storefront/server.js and its node_modules symlinks point at the
+# workspace root, so the directory layout must be preserved.
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./apps/storefront/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/public ./apps/storefront/public
 
 USER nextjs
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+EXPOSE 3000
 
-CMD ["node", "-r", "./pnpm-wrapper", "./pnpm-wrapper", "./standalone/server.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
+
+CMD ["node", "apps/storefront/server.js"]

@@ -41,7 +41,8 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    command: ["pnpm", "dev"] # medusa develop — handles TypeScript source for local dev
+      target: runtime
+    # Production server (medusa start). The image never runs `develop`.
     environment:
       DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa
       REDIS_URL: redis://redis:6379
@@ -50,18 +51,19 @@ services:
       STORE_CORS: http://localhost:3000
       ADMIN_CORS: http://localhost:7000,http://localhost:3000
       AUTH_CORS: http://localhost:3000
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
-      COOKIE_SECRET: ${COOKIE_SECRET:-dev-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
+      COOKIE_SECRET: ${COOKIE_SECRET:?Set COOKIE_SECRET in .env (openssl rand -hex 32)}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
       SHIPROCKET_API_TOKEN: ${SHIPROCKET_API_TOKEN:-}
       SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}
       SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
-      SANITY_PROJECT_ID: ${SANITY_PROJECT_ID:-1ifsr3lr}
+      SANITY_PROJECT_ID: ${SANITY_PROJECT_ID:-}
       SANITY_DATASET: ${SANITY_DATASET:-production}
-      SANITY_API_TOKEN: ${SANITY_API_TOKEN:-skcOeXAJD24nRtb2sSjeMjhy3TfKAEWiekDvocPP81aXPXK7tlzEBU6naMtWSkW2l2GE1nTQZspYC2U2w1JWpD29660DVHncf0Eg3S7DG7HeUZCEPfpAqj60lRdHdmrwIIUySsvgp8CoKHx9JB8ecPUPrGopEiMZbtnRjw7qp6lMwmTbGXY8}
-      AWS_REGION: ap-south-1
+      SANITY_API_TOKEN: ${SANITY_API_TOKEN:-}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+    restart: unless-stopped
     ports:
       - "9000:9000"
     depends_on:
@@ -78,15 +80,25 @@ services:
       context: .
       dockerfile: apps/storefront/Dockerfile
     environment:
+      # Server-side calls use the Docker network hostname.
+      MEDUSA_BACKEND_URL: http://backend:9000
+      # Browser-facing URL (only used by client components if any).
       NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://localhost:9000
-      NEXT_PUBLIC_STOREFRONT_URL: http://localhost:3000
+      MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-}
+      MEDUSA_REGION_ID: ${MEDUSA_REGION_ID:-}
+      MEDUSA_CURRENCY_CODE: ${MEDUSA_CURRENCY_CODE:-inr}
+      NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-http://localhost:3000}
+      NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-hello@snehavrindakala.example}
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
       NEXT_PUBLIC_SANITY_PROJECT_ID: ${SANITY_PROJECT_ID:-}
       NEXT_PUBLIC_SANITY_DATASET: ${SANITY_DATASET:-production}
-      NEXT_PUBLIC_SANITY_API_VERSION: "2026-01-01"
+      NEXT_PUBLIC_SANITY_API_VERSION: ${SANITY_API_VERSION:-2026-01-01}
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
     networks:
       - snehavrinda
 

@@ -1,12 +1,22 @@
-import { medusa } from "@/lib/medusa";
+import { getProductPrice, getStockType, medusa } from "@/lib/medusa";
 import { ProductCard } from "@/components/product-card";
 import Link from "next/link";
 
-export default async function ShopPage() {
-  let products: any[] = [];
+export const dynamic = "force-dynamic";
+
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  let products: Awaited<
+    ReturnType<typeof medusa.listProducts>
+  >["products"] = [];
   try {
     const { products: productsData } = await medusa.listProducts({
       limit: 100,
+      q: q?.trim() || undefined,
     });
     products = productsData;
   } catch (err) {
@@ -26,34 +36,27 @@ export default async function ShopPage() {
 
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => {
-              const variants = product.variants || [];
-              const price = variants[0]?.price || product.price || 0;
-              const stockType = product.options?.find(
-                (o: any) => o.title === "Stock type"
-              )?.values?.[0]?.value || "ready_to_ship";
-              return (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  title={product.title}
-                  artist={product.category?.name || "Artist"}
-                  price={price / 100}
-                  stockType={stockType as any}
-                  image={
-                    product.images?.[0]?.url ||
-                    `/images/products/${product.handle}.jpg`
-                  }
-                  isNew={product.is_new}
-                />
-              );
-            })}
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                handle={product.handle}
+                title={product.title}
+                artist={product.category?.name || "SnehaVrinda Kala"}
+                price={getProductPrice(product)}
+                stockType={getStockType(product)}
+                image={
+                  product.thumbnail ||
+                  product.images?.[0]?.url ||
+                  "/images/product-placeholder.svg"
+                }
+                isNew={product.is_new}
+              />
+            ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-lg text-muted font-sans mb-6">
-              No products found. Connect the Medusa backend to load catalogue
-              data.
+              The catalogue is being refreshed. Please check back shortly.
             </p>
             <Link
               href="/art-forms"

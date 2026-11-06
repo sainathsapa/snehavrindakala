@@ -1,49 +1,97 @@
 /**
- * Medusa API client for the SnehaVrinda Kala storefront.
+ * Server-side Medusa v2 Store API client.
  *
- * Calls the Medusa v2 backend API directly via fetch. All commerce data
- * (products, carts, orders, customers) is sourced from Medusa.
+ * The publishable API key and backend URL are read from server-only
+ * environment variables so credentials are never shipped to the browser.
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
+const BACKEND_URL = (
+  process.env.MEDUSA_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+  "http://localhost:9000"
+).replace(/\/+$/, "");
+
+const PUBLISHABLE_KEY =
+  process.env.MEDUSA_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
+  "";
+
+const DEFAULT_CURRENCY =
+  process.env.MEDUSA_CURRENCY_CODE?.toLowerCase() || "inr";
+
+const REGION_ID = process.env.MEDUSA_REGION_ID || undefined;
+
+const REQUEST_TIMEOUT_MS = Number(
+  process.env.MEDUSA_REQUEST_TIMEOUT_MS || 10_000
+);
+
+export interface MedusaMoney {
+  amount: number;
+  currency_code?: string;
+}
+
+export interface MedusaCalculatedPrice {
+  calculated_amount: number;
+  original_amount?: number;
+  currency_code?: string;
+}
+
+export interface MedusaVariant {
+  id: string;
+  title?: string;
+  sku?: string | null;
+  inventory_quantity?: number;
+  calculated_price?: MedusaCalculatedPrice | null;
+  prices?: MedusaMoney[];
+  options?: Array<{ option_id?: string; value: string }>;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface MedusaProductImage {
+  id?: string;
+  url: string;
+  rank?: number;
+}
 
 export interface MedusaProduct {
   id: string;
   title: string;
-  subtitle?: string;
-  description: string;
+  subtitle?: string | null;
+  description?: string | null;
   handle: string;
   status: string;
+  thumbnail?: string | null;
   is_new?: boolean;
-  price?: number;
-  currency_code?: string;
-  options?: any[];
-  variants?: any[];
-  images?: any[];
-  category?: any;
-  collection?: any;
-  weight?: number;
-  length?: number;
-  height?: number;
-  width?: number;
-  hs_code?: string;
-  origin_country?: string;
-  mid_code?: string;
-  material?: string;
+  options?: Array<{ id?: string; title: string; values?: Array<{ value: string }> }>;
+  variants?: MedusaVariant[];
+  images?: MedusaProductImage[];
+  category?: { id: string; name: string; handle?: string } | null;
+  collection?: { id: string; title: string } | null;
+  material?: string | null;
+  metadata?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface MedusaCartLineItem {
+  id: string;
+  title?: string;
+  product_title?: string;
+  variant_title?: string | null;
+  quantity: number;
+  unit_price: number;
+  total?: number;
+  thumbnail?: string | null;
 }
 
 export interface MedusaCart {
   id: string;
   status: string;
-  items: any[];
+  items: MedusaCartLineItem[];
   subtotal: number;
   total: number;
   currency_code: string;
-  email?: string;
-  shipping_address?: any;
+  email?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -55,7 +103,7 @@ export interface MedusaOrder {
   payment_status: string;
   total: number;
   currency_code: string;
-  items: any[];
+  items: MedusaCartLineItem[];
   created_at: string;
   updated_at: string;
 }
@@ -85,8 +133,26 @@ export interface MedusaCommissionRequest {
   updated_at: string;
 }
 
+export class MedusaApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly body: string
+  ) {
+    super(message);
+    this.name = "MedusaApiError";
+  }
+}
+
+export class MedusaNotConfiguredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MedusaNotConfiguredError";
+  }
+}
+
 class MedusaClient {
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -96,22 +162,61 @@ class MedusaClient {
     path: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-      ...options,
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => "");
-      throw new Error(
-        `Medusa API error: ${response.status} ${errorBody}`
+    if (!PUBLISHABLE_KEY) {
+      throw new MedusaNotConfiguredError(
+        "MEDUSA_PUBLISHABLE_KEY is not set. Create a publishable API key in the Medusa admin and add it to the storefront environment."
       );
     }
 
-    return response.json();
+    const headers = new Headers(options.headers);
+    headers.set("Accept", "application/json");
+    headers.set("x-publishable-api-key", PUBLISHABLE_KEY);
+    if (options.body) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      ...options,
+      headers,
+      cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new MedusaApiError(
+        `Medusa API request failed: ${response.status} ${path}`,
+        response.status,
+        body
+      );
+    }
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return (await response.json()) as T;
+  }
+
+  private productQuery(params: {
+    limit?: number;
+    offset?: number;
+    category?: string;
+    q?: string;
+    handle?: string;
+    order?: string;
+  }): string {
+    const searchParams = new URLSearchParams();
+    searchParams.set("limit", String(params.limit ?? 50));
+    searchParams.set("offset", String(params.offset ?? 0));
+    searchParams.set("order", params.order ?? "-created_at");
+    if (REGION_ID) searchParams.set("region_id", REGION_ID);
+    if (params.category) {
+      searchParams.append("category_id[]", params.category);
+    }
+    if (params.q) searchParams.set("q", params.q);
+    if (params.handle) searchParams.set("handle", params.handle);
+    return searchParams.toString();
   }
 
   // Products
@@ -120,60 +225,83 @@ class MedusaClient {
     offset?: number;
     category?: string;
     q?: string;
+    handle?: string;
   }): Promise<{ products: MedusaProduct[]; count: number }> {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    if (params?.offset) searchParams.set("offset", String(params.offset));
-    if (params?.category) searchParams.set("category", params.category);
-    if (params?.q) searchParams.set("q", params.q);
-
     return this.request<{
       products: MedusaProduct[];
       count: number;
       limit: number;
       offset: number;
-    }>(`/store/products?${searchParams.toString()}`);
+    }>(`/store/products?${this.productQuery(params ?? {})}`);
   }
 
   async getProduct(handle: string): Promise<{ product: MedusaProduct }> {
-    return this.request<{ product: MedusaProduct }>(
-      `/store/products/${handle}`
-    );
+    const { products } = await this.listProducts({ handle, limit: 1 });
+    const product = products[0];
+    if (!product) {
+      throw new MedusaApiError(
+        `Product "${handle}" was not found`,
+        404,
+        ""
+      );
+    }
+    return { product };
   }
 
   async listProductCategories(params?: {
     limit?: number;
     offset?: number;
-  }): Promise<{ categories: any[]; count: number }> {
+  }): Promise<{ product_categories: any[]; count: number }> {
     const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    if (params?.offset) searchParams.set("offset", String(params.offset));
-    return this.request<{
-      categories: any[];
-      count: number;
-    }>(`/store/categories?${searchParams.toString()}`);
+    searchParams.set("limit", String(params?.limit ?? 100));
+    searchParams.set("offset", String(params?.offset ?? 0));
+    return this.request<{ product_categories: any[]; count: number }>(
+      `/store/product-categories?${searchParams.toString()}`
+    );
   }
 
-  // Carts
-  async createCart(): Promise<MedusaCart> {
+  // Regions / carts
+  async listRegions(): Promise<{ regions: any[] }> {
+    return this.request<{ regions: any[] }>("/store/regions");
+  }
+
+  async createCart(regionId?: string): Promise<MedusaCart> {
+    const region = regionId || (await this.resolveRegionId());
     return this.request<{ cart: MedusaCart }>("/store/carts", {
       method: "POST",
-      body: JSON.stringify({}),
+      body: JSON.stringify({ region_id: region }),
     }).then((r) => r.cart);
   }
 
   async getCart(cartId: string): Promise<MedusaCart> {
     return this.request<{ cart: MedusaCart }>(
-      `/store/carts/${cartId}`
+      `/store/carts/${encodeURIComponent(cartId)}`
     ).then((r) => r.cart);
   }
 
-  async addToCart(cartId: string, item: {
-    variant_id: string;
-    quantity: number;
-  }): Promise<MedusaCart> {
+  async updateCart(
+    cartId: string,
+    data: {
+      email?: string;
+      shipping_address?: Record<string, unknown>;
+      billing_address?: Record<string, unknown>;
+    }
+  ): Promise<MedusaCart> {
     return this.request<{ cart: MedusaCart }>(
-      `/store/carts/${cartId}/line-items`,
+      `/store/carts/${encodeURIComponent(cartId)}`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ).then((r) => r.cart);
+  }
+
+  async addToCart(
+    cartId: string,
+    item: { variant_id: string; quantity: number }
+  ): Promise<MedusaCart> {
+    return this.request<{ cart: MedusaCart }>(
+      `/store/carts/${encodeURIComponent(cartId)}/line-items`,
       {
         method: "POST",
         body: JSON.stringify(item),
@@ -181,9 +309,13 @@ class MedusaClient {
     ).then((r) => r.cart);
   }
 
-  async updateLineItem(cartId: string, lineItemId: string, quantity: number): Promise<MedusaCart> {
+  async updateLineItem(
+    cartId: string,
+    lineItemId: string,
+    quantity: number
+  ): Promise<MedusaCart> {
     return this.request<{ cart: MedusaCart }>(
-      `/store/carts/${cartId}/line-items/${lineItemId}`,
+      `/store/carts/${encodeURIComponent(cartId)}/line-items/${encodeURIComponent(lineItemId)}`,
       {
         method: "POST",
         body: JSON.stringify({ quantity }),
@@ -191,36 +323,44 @@ class MedusaClient {
     ).then((r) => r.cart);
   }
 
-  async removeLineItem(cartId: string, lineItemId: string): Promise<MedusaCart> {
+  async removeLineItem(
+    cartId: string,
+    lineItemId: string
+  ): Promise<MedusaCart> {
     return this.request<{ cart: MedusaCart }>(
-      `/store/carts/${cartId}/line-items/${lineItemId}`,
+      `/store/carts/${encodeURIComponent(cartId)}/line-items/${encodeURIComponent(lineItemId)}`,
       { method: "DELETE" }
     ).then((r) => r.cart);
+  }
+
+  private async resolveRegionId(): Promise<string> {
+    if (REGION_ID) return REGION_ID;
+    const { regions } = await this.listRegions();
+    const region = regions.find(
+      (r) =>
+        String(r.currency_code || "").toLowerCase() === DEFAULT_CURRENCY
+    );
+    if (!region) {
+      throw new MedusaApiError(
+        `No Medusa region found for currency "${DEFAULT_CURRENCY}". Set MEDUSA_REGION_ID or create a region.`,
+        404,
+        ""
+      );
+    }
+    return region.id;
   }
 
   // Orders
   async getOrder(orderId: string): Promise<MedusaOrder> {
     return this.request<{ order: MedusaOrder }>(
-      `/store/orders/${orderId}`
+      `/store/orders/${encodeURIComponent(orderId)}`
     ).then((r) => r.order);
-  }
-
-  async listOrders(params?: {
-    limit?: number;
-    offset?: number;
-  }): Promise<{ orders: MedusaOrder[]; count: number }> {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    if (params?.offset) searchParams.set("offset", String(params.offset));
-    return this.request<{ orders: MedusaOrder[]; count: number }>(
-      `/store/orders?${searchParams.toString()}`
-    );
   }
 
   // Customers
   async getCustomer(customerId: string): Promise<any> {
     return this.request<{ customer: any }>(
-      `/store/customers/${customerId}`
+      `/store/customers/${encodeURIComponent(customerId)}`
     ).then((r) => r.customer);
   }
 
@@ -231,8 +371,8 @@ class MedusaClient {
     q?: string;
   }): Promise<{ artists: MedusaArtist[]; count: number }> {
     const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    if (params?.offset) searchParams.set("offset", String(params.offset));
+    searchParams.set("limit", String(params?.limit ?? 100));
+    searchParams.set("offset", String(params?.offset ?? 0));
     if (params?.q) searchParams.set("q", params.q);
     return this.request<{ artists: MedusaArtist[]; count: number }>(
       `/store/artists?${searchParams.toString()}`
@@ -241,7 +381,7 @@ class MedusaClient {
 
   async getArtist(slug: string): Promise<{ artist: MedusaArtist }> {
     return this.request<{ artist: MedusaArtist }>(
-      `/store/artists/${slug}`
+      `/store/artists/${encodeURIComponent(slug)}`
     );
   }
 
@@ -256,7 +396,10 @@ class MedusaClient {
     target_date?: string;
     delivery_region?: string;
     delivery_pin?: string;
-  }): Promise<{ commission_request: MedusaCommissionRequest; reference_id: string }> {
+  }): Promise<{
+    commission_request: MedusaCommissionRequest;
+    reference_id: string;
+  }> {
     return this.request("/store/commissions", {
       method: "POST",
       body: JSON.stringify(data),
@@ -267,9 +410,59 @@ class MedusaClient {
     commission_request: MedusaCommissionRequest;
   }> {
     return this.request(
-      `/store/commissions/${referenceId}`
+      `/store/commissions/${encodeURIComponent(referenceId)}`
     );
   }
 }
 
 export const medusa = new MedusaClient(BACKEND_URL);
+
+/**
+ * Resolve a product's price in minor currency units. Medusa v2 exposes
+ * calculated prices when a region/currency is supplied; fall back to the
+ * variant price list for older responses.
+ */
+export function getVariantPrice(
+  variant?: MedusaVariant | null
+): number | null {
+  if (!variant) return null;
+  if (variant.calculated_price?.calculated_amount != null) {
+    return variant.calculated_price.calculated_amount;
+  }
+  const price = variant.prices?.find(
+    (p) =>
+      (p.currency_code || "").toLowerCase() === DEFAULT_CURRENCY
+  );
+  return price?.amount ?? null;
+}
+
+export function getProductPrice(product?: MedusaProduct | null): number | null {
+  for (const variant of product?.variants ?? []) {
+    const price = getVariantPrice(variant);
+    if (price != null) return price;
+  }
+  return null;
+}
+
+export function getStockType(product?: MedusaProduct | null): string {
+  const metadataValue = product?.metadata?.stock_type;
+  if (typeof metadataValue === "string" && metadataValue) {
+    return metadataValue;
+  }
+  const option = product?.options?.find(
+    (item) => item.title.toLowerCase() === "stock type"
+  );
+  return option?.values?.[0]?.value || "ready_to_ship";
+}
+
+export function formatPrice(
+  amountInMinorUnits: number | null | undefined,
+  currency = "INR"
+): string {
+  if (amountInMinorUnits == null) return "Price on request";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amountInMinorUnits / 100);
+}

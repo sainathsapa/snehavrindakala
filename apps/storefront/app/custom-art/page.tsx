@@ -1,7 +1,14 @@
-import { medusa } from "@/lib/medusa";
-import Link from "next/link";
+import { createCommissionAction } from "./actions";
 
-export default function CustomArtPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CustomArtPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -48,12 +55,28 @@ export default function CustomArtPage() {
             <h2 className="text-2xl font-serif font-semibold text-ink mb-4">
               Start your request
             </h2>
-            <form className="space-y-4" noValidate>
+            {error && (
+              <div
+                role="alert"
+                className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 font-sans"
+              >
+                {error === "missing"
+                  ? "Please choose an art form and describe your brief."
+                  : "We could not submit your request. Please try again."}
+              </div>
+            )}
+            <form action={createCommissionAction} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink mb-1">
+                <label
+                  htmlFor="art_form"
+                  className="block text-sm font-medium text-ink mb-1"
+                >
                   Art form
                 </label>
                 <select
+                  id="art_form"
+                  name="art_form"
+                  required
                   className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                 >
                   <option value="">Select an art form</option>
@@ -67,10 +90,15 @@ export default function CustomArtPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink mb-1">
+                <label
+                  htmlFor="brief"
+                  className="block text-sm font-medium text-ink mb-1"
+                >
                   Brief / description
                 </label>
                 <textarea
+                  id="brief"
+                  name="brief"
                   rows={4}
                   className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                   placeholder="Describe the piece you have in mind…"
@@ -79,48 +107,51 @@ export default function CustomArtPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label
+                    htmlFor="budget_range"
+                    className="block text-sm font-medium text-ink mb-1"
+                  >
                     Budget range (₹)
                   </label>
                   <input
+                    id="budget_range"
+                    name="budget_range"
                     type="text"
                     className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                     placeholder="e.g. 5,000 – 15,000"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label
+                    htmlFor="target_date"
+                    className="block text-sm font-medium text-ink mb-1"
+                  >
                     Target date
                   </label>
                   <input
+                    id="target_date"
+                    name="target_date"
                     type="date"
                     className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink mb-1">
+                <label
+                  htmlFor="delivery_pin"
+                  className="block text-sm font-medium text-ink mb-1"
+                >
                   Delivery PIN code
                 </label>
                 <input
+                  id="delivery_pin"
+                  name="delivery_pin"
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
                   className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
                   placeholder="XXXXXX"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-ink mb-1">
-                  Reference uploads (optional)
-                </label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,application/pdf"
-                  className="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-terracotta file:text-white hover:file:bg-terracotta/90"
-                />
-                <p className="mt-1 text-xs text-muted">
-                  Images or PDFs only. Files are stored privately and scanned.
-                </p>
               </div>
               <button
                 type="submit"

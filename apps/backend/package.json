@@ -9,26 +9,37 @@
     "dev": "pnpm exec medusa develop",
     "start": "pnpm exec medusa start",
     "build": "pnpm exec medusa build",
-    "seed": "pnpm exec medusa seed -f ./data/seed.json",
-    "migrations:run": "pnpm exec medusa migrations run",
-    "migrations:generate": "pnpm exec medusa migrations generate",
+    "db:setup": "pnpm exec medusa db:setup",
+    "migrations:run": "pnpm exec medusa db:migrate",
+    "migrations:generate": "pnpm exec medusa db:generate",
+    "links:sync": "pnpm exec medusa db:sync-links",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
     "studio": "pnpm exec medusa develop"
   },
   "dependencies": {
+    "@medusajs/cli": "^2.22.3",
     "@medusajs/medusa": "^2.3.0",
     "@medusajs/types": "^2.3.0",
     "@medusajs/utils": "^2.3.0",
-    "pg": "^8.15.0",
-    "ioredis": "^5.5.0"
+    "ajv": "^8.20.0",
+    "ioredis": "^5.5.0",
+    "pg": "^8.15.0"
   },
   "devDependencies": {
+    "@medusajs/admin-sdk": "^2.22.3",
+    "@medusajs/admin-shared": "^2.22.3",
+    "@medusajs/dashboard": "^2.22.3",
+    "@medusajs/draft-order": "^2.22.3",
     "@types/node": "22.15.0",
+    "jsdom": "^25.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "5.8.3",
-    "vitest": "^2.1.0",
-    "jsdom": "^25.0.0"
+    "vitest": "^2.1.0"
   },
   "engines": {
     "node": ">=20"

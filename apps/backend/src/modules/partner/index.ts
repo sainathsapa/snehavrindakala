@@ -1,4 +1,5 @@
 import type { ModuleExports } from "@medusajs/types";
+import { Module } from "@medusajs/utils";
 import { PartnerService } from "./service";
 import { PartnerApplication } from "./models/partner_application";
 
@@ -9,3 +10,6 @@ export const partnerModule: ModuleExports<typeof PartnerService> = {
 };
 
 export { PartnerService, PartnerApplication };
+
+
+export default Module(PARTNER_MODULE, { service: PartnerService });

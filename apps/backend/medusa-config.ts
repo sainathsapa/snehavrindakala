@@ -1,22 +1,28 @@
 import { defineConfig } from "@medusajs/medusa";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+function secret(name: string): string {
+  const value =
+    process.env[name] || (isProduction ? undefined : "supersecret");
+  if (!value) {
+    throw new Error(
+      `${name} is required in production. Set it in the deployment environment.`
+    );
+  }
+  return value;
+}
+
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     redisUrl: process.env.REDIS_URL,
     http: {
-      storeCors: process.env.STORE_CORS?.split(",") || [
-        "http://localhost:3000",
-      ],
-      adminCors: process.env.ADMIN_CORS?.split(",") || [
-        "http://localhost:7000",
-        "http://localhost:3000",
-      ],
-      authCors: process.env.AUTH_CORS?.split(",") || [
-        "http://localhost:3000",
-      ],
-      jwtSecret: process.env.JWT_SECRET || "supersecret",
-      cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+      storeCors: process.env.STORE_CORS || "http://localhost:3000",
+      adminCors: process.env.ADMIN_CORS || "http://localhost:7000,http://localhost:3000",
+      authCors: process.env.AUTH_CORS || "http://localhost:3000",
+      jwtSecret: secret("JWT_SECRET"),
+      cookieSecret: secret("COOKIE_SECRET"),
     },
   },
   // Custom business modules (Medusa v2 module system)

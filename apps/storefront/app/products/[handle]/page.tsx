@@ -1,6 +1,14 @@
-import { medusa } from "@/lib/medusa";
+import {
+  formatPrice,
+  getProductPrice,
+  getStockType,
+  medusa,
+} from "@/lib/medusa";
+import { AddToCart } from "@/components/add-to-cart";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 export default async function ProductDetailPage({
   params,
@@ -8,21 +16,22 @@ export default async function ProductDetailPage({
   params: Promise<{ handle: string }>;
 }) {
   const { handle } = await params;
-  let product: any = null;
+  let product: Awaited<ReturnType<typeof medusa.getProduct>>["product"];
   try {
     const { product: prod } = await medusa.getProduct(handle);
     product = prod;
-  } catch (err) {
+  } catch {
     notFound();
   }
 
-  if (!product) {
-    notFound();
-  }
-
-  const variants = product.variants || [];
-  const price = variants[0]?.price || product.price || 0;
-  const images = product.images || [];
+  const variants = product.variants ?? [];
+  const images = product.images ?? [];
+  const price = getProductPrice(product);
+  const stockType = getStockType(product);
+  const isCustomOnly = stockType === "custom_only";
+  const variantId = variants[0]?.id;
+  const currency = (product.variants?.[0]?.calculated_price?.currency_code ||
+    "inr").toUpperCase();
 
   return (
     <main className="py-10">
@@ -50,9 +59,9 @@ export default async function ProductDetailPage({
             )}
             {images.slice(1).length > 0 && (
               <div className="grid grid-cols-4 gap-2">
-                {images.slice(1, 5).map((img: any, idx: number) => (
+                {images.slice(1, 5).map((img, idx) => (
                   <img
-                    key={idx}
+                    key={img.id || idx}
                     src={img.url}
                     alt={product.title}
                     className="w-full h-24 object-cover rounded-md border border-border hover:border-terracotta cursor-pointer transition-colors"
@@ -80,17 +89,14 @@ export default async function ProductDetailPage({
             <div className="border-y border-border py-4">
               <div className="flex items-baseline gap-4">
                 <span className="text-3xl font-serif font-bold text-ink">
-                  ₹{(price / 100).toLocaleString("en-IN")}
+                  {formatPrice(price, currency)}
                 </span>
-                <span className="text-sm text-muted font-sans">
-                  {product.currency_code ? product.currency_code : "INR"}
-                </span>
+                {price != null && (
+                  <span className="text-sm text-muted font-sans">{currency}</span>
+                )}
               </div>
-              <p className="mt-2 text-sm text-muted font-sans">
-                {product.options?.find(
-                  (o: any) => o.title === "Stock type"
-                )?.values?.[0]?.value?.replace(/_/g, " ") ||
-                  "Ready to ship"}
+              <p className="mt-2 text-sm text-muted font-sans capitalize">
+                {stockType.replace(/_/g, " ")}
               </p>
             </div>
 
@@ -98,26 +104,21 @@ export default async function ProductDetailPage({
               <h3 className="text-lg font-serif font-semibold text-ink">
                 Description
               </h3>
-              <p className="text-muted font-sans leading-relaxed">
-                {product.description}
+              <p className="text-muted font-sans leading-relaxed whitespace-pre-line">
+                {product.description || "Details coming soon."}
               </p>
             </div>
 
-            {product.material && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-ink">Materials:</p>
-                <p className="text-sm text-muted font-sans">
-                  {product.material}
-                </p>
-              </div>
-            )}
-
             <div className="pt-4 border-t border-border">
-              <button
-                className="w-full py-4 bg-terracotta text-white rounded-xl font-semibold hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-              >
-                Add to Cart
-              </button>
+              <AddToCart
+                variantId={variantId}
+                disabled={isCustomOnly || !variantId}
+                disabledReason={
+                  isCustomOnly
+                    ? "This piece is made to order through our commission process."
+                    : "This product is not available for online purchase yet."
+                }
+              />
             </div>
           </div>
         </div>

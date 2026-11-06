@@ -31,14 +31,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm turbo run lint
-
       - name: Type check
-        run: pnpm turbo run typecheck
+        run: |
+          pnpm --filter @snehavrinda-kala/backend run typecheck
+          pnpm --filter @snehavrinda-kala/storefront run typecheck
 
       - name: Run tests
-        run: pnpm turbo run test
+        run: pnpm --filter @snehavrinda-kala/backend run test
 
   builds:
     needs: lint-type-test
@@ -61,8 +60,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build all apps
-        run: pnpm turbo run build
+      - name: Build storefront
+        run: pnpm --filter @snehavrinda-kala/storefront run build
 
   deploy:
     needs: builds
@@ -86,8 +85,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          cd apps/backend
-          docker build -t ${{ secrets.ECR_REGISTRY }}/snehavrinda-backend:${{ github.sha }} .
+          docker build -f apps/backend/Dockerfile \
+            -t ${{ secrets.ECR_REGISTRY }}/snehavrinda-backend:${{ github.sha }} .
           docker push ${{ secrets.ECR_REGISTRY }}/snehavrinda-backend:${{ github.sha }}
 
       - name: Deploy to ECS

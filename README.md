@@ -101,19 +101,40 @@ cd snehavrindakala
 ### 2. Environment
 ```bash
 cp .env.example .env
+openssl rand -hex 32   # use one value for JWT_SECRET, one for COOKIE_SECRET
 ```
-Fill in your Razorpay, Shiprocket, Sanity, and AWS credentials. Test keys first.
+Fill in `JWT_SECRET`, `COOKIE_SECRET`, and the integration credentials you
+need. Test keys first. The stack refuses to start in production when either
+signing secret is missing.
 
 ### 3. Start the Local Stack
 ```bash
 docker compose up -d
 ```
-This brings up **PostgreSQL**, **Redis**, the **Medusa backend** (port 9000), and the **Next.js storefront** (port 3000).
+This brings up **PostgreSQL**, **Redis**, the **Medusa backend** (port 9000),
+and the **Next.js storefront** (port 3000). The storefront image is built from
+the existing backend/Medusa API; it does not bundle a second backend.
 
-### 4. Seed the Catalogue
+### 4. Prepare the Backend
+The storefront assumes the existing Medusa schema. Sync link tables once
+against the running database:
 ```bash
-pnpm --filter @snehavrinda-kala/backend run seed
+pnpm --filter @snehavrinda-kala/backend run links:sync
 ```
+For a brand-new database, apply migrations first
+(`pnpm --filter @snehavrinda-kala/backend run migrations:run`) and resolve any
+pending custom-module migration issues before starting the API.
+
+Create a region and a publishable API key in the Medusa admin
+(`http://localhost:9000/app`), then set `MEDUSA_PUBLISHABLE_KEY` (and
+optionally `MEDUSA_REGION_ID`) in `.env` and restart the storefront:
+
+```bash
+docker compose up -d --build storefront
+```
+
+Add products through the Medusa admin. The storefront reads catalogue, cart,
+checkout details, artists, and commissions directly from the backend.
 
 ---
 
@@ -149,11 +170,10 @@ Commission status machine:
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | Start all apps |
-| `pnpm build` | Build all apps |
-| `pnpm typecheck` | TypeScript strict check |
-| `pnpm lint` | ESLint |
-| `pnpm test` | Vitest + Playwright |
+| `pnpm --filter @snehavrinda-kala/backend run typecheck` | Backend TypeScript check |
+| `pnpm --filter @snehavrinda-kala/storefront run typecheck` | Storefront TypeScript check |
+| `pnpm --filter @snehavrinda-kala/backend run test` | Backend unit tests |
+| `pnpm --filter @snehavrinda-kala/storefront run build` | Storefront production build |
 
 **Backend** (port 9000): `pnpm --filter @snehavrinda-kala/backend run dev`  
 **Storefront** (port 3000): `pnpm --filter @snehavrinda-kala/storefront run dev`

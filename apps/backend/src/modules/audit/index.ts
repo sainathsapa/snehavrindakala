@@ -1,4 +1,5 @@
 import type { ModuleExports } from "@medusajs/types";
+import { Module } from "@medusajs/utils";
 import { AuditService } from "./service";
 
 export const AUDIT_MODULE = "audit";
@@ -8,3 +9,6 @@ export const auditModule: ModuleExports<typeof AuditService> = {
 };
 
 export { AuditService };
+
+
+export default Module(AUDIT_MODULE, { service: AuditService });

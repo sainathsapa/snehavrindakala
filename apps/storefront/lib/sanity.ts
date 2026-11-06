@@ -1,68 +1,66 @@
 /**
  * Sanity CMS client for SnehaVrinda Kala editorial content.
  *
- * Connects to Sanity project: 1ifsr3lr, dataset: production.
- * Per build plan Section 12.5: Sanity owns editorial content only;
- * product/price/stock/order fields remain in Medusa. Sanity stories
- * refer to Medusa artist/product IDs rather than duplicating operational data.
+ * Editorial content only: products, prices, stock, and orders stay in Medusa.
+ * Configure via NEXT_PUBLIC_SANITY_* (safe for the browser) and
+ * SANITY_API_TOKEN (server-only, required only for draft previews).
  */
 
 import { createClient } from "next-sanity";
 import createImageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
-const projectId = "1ifsr3lr";
-const dataset = "production";
-const apiVersion = "2026-01-01";
+const projectId =
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ||
+  process.env.SANITY_PROJECT_ID ||
+  "";
+const dataset =
+  process.env.NEXT_PUBLIC_SANITY_DATASET ||
+  process.env.SANITY_DATASET ||
+  "production";
+const apiVersion =
+  process.env.NEXT_PUBLIC_SANITY_API_VERSION ||
+  process.env.SANITY_API_VERSION ||
+  "2026-01-01";
 
-/**
- * Sanity client for server-side fetching.
- * Uses the CDN API for public editorial content; bypass cache for drafts
- * via the `stega` / `token` when previewing.
- */
-export const sanityClient = createClient({
-  projectId,
-  dataset,
-  apiVersion,
-  useCdn: process.env.NODE_ENV === "production",
-  perspective: "published",
-  stega: process.env.SANITY_API_TOKEN ? { studioUrl: "https://1ifsr3lr.sanity.studio" } : undefined,
-  token: process.env.SANITY_API_TOKEN,
-});
+const isConfigured = Boolean(projectId);
 
-/**
- * Sanity client for preview / draft content (server-side only).
- * Used when Sanity webhook triggers revalidation with a secret token.
- */
-export const previewClient = createClient({
-  projectId,
-  dataset,
-  apiVersion,
-  useCdn: false,
-  token: process.env.SANITY_API_TOKEN,
-});
+export const sanityClient = isConfigured
+  ? createClient({
+      projectId,
+      dataset,
+      apiVersion,
+      useCdn: process.env.NODE_ENV === "production",
+      perspective: "published",
+    })
+  : null;
 
-/**
- * Get the appropriate client based on whether we're previewing drafts.
- */
+export const previewClient = isConfigured
+  ? createClient({
+      projectId,
+      dataset,
+      apiVersion,
+      useCdn: false,
+      token: process.env.SANITY_API_TOKEN,
+    })
+  : null;
+
 export function getClient(preview = false) {
-  return preview ? previewClient : sanityClient;
+  const client = preview ? previewClient : sanityClient;
+  if (!client) {
+    throw new Error(
+      "Sanity is not configured. Set NEXT_PUBLIC_SANITY_PROJECT_ID and NEXT_PUBLIC_SANITY_DATASET."
+    );
+  }
+  return client;
 }
 
-/**
- * Image URL builder for Sanity assets.
- */
 export function urlFor(source: SanityImageSource) {
-  const builder = createImageUrlBuilder({
-    projectId,
-    dataset,
-  });
-  return builder.image(source);
+  if (!isConfigured) {
+    throw new Error("Sanity is not configured.");
+  }
+  return createImageUrlBuilder({ projectId, dataset }).image(source);
 }
-
-/**
- * Sanity query helpers for editorial content.
- */
 
 export interface SanityArticle {
   _id: string;
@@ -132,12 +130,11 @@ export interface SanityFAQ {
   category: string;
 }
 
-/**
- * Fetch all published articles for the journal listing.
- */
-export async function getArticles(preview = false): Promise<SanityArticle[]> {
-  const client = getClient(preview);
-  return client.fetch(
+export async function getArticles(
+  preview = false
+): Promise<SanityArticle[]> {
+  if (!isConfigured) return [];
+  return getClient(preview).fetch(
     `*[_type == "article"] | order(published_at desc, _updatedAt desc) {
       _id,
       _type,
@@ -154,15 +151,12 @@ export async function getArticles(preview = false): Promise<SanityArticle[]> {
   );
 }
 
-/**
- * Fetch a single article by slug.
- */
 export async function getArticleBySlug(
   slug: string,
   preview = false
 ): Promise<SanityArticle | null> {
-  const client = getClient(preview);
-  const article = await client.fetch(
+  if (!isConfigured) return null;
+  const article = await getClient(preview).fetch(
     `*[_type == "article" && slug.current == $slug][0] {
       _id,
       _type,
@@ -181,12 +175,11 @@ export async function getArticleBySlug(
   return article ?? null;
 }
 
-/**
- * Fetch all published artist stories.
- */
-export async function getArtistStories(preview = false): Promise<SanityArtistStory[]> {
-  const client = getClient(preview);
-  return client.fetch(
+export async function getArtistStories(
+  preview = false
+): Promise<SanityArtistStory[]> {
+  if (!isConfigured) return [];
+  return getClient(preview).fetch(
     `*[_type == "artistStory"] | order(published_at desc, _updatedAt desc) {
       _id,
       _type,
@@ -202,12 +195,11 @@ export async function getArtistStories(preview = false): Promise<SanityArtistSto
   );
 }
 
-/**
- * Fetch all published tutorials.
- */
-export async function getTutorials(preview = false): Promise<SanityTutorial[]> {
-  const client = getClient(preview);
-  return client.fetch(
+export async function getTutorials(
+  preview = false
+): Promise<SanityTutorial[]> {
+  if (!isConfigured) return [];
+  return getClient(preview).fetch(
     `*[_type == "tutorial"] | order(published_at desc, _updatedAt desc) {
       _id,
       _type,
@@ -224,23 +216,22 @@ export async function getTutorials(preview = false): Promise<SanityTutorial[]> {
   );
 }
 
-/**
- * Fetch FAQs by category.
- */
-export async function getFAQs(category?: string, preview = false): Promise<SanityFAQ[]> {
-  const client = getClient(preview);
+export async function getFAQs(
+  category?: string,
+  preview = false
+): Promise<SanityFAQ[]> {
+  if (!isConfigured) return [];
   const query = category
     ? `*[_type == "faq" && category == $category] | order(_updatedAt desc)`
     : `*[_type == "faq"] | order(_updatedAt desc)`;
-  return client.fetch(query, { category });
+  return getClient(preview).fetch(query, { category });
 }
 
-/**
- * Fetch homepage content.
- */
-export async function getHomepage(preview = false): Promise<SanityHomepage | null> {
-  const client = getClient(preview);
-  const homepage = await client.fetch(
+export async function getHomepage(
+  preview = false
+): Promise<SanityHomepage | null> {
+  if (!isConfigured) return null;
+  const homepage = await getClient(preview).fetch(
     `*[_type == "homepage"][0] {
       _id,
       _type,

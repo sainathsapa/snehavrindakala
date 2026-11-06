@@ -1,4 +1,5 @@
 import type { ModuleExports } from "@medusajs/types";
+import { Module } from "@medusajs/utils";
 import { ArtistService } from "./service";
 import { Artist } from "./entities/artist";
 import { PartnerApplication } from "./entities/partner_application";
@@ -11,3 +12,6 @@ export const artistModule: ModuleExports<typeof ArtistService> = {
 };
 
 export { ArtistService, Artist, PartnerApplication, PartnerAgreement };
+
+
+export default Module(ARTIST_MODULE, { service: ArtistService });

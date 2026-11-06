@@ -1,0 +1,99 @@
+<svg width="1200" height="200" viewBox="0 0 1200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mandalaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF9933;stop-opacity:0.8"/>
+      <stop offset="25%" style="stop-color:#4B0082;stop-opacity:0.7"/>
+      <stop offset="50%" style="stop-color:#FFB74D;stop-opacity:0.8"/>
+      <stop offset="75%" style="stop-color:#4B0082;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#FF9933;stop-opacity:0.8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="200" fill="#FAF5EA"/>
+
+  <!-- Top decorative border -->
+  <g transform="translate(0, 30)">
+    <!-- Traditional Kalka/Paisley motifs -->
+    <g id="kalkaRow">
+      <!-- Paisley 1 -->
+      <g transform="translate(100, 65)">
+        <path d="M0,0 Q-30,-60 -60,0 Q-30,60 0,0 Q30,60 60,0 Q30,-60 0,0 Z" fill="url(#mandalaGradient)" opacity="0.85"/>
+        <path d="M-20,-25 Q0,-45 20,-25 Q0,0 -20,-25 Z" fill="#FFF3E0" opacity="0.95"/>
+        <circle cx="0" cy="0" r="5" fill="#FF5722"/>
+        <circle cx="-14" cy="-14" r="3" fill="#FFF3E0"/>
+        <circle cx="14" cy="-14" r="3" fill="#FFF3E0"/>
+      </g>
+      <!-- Paisley 2 -->
+      <g transform="translate(300, 65)">
+        <path d="M0,0 Q-30,-60 -60,0 Q-30,60 0,0 Q30,60 60,0 Q30,-60 0,0 Z" fill="url(#mandalaGradient)" opacity="0.85"/>
+        <path d="M-20,-25 Q0,-45 20,-25 Q0,0 -20,-25 Z" fill="#FFF3E0" opacity="0.95"/>
+        <circle cx="0" cy="0" r="5" fill="#FF5722"/>
+        <circle cx="-14" cy="-14" r="3" fill="#FFF3E0"/>
+        <circle cx="14" cy="-14" r="3" fill="#FFF3E0"/>
+      </g>
+      <!-- Paisley 3 -->
+      <g transform="translate(500, 65)">
+        <path d="M0,0 Q-30,-60 -60,0 Q-30,60 0,0 Q30,60 60,0 Q30,-60 0,0 Z" fill="url(#mandalaGradient)" opacity="0.85"/>
+        <path d="M-20,-25 Q0,-45 20,-25 Q0,0 -20,-25 Z" fill="#FFF3E0" opacity="0.95"/>
+        <circle cx="0" cy="0" r="5" fill="#FF5722"/>
+        <circle cx="-14" cy="-14" r="3" fill="#FFF3E0"/>
+        <circle cx="14" cy="-14" r="3" fill="#FFF3E0"/>
+      </g>
+      <!-- Paisley 4 -->
+      <g transform="translate(700, 65)">
+        <path d="M0,0 Q-30,-60 -60,0 Q-30,60 0,0 Q30,60 60,0 Q30,-60 0,0 Z" fill="url(#mandalaGradient)" opacity="0.85"/>
+        <path d="M-20,-25 Q0,-45 20,-25 Q0,0 -20,-25 Z" fill="#FFF3E0" opacity="0.95"/>
+        <circle cx="0" cy="0" r="5" fill="#FF5722"/>
+        <circle cx="-14" cy="-14" r="3" fill="#FFF3E0"/>
+        <circle cx="14" cy="-14" r="3" fill="#FFF3E0"/>
+      </g>
+      <!-- Paisley 5 -->
+      <g transform="translate(900, 65)">
+        <path d="M0,0 Q-30,-60 -60,0 Q-30,60 0,0 Q30,60 60,0 Q30,-60 0,0 Z" fill="url(#mandalaGradient)" opacity="0.85"/>
+        <path d="M-20,-25 Q0,-45 20,-25 Q0,0 -20,-25 Z" fill="#FFF3E0" opacity="0.95"/>
+        <circle cx="0" cy="0" r="5" fill="#FF5722"/>
+        <circle cx="-14" cy="-14" r="3" fill="#FFF3E0"/>
+        <circle cx="14" cy="-14" r="3" fill="#FFF3E0"/>
+      </g>
+      <!-- Paisley 6 -->
+      <g transform="translate(1100, 65)">
+        <path d="M0,0 Q-30,-60 -60,0 Q-30,60 0,0 Q30,60 60,0 Q30,-60 0,0 Z" fill="url(#mandalaGradient)" opacity="0.85"/>
+        <path d="M-20,-25 Q0,-45 20,-25 Q0,0 -20,-25 Z" fill="#FFF3E0" opacity="0.95"/>
+        <circle cx="0" cy="0" r="5" fill="#FF5722"/>
+        <circle cx="-14" cy="-14" r="3" fill="#FFF3E0"/>
+        <circle cx="14" cy="-14" r="3" fill="#FFF3E0"/>
+      </g>
+    </g>
+
+    <!-- Alternating dots between motifs -->
+    <g id="decorativeDots">
+      <circle cx="50" cy="110" r="4.5" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="200" cy="110" r="4.5" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.2;1;0.2" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="400" cy="110" r="4.5" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="600" cy="110" r="4.5" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.2;1;0.2" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="800" cy="110" r="4.5" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="1000" cy="110" r="4.5" fill="#4B0082" opacity="0.9">
+        <animate attributeName="opacity" values="0.2;1;0.2" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="1150" cy="110" r="4.5" fill="#FF9933" opacity="0.9">
+        <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Bottom border mirror -->
+  <g transform="translate(0, 140)">
+    <use href="#kalkaRow" transform="scale(1, -1) translate(0, -130)"/>
+    <use href="#decorativeDots" transform="translate(0, -45)"/>
+  </g>
+</svg>

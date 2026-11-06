@@ -1,4 +1,6 @@
 # Medusa v2 backend Dockerfile (production-grade)
+
+# ── base: install linux node_modules ──────────────────────────────────────────
 FROM node:24-alpine AS base
 
 WORKDIR /app
@@ -23,20 +25,37 @@ COPY apps/backend/package.json ./apps/backend/package.json
 # Install dependencies (frozen lockfile for reproducible builds)
 RUN pnpm approve-builds core-js medusa-telemetry && pnpm install --frozen-lockfile
 
-# Remove build tools to reduce image size
-RUN apk del python3 make g++
-
-FROM base AS runtime
+# ── build: compile backend + admin into ./dist ───────────────────────────────
+FROM base AS build
 
 WORKDIR /app/apps/backend
 
-# Copy application source. node_modules/dist are excluded via .dockerignore so the
-# linux node_modules installed in the `base` stage is preserved intact.
+# Copy backend source (.dockerignore excludes node_modules/dist, so the
+# linux node_modules installed in `base` is preserved intact).
 COPY apps/backend/ ./
+
+# Medusa build → dist/ (backend server + admin UI in dist/public/admin)
+RUN pnpm exec medusa build && apk del python3 make g++
+
+# ── runtime: minimal production image ──────────────────────────────────────────
+FROM node:24-alpine AS runtime
+
+WORKDIR /app/apps/backend
+
+# pnpm's node_modules are symlinks relative to the workspace root
+# (/app/node_modules + /app/apps/backend/node_modules), so we must copy
+# the whole workspace — symlink resolution breaks if we copy only part.
+COPY --from=build /app /app
+
+# medusa start serves the admin UI from <root>/public/admin. The build
+# emits to dist/public/admin, so move it next to the backend root.
+RUN mkdir -p /app/apps/backend/public/admin && \
+    cp -r /app/apps/backend/dist/public/admin/. /app/apps/backend/public/admin/
 
 # Create non-root user
 RUN addgroup --system --gid 1001 medusa && \
-    adduser --system --uid 1001 medusa
+    adduser --system --uid 1001 medusa && \
+    chown -R medusa:medusa /app
 
 # Environment variables (overridden at runtime)
 ENV DATABASE_URL=""
@@ -62,11 +81,14 @@ ENV NODE_ENV="production"
 
 EXPOSE 9000
 
+WORKDIR /app/apps/backend
+
 USER medusa
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:9000/health || exit 1
 
-# Production server (no file watching / HMR).
-CMD ["node", "server.js"]
+# Production server (no file watching / HMR). `medusa start` serves the
+# compiled backend from dist/ and the admin UI from dist/public/admin.
+CMD ["sh", "-c", "exec ./node_modules/.bin/medusa start"]

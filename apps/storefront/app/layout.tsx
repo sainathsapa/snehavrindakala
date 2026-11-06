@@ -24,21 +24,12 @@ export const metadata: Metadata = {
     title: "SnehaVrinda Kala — Art made, curated, personalized, and shared",
     description:
       "Ready-to-ship artwork, made-to-order pieces, custom commissions, artist profiles, and creative kits from Indian makers.",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "SnehaVrinda Kala",
-      },
-    ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "SnehaVrinda Kala",
     description:
       "Ready-to-ship artwork, made-to-order pieces, custom commissions, artist profiles, and creative kits.",
-    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,
@@ -51,6 +42,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
@@ -66,7 +59,7 @@ export default function RootLayout({
               "@type": "Organization",
               name: "SnehaVrinda Kala",
               url: process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000",
-              logo: "/images/logo.png",
+              logo: "/images/brand-mark.svg",
               sameAs: [],
             }),
           }}
@@ -83,17 +76,24 @@ export default function RootLayout({
             }),
           }}
         />
-        {/* Google tag (gtag.js) */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-8YJ1R5L9CJ"
-        />
-        <script>{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-8YJ1R5L9CJ');
-        `}</script>
+        {gaMeasurementId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${gaMeasurementId}');
+                `,
+              }}
+            />
+          </>
+        )}
       </body>
     </html>
   );

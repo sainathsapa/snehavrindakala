@@ -1,6 +1,8 @@
 import { medusa } from "@/lib/medusa";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function ArtistsPage() {
   let artists: any[] = [];
   try {

@@ -1,0 +1,86 @@
+<svg width="900" height="360" viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="saffronGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF9933;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#E68A2E;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="indigoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4B0082;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#3A0CA3;stop-opacity:1"/>
+    </linearGradient>
+    <filter id="flameGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="360" fill="#FAF5EA"/>
+
+  <!-- Left: Traditional Diya (oil lamp) -->
+  <g transform="translate(140, 200)">
+    <!-- Lamp pot base -->
+    <path d="M-35,50 Q0,20 35,50 Q0,80 -35,50 Z" fill="#8B4513"/>
+    <path d="M-30,50 Q0,30 30,50 Q0,65 -30,50 Z" fill="#CD853F"/>
+    <!-- Lamp rim -->
+    <path d="M-40,50 Q0,42 40,50 Q0,52 -40,50 Z" fill="#5D4037"/>
+    <!-- Flame - proper teardrop -->
+    <path d="M0,50 Q-18,20 0,-5 Q18,20 0,50 Z" fill="#FFF176" filter="url(#flameGlow)">
+      <animate attributeName="d" values="M0,50 Q-18,20 0,-5 Q18,20 0,50 Z; M0,50 Q-14,16 0,-3 Q14,16 0,50 Z; M0,50 Q-18,20 0,-5 Q18,20 0,50 Z" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="fill-opacity" values="0.85;1;0.8" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,50 Q-10,28 0,8 Q10,28 0,50 Z" fill="#FFEB3B" opacity="0.9">
+      <animate attributeName="d" values="M0,50 Q-10,28 0,8 Q10,28 0,50 Z; M0,50 Q-8,25 0,5 Q8,25 0,50 Z; M0,50 Q-10,28 0,8 Q10,28 0,50 Z" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="0" cy="25" r="7" fill="#FFD700" filter="url(#flameGlow)">
+      <animate attributeName="r" values="6;8;6" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Wick -->
+    <path d="M0,50 Q0,44 0,38 Q0,32 0,26" stroke="#3E2723" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Center: Proper Lotus Flower -->
+  <g transform="translate(450, 180)">
+    <!-- Outer lotus petals - 8 rounded overlapping petals -->
+    <g id="outerLotus">
+      <path d="M0,-95 Q48,-48 95,0 Q48,48 0,95 Q-48,48 -95,0 Q-48,-48 0,-95 Z" fill="#FFE0B2" opacity="0.85"/>
+      <path d="M-95,0 Q-48,-48 0,-95 Q48,-48 95,0 Q48,48 0,95 Q-48,48 -95,0 Z" fill="#FFE0B2" opacity="0.85"/>
+    </g>
+    <!-- Middle petals -->
+    <g id="middleLotus">
+      <path d="M0,-60 Q30,-30 60,0 Q30,30 0,60 Q-30,30 -60,0 Q-30,-30 0,-60 Z" fill="#FFF3E0" opacity="0.9"/>
+      <path d="M-60,0 Q-30,-30 0,-60 Q30,-30 60,0 Q30,30 0,60 Q-30,30 -60,0 Z" fill="#FFF3E0" opacity="0.9"/>
+    </g>
+    <!-- Inner petals -->
+    <g id="innerLotus">
+      <path d="M0,-35 Q18,-18 35,0 Q18,18 0,35 Q-18,18 -35,0 Q-18,-18 0,-35 Z" fill="#FFF9C4" opacity="0.95"/>
+      <path d="M-35,0 Q-18,-18 0,-35 Q18,-18 35,0 Q18,18 0,35 Q-18,18 -35,0 Z" fill="#FFF9C4" opacity="0.95"/>
+    </g>
+    <!-- Center bindi -->
+    <circle cx="0" cy="0" r="14" fill="#FF5722" filter="url(#flameGlow)">
+      <animate attributeName="r" values="12;16;12" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="fill-opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="0" r="9" fill="#FFF9C4">
+      <animate attributeName="r" values="8;11;8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="0" r="4" fill="#FFFFFF">
+      <animate attributeName="r" values="3;5;3" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Right: Brand text -->
+  <text x="660" y="145" font-family="'Cormorant Garamond', Georgia, serif" font-size="64" font-weight="700" fill="#B7410E" letter-spacing="2">SnehaVrinda</text>
+  <text x="660" y="200" font-family="'Manrope', sans-serif" font-size="22" fill="#5D4037" letter-spacing="6">Kala</text>
+  <text x="660" y="235" font-family="'Manrope', sans-serif" font-size="15" fill="#8D6E63" letter-spacing="4">Art made, curated, personalized</text>
+
+  <!-- Decorative bindis -->
+  <circle cx="830" cy="80" r="7" fill="#FF9933" opacity="0.9">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="850" cy="250" r="7" fill="#4B0082" opacity="0.9">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="810" cy="310" r="7" fill="#FF9933" opacity="0.9">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

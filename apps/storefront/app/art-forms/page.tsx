@@ -3,37 +3,37 @@ const artForms = [
     name: "Painting & Drawing",
     description:
       "Original paintings, sketches, portraits, prints, and illustration across mediums.",
-    href: "/collections/painting-drawing",
+    href: "/shop?q=Painting",
   },
   {
     name: "Traditional & Folk Art",
     description:
       "Region- and technique-led work with careful cultural attribution and provenance.",
-    href: "/collections/traditional-folk-art",
+    href: "/shop?q=Folk",
   },
   {
     name: "Home & Decorative Art",
     description:
       "Wall décor, sculpture, ceramics, lamps, and decorative objects for the home.",
-    href: "/collections/home-decor",
+    href: "/shop?q=Home%20%26%20Decorative",
   },
   {
     name: "Textile & Fibre Art",
     description:
       "Embroidery, weaving, crochet, macramé, and textile décor in natural fibres.",
-    href: "/collections/textile-fibre",
+    href: "/shop?q=Textile",
   },
   {
     name: "Paper, Stationery & Books",
     description:
       "Paper art, handmade cards, journals, calligraphy, and creative stationery.",
-    href: "/collections/paper-stationery",
+    href: "/shop?q=Paper",
   },
   {
     name: "Wearable Art",
     description:
       "Art jewellery, accessories, painted apparel, and wearable craft pieces.",
-    href: "/collections/wearable-art",
+    href: "/shop?q=Wearable",
   },
 ];
 

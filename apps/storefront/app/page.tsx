@@ -1,42 +1,41 @@
 import Link from "next/link";
-import { Button } from "@snehavrinda-kala/ui";
 
 const artForms = [
   {
     name: "Painting & Drawing",
     description: "Original paintings, sketches, portraits, prints, illustration.",
-    href: "/collections/painting-drawing",
-    image: "/images/artforms/painting.jpg",
+    href: "/shop?q=Painting",
+    image: "/images/artforms/painting.svg",
   },
   {
     name: "Traditional & Folk Art",
     description: "Region- and technique-led work with careful cultural attribution.",
-    href: "/collections/traditional-folk-art",
-    image: "/images/artforms/folk.jpg",
+    href: "/shop?q=Folk",
+    image: "/images/artforms/folk.svg",
   },
   {
     name: "Home & Decorative Art",
     description: "Wall décor, sculpture, ceramics, lamps, decorative objects.",
-    href: "/collections/home-decor",
-    image: "/images/artforms/decor.jpg",
+    href: "/shop?q=Home%20%26%20Decorative",
+    image: "/images/artforms/decor.svg",
   },
   {
     name: "Textile & Fibre Art",
     description: "Embroidery, weaving, crochet, macramé, textile décor.",
-    href: "/collections/textile-fibre",
-    image: "/images/artforms/textile.jpg",
+    href: "/shop?q=Textile",
+    image: "/images/artforms/textile.svg",
   },
   {
     name: "Paper, Stationery & Books",
     description: "Paper art, cards, journals, calligraphy, creative stationery.",
-    href: "/collections/paper-stationery",
-    image: "/images/artforms/stationery.jpg",
+    href: "/shop?q=Paper",
+    image: "/images/artforms/stationery.svg",
   },
   {
     name: "Wearable Art",
     description: "Art jewellery, accessories, painted apparel, wearable craft.",
-    href: "/collections/wearable-art",
-    image: "/images/artforms/wearable.jpg",
+    href: "/shop?q=Wearable",
+    image: "/images/artforms/wearable.svg",
   },
 ];
 
