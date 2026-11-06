@@ -43,6 +43,45 @@ export function Footer() {
             </ul>
           </div>
         </div>
+        <div className="mt-12 border-t border-sand-border pt-8">
+          <div className="max-w-md mx-auto text-center md:text-left md:mx-0">
+            <h3 className="font-serif text-xl font-semibold text-deep-ink mb-3">
+              Join the art house
+            </h3>
+            <p className="text-sm text-muted-ink font-sans mb-4">
+              New collections, artist stories, and workshop invitations.
+            </p>
+            <form
+              className="flex flex-col sm:flex-row gap-3"
+              action="/api/newsletter"
+              method="POST"
+            >
+              <input
+                name="email"
+                type="email"
+                placeholder="Your email"
+                required
+                className="flex-1 rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              />
+              <label className="flex items-start gap-2 text-xs text-muted-ink font-sans leading-snug">
+                <input
+                  name="consent"
+                  type="checkbox"
+                  className="mt-1 text-sindoor focus:ring-sindoor"
+                  required
+                />
+                I consent to receive updates from SnehaVrinda Kala. You can
+                unsubscribe anytime.
+              </label>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 transition-colors"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
         <div className="border-t border-sand-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-ink font-sans">
             SnehaVrinda Kala. All rights reserved.

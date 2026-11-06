@@ -35,6 +35,39 @@ export default async function ProductDetailPage({
 
   return (
     <main className="py-10">
+      <script
+        id="schema-product"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.title,
+            description:
+              product.description ||
+              `${product.title} — available on SnehaVrinda Kala.`,
+            image: product.images
+              ? product.images.map((i) => i.url).filter(Boolean)
+              : [],
+            brand: { "@type": "Brand", name: "SnehaVrinda Kala" },
+            sku: product.handle,
+            offers: {
+              "@type": "Offer",
+              url: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+                "http://localhost:3000"}/products/${product.handle}`,
+              priceCurrency: (currency || "INR").toUpperCase(),
+              price:
+                price != null
+                  ? (price / 100).toString()
+                  : undefined,
+              availability:
+                stockType === "made_to_order"
+                  ? "https://schema.org/PreOrder"
+                  : "https://schema.org/InStock",
+            },
+          }),
+        }}
+      />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 text-sm text-muted-ink font-sans">
           <Link href="/shop" className="hover:text-sindoor transition-colors">
