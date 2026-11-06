@@ -1,48 +1,111 @@
-import { listOrders, getOrder, updateOrderStatus } from "../actions";
-import { hasPermission, ROLE_LABELS } from "@/lib/rbac";
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { getPlatformModeFromEnv } from "@/lib/settings";
+import { hasPermission } from "@/lib/rbac";
+import { BulkActionsToolbar } from "@/components/bulk-actions-toolbar";
+import { useSearchParams } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+interface Order {
+  id: string;
+  status: string;
+  fulfillment_status: string;
+  payment_status: string;
+  total: number;
+  currency_code: string;
+  customer?: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
 
-export const metadata = {
-  title: "Orders | SnehaVrinda Kala Admin",
-  robots: { index: false, follow: false },
-};
-
-export default async function OrdersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
-}) {
-  const { q, status, page } = await searchParams;
-
-  const stats = await getDashboardStatsWrapper();
-  const userRole = (await getCurrentUserRole()) || "viewer";
+export default function OrdersPage() {
+  const searchParams = useSearchParams();
+  const q = searchParams.get("q") || "";
+  const status = searchParams.get("status") || "";
+  const page = searchParams.get("page") || "1";
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [count, setCount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const userRole = "super_admin";
 
   if (!hasPermission(userRole as any, "orders:read")) {
-    redirect("/admin?error=unauthorized");
+    return (
+      <main className="py-8">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-xl border border-sand-border bg-surface p-12 text-center">
+            <h2 className="text-lg font-serif font-semibold text-deep-ink mb-2">
+              Unauthorized
+            </h2>
+            <p className="text-muted-ink font-sans">
+              You do not have permission to view orders.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
-  let orders: any[] = [];
-  let count = 0;
-  try {
-    const res = await listOrders({
-      limit: 20,
-      offset: ((parseInt(page || "1") - 1) * 20) || 0,
-      status: status || undefined,
-    });
-    orders = res.orders;
-    count = res.count;
-  } catch (err) {
-    console.error("Failed to load orders", err);
+  useEffect(() => {
+    loadOrders();
+  }, [q, status, page]);
+
+  async function loadOrders() {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/orders?limit=20&offset=${(
+          (parseInt(page || "1") - 1) * 20
+        ) || 0}${status ? `&status=${status}` : ""}${
+          q ? `&q=${q}` : ""
+        }`,
+        { cache: "no-store" }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
+        setCount(data.count || 0);
+      }
+    } catch (err) {
+      console.error("Failed to load orders", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedIds(
+      checked ? orders.map((o) => o.id) : []
+    );
+  };
+
+  const handleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((i) => i !== id)
+    );
+  };
+
+  const isSelected = (id: string) => selectedIds.includes(id);
+
+  if (loading) {
+    return (
+      <main className="py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <p className="text-muted-ink font-sans">Loading orders...</p>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
               Orders
@@ -61,10 +124,17 @@ export default async function OrdersPage({
           )}
         </div>
 
-        {/* Filters */}
+        {hasPermission(userRole as any, "orders:write") && (
+          <BulkActionsToolbar
+            selectedIds={selectedIds}
+            type="orders"
+            onSelectionChange={setSelectedIds}
+            canWrite={true}
+          />
+        )}
+
         <div className="flex gap-4 mb-6">
           <select
-            className="px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans"
             defaultValue={status || ""}
             onChange={(e) => {
               const params = new URLSearchParams(window.location.search);
@@ -72,6 +142,7 @@ export default async function OrdersPage({
               else params.delete("status");
               window.location.search = params.toString();
             }}
+            className="px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -94,11 +165,23 @@ export default async function OrdersPage({
           />
         </div>
 
-        {/* Orders table */}
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <table className="w-full text-left divide-y divide-sand-border">
             <thead>
               <tr className="bg-surface">
+                {hasPermission(userRole as any, "orders:write") && (
+                  <th className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedIds.length === orders.length &&
+                        orders.length > 0
+                      }
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="rounded text-sindoor focus:ring-sindoor"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Order
                 </th>
@@ -124,11 +207,23 @@ export default async function OrdersPage({
             </thead>
             <tbody className="divide-y divide-sand-border">
               {orders.length > 0 ? (
-                orders.map((order: any) => (
+                orders.map((order: Order) => (
                   <tr
                     key={order.id}
                     className="hover:bg-rang-paper/50 transition-colors"
                   >
+                    {hasPermission(userRole as any, "orders:write") && (
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isSelected(order.id)}
+                          onChange={(e) =>
+                            handleSelect(order.id, e.target.checked)
+                          }
+                          className="rounded text-sindoor focus:ring-sindoor"
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4 font-sans text-sm text-deep-ink">
                       #{order.id.slice(-8)}
                     </td>
@@ -177,7 +272,7 @@ export default async function OrdersPage({
                     </td>
                     <td className="px-6 py-4">
                       <Link
-                        href={`/admin/orders/${order.id}`}
+                        href={`/admin/orders/[id]?id=${order.id}`}
                         className="text-sm font-medium text-sindoor hover:underline"
                       >
                         View
@@ -187,7 +282,7 @@ export default async function OrdersPage({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <p className="text-muted-ink font-sans">
                       No orders found.
                     </p>
@@ -198,7 +293,6 @@ export default async function OrdersPage({
           </table>
         </div>
 
-        {/* Pagination */}
         {count > 20 && (
           <div className="mt-6 flex items-center justify-between">
             <p className="text-sm text-muted-ink font-sans">
@@ -226,22 +320,4 @@ export default async function OrdersPage({
       </div>
     </main>
   );
-}
-
-async function getDashboardStatsWrapper() {
-  try {
-    const { getDashboardStats } = await import("../actions");
-    return getDashboardStats();
-  } catch {
-    return null;
-  }
-}
-
-async function getCurrentUserRole() {
-  try {
-    const { getPlatformMode } = await import("../actions");
-    return "super_admin";
-  } catch {
-    return "viewer";
-  }
 }

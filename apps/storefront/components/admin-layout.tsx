@@ -49,6 +49,24 @@ const NAV_ITEMS = [
     icon: "⚙️",
     role: "super_admin" as const,
   },
+  {
+    href: "/admin/analytics",
+    label: "Analytics",
+    icon: "📈",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/discounts",
+    label: "Discounts",
+    icon: "🏷️",
+    role: "manager" as const,
+  },
+  {
+    href: "/admin/commissions",
+    label: "Commissions",
+    icon: "💸",
+    role: "manager" as const,
+  },
 ];
 
 interface AdminLayoutProps {
