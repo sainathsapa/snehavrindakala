@@ -27,7 +27,8 @@
     "@medusajs/utils": "^2.3.0",
     "ajv": "^8.20.0",
     "ioredis": "^5.5.0",
-    "pg": "^8.15.0"
+    "pg": "^8.15.0",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "@medusajs/admin-sdk": "^2.22.3",

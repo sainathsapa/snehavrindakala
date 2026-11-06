@@ -15,11 +15,12 @@
     "db:setup": "pnpm --filter @snehavrinda-kala/backend db:setup",
     "migrations:run": "pnpm --filter @snehavrinda-kala/backend migrations:run",
     "seed": "node scripts/seed.mjs",
+    "seed:full": "node scripts/seed-full.mjs",
     "postinstall": "pnpm --filter @snehavrinda-kala/backend typecheck && pnpm --filter @snehavrinda-kala/storefront typecheck"
   },
   "devDependencies": {
-    "turbo": "^2.4.0",
     "eslint": "^9.26.0",
+    "turbo": "^2.4.0",
     "typescript": "5.8.3"
   },
   "engines": {
@@ -27,5 +28,8 @@
   },
   "publishConfig": {
     "access": "restricted"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3"
   }
 }
