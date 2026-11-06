@@ -45,7 +45,7 @@ export async function isAdmin(): Promise<boolean> {
 export async function requireAdmin() {
   const ok = await isAdmin();
   if (!ok) {
-    redirect("/account/login");
+    redirect("/admin/login");
   }
 }
 

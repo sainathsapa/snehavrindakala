@@ -24,7 +24,7 @@ COPY pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/package.json
 
 # Install dependencies (frozen lockfile for reproducible builds)
-RUN pnpm approve-builds core-js medusa-telemetry && pnpm install --frozen-lockfile
+RUN pnpm approve-builds core-js medusa-telemetry && pnpm install --frozen-lockfile --ignore-scripts
 
 # ── build: compile backend + admin into ./dist ───────────────────────────────
 FROM base AS build

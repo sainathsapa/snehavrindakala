@@ -267,6 +267,30 @@ async function ensureCommission(artistId) {
   console.log(`✓ Commission test record (${ref})`);
 }
 
+async function ensureAdminCustomer() {
+  // Register a customer account with the admin email so it can log into
+  // the partner admin panel. Medusa customer registration via store API.
+  try {
+    const { status, body } = await post("/auth/customer/emailpass/register", {
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+    });
+    if (status === 200 || status === 201) {
+      console.log(`✓ Admin customer registered (${ADMIN_EMAIL})`);
+    } else if (status === 400 && body?.error?.includes("already exists")) {
+      console.log(`✓ Admin customer already exists (${ADMIN_EMAIL})`);
+    } else {
+      console.log(
+        `⚠ Admin customer registration returned ${status}: ${JSON.stringify(body)}`
+      );
+    }
+  } catch (err) {
+    console.log(
+      `⚠ Admin customer registration skipped: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
+
 async function main() {
   console.log(`🌱 Seeding SnehaVrinda Kala against ${BACKEND_URL}`);
   await adminLogin();
@@ -277,6 +301,7 @@ async function main() {
   const artistIds = await ensureArtists();
   await ensureProducts(categoryIds);
   if (artistIds[0]) await ensureCommission(artistIds[0]);
+  await ensureAdminCustomer();
   console.log("✅ Seed complete.");
 }
 
