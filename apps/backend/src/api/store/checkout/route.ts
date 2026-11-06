@@ -28,9 +28,9 @@ export async function POST(
     return res.status(400).json({ error: "cart_id is required." });
   }
 
-  const paymentModuleService = scope.resolve("paymentModuleService");
-  const orderModuleService = scope.resolve("orderModuleService");
-  const auditService = scope.resolve("auditModuleService");
+  const paymentModuleService = scope.resolve("payment");
+  const orderModuleService = scope.resolve("order");
+  const auditService = scope.resolve("audit");
 
   if (!paymentModuleService || !orderModuleService || !auditService) {
     return res.status(501).json({

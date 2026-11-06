@@ -7,7 +7,7 @@ import type { ArtistService } from "../../../../../modules/artist/service";
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
   const { id } = req.params as { id: string };
 

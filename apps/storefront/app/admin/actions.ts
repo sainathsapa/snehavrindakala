@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { medusa } from "@/lib/medusa";
 import { AUTH_COOKIE } from "@/lib/auth";
 import {
@@ -31,6 +30,10 @@ import {
   isSingleBrandMode,
   setPlatformMode,
 } from "@/lib/settings";
+import {
+  ADMIN_SESSION_COOKIE,
+  verifyAdminSession,
+} from "@/lib/admin-session";
 
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || ""
@@ -39,12 +42,24 @@ const ADMIN_EMAILS = (
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
-/** ── Auth ───────────────────────────────────────────────────────────── */
-
-export async function isAdmin(): Promise<boolean> {
+export async function getAdminIdentity(): Promise<{
+  email: string;
+  role: string;
+} | null> {
   const cookieStore = await cookies();
+
+  // Preferred: signed admin session cookie issued by /api/admin/login.
+  const sessionToken = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
+  if (sessionToken) {
+    const session = verifyAdminSession(sessionToken);
+    if (session) {
+      return { email: session.email, role: session.role };
+    }
+  }
+
+  // Backwards compatible: a Medusa customer token for an ADMIN_EMAILS account.
   const token = cookieStore.get(AUTH_COOKIE)?.value;
-  if (!token) return false;
+  if (!token) return null;
   try {
     const res = await fetch(
       `${(
@@ -64,21 +79,25 @@ export async function isAdmin(): Promise<boolean> {
         cache: "no-store",
       }
     );
-    if (!res.ok) return false;
+    if (!res.ok) return null;
     const data = await res.json();
     const customer = data?.customer ?? data;
     const email = (customer?.email || "").toLowerCase();
-    return ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(email);
+    if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(email)) {
+      return { email, role: "super_admin" };
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export async function requireAdmin() {
-  const ok = await isAdmin();
-  if (!ok) {
-    redirect("/admin/login");
-  }
+export async function isAdmin(): Promise<boolean> {
+  return (await getAdminIdentity()) !== null;
+}
+
+export async function requireAdmin(): Promise<boolean> {
+  return isAdmin();
 }
 
 export async function adminLoginAction(formData: FormData): Promise<void> {
@@ -86,11 +105,11 @@ export async function adminLoginAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") || "");
 
   if (!email || !password) {
-    redirect("/admin/login?error=missing");
+    return;
   }
 
   if (!ADMIN_EMAILS.includes(email)) {
-    redirect("/admin/login?error=not_admin");
+    return;
   }
 
   let token: string;
@@ -99,7 +118,7 @@ export async function adminLoginAction(formData: FormData): Promise<void> {
     token = result.token;
   } catch (error) {
     console.error("Admin login failed", error);
-    redirect("/admin/login?error=invalid");
+    return;
   }
 
   const cookieStore = await cookies();
@@ -110,161 +129,136 @@ export async function adminLoginAction(formData: FormData): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
-
-  redirect("/admin");
 }
 
 export async function adminLogoutAction(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE);
-  redirect("/");
 }
 
-/** ── Dashboard ───────────────────────────────────────────────────────── */
-
 export async function getDashboardStats() {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return { totalOrders: 0, totalProducts: 0, totalArtists: 0, totalCustomers: 0, recentOrders: [] };
   return getAdminDashboardStats();
 }
 
-/** ── Orders ──────────────────────────────────────────────────────────── */
-
-export async function listOrders(params?: {
-  limit?: number;
-  offset?: number;
-  status?: string;
-}) {
-  await requireAdmin();
+export async function listOrders(params?: { limit?: number; offset?: number; status?: string }) {
+  const ok = await isAdmin();
+  if (!ok) return { orders: [], count: 0 };
   return listAdminOrders(params);
 }
 
 export async function getOrder(orderId: string) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return getAdminOrder(orderId);
 }
 
-export async function updateOrderStatus(
-  orderId: string,
-  data: Record<string, unknown>
-) {
-  await requireAdmin();
+export async function updateOrderStatus(orderId: string, data: Record<string, unknown>) {
+  const ok = await isAdmin();
+  if (!ok) return null;
   return updateAdminOrder(orderId, data);
 }
 
-/** ── Products ────────────────────────────────────────────────────────── */
-
-export async function listProducts(params?: {
-  limit?: number;
-  offset?: number;
-  q?: string;
-  category?: string;
-}) {
-  await requireAdmin();
+export async function listProducts(params?: { limit?: number; offset?: number; q?: string; category?: string }) {
+  const ok = await isAdmin();
+  if (!ok) return { products: [], count: 0 };
   return listAdminProducts(params);
 }
 
 export async function getProduct(productId: string) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return getAdminProduct(productId);
 }
 
 export async function createProduct(data: Record<string, unknown>) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return createAdminProduct(data);
 }
 
-export async function updateProduct(
-  productId: string,
-  data: Record<string, unknown>
-) {
-  await requireAdmin();
+export async function updateProduct(productId: string, data: Record<string, unknown>) {
+  const ok = await isAdmin();
+  if (!ok) return null;
   return updateAdminProduct(productId, data);
 }
 
 export async function deleteProduct(productId: string) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return deleteAdminProduct(productId);
 }
 
-/** ── Categories ──────────────────────────────────────────────────────── */
-
 export async function listCategories(params?: { limit?: number; offset?: number }) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return { categories: [], count: 0 };
   return listAdminCategories(params);
 }
 
 export async function createCategory(data: Record<string, unknown>) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return createAdminCategory(data);
 }
 
-export async function updateCategory(
-  categoryId: string,
-  data: Record<string, unknown>
-) {
-  await requireAdmin();
+export async function updateCategory(categoryId: string, data: Record<string, unknown>) {
+  const ok = await isAdmin();
+  if (!ok) return null;
   return updateAdminCategory(categoryId, data);
 }
 
 export async function deleteCategory(categoryId: string) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return deleteAdminCategory(categoryId);
 }
 
-/** ── Artists / Partners ──────────────────────────────────────────────── */
-
 export async function listArtists(params?: { limit?: number; offset?: number; q?: string }) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return { artists: [], count: 0 };
   return listAdminArtists(params);
 }
 
 export async function createArtist(data: Record<string, unknown>) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return createAdminArtist(data);
 }
 
-export async function updateArtist(
-  artistId: string,
-  data: Record<string, unknown>
-) {
-  await requireAdmin();
+export async function updateArtist(artistId: string, data: Record<string, unknown>) {
+  const ok = await isAdmin();
+  if (!ok) return null;
   return updateAdminArtist(artistId, data);
 }
 
 export async function deleteArtist(artistId: string) {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return null;
   return deleteAdminArtist(artistId);
 }
 
-export async function toggleArtistStatusAction(
-  artistId: string,
-  enabled: boolean
-) {
-  await requireAdmin();
+export async function toggleArtistStatusAction(artistId: string, enabled: boolean) {
+  const ok = await isAdmin();
+  if (!ok) return { ok: false, message: "Not signed in." };
   return toggleAdminArtistStatus(artistId, enabled);
 }
 
-/** ── Customers ───────────────────────────────────────────────────────── */
-
-export async function listCustomers(params?: {
-  limit?: number;
-  offset?: number;
-  q?: string;
-}) {
-  await requireAdmin();
+export async function listCustomers(params?: { limit?: number; offset?: number; q?: string }) {
+  const ok = await isAdmin();
+  if (!ok) return { customers: [], count: 0 };
   return listAdminCustomers(params);
 }
 
-/** ── Settings ────────────────────────────────────────────────────────── */
-
 export async function getPlatformMode() {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return "single-brand";
   return getPlatformModeFromEnv();
 }
 
 export async function setPlatformModeAction(mode: string): Promise<void> {
-  await requireAdmin();
+  const ok = await isAdmin();
+  if (!ok) return;
   const validMode = mode === "platform" ? "platform" : "single-brand";
   await setPlatformMode(validMode);
-  redirect("/admin/settings?saved=1");
 }

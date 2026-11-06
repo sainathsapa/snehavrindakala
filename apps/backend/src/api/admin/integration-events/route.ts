@@ -7,7 +7,7 @@ import type { IntegrationEventService } from "../../../modules/integration_event
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
   const integrationEventService = req.scope.resolve(
-    "integrationEventModuleService"
+    "integration_event"
   ) as IntegrationEventService;
 
   const { provider, processing_state, offset, limit } = req.query as unknown as {

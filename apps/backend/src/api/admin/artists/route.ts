@@ -12,7 +12,7 @@ import type {
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
 
   const { offset, limit, status, q } = req.query as unknown as ArtistFilter;
@@ -38,7 +38,7 @@ async function GET(req: MedusaRequest, res: MedusaResponse) {
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
 
   const body = req.body as CreateArtistInput;

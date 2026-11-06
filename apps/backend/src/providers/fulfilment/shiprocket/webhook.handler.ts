@@ -15,9 +15,9 @@ export class ShiprocketWebhookHandler {
 
   constructor(container: any) {
     this.integrationEventService_ =
-      container.resolve("integrationEventModuleService");
+      container.resolve("integration_event");
     this.fulfilmentModuleService_ =
-      container.resolve("fulfilmentModuleService");
+      container.resolve("fulfillment");
   }
 
   async handle(req: any, res: any): Promise<void> {

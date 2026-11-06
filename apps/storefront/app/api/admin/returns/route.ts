@@ -23,7 +23,9 @@ async function query(sql: string, params: any[] = []) {
 }
 
 export async function GET() {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     await query(`
       CREATE TABLE IF NOT EXISTS return_requests (
@@ -49,7 +51,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const { order_id, customer_id, customer_email, reason, items } = body;

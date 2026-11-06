@@ -5,6 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
+import { getSystemAdminToken, getAdminProduct } from "@/lib/admin";
 
 async function adminFetch(
   backendUrl: string,
@@ -12,19 +13,49 @@ async function adminFetch(
   path: string,
   options: RequestInit = {}
 ) {
+  const token = await getSystemAdminToken();
   const headers = new Headers(options.headers);
   headers.set("x-publishable-api-key", publishableKey);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   return fetch(`${backendUrl}${path}`, { ...options, headers });
 }
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  try {
+    const { id } = await params;
+    const { product } = await getAdminProduct(id);
+    const anyProduct = product as any;
+    const variant = anyProduct.variants?.[0];
+    const price = variant?.prices?.[0]?.amount ?? anyProduct.total ?? 0;
+    const currency =
+      variant?.prices?.[0]?.currency_code || anyProduct.currency_code || "inr";
+    return NextResponse.json({
+      ...anyProduct,
+      slug: anyProduct.handle || anyProduct.slug || "",
+      total: price,
+      currency_code: currency,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { id } = await params;
     const body = await req.json();
@@ -63,7 +94,9 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { id } = await params;
     const BACKEND_URL =

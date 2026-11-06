@@ -28,7 +28,7 @@ export async function POST(
     return;
   }
 
-  const fulfilmentModuleService = scope.resolve("fulfilmentModuleService") as any;
+  const fulfilmentModuleService = scope.resolve("fulfillment") as any;
   if (!fulfilmentModuleService) {
     res.status(501).json({
       error: "Fulfilment not wired. Resolve fulfilmentModuleService in the Medusa container.",

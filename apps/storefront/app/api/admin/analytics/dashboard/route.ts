@@ -23,7 +23,9 @@ async function query(sql: string, params: any[] = []) {
 }
 
 export async function GET(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") || "30"; // days

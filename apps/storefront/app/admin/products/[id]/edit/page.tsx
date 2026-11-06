@@ -2,174 +2,59 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@snehavrinda-kala/ui";
 import { useSearchParams } from "next/navigation";
 
-interface ProductVariant {
-  id?: string;
+interface Product {
+  id: string;
   title: string;
-  sku: string;
-  stock_quantity: number;
-  prices: Array<{ currency_code: string; amount: number }>;
-}
-
-interface ProductImage {
-  id?: string;
-  url: string;
-  rank?: number;
-}
-
-interface ProductFormData {
-  title: string;
-  handle: string;
-  description: string;
+  slug: string;
   status: string;
-  category_id: string;
-  is_new: boolean;
-  variants: ProductVariant[];
-  images: ProductImage[];
-  options: Array<{ title: string; values: string[] }>;
+  total: number;
+  currency_code: string;
+  created_at: string;
 }
 
-export default function ProductEditPage() {
+export default function EditProductPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id") || "";
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
-
-  const [form, setForm] = useState<ProductFormData>({
-    title: "",
-    handle: "",
-    description: "",
-    status: "draft",
-    category_id: "",
-    is_new: false,
-    variants: [
-      {
-        title: "Default",
-        sku: "",
-        stock_quantity: 0,
-        prices: [{ currency_code: "inr", amount: 0 }],
-      },
-    ],
-    images: [],
-    options: [{ title: "Size", values: ["Default"] }],
-  });
-
-  const lowStockVariants = form.variants.filter(
-    (v) => v.stock_quantity <= 10 && v.stock_quantity > 0
-  );
-  const outOfStockVariants = form.variants.filter((v) => v.stock_quantity === 0);
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [productStatus, setProductStatus] = useState("draft");
+  const [price, setPrice] = useState("0");
+  const [currency, setCurrency] = useState("inr");
 
   useEffect(() => {
-    if (id) {
-      loadProduct(id);
+    if (!id) {
+      setLoading(false);
+      return;
     }
+    fetch(`/api/admin/products/${id}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data: any) => {
+        const loaded: Product = {
+          id: data.id || "",
+          title: data.title || "",
+          slug: data.slug || "",
+          status: data.status || "",
+          total: data.total || 0,
+          currency_code: data.currency_code || "inr",
+          created_at: data.created_at || "",
+        };
+        setProduct(loaded);
+        setTitle(loaded.title);
+        setSlug(loaded.slug);
+        setProductStatus(loaded.status || "draft");
+        setPrice((loaded.total / 100).toString());
+        setCurrency(loaded.currency_code || "inr");
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [id]);
 
-  async function loadProduct(productId: string) {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/products/${productId}`, { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        const p = data.product;
-        setForm({
-          title: p.title || "",
-          handle: p.handle || "",
-          description: p.description || "",
-          status: p.status || "draft",
-          category_id: p.category?.id || "",
-          is_new: p.is_new || false,
-          variants: (p.variants || []).map((v: any) => ({
-            id: v.id,
-            title: v.title || "",
-            sku: v.sku || "",
-            stock_quantity: v.stock_quantity ?? 0,
-            prices: (v.prices || []).map((pr: any) => ({
-              currency_code: pr.currency_code || "inr",
-              amount: pr.amount || 0,
-            })),
-          })),
-          images: (p.images || []).map((img: any) => ({
-            id: img.id,
-            url: img.url || "",
-            rank: img.rank,
-          })),
-          options: (p.options || []).map((opt: any) => ({
-            title: opt.title || "Size",
-            values: opt.values?.map((v: any) => v.value) || [],
-          })),
-        });
-      } else {
-        setMessage({ ok: false, text: "Product not found." });
-      }
-    } catch (err) {
-      setMessage({ ok: false, text: "Failed to load product." });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setForm({ ...form, [field]: value });
-  };
-
-  const addVariant = () => {
-    setForm({
-      ...form,
-      variants: [
-        ...form.variants,
-        {
-          title: `Variant ${form.variants.length + 1}`,
-          sku: "",
-          stock_quantity: 0,
-          prices: [{ currency_code: "inr", amount: 0 }],
-        },
-      ],
-    });
-  };
-
-  const removeVariant = (index: number) => {
-    if (form.variants.length <= 1) return;
-    setForm({
-      ...form,
-      variants: form.variants.filter((_, i) => i !== index),
-    });
-  };
-
-  const updateVariantField = (
-    variantIndex: number,
-    field: string,
-    value: string | number
-  ) => {
-    const newVariants = [...form.variants];
-    (newVariants[variantIndex] as any)[field] = value;
-    setForm({ ...form, variants: newVariants });
-  };
-
-  const addImage = () => {
-    setForm({
-      ...form,
-      images: [...form.images, { url: "", rank: form.images.length }],
-    });
-  };
-
-  const removeImage = (index: number) => {
-    setForm({
-      ...form,
-      images: form.images.filter((_, i) => i !== index),
-    });
-  };
-
-  const updateImageUrl = (imageIndex: number, url: string) => {
-    const newImages = [...form.images];
-    newImages[imageIndex].url = url;
-    setForm({ ...form, images: newImages });
-  };
-
-  async function handleSave(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
@@ -177,26 +62,19 @@ export default function ProductEditPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: form.title,
-          handle: form.handle,
-          description: form.description,
-          status: form.status,
-          category_id: form.category_id,
-          is_new: form.is_new,
-          variants: form.variants,
-          images: form.images,
-          options: form.options,
+          title,
+          slug,
+          status: productStatus,
+          total: price ? parseInt(price) * 100 : 0,
+          currency_code: currency,
         }),
       });
       if (res.ok) {
-        setMessage({ ok: true, text: "Product updated successfully." });
+        window.location.href = "/admin/products";
       } else {
-        const err = await res.json();
-        setMessage({ ok: false, text: err.error || "Failed to update product." });
+        setSaving(false);
       }
     } catch {
-      setMessage({ ok: false, text: "Error updating product." });
-    } finally {
       setSaving(false);
     }
   }
@@ -204,8 +82,18 @@ export default function ProductEditPage() {
   if (loading) {
     return (
       <main className="py-8">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <p className="text-muted-ink font-sans">Loading product...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!product) {
+    return (
+      <main className="py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <p className="text-muted-ink font-sans">Product not found.</p>
         </div>
       </main>
     );
@@ -213,328 +101,103 @@ export default function ProductEditPage() {
 
   return (
     <main className="py-8">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Link
-            href="/admin/products"
-            className="inline-flex items-center gap-2 text-sindoor font-sans font-medium hover:underline mb-4"
-          >
-            ← Back to Products
-          </Link>
-          <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
-            Edit Product
-          </h1>
-          <p className="text-muted-ink font-sans">
-            Modify product details, variants, and images.
-          </p>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <Link href="/admin/products" className="inline-flex items-center gap-2 text-sindoor font-sans font-medium hover:underline mb-4">
+              ← Back to Products
+            </Link>
+            <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
+              Edit Product
+            </h1>
+          </div>
         </div>
 
-        {message && (
-          <p className={`mb-6 rounded-md p-3 text-sm font-sans ${
-            message.ok
-              ? "bg-green-50 text-green-800 border border-green-200"
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}>
-            {message.text}
-          </p>
-        )}
-
-        {/* Low stock warning */}
-        {(outOfStockVariants.length > 0 || lowStockVariants.length > 0) && (
-          <div className="mb-6 rounded-lg border border-terracotta/20 bg-terracotta/5 p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-terracotta">⚠️</span>
-              <div>
-                <p className="text-sm font-medium text-terracotta font-sans">
-                  Inventory Alert
-                </p>
-                <p className="text-xs text-terracotta font-sans">
-                  {outOfStockVariants.length > 0
-                    ? `${outOfStockVariants.length} variant(s) out of stock`
-                    : ""}
-                  {lowStockVariants.length > 0
-                    ? `${lowStockVariants.length} variant(s) low stock (≤10)`
-                    : ""}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSave} className="space-y-8">
-          {/* Basic Info */}
-          <div className="rounded-xl border border-sand-border bg-surface p-6">
-            <h2 className="text-lg font-serif font-semibold text-deep-ink mb-6">
-              Basic Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-sans font-medium text-deep-ink">
-                  Product Title
-                </label>
-                <input
-                  name="title"
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-sans font-medium text-deep-ink">
-                  URL Handle
-                </label>
-                <input
-                  name="handle"
-                  type="text"
-                  value={form.handle}
-                  onChange={(e) => handleInputChange("handle", e.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
-                />
-              </div>
-            </div>
-            <div className="space-y-2 mt-4">
-              <label className="block text-sm font-sans font-medium text-deep-ink">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
-              />
-            </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-sans font-medium text-deep-ink">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  value={form.status}
-                  onChange={(e) => handleInputChange("status", e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-sans font-medium text-deep-ink">
-                  Category
-                </label>
-                <select
-                  name="category_id"
-                  value={form.category_id}
-                  onChange={(e) => handleInputChange("category_id", e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans"
-                >
-                  <option value="">No category</option>
-                </select>
-              </div>
-              <div className="space-y-2 flex items-end">
-                <label className="flex items-center gap-2 cursor-pointer">
+        <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
+          <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Title
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={form.is_new}
-                    onChange={() => setForm({ ...form, is_new: !form.is_new })}
-                    className="rounded border text-sindoor focus:ring-sindoor"
+                    type="text"
+                    name="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
                   />
-                  <span className="text-sm font-sans text-deep-ink">New Arrival</span>
-                </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Slug
+                  </label>
+                  <input
+                    type="text"
+                    name="slug"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    value={productStatus}
+                    onChange={(e) => setProductStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="proposed">Proposed</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Price
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Currency
+                  </label>
+                  <select
+                    name="currency"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
+                  >
+                    <option value="inr">INR</option>
+                    <option value="usd">USD</option>
+                  </select>
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* Variants */}
-          <div className="rounded-xl border border-sand-border bg-surface p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-serif font-semibold text-deep-ink">
-                Variants & Inventory
-              </h2>
-              <button
-                type="button"
-                onClick={addVariant}
-                className="px-3 py-1.5 bg-sindoor text-rang-paper rounded-md text-sm font-medium hover:bg-sindoor/90 transition-colors"
-              >
-                + Add Variant
-              </button>
-            </div>
-            <div className="space-y-4">
-              {form.variants.map((variant, idx) => (
-                <div
-                  key={variant.id || idx}
-                  className="border border-sand-border rounded-lg p-4 bg-rang-paper/30"
+              <div>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
-                      Variant {idx + 1}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeVariant(idx)}
-                      disabled={form.variants.length <= 1}
-                      className="text-xs text-sindoor hover:underline disabled:opacity-50"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-sans font-medium text-muted-ink">
-                        Title
-                      </label>
-                      <input
-                        value={variant.title}
-                        onChange={(e) => {
-                          updateVariantField(idx, "title", e.target.value);
-                        }}
-                        className="w-full px-2 py-1 rounded border border-sand-border bg-surface text-sm font-sans"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-sans font-medium text-muted-ink">
-                        SKU
-                      </label>
-                      <input
-                        value={variant.sku}
-                        onChange={(e) => {
-                          updateVariantField(idx, "sku", e.target.value);
-                        }}
-                        className="w-full px-2 py-1 rounded border border-sand-border bg-surface text-sm font-sans"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-sans font-medium text-muted-ink">
-                        Stock Qty
-                      </label>
-                      <input
-                        type="number"
-                        value={variant.stock_quantity}
-                        onChange={(e) => {
-                          updateVariantField(
-                            idx,
-                            "stock_quantity",
-                            parseInt(e.target.value) || 0
-                          );
-                        }}
-                        className={`w-full px-2 py-1 rounded border text-sm font-sans ${
-                          variant.stock_quantity === 0
-                            ? "border-sindoor"
-                            : variant.stock_quantity <= 10
-                              ? "border-terracotta"
-                              : "border-leaf"
-                        }`}
-                      />
-                      {variant.stock_quantity === 0 && (
-                        <p className="text-[10px] text-sindoor font-sans">
-                          Out of stock
-                        </p>
-                      )}
-                      {variant.stock_quantity > 0 &&
-                        variant.stock_quantity <= 10 && (
-                          <p className="text-[10px] text-terracotta font-sans">
-                            Low stock
-                          </p>
-                        )}
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-sans font-medium text-muted-ink">
-                        Price (INR)
-                      </label>
-                      <input
-                        type="number"
-                        value={variant.prices[0]?.amount || ""}
-                        onChange={(e) => {
-                          const newVariants = [...form.variants];
-                          (newVariants[idx] as any).prices[0].amount =
-                            parseFloat(e.target.value) || 0;
-                          setForm({ ...form, variants: newVariants });
-                        }}
-                        className="w-full px-2 py-1 rounded border border-sand-border bg-surface text-sm font-sans"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
-
-          {/* Images */}
-          <div className="rounded-xl border border-sand-border bg-surface p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-serif font-semibold text-deep-ink">
-                Product Images
-              </h2>
-              <button
-                type="button"
-                onClick={addImage}
-                className="px-3 py-1.5 bg-sindoor text-rang-paper rounded-md text-sm font-medium hover:bg-sindoor/90 transition-colors"
-              >
-                + Add Image
-              </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {form.images.length === 0 ? (
-                <div className="col-span-full py-12 text-center rounded-xl border border-dashed border-sand-border bg-surface/50">
-                  <div className="text-2xl mb-2">📷</div>
-                  <p className="text-sm text-muted-ink font-sans">
-                    No images added. Upload product photos below.
-                  </p>
-                </div>
-              ) : (
-                form.images.map((img, idx) => (
-                  <div key={img.id || idx} className="border border-sand-border rounded-lg overflow-hidden">
-                    <div className="aspect-square relative bg-rang-paper">
-                      {img.url ? (
-                        <img
-                          src={img.url}
-                          alt={`Product image ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-sm text-muted-ink">
-                          No image
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="absolute top-2 right-2 p-1 bg-sindoor text-rang-paper rounded-full hover:bg-sindoor/90 transition-colors"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <p className="mt-2 text-xs text-muted-ink font-sans">
-              Add product images using the URL field below each image.
-            </p>
-          </div>
-
-          {/* Submit */}
-          <div className="pt-8">
-            <Button
-              type="submit"
-              disabled={saving}
-              className="w-auto px-8 py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50"
-            >
-              {saving ? "Saving…" : "Update Product"}
-            </Button>
-            <Link
-              href="/admin/products"
-              className="ml-4 px-6 py-3 border border-sand-border text-deep-ink rounded-xl font-medium hover:bg-rang-paper transition-colors"
-            >
-              Cancel
-            </Link>
-          </div>
-        </form>
+        </div>
       </div>
     </main>
   );

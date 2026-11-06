@@ -1,55 +1,247 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import AdminLayout from "@/components/admin-layout";
-import { isAdmin } from "./actions";
+"use client";
 
-export default async function AdminLayoutWrapper({
-  children,
-}: {
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+
+const NAV_ITEMS = [
+  { href: "/admin", label: "Dashboard", icon: "📊", role: "viewer" as const },
+  { href: "/admin/orders", label: "Orders", icon: "📦", role: "viewer" as const },
+  {
+    href: "/admin/products",
+    label: "Products",
+    icon: "🎨",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/categories",
+    label: "Categories",
+    icon: "📁",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/customers",
+    label: "Customers",
+    icon: "👥",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/partners",
+    label: "Partners",
+    icon: "👩‍🎨",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/tickets",
+    label: "Support Tickets",
+    icon: "🎫",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/users",
+    label: "Users & Roles",
+    icon: "🔐",
+    role: "super_admin" as const,
+  },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    icon: "⚙️",
+    role: "super_admin" as const,
+  },
+  {
+    href: "/admin/analytics",
+    label: "Analytics",
+    icon: "📈",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/discounts",
+    label: "Discounts",
+    icon: "🏷️",
+    role: "manager" as const,
+  },
+  {
+    href: "/admin/commissions",
+    label: "Commissions",
+    icon: "💸",
+    role: "manager" as const,
+  },
+  {
+    href: "/admin/tax",
+    label: "Tax (GST)",
+    icon: "🧾",
+    role: "manager" as const,
+  },
+  {
+    href: "/admin/audit-log",
+    label: "Audit Log",
+    icon: "📋",
+    role: "super_admin" as const,
+  },
+  {
+    href: "/admin/notifications",
+    label: "Notifications",
+    icon: "🔔",
+    role: "manager" as const,
+  },
+];
+
+interface AdminLayoutProps {
   children: React.ReactNode;
-}) {
-  const ok = await isAdmin();
-  if (!ok) {
-    redirect("/admin/login");
-  }
+}
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get("medusa_auth_token")?.value;
+export default function AdminLayout({
+  children,
+}: AdminLayoutProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [collapsed, setCollapsed] = useState(false);
+  const [user, setUser] = useState<{ email: string; role: string } | null>(null);
+  const [checking, setChecking] = useState(true);
 
-  // Get user info from the customer endpoint
-  let user = { email: "admin@snehavrindakala.example", role: "super_admin" as const };
-  if (token) {
-    try {
-      const res = await fetch(
-        `${(
-          process.env.MEDUSA_BACKEND_URL ||
-          process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
-          "http://localhost:9000"
-        ).replace(/\/+$/, "")}/store/customers/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "x-publishable-api-key":
-              process.env.MEDUSA_PUBLISHABLE_KEY ||
-              process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
-              "",
-            Accept: "application/json",
-          },
-          cache: "no-store",
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const customer = data?.customer ?? data;
-        user = {
-          email: customer?.email || "admin@example.com",
-          role: "super_admin" as const,
-        };
-      }
-    } catch {
-      // Use default user
+  const isLoginPage = pathname === "/admin/login";
+
+  useEffect(() => {
+    if (isLoginPage) {
+      setChecking(false);
+      return;
     }
+
+    let cancelled = false;
+    setChecking(true);
+
+    fetch("/api/admin/session", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("unauthorized");
+        return res.json();
+      })
+      .then((data: { email: string; role: string }) => {
+        if (cancelled) return;
+        setUser({ email: data.email, role: data.role });
+        setChecking(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setUser(null);
+        setChecking(false);
+        router.replace("/admin/login");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoginPage, router]);
+
+  const canAccess = (role: string) => {
+    const roleOrder: Record<string, number> = {
+      super_admin: 4,
+      manager: 3,
+      support: 2,
+      viewer: 1,
+    };
+    return (roleOrder[user?.role ?? "viewer"] ?? 0) >= (roleOrder[role] ?? 0);
+  };
+
+  // The login page must render standalone, without the admin sidebar chrome.
+  if (isLoginPage) {
+    return <>{children}</>;
   }
 
-  return <AdminLayout user={user}>{children}</AdminLayout>;
+  if (checking || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-rang-paper">
+        <p className="text-muted-ink font-sans">Checking access…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-rang-paper">
+      {/* Mobile sidebar toggle */}
+      <div className="md:hidden">
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="px-4 py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90"
+        >
+          {collapsed ? "☰ Menu" : "✕ Close"}
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-sand-border transition-all duration-300 ${
+          collapsed ? "-translate-x-full" : "translate-x-0"
+        } md:relative md:translate-x-0`}
+      >
+        <div className="p-6 border-b border-sand-border">
+          <Link
+            href="/admin"
+            className="flex items-center gap-2"
+          >
+            <span className="text-xl font-serif font-bold text-deep-ink tracking-tight">
+              SnehaVrinda
+            </span>
+            <span className="text-xl font-serif font-bold text-terracotta tracking-tight">
+              Kala
+            </span>
+          </Link>
+          <p className="mt-2 text-xs text-muted-ink font-sans">
+            Admin Panel
+          </p>
+        </div>
+
+        <nav className="p-4 space-y-1">
+          {NAV_ITEMS.filter((item) => canAccess(item.role)).map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setCollapsed(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium font-sans transition-colors ${
+                  isActive
+                    ? "bg-sindoor/10 text-sindoor border border-sindoor/20"
+                    : "text-muted-ink hover:bg-rang-paper/50 hover:text-terracotta"
+                }`}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-sand-border">
+          <div className="text-xs font-sans text-muted-ink">
+            <div className="font-medium text-deep-ink">{user.email}</div>
+            <div className="text-terracotta font-medium capitalize">
+              {user.role}
+            </div>
+          </div>
+          <button
+            onClick={() => router.push("/admin/logout")}
+            className="mt-4 w-full py-2 px-4 rounded-md text-sm font-medium text-sindoor border border-sindoor hover:bg-sindoor hover:text-rang-paper transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div
+        className={`transition-all duration-300 md:pl-64 ${
+          collapsed ? "pl-0" : ""
+        }`}
+      >
+        <Suspense
+          fallback={
+            <div className="p-8 font-sans text-muted-ink">Loading…</div>
+          }
+        >
+          {children}
+        </Suspense>
+      </div>
+    </div>
+  );
 }

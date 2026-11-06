@@ -10,7 +10,9 @@ services:
       POSTGRES_PASSWORD: medusa
       POSTGRES_DB: medusa
     ports:
-      - "5432:5432"
+      # Host port 5432 is sometimes occupied by unrelated local tooling;
+      # containers still reach Postgres at postgres:5432 on the compose network.
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -95,6 +97,16 @@ services:
       NEXT_PUBLIC_SANITY_API_VERSION: ${NEXT_PUBLIC_SANITY_API_VERSION:-2026-01-01}
       # Admin access control
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # Dedicated Medusa system user for admin API calls
+      MEDUSA_ADMIN_EMAIL: ${MEDUSA_ADMIN_EMAIL:-}
+      MEDUSA_ADMIN_PASSWORD: ${MEDUSA_ADMIN_PASSWORD:-}
+      # Admin sessions + server-side data access
+      COOKIE_SECRET: ${COOKIE_SECRET:-}
+      JWT_SECRET: ${JWT_SECRET:-}
+      DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa
+      PLATFORM_MODE: ${PLATFORM_MODE:-single-brand}
     ports:
       - "3000:3000"
     depends_on:

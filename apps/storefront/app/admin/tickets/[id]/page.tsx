@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@snehavrinda-kala/ui";
 import { useSearchParams } from "next/navigation";
 
 interface Ticket {
@@ -14,7 +13,6 @@ interface Ticket {
   status: string;
   priority: string;
   created_at: string;
-  updated_at: string;
 }
 
 interface TicketReply {
@@ -139,8 +137,6 @@ export default function TicketDetailPage() {
         return "bg-sindoor/10 text-sindoor border border-sindoor/20";
       case "resolved":
         return "bg-leaf/10 text-leaf border border-leaf/20";
-      case "closed":
-        return "bg-muted-ink/10 text-muted-ink border border-muted-ink/20";
       default:
         return "bg-muted-ink/10 text-muted-ink border border-muted-ink/20";
     }
@@ -157,136 +153,88 @@ export default function TicketDetailPage() {
     }
   };
 
+  // Compute reply rows BEFORE JSX to avoid JSX-in-JSX ternary
+  const replyRows =
+    replies.length > 0
+      ? replies.map((reply: TicketReply) => (
+          <tr key={reply.id} className="hover:bg-rang-paper/50 transition-colors">
+            <td className="px-6 py-4 font-sans text-sm text-deep-ink">
+              {reply.author}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-muted-ink">
+              {reply.message}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-muted-ink">
+              {new Date(reply.created_at).toLocaleDateString()}
+            </td>
+          </tr>
+        ))
+      : (
+          <tr>
+            <td colSpan={5} className="px-6 py-12 text-center">
+              <p className="text-muted-ink font-sans">
+                No replies yet. Start the conversation below.
+              </p>
+            </td>
+          </tr>
+        );
+
   return (
     <main className="py-8">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Link
-            href="/admin/tickets"
-            className="inline-flex items-center gap-2 text-sindoor font-sans font-medium hover:underline mb-4"
-          >
-            ← Back to Tickets
-          </Link>
-          <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
-            Ticket #{ticket.id.slice(-6)}
-          </h1>
-          <p className="text-muted-ink font-sans">
-            Support request from {ticket.name}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <Link href="/admin/tickets" className="inline-flex items-center gap-2 text-sindoor font-sans font-medium hover:underline mb-4">
+              ← Back to Tickets
+            </Link>
+            <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
+              Ticket #{ticket.id.slice(-6)}
+            </h1>
+            <p className="text-muted-ink font-sans">
+              Support request from {ticket.name}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <span
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${getStatusClass(ticket.status)}`}
+            >
+              {ticket.status}
+            </span>
+            <span
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${getPriorityClass(ticket.priority)}`}
+            >
+              {ticket.priority}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-rang-paper rounded-md p-4 border border-sand-border mb-6">
+          <p className="text-sm font-sans text-deep-ink leading-relaxed">
+            {ticket.message}
           </p>
         </div>
 
-        {/* Ticket header */}
-        <div className="rounded-xl border border-sand-border bg-surface p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-serif font-semibold text-deep-ink">
-                {ticket.subject}
-              </h2>
-              <p className="text-sm text-muted-ink font-sans">
-                {ticket.email}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <span
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${getStatusClass(ticket.status)}`}
-              >
-                {ticket.status}
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${getPriorityClass(ticket.priority)}`}
-              >
-                {ticket.priority}
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-rang-paper rounded-md p-4 border border-sand-border mb-6">
-            <p className="text-sm font-sans text-deep-ink leading-relaxed">
-              {ticket.message}
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              onClick={() => handleStatusChange("open")}
-              disabled={saving}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 ${
-                ticket.status === "open"
-                  ? "bg-leaf/10 text-leaf border border-leaf/20"
-                  : "border border-sand-border text-deep-ink hover:bg-rang-paper/50"
-              }`}
-            >
-              Reopen
-            </Button>
-            <Button
-              onClick={() => handleStatusChange("in_progress")}
-              disabled={saving}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 ${
-                ticket.status === "in_progress"
-                  ? "bg-sindoor/10 text-sindoor border border-sindoor/20"
-                  : "border border-sand-border text-deep-ink hover:bg-rang-paper/50"
-              }`}
-            >
-              Start Work
-            </Button>
-            <Button
-              onClick={() => handleStatusChange("resolved")}
-              disabled={saving}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 ${
-                ticket.status === "resolved"
-                  ? "bg-terracotta/10 text-terracotta border border-terracotta/20"
-                  : "border border-sand-border text-deep-ink hover:bg-rang-paper/50"
-              }`}
-            >
-              Mark Resolved
-            </Button>
-          </div>
-        </div>
-
-        {/* Replies */}
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
-          <div className="border-b border-sand-border bg-rang-paper p-6">
-            <h2 className="text-lg font-serif font-semibold text-deep-ink">
-              Conversation ({replies.length})
-            </h2>
-          </div>
-          <div className="divide-y divide-sand-border">
-            {replies.length > 0 ? (
-              replies.map((reply) => (
-                <div key={reply.id} className="p-6 border-b border-sand-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-sans font-semibold text-deep-ink">
-                      {reply.author}
-                    </span>
-                    <span className="text-xs text-muted-ink font-sans">
-                      {new Date(reply.created_at).toLocaleString()}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                        reply.author_type === "staff"
-                          ? "bg-sindoor/10 text-sindoor border border-sindoor/20"
-                          : "bg-leaf/10 text-leaf border border-leaf/20"
-                      }`}
-                    >
-                      {reply.author_type}
-                    </span>
-                  </div>
-                  <p className="text-sm font-sans text-deep-ink leading-relaxed">
-                    {reply.message}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="p-12 text-center">
-                <p className="text-muted-ink font-sans">
-                  No replies yet. Start the conversation below.
-                </p>
-              </div>
-            )}
-          </div>
+          <table className="w-full text-left divide-y divide-sand-border">
+            <thead>
+              <tr className="bg-surface">
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Artist
+                </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Message
+                </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Date
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-sand-border">
+              {replyRows}
+            </tbody>
+          </table>
         </div>
 
-        {/* Reply form */}
         <div className="mt-8 rounded-xl border border-sand-border bg-surface p-6">
           <h2 className="text-lg font-serif font-semibold text-deep-ink mb-4">
             Send Reply
@@ -305,13 +253,13 @@ export default function TicketDetailPage() {
                 className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
               />
             </div>
-            <Button
+            <button
               type="submit"
               disabled={replying || !newReply.trim()}
-              className="w-auto px-8 py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50"
             >
               {replying ? "Sending…" : "Send Reply"}
-            </Button>
+            </button>
           </form>
         </div>
       </div>

@@ -25,7 +25,7 @@ export async function POST(
     razorpay_signature?: string;
   };
 
-  const paymentModuleService = scope.resolve("paymentModuleService");
+  const paymentModuleService = scope.resolve("payment");
   if (!paymentModuleService) {
     return res.status(501).json({
       error:

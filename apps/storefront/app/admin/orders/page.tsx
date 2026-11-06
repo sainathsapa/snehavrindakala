@@ -2,95 +2,41 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { hasPermission } from "@/lib/rbac";
-import { BulkActionsToolbar } from "@/components/bulk-actions-toolbar";
-import { useSearchParams } from "next/navigation";
 
 interface Order {
   id: string;
+  customerName: string;
+  customerEmail: string;
   status: string;
-  fulfillment_status: string;
-  payment_status: string;
+  paymentStatus: string;
   total: number;
-  currency_code: string;
-  customer?: {
-    id: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-  };
-  created_at: string;
-  updated_at: string;
+  currencyCode: string;
+  createdAt: string;
 }
 
 export default function OrdersPage() {
-  const searchParams = useSearchParams();
-  const q = searchParams.get("q") || "";
-  const status = searchParams.get("status") || "";
-  const page = searchParams.get("page") || "1";
   const [orders, setOrders] = useState<Order[]>([]);
-  const [count, setCount] = useState(0);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const userRole = "super_admin";
-
-  if (!hasPermission(userRole as any, "orders:read")) {
-    return (
-      <main className="py-8">
-        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-sand-border bg-surface p-12 text-center">
-            <h2 className="text-lg font-serif font-semibold text-deep-ink mb-2">
-              Unauthorized
-            </h2>
-            <p className="text-muted-ink font-sans">
-              You do not have permission to view orders.
-            </p>
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   useEffect(() => {
-    loadOrders();
-  }, [q, status, page]);
-
-  async function loadOrders() {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `/api/admin/orders?limit=20&offset=${(
-          (parseInt(page || "1") - 1) * 20
-        ) || 0}${status ? `&status=${status}` : ""}${
-          q ? `&q=${q}` : ""
-        }`,
-        { cache: "no-store" }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data.orders || []);
-        setCount(data.count || 0);
-      }
-    } catch (err) {
-      console.error("Failed to load orders", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const handleSelectAll = (checked: boolean) => {
-    setSelectedIds(
-      checked ? orders.map((o) => o.id) : []
-    );
-  };
-
-  const handleSelect = (id: string, checked: boolean) => {
-    setSelectedIds((prev) =>
-      checked ? [...prev, id] : prev.filter((i) => i !== id)
-    );
-  };
-
-  const isSelected = (id: string) => selectedIds.includes(id);
+    fetch("/api/admin/orders?limit=20", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data: any) => {
+        const rows: Order[] = (data.orders || []).map((o: any) => ({
+          id: o.id || "",
+          customerName: `${o.customer?.first_name || ""} ${o.customer?.last_name || ""}`.trim(),
+          customerEmail: o.customer?.email || "",
+          status: o.status || "",
+          paymentStatus: o.payment_status || "",
+          total: o.total || 0,
+          currencyCode: o.currency_code || "inr",
+          createdAt: o.created_at || "",
+        }));
+        setOrders(rows);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   if (loading) {
     return (
@@ -101,6 +47,38 @@ export default function OrdersPage() {
       </main>
     );
   }
+
+  const orderRows =
+    orders.length > 0
+      ? orders.map((order: Order) => (
+          <tr key={order.id} className="hover:bg-rang-paper/50 transition-colors">
+            <td className="px-6 py-4 font-sans text-sm text-deep-ink">
+              #{order.id.slice(-8)}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-deep-ink">
+              {order.customerName}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-muted-ink">
+              {order.customerEmail}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-deep-ink text-right">
+              {(order.total / 100).toFixed(2)}
+              {order.currencyCode?.toUpperCase()}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-muted-ink">
+              {new Date(order.createdAt).toLocaleDateString()}
+            </td>
+          </tr>
+        ))
+      : (
+          <tr>
+            <td colSpan={5} className="px-6 py-12 text-center">
+              <p className="text-muted-ink font-sans">
+                No orders found.
+              </p>
+            </td>
+          </tr>
+        );
 
   return (
     <main className="py-8">
@@ -114,74 +92,12 @@ export default function OrdersPage() {
               Manage customer orders and fulfillment.
             </p>
           </div>
-          {hasPermission(userRole as any, "orders:write") && (
-            <Link
-              href="/admin/orders/new"
-              className="px-4 py-2 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 transition-colors"
-            >
-              New Order
-            </Link>
-          )}
-        </div>
-
-        {hasPermission(userRole as any, "orders:write") && (
-          <BulkActionsToolbar
-            selectedIds={selectedIds}
-            type="orders"
-            onSelectionChange={setSelectedIds}
-            canWrite={true}
-          />
-        )}
-
-        <div className="flex gap-4 mb-6">
-          <select
-            defaultValue={status || ""}
-            onChange={(e) => {
-              const params = new URLSearchParams(window.location.search);
-              if (e.target.value) params.set("status", e.target.value);
-              else params.delete("status");
-              window.location.search = params.toString();
-            }}
-            className="px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="refunded">Refunded</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Search orders…"
-            className="flex-1 px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans"
-            defaultValue={q || ""}
-            onChange={(e) => {
-              const params = new URLSearchParams(window.location.search);
-              if (e.target.value) params.set("q", e.target.value);
-              else params.delete("q");
-              window.location.search = params.toString();
-            }}
-          />
         </div>
 
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <table className="w-full text-left divide-y divide-sand-border">
             <thead>
               <tr className="bg-surface">
-                {hasPermission(userRole as any, "orders:write") && (
-                  <th className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedIds.length === orders.length &&
-                        orders.length > 0
-                      }
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded text-sindoor focus:ring-sindoor"
-                    />
-                  </th>
-                )}
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Order
                 </th>
@@ -191,137 +107,19 @@ export default function OrdersPage() {
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
-                  Payment
-                </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider text-right">
                   Total
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sand-border">
-              {orders.length > 0 ? (
-                orders.map((order: Order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-rang-paper/50 transition-colors"
-                  >
-                    {hasPermission(userRole as any, "orders:write") && (
-                      <td className="px-6 py-4">
-                        <input
-                          type="checkbox"
-                          checked={isSelected(order.id)}
-                          onChange={(e) =>
-                            handleSelect(order.id, e.target.checked)
-                          }
-                          className="rounded text-sindoor focus:ring-sindoor"
-                        />
-                      </td>
-                    )}
-                    <td className="px-6 py-4 font-sans text-sm text-deep-ink">
-                      #{order.id.slice(-8)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-sans text-sm text-deep-ink">
-                        <Link
-                          href={`/admin/customers/${order.customer?.id}`}
-                          className="text-sindoor hover:underline"
-                        >
-                          {order.customer?.first_name} {order.customer?.last_name}
-                        </Link>
-                      </div>
-                      <div className="text-xs text-muted-ink">
-                        {order.customer?.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${
-                          order.status === "completed"
-                            ? "bg-leaf/10 text-leaf border border-leaf/20"
-                            : order.status === "cancelled"
-                              ? "bg-sindoor/10 text-sindoor border border-sindoor/20"
-                              : order.status === "pending"
-                                ? "bg-terracotta/10 text-terracotta border border-terracotta/20"
-                                : "bg-muted-ink/10 text-muted-ink border border-muted-ink/20"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`font-sans text-sm ${
-                          order.payment_status === "paid"
-                            ? "text-leaf"
-                            : order.payment_status === "refunded"
-                              ? "text-sindoor"
-                              : "text-muted-ink"
-                        } font-medium`}
-                      >
-                        {order.payment_status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-sans text-sm text-deep-ink text-right">
-                      {(order.total / 100).toFixed(2)}
-                      {order.currency_code?.toUpperCase()}
-                    </td>
-                    <td className="px-6 py-4 font-sans text-sm text-muted-ink">
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="text-sm font-medium text-sindoor hover:underline"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <p className="text-muted-ink font-sans">
-                      No orders found.
-                    </p>
-                  </td>
-                </tr>
-              )}
+              {orderRows}
             </tbody>
           </table>
         </div>
-
-        {count > 20 && (
-          <div className="mt-6 flex items-center justify-between">
-            <p className="text-sm text-muted-ink font-sans">
-              Showing {orders.length} of {count} orders
-            </p>
-            <div className="flex gap-2">
-              {Array.from({ length: Math.ceil(count / 20) }).map((_, i) => (
-                <Link
-                  key={i}
-                  href={`/admin/orders?page=${i + 1}${
-                    status ? `&status=${status}` : ""
-                  }${q ? `&q=${q}` : ""}`}
-                  className={`px-3 py-1 rounded-md text-sm font-sans ${
-                    parseInt(page || "1") === i + 1
-                      ? "bg-sindoor text-rang-paper"
-                      : "text-muted-ink hover:bg-rang-paper/50"
-                  }`}
-                >
-                  {i + 1}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </main>
   );

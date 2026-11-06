@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
+import { getSystemAdminToken } from "@/lib/admin";
 
 async function adminFetch(
   backendUrl: string,
@@ -13,8 +14,10 @@ async function adminFetch(
   path: string,
   options: RequestInit = {}
 ) {
+  const token = await getSystemAdminToken();
   const headers = new Headers(options.headers);
   headers.set("x-publishable-api-key", publishableKey);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
@@ -22,7 +25,9 @@ async function adminFetch(
 }
 
 export async function POST(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "orders";

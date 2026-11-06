@@ -21,10 +21,10 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
   const data = event?.data || {};
   const id = event?.id || "";
 
-  const paymentModuleService = container.resolve("paymentModuleService");
-  const fulfilmentModuleService = container.resolve("fulfilmentModuleService");
-  const notificationModuleService = container.resolve("notificationModuleService");
-  const integrationEventService = container.resolve("integrationEventModuleService");
+  const paymentModuleService = container.resolve("payment");
+  const fulfilmentModuleService = container.resolve("fulfillment");
+  const notificationModuleService = container.resolve("notification");
+  const integrationEventService = container.resolve("integration_event");
 
   const correlationId = id;
 
@@ -80,7 +80,7 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
       );
 
       try {
-        const auditService = container.resolve("auditModuleService");
+        const auditService = container.resolve("audit");
         await auditService.record({
           actor: "system",
           actor_role: "system",

@@ -15,8 +15,14 @@ const BACKEND_URL = (
   "http://localhost:9000"
 ).replace(/\/+$/, "");
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "sneha@sainath.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "snehalovessainath143";
+const ADMIN_EMAIL =
+  process.env.MEDUSA_ADMIN_EMAIL ||
+  process.env.ADMIN_EMAIL ||
+  "sneha@sainath.com";
+const ADMIN_PASSWORD =
+  process.env.MEDUSA_ADMIN_PASSWORD ||
+  process.env.ADMIN_PASSWORD ||
+  "snehalovessainath143";
 const PUBLISHABLE_KEY =
   process.env.MEDUSA_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
@@ -58,28 +64,48 @@ async function authenticateSystemAdmin(): Promise<string | null> {
   return adminTokenPromise;
 }
 
+export async function getSystemAdminToken(): Promise<string | null> {
+  return authenticateSystemAdmin();
+}
+
 async function adminRequest(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = await authenticateSystemAdmin();
+  let token = await authenticateSystemAdmin();
   if (!token) {
     throw new Error("System admin authentication failed. Check ADMIN_EMAIL/ADMIN_PASSWORD.");
   }
 
-  const headers = new Headers(options.headers);
-  headers.set("Authorization", `Bearer ${token}`);
-  headers.set("x-publishable-api-key", PUBLISHABLE_KEY);
-  headers.set("Accept", "application/json");
-  if (options.body && !(options.body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
+  const perform = (authToken: string) => {
+    const headers = new Headers(options.headers);
+    headers.set("Authorization", `Bearer ${authToken}`);
+    headers.set("x-publishable-api-key", PUBLISHABLE_KEY);
+    headers.set("Accept", "application/json");
+    if (options.body && !(options.body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    return fetch(`${BACKEND_URL}${path}`, {
+      ...options,
+      headers,
+      cache: "no-store",
+    });
+  };
+
+  let res = await perform(token);
+
+  // A cached token may have expired - refresh once and retry.
+  if (res.status === 401) {
+    adminToken = null;
+    adminTokenPromise = null;
+    token = await authenticateSystemAdmin();
+    if (token) {
+      res = await perform(token);
+    }
   }
 
-  return fetch(`${BACKEND_URL}${path}`, {
-    ...options,
-    headers,
-    cache: "no-store",
-  });
+  return res;
 }
 
 /** ── Types ───────────────────────────────────────────────────────────── */
@@ -272,7 +298,10 @@ export async function listAdminCategories(params?: {
     const body = await res.text().catch(() => "");
     throw new Error(`Failed to fetch categories: ${res.status} ${body}`);
   }
-  return res.json();
+  const data = await res.json();
+  const categories =
+    data.product_categories ?? data.categories ?? [];
+  return { categories, count: data.count ?? categories.length };
 }
 
 export async function createAdminCategory(data: Record<string, unknown>): Promise<{ product_category: AdminCategory }> {

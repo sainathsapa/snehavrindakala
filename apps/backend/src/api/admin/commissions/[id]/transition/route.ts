@@ -7,7 +7,7 @@ import type { CommissionService } from "../../../../../modules/commission/servic
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const commissionService = req.scope.resolve(
-    "commissionModuleService"
+    "commission"
   ) as CommissionService;
   const { id } = req.params as { id: string };
 

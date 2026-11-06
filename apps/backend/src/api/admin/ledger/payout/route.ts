@@ -7,7 +7,7 @@ import type { LedgerService } from "../../../../modules/ledger/service";
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
   const ledgerService = req.scope.resolve(
-    "ledgerModuleService"
+    "ledger"
   ) as LedgerService;
 
   const { partner_id, status, offset, limit } = req.query as unknown as {
@@ -38,7 +38,7 @@ async function GET(req: MedusaRequest, res: MedusaResponse) {
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const ledgerService = req.scope.resolve(
-    "ledgerModuleService"
+    "ledger"
   ) as LedgerService;
 
   const body = req.body as any;

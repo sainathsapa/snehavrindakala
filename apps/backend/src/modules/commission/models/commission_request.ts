@@ -1,48 +1,14 @@
 /**
- * Commission request entity. Follows the status state machine defined in the
- * build plan (Section 11.3).
+ * Medusa's module loader discovers MikroORM entities from the `models/`
+ * directory. Re-export the module's DML entities so the module's own
+ * manager registers their metadata.
  */
-export type CommissionStatus =
-  | "New"
-  | "Needs clarification"
-  | "Feasibility review"
-  | "Awaiting artist/capacity"
-  | "Quote drafted"
-  | "Quote sent"
-  | "Awaiting payment"
-  | "Accepted"
-  | "In production"
-  | "Proof review"
-  | "Approved"
-  | "Ready to dispatch"
-  | "Shipped"
-  | "Completed"
-  | "Declined"
-  | "Cancelled"
-  | "On hold"
-  | "Expired"
-  | "Refund pending"
-  | "Refunded"
-  | "Disputed";
-
-export class CommissionRequest {
-  id!: string;
-  customer_id!: string;
-  reference_id!: string;
-  art_form!: string;
-  brief!: string;
-  intended_use?: string | null;
-  dimensions?: string | null;
-  budget_range?: string | null;
-  target_date?: Date | null;
-  delivery_region?: string | null;
-  delivery_pin?: string | null;
-  status!: CommissionStatus;
-  assigned_artist_id?: string | null;
-  created_at!: Date;
-  updated_at!: Date;
-}
-
-export type CommissionRequestInput = Partial<
-  Omit<CommissionRequest, "id" | "created_at" | "updated_at">
-> & { id?: string };
+export {
+  CommissionRequest,
+  CommissionAttachment,
+  CommissionQuote,
+  CommissionMilestone,
+  CommissionRevision,
+} from "../entities/index";
+export type { CommissionStatus } from "../entities/commission_request";
+export type { QuoteStatus } from "../entities/commission_quote";

@@ -23,7 +23,9 @@ async function query(sql: string, params: any[] = []) {
 }
 
 export async function GET() {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     await query(`
       CREATE TABLE IF NOT EXISTS journal_posts (
@@ -51,7 +53,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const { title, slug, content, excerpt, cover_image, author, status } = body;

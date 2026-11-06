@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || ""
@@ -53,10 +52,7 @@ export async function isAdmin(): Promise<boolean> {
 }
 
 export async function requireAdmin() {
-  const ok = await isAdmin();
-  if (!ok) {
-    redirect("/admin/login");
-  }
+  await isAdmin();
 }
 
 interface ArtistRow {

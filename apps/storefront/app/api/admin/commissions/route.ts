@@ -23,7 +23,9 @@ async function query(sql: string, params: any[] = []) {
 }
 
 export async function GET() {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     await query(`
       CREATE TABLE IF NOT EXISTS commission_payouts (
@@ -42,7 +44,7 @@ export async function GET() {
     const payouts = await query(`
       SELECT cp.*, a.display_name
       FROM commission_payouts cp
-      LEFT JOIN artist a ON a.id = cp.artist_id
+      LEFT JOIN artist a ON a.id::text = cp.artist_id
       ORDER BY cp.created_at DESC
       LIMIT 100
     `);
@@ -58,7 +60,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const { artist_id, amount, currency_code, status, notes } = body;
@@ -85,7 +89,7 @@ export async function POST(req: Request) {
     const id = `payout_${uuidv4().slice(0, 8)}`;
 
     const artistRow = await query(
-      "SELECT display_name FROM artist WHERE id = $1",
+      "SELECT display_name FROM artist WHERE id::text = $1",
       [artist_id]
     );
     const artistName = artistRow[0]?.display_name || "Unknown Artist";

@@ -21,7 +21,7 @@ export async function PATCH(
   const body = (req.body as unknown) as { enabled?: boolean };
 
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
 
   if (!artistService) {

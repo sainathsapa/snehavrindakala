@@ -7,7 +7,7 @@ import type { CommissionService } from "../../../modules/commission/service";
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
   const commissionService = req.scope.resolve(
-    "commissionModuleService"
+    "commission"
   ) as CommissionService;
 
   const { status, assigned_artist_id, offset, limit } = req.query as unknown as {

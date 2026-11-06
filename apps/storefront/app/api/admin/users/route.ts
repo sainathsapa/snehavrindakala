@@ -3,6 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/app/admin/actions";
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
@@ -21,6 +22,9 @@ async function query(sql: string, params: any[] = []) {
 }
 
 export async function GET(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     // Ensure table exists
     await query(`
@@ -45,6 +49,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const { email, password, role = "viewer" } = body;
@@ -84,6 +91,9 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const { id, role, is_active } = body;
@@ -122,6 +132,9 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

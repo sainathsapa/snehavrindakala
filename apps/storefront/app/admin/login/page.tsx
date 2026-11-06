@@ -1,106 +1,89 @@
-import Link from "next/link";
-import { adminLoginAction } from "../actions";
-import { Card, CardContent, CardHeader, CardTitle } from "@snehavrinda-kala/ui";
-import { Button } from "@snehavrinda-kala/ui";
+"use client";
 
-export const metadata = {
-  title: "Admin login",
-  robots: { index: false, follow: false },
-};
+import { useState } from "react";
 
-export default async function AdminLoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
-  const { error } = await searchParams;
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        window.location.href = "/admin";
+      } else {
+        setError("Invalid email or password");
+        setLoading(false);
+      }
+    } catch {
+      setError("Login failed");
+      setLoading(false);
+    }
+  }
 
   return (
-    <main className="py-12">
-      <div className="mx-auto max-w-md px-4 sm:px-6">
+    <main className="min-h-screen flex items-center justify-center bg-rang-paper">
+      <div className="max-w-md px-6 py-8 rounded-xl border border-sand-border bg-surface shadow-lg">
         <div className="text-center mb-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sindoor font-sans font-medium hover:underline"
-          >
-            ← Back to SnehaVrinda Kala
-          </Link>
-          <h1 className="mt-4 text-3xl md:text-4xl font-serif font-semibold text-deep-ink tracking-tight">
-            Admin login
+          <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
+            Admin Login
           </h1>
-          <p className="mt-2 text-muted-ink font-sans">
-            Partner &amp; catalogue administration
+          <p className="text-muted-ink font-sans mt-2">
+            Sign in to your admin account
           </p>
         </div>
-
-        <Card elevated className="max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            {error && (
-              <p className="mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 font-sans">
-                {error === "missing"
-                  ? "Email and password are required."
-                  : error === "not_admin"
-                    ? "This email is not authorised for admin access. Contact the store owner."
-                    : "We could not sign you in. Check your details and try again."}
-              </p>
-            )}
-          </CardHeader>
-          <CardContent>
-            <form action={adminLoginAction} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-deep-ink mb-1 font-sans"
-                >
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-deep-ink mb-1 font-sans"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
-              >
-                Sign in to admin
-              </button>
-            </form>
-            <p className="mt-6 text-sm text-muted-ink font-sans text-center">
-              Not an admin?{" "}
-              <Link href="/account/login" className="text-sindoor underline">
-                Customer login
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-
-        <p className="mt-8 text-xs text-muted-ink font-sans text-center">
-          Sample admin: {process.env.ADMIN_EMAILS ||
-            "admin@snehavrindakala.example"}. Set ADMIN_EMAILS in .env and
-          create a customer account with that email to access the panel.
-        </p>
+        {error && (
+          <div className="mb-6 p-3 rounded-md bg-sindoor/10 border border-sindoor/20 text-sindoor text-sm">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
+              placeholder="sneha@sainath.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
       </div>
     </main>
   );

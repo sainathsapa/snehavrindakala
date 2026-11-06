@@ -3,12 +3,16 @@
  */
 
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/app/admin/actions";
 import fs from "fs";
 import path from "path";
 
 const ENV_PATH = path.resolve(process.cwd(), ".env");
 
 export async function GET() {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const raw =
       process.env.PLATFORM_MODE ||
@@ -21,6 +25,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { mode } = await req.json();
     const validMode = mode === "platform" ? "platform" : "single-brand";

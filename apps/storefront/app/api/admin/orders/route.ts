@@ -4,6 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
+import { getSystemAdminToken } from "@/lib/admin";
 
 async function adminFetch(
   backendUrl: string,
@@ -11,8 +12,10 @@ async function adminFetch(
   path: string,
   options: RequestInit = {}
 ) {
+  const token = await getSystemAdminToken();
   const headers = new Headers(options.headers);
   headers.set("x-publishable-api-key", publishableKey);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
@@ -20,7 +23,9 @@ async function adminFetch(
 }
 
 export async function GET(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const limit = searchParams.get("limit") || "20";
@@ -37,9 +42,13 @@ export async function GET(req: Request) {
       process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
       "";
 
-    let url = `/admin/orders?limit=${limit}&offset=${offset}`;
-    if (status) url += `&status=${status}`;
-    if (q) url += `&q=${q}`;
+    const fields =
+      "id,display_id,status,total,currency_code,created_at,*customer";
+    let url = `/admin/orders?limit=${limit}&offset=${offset}&fields=${encodeURIComponent(
+      fields
+    )}`;
+    if (status) url += `&status[]=${encodeURIComponent(status)}`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
 
     const res = await adminFetch(BACKEND_URL, PUBLISHABLE_KEY, url);
 

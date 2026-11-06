@@ -7,7 +7,7 @@ import type { AuditService } from "../../../modules/audit/service";
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
   const auditService = req.scope.resolve(
-    "auditModuleService"
+    "audit"
   ) as AuditService;
 
   const { entity, entity_id, actor, action, offset, limit } = req.query as unknown as {

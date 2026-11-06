@@ -21,9 +21,9 @@ export default async function commissionSubscriber(args: any): Promise<void> {
   const data = event?.data || {};
   const id = event?.id || "";
 
-  const notificationModuleService = container.resolve("notificationModuleService");
-  const ledgerModuleService = container.resolve("ledgerModuleService");
-  const integrationEventService = container.resolve("integrationEventModuleService");
+  const notificationModuleService = container.resolve("notification");
+  const ledgerModuleService = container.resolve("ledger");
+  const integrationEventService = container.resolve("integration_event");
 
   const correlationId = id;
 

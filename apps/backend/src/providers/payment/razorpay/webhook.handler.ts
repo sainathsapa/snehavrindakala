@@ -22,7 +22,7 @@ export class RazorpayWebhookHandler {
     this.provider_ = container.resolve("razorpayPaymentProvider");
     this.manager_ = container.resolve("manager");
     this.integrationEventService_ =
-      container.resolve("integrationEventModuleService");
+      container.resolve("integration_event");
   }
 
   async handle(req: any, res: any): Promise<void> {

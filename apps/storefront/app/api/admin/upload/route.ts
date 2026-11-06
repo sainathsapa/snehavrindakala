@@ -15,7 +15,9 @@ import { v4 as uuidv4 } from "uuid";
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "products");
 
 export async function POST(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;

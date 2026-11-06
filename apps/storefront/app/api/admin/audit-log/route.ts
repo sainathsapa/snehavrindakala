@@ -22,7 +22,9 @@ async function query(sql: string, params: any[] = []) {
 }
 
 export async function GET(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     await query(`
       CREATE TABLE IF NOT EXISTS audit_log (

@@ -40,7 +40,9 @@ function rowsToCsv(rows: any[]): string {
 }
 
 export async function GET(req: Request) {
-  await requireAdmin();
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "orders";

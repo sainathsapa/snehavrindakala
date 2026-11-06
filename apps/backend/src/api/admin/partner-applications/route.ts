@@ -7,7 +7,7 @@ import type { ArtistService } from "../../../modules/artist/service";
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
 
   const { review_status, offset, limit } = req.query as unknown as {
@@ -36,7 +36,7 @@ async function GET(req: MedusaRequest, res: MedusaResponse) {
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
 
   const body = req.body as any;

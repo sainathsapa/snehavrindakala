@@ -16,7 +16,7 @@ export default async function integrationEventRetrySubscriber(
   const data = event?.data || {};
 
   const integrationEventService = container.resolve(
-    "integrationEventModuleService"
+    "integration_event"
   );
 
   const { provider, limit = 50 } = data || {};

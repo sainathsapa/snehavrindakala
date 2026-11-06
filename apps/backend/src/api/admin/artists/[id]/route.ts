@@ -8,7 +8,7 @@ import type { UpdateArtistInput } from "../../../../modules/artist/types";
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
   const { id } = req.params as { id: string };
 
@@ -26,7 +26,7 @@ async function GET(req: MedusaRequest, res: MedusaResponse) {
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
   const { id } = req.params as { id: string };
 
@@ -47,7 +47,7 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
  */
 async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   const artistService = req.scope.resolve(
-    "artistModuleService"
+    "artist"
   ) as ArtistService;
   const { id } = req.params as { id: string };
 

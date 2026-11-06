@@ -1,22 +1,14 @@
 /**
- * Immutable earnings ledger entry for partner payout reconciliation.
+ * Medusa's module loader discovers MikroORM entities from the `models/`
+ * directory. Re-export the module's DML entities so the module's own
+ * manager registers their metadata.
  */
-export type LedgerEntryState = "pending" | "paid" | "reversed";
-
-export class EarningsLedgerEntry {
-  id!: string;
-  partner_id!: string;
-  source_type!: "order" | "commission";
-  source_id!: string;
-  gross_basis!: number;
-  deductions!: number;
-  fee_share!: number;
-  currency!: string;
-  state!: LedgerEntryState;
-  audit_metadata?: string | null;
-  created_at!: Date;
-}
-
-export type EarningsLedgerEntryInput = Partial<
-  Omit<EarningsLedgerEntry, "id" | "created_at">
-> & { id?: string };
+export {
+  EarningsLedgerEntry,
+  PayoutBatch,
+} from "../entities/index";
+export type {
+  LedgerEntryState,
+  LedgerSourceType,
+  PayoutBatchStatus,
+} from "../entities/index";
