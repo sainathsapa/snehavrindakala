@@ -16,6 +16,7 @@ COPY .npmrc ./
 COPY pnpmfile.js ./
 
 # Copy workspace files for dependency installation
+COPY package.json ./
 COPY pnpm-workspace.yaml ./
 COPY pnpm-lock.yaml ./
 

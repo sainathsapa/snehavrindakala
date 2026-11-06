@@ -12,6 +12,7 @@ RUN corepack enable && corepack prepare pnpm@12 --activate
 RUN apk add --no-cache python3 make g++
 
 # Workspace metadata is needed so pnpm links workspace packages correctly.
+COPY package.json ./
 COPY .npmrc pnpmfile.js pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/storefront/package.json ./apps/storefront/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
