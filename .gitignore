@@ -55,3 +55,6 @@ coverage/
 
 # Sanity generated cache
 .sanity/
+
+# Medusa generated
+.medusa/
