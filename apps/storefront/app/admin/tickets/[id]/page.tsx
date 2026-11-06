@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@snehavrinda-kala/ui";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface Ticket {
   id: string;
@@ -26,8 +26,8 @@ interface TicketReply {
 }
 
 export default function TicketDetailPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = params.id as string;
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [replies, setReplies] = useState<TicketReply[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,6 +175,7 @@ export default function TicketDetailPage() {
           </p>
         </div>
 
+        {/* Ticket header */}
         <div className="rounded-xl border border-sand-border bg-surface p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -242,6 +243,7 @@ export default function TicketDetailPage() {
           </div>
         </div>
 
+        {/* Replies */}
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <div className="border-b border-sand-border bg-rang-paper p-6">
             <h2 className="text-lg font-serif font-semibold text-deep-ink">
@@ -284,6 +286,7 @@ export default function TicketDetailPage() {
           </div>
         </div>
 
+        {/* Reply form */}
         <div className="mt-8 rounded-xl border border-sand-border bg-surface p-6">
           <h2 className="text-lg font-serif font-semibold text-deep-ink mb-4">
             Send Reply

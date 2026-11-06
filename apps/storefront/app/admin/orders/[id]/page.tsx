@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { Button } from "@snehavrinda-kala/ui";
+import { useParams } from "next/navigation";
 
 interface Order {
   id: string;
@@ -24,8 +25,8 @@ interface Order {
 }
 
 export default function OrderDetailPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = params.id as string;
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -204,7 +205,9 @@ export default function OrderDetailPage() {
 
         {/* Customer info */}
         <div className="rounded-xl border border-sand-border bg-surface p-6 mb-8">
-          <h2 className="text-lg font-serif font-semibold text-deep-ink mb-4">Customer Details</h2>
+          <h2 className="text-lg font-serif font-semibold text-deep-ink mb-4">
+            Customer Details
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">Name</p>
@@ -214,16 +217,20 @@ export default function OrderDetailPage() {
             </div>
             <div>
               <p className="text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">Email</p>
-              <p className="text-sm font-sans text-deep-ink">{order.customer?.email}</p>
+              <p className="text-sm font-sans text-deep-ink">
+                {order.customer?.email}
+              </p>
             </div>
             <div>
               <p className="text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">Customer ID</p>
-              <p className="text-sm font-sans text-deep-ink">{order.customer?.id}</p>
+              <p className="text-sm font-sans text-deep-ink">
+                {order.customer?.id}
+              </p>
             </div>
             <div>
               <p className="text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">View Profile</p>
               <Link
-                href={`/admin/customers/[id]?id=${order.customer?.id}`}
+                href={`/admin/customers/${order.customer?.id}`}
                 className="text-sindoor font-medium hover:underline"
               >
                 View customer details →
@@ -305,7 +312,9 @@ export default function OrderDetailPage() {
         {/* Order items */}
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <div className="border-b border-sand-border bg-rang-paper p-6">
-            <h2 className="text-lg font-serif font-semibold text-deep-ink">Order Items ({order.items?.length || 0})</h2>
+            <h2 className="text-lg font-serif font-semibold text-deep-ink">
+              Order Items ({order.items?.length || 0})
+            </h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left divide-y divide-sand-border">

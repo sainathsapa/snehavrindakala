@@ -114,7 +114,7 @@ export default function CustomersPage() {
                   <tr key={customer.id} className="hover:bg-rang-paper/50">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/admin/customers/[id]?id=${customer.id}`}
+                        href={`/admin/customers/${customer.id}`}
                         className="font-sans text-sm text-deep-ink hover:underline"
                       >
                         {customer.first_name} {customer.last_name}

@@ -229,7 +229,12 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-sans text-sm text-deep-ink">
-                        {order.customer?.first_name} {order.customer?.last_name}
+                        <Link
+                          href={`/admin/customers/${order.customer?.id}`}
+                          className="text-sindoor hover:underline"
+                        >
+                          {order.customer?.first_name} {order.customer?.last_name}
+                        </Link>
                       </div>
                       <div className="text-xs text-muted-ink">
                         {order.customer?.email}
@@ -272,7 +277,7 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <Link
-                        href={`/admin/orders/[id]?id=${order.id}`}
+                        href={`/admin/orders/${order.id}`}
                         className="text-sm font-medium text-sindoor hover:underline"
                       >
                         View

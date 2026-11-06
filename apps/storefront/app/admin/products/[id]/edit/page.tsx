@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@snehavrinda-kala/ui";
-import { ImageUpload } from "@/components/image-upload";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface ProductVariant {
   id?: string;
@@ -32,11 +31,9 @@ interface ProductFormData {
   options: Array<{ title: string; values: string[] }>;
 }
 
-const LOW_STOCK_THRESHOLD = 10;
-
 export default function ProductEditPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = params.id as string;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -61,7 +58,7 @@ export default function ProductEditPage() {
   });
 
   const lowStockVariants = form.variants.filter(
-    (v) => v.stock_quantity <= LOW_STOCK_THRESHOLD && v.stock_quantity > 0
+    (v) => v.stock_quantity <= 10 && v.stock_quantity > 0
   );
   const outOfStockVariants = form.variants.filter((v) => v.stock_quantity === 0);
 
@@ -256,7 +253,7 @@ export default function ProductEditPage() {
                     ? `${outOfStockVariants.length} variant(s) out of stock`
                     : ""}
                   {lowStockVariants.length > 0
-                    ? `${lowStockVariants.length} variant(s) low stock (≤${LOW_STOCK_THRESHOLD})`
+                    ? `${lowStockVariants.length} variant(s) low stock (≤10)`
                     : ""}
                 </p>
               </div>
@@ -428,7 +425,7 @@ export default function ProductEditPage() {
                         className={`w-full px-2 py-1 rounded border text-sm font-sans ${
                           variant.stock_quantity === 0
                             ? "border-sindoor"
-                            : variant.stock_quantity <= LOW_STOCK_THRESHOLD
+                            : variant.stock_quantity <= 10
                               ? "border-terracotta"
                               : "border-leaf"
                         }`}
@@ -439,7 +436,7 @@ export default function ProductEditPage() {
                         </p>
                       )}
                       {variant.stock_quantity > 0 &&
-                        variant.stock_quantity <= LOW_STOCK_THRESHOLD && (
+                        variant.stock_quantity <= 10 && (
                           <p className="text-[10px] text-terracotta font-sans">
                             Low stock
                           </p>
@@ -488,13 +485,6 @@ export default function ProductEditPage() {
                   <p className="text-sm text-muted-ink font-sans">
                     No images added. Upload product photos below.
                   </p>
-                  <ImageUpload
-                    value=""
-                    onChange={(url) => {
-                      addImage();
-                      updateImageUrl(form.images.length - 1, url);
-                    }}
-                  />
                 </div>
               ) : (
                 form.images.map((img, idx) => (
@@ -507,10 +497,9 @@ export default function ProductEditPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <ImageUpload
-                          value=""
-                          onChange={(url) => updateImageUrl(idx, url)}
-                        />
+                        <div className="w-full h-full flex items-center justify-center text-sm text-muted-ink">
+                          No image
+                        </div>
                       )}
                       <button
                         type="button"
@@ -525,7 +514,7 @@ export default function ProductEditPage() {
               )}
             </div>
             <p className="mt-2 text-xs text-muted-ink font-sans">
-              Upload product photos using drag-and-drop. Multiple images supported.
+              Add product images using the URL field below each image.
             </p>
           </div>
 

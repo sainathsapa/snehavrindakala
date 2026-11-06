@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface Customer {
   id: string;
@@ -26,8 +26,8 @@ interface Order {
 }
 
 export default function CustomerDetailPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = params.id as string;
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +111,9 @@ export default function CustomerDetailPage() {
           <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
             Customer Details
           </h1>
+          <p className="text-muted-ink font-sans">
+            Support request from {customer.name}
+          </p>
         </div>
 
         {/* Customer info */}
