@@ -5,51 +5,53 @@
 @layer base {
   :root {
     /* Design tokens — SnehaVrinda Kala */
-    --background: 240 48% 96%;      /* #F7F4ED paper */
-    --foreground: 20 9% 13%;        /* #242321 ink */
-    --card: 0 0% 100%;              /* #FFFFFF surface */
-    --card-foreground: 20 9% 13%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 20 9% 13%;
-    --primary: 20 56% 51%;          /* #B96545 terracotta */
+    --background: 40 24% 94%;        /* #F4EFE6 ivory */
+    --foreground: 30 10% 12%;        /* #221F1A ink */
+    --card: 45 60% 99%;              /* #FFFDF8 surface */
+    --card-foreground: 30 10% 12%;
+    --popover: 45 60% 99%;
+    --popover-foreground: 30 10% 12%;
+    --primary: 10 56% 42%;           /* #A63D2F madder */
     --primary-foreground: 0 0% 100%;
-    --secondary: 216 28% 20%;       /* #343C67 indigo */
+    --secondary: 224 38% 19%;        /* #1F2A44 indigo */
     --secondary-foreground: 0 0% 100%;
-    --muted: 20 8% 42%;             /* #6B6862 muted ink */
-    --muted-foreground: 20 6% 46%;
-    --accent: 38 55% 60%;           /* #D8A441 saffron */
-    --accent-foreground: 20 9% 13%;
-    --destructive: 0 84% 60%;
+    --muted: 32 8% 38%;             /* #6B6258 muted ink */
+    --muted-foreground: 32 6% 46%;
+    --accent: 42 68% 55%;            /* #D9A441 haldi */
+    --accent-foreground: 30 10% 12%;
+    --destructive: 0 75% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 38 18% 89%;           /* #E4DED3 border */
-    --input: 38 18% 89%;
-    --ring: 20 56% 51%;
-    --radius: 0.6rem;
+    --border: 38 22% 82%;            /* #D8CCB8 border */
+    --input: 38 22% 82%;
+    --ring: 10 56% 42%;
+
+    --radius: 0.625rem;
 
     --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
     --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+    --font-devanagari: "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif;
   }
 
   .dark {
-    --background: 20 12% 8%;
-    --foreground: 40 8% 90%;
-    --card: 20 10% 12%;
-    --card-foreground: 40 8% 90%;
-    --popover: 20 10% 12%;
-    --popover-foreground: 40 8% 90%;
-    --primary: 20 56% 51%;
+    --background: 30 12% 8%;
+    --foreground: 40 12% 92%;
+    --card: 30 10% 12%;
+    --card-foreground: 40 12% 92%;
+    --popover: 30 10% 12%;
+    --popover-foreground: 40 12% 92%;
+    --primary: 10 56% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 216 28% 40%;
+    --secondary: 224 38% 42%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 20 6% 55%;
-    --muted-foreground: 20 4% 65%;
-    --accent: 38 55% 60%;
-    --accent-foreground: 20 9% 13%;
-    --destructive: 0 70% 55%;
+    --muted: 32 6% 58%;
+    --muted-foreground: 32 4% 68%;
+    --accent: 42 68% 60%;
+    --accent-foreground: 30 10% 12%;
+    --destructive: 0 65% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 20 8% 18%;
-    --input: 20 8% 18%;
-    --ring: 20 56% 51%;
+    --border: 30 8% 20%;
+    --input: 30 8% 20%;
+    --ring: 10 56% 48%;
   }
 
   * {
@@ -91,10 +93,36 @@
   .font-serif {
     font-family: var(--font-serif);
   }
+
+  .font-devanagari {
+    font-family: var(--font-devanagari);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .motif-jaali {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(31, 42, 68, 0.10) 1px, transparent 0),
+      radial-gradient(circle at 9px 9px, rgba(166, 61, 47, 0.06) 1px, transparent 0);
+    background-size: 18px 18px;
+  }
+
+  .motif-blockprint {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(166, 61, 47, 0.06) 0 2px,
+      transparent 2px 16px
+    );
+  }
+
+  .motif-lotus {
+    background-image: url("/images/motifs/lotus-border.svg");
+    background-repeat: repeat-x;
+    background-size: auto 24px;
+    background-position: bottom;
   }
 }

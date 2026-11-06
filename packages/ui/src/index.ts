@@ -1,4 +1,7 @@
-// Shared design system components and tokens for SnehaVrinda Kala.
-// Re-export primitives once components are implemented.
-
 export * from "./button";
+export * from "./card";
+export * from "./badge";
+export * from "./input";
+export * from "./textarea";
+export * from "./select";
+export * from "./section";

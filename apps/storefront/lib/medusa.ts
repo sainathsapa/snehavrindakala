@@ -413,6 +413,61 @@ class MedusaClient {
       `/store/commissions/${encodeURIComponent(referenceId)}`
     );
   }
+  // Customer auth
+  async registerCustomer(email: string, password: string): Promise<{ token: string }> {
+    return this.request<{ token: string }>("/auth/customer/emailpass/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async loginCustomer(email: string, password: string): Promise<{ token: string }> {
+    return this.request<{ token: string }>("/auth/customer/emailpass", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async createCustomer(
+    token: string,
+    data: { email: string; first_name?: string; last_name?: string; phone?: string }
+  ): Promise<{ customer: any }> {
+    return this.request<{ customer: any }>("/store/customers", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getCurrentCustomer(token: string): Promise<{ customer: any }> {
+    return this.request<{ customer: any }>("/store/customers/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  async updateCustomer(
+    token: string,
+    data: Record<string, unknown>
+  ): Promise<{ customer: any }> {
+    return this.request<{ customer: any }>("/store/customers/me", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async listCustomerOrders(
+    token: string,
+    params?: { limit?: number; offset?: number }
+  ): Promise<{ orders: any[]; count: number }> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("limit", String(params?.limit ?? 20));
+    searchParams.set("offset", String(params?.offset ?? 0));
+    return this.request<{ orders: any[]; count: number }>(
+      `/store/orders?${searchParams.toString()}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
 }
 
 export const medusa = new MedusaClient(BACKEND_URL);

@@ -9,6 +9,7 @@ const navLinks = [
   { label: "Art Forms", href: "/art-forms" },
   { label: "Artists", href: "/artists" },
   { label: "Custom Art", href: "/custom-art" },
+  { label: "Sell", href: "/sell" },
   { label: "Journal", href: "/journal" },
   { label: "About", href: "/about" },
 ];

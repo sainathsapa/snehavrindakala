@@ -1,64 +1,114 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
+import { medusa, formatPrice } from "@/lib/medusa";
+import { logoutAction } from "./actions";
+import { Card, CardContent, CardHeader, CardTitle } from "@snehavrinda-kala/ui";
+import { Badge } from "@snehavrinda-kala/ui";
 
-export default function AccountPage() {
+export default async function AccountPage() {
+  const customer = await getCurrentCustomer();
+  if (!customer) {
+    redirect("/account/login");
+  }
+
+  const token = await getAuthToken();
+  let orders: any[] = [];
+  if (token) {
+    try {
+      const result = await medusa.listCustomerOrders(token, { limit: 20 });
+      orders = result.orders ?? [];
+    } catch (error) {
+      console.error("Failed to load orders", error);
+    }
+  }
+
   return (
     <main className="py-10">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink mb-8">
-          Your account
-        </h1>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <aside className="lg:col-span-1 space-y-6">
-            <nav>
-              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider mb-4">
-                Account
-              </h2>
-              <ul className="space-y-1 text-sm text-muted font-sans">
-                <li>
-                  <a
-                    href="#"
-                    className="block px-3 py-2 rounded-md bg-terracotta/10 text-terracotta"
-                  >
-                    Orders
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block px-3 py-2 rounded-md text-muted hover:bg-paper hover:text-terracotta"
-                  >
-                    Addresses
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block px-3 py-2 rounded-md text-muted hover:bg-paper hover:text-terracotta"
-                  >
-                    Commission requests
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block px-3 py-2 rounded-md text-muted hover:bg-paper hover:text-terracotta"
-                  >
-                    Preferences
-                  </a>
-                </li>
-              </ul>
-            </nav>
-          </aside>
-
-          <div className="lg:col-span-3 rounded-xl border border-border bg-surface p-8">
-            <h2 className="text-xl font-serif font-semibold text-ink mb-6">
-              Orders
-            </h2>
-            <p className="text-muted font-sans">
-              Your order history will appear here once you place an order.
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8">
+          <div>
+            <p className="text-sm font-medium text-madder uppercase tracking-wider">
+              Your account
             </p>
+            <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink">
+              {customer.first_name || customer.email}
+            </h1>
+            <p className="mt-1 text-muted font-sans">{customer.email}</p>
           </div>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="text-sm text-muted hover:text-madder transition-colors"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card elevated className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-3 text-sm font-sans">
+                <div>
+                  <dt className="text-muted">Name</dt>
+                  <dd className="text-ink">
+                    {[customer.first_name, customer.last_name].filter(Boolean).join(" ") || "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Email</dt>
+                  <dd className="text-ink">{customer.email}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Phone</dt>
+                  <dd className="text-ink">{customer.phone || "—"}</dd>
+                </div>
+              </dl>
+              <div className="mt-6">
+                <Link href="/custom-art" className="text-sm text-madder underline">
+                  Request custom art
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card elevated className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Recent orders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {orders.length === 0 ? (
+                <p className="text-muted font-sans">
+                  Your order history will appear here once you place an order.
+                </p>
+              ) : (
+                <ul className="space-y-4">
+                  {orders.map((order: any) => (
+                    <li
+                      key={order.id}
+                      className="flex flex-col gap-2 border-b border-border pb-4 last:border-0 last:pb-0"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="font-medium text-ink">{order.display_id ?? order.id}</span>
+                        <Badge variant="outline">{order.status ?? "processing"}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-muted font-sans">
+                        <span>
+                          {order.items?.length ?? 0} item
+                          {(order.items?.length ?? 0) === 1 ? "" : "s"}
+                        </span>
+                        <span>{formatPrice(order.total, order.currency_code)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </main>
