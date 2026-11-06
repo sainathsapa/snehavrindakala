@@ -2,6 +2,7 @@ import { getCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/medusa";
 import { saveCheckoutDetailsAction } from "@/app/cart/actions";
 import Link from "next/link";
+import { CheckoutPayment } from "@/components/checkout-payment";
 
 export const dynamic = "force-dynamic";
 
@@ -48,16 +49,11 @@ export default async function CheckoutPage({
         </h1>
 
         {saved && (
-          <div
-            role="status"
-            className="mb-8 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 font-sans"
-          >
-            Your details have been saved. To complete payment, contact us at{" "}
-            <a href={`mailto:${contactEmail}`} className="underline">
-              {contactEmail}
-            </a>
-            .
-          </div>
+          <CheckoutPayment
+            cartTotal={cart?.total ?? 0}
+            currency={cart?.currency_code || "inr"}
+            cartId={cart?.id ?? ""}
+          />
         )}
 
         {error && (
