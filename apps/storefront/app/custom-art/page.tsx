@@ -153,6 +153,28 @@ export default async function CustomArtPage({
                   placeholder="XXXXXX"
                 />
               </div>
+              <div className="pt-4 border-t border-sand-border">
+                <label className="flex items-start gap-3 cursor-pointer text-sm text-deep-ink font-sans">
+                  <input
+                    type="checkbox"
+                    name="consent"
+                    className="mt-1 text-sindoor focus:ring-sindoor"
+                    required
+                  />
+                  <span>
+                    I consent to SnehaVrinda Kala using my submitted reference
+                    materials for this commission. Reference uploads are private
+                    and not shared publicly.{" "}
+                    <a href="/policies/privacy" className="text-sindoor underline">
+                      Read our privacy notice
+                    </a>
+                  </span>
+                </label>
+                <p className="mt-2 text-xs text-muted-ink font-sans">
+                  Reference files are uploaded via a private, short-lived signed
+                  URL and retained only for the duration of the commission.
+                </p>
+              </div>
               <button
                 type="submit"
                 className="w-full py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
