@@ -51,23 +51,23 @@ export default async function CommissionStatusPage({
   return (
     <main className="py-10">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <nav className="mb-8 text-sm text-muted font-sans">
-          <Link href="/" className="hover:text-terracotta transition-colors">
+        <nav className="mb-8 text-sm text-muted-ink font-sans">
+          <Link href="/" className="text-sindoor transition-colors">
             ← Back home
           </Link>
         </nav>
 
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink mb-6">
+        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-6">
           Commission status
         </h1>
 
-        <div className="rounded-xl border border-border bg-surface p-8">
+        <div className="rounded-xl border border-sand-border bg-surface p-8">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h2 className="text-xl font-serif font-semibold text-ink">
+              <h2 className="text-xl font-serif font-semibold text-deep-ink">
                 {commission.art_form} Commission
               </h2>
-              <p className="text-sm text-muted font-sans">
+              <p className="text-sm text-muted-ink font-sans">
                 Reference: {commission.reference_id}
               </p>
             </div>
@@ -78,56 +78,56 @@ export default async function CommissionStatusPage({
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-semibold text-ink uppercase tracking-wider mb-3">
+              <h3 className="text-sm font-semibold text-deep-ink uppercase tracking-wider mb-3">
                 Brief
               </h3>
-              <p className="text-muted font-sans leading-relaxed">
+              <p className="text-muted-ink font-sans leading-relaxed">
                 {commission.brief}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 text-sm text-muted font-sans">
+            <div className="grid grid-cols-2 gap-6 text-sm text-muted-ink font-sans">
               <div>
-                <p className="text-xs font-medium text-terracotta uppercase">
+                <p className="text-xs font-medium text-sindoor uppercase">
                   Art form
                 </p>
-                <p className="text-ink">{commission.art_form}</p>
+                <p className="text-deep-ink">{commission.art_form}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-terracotta uppercase">
+                <p className="text-xs font-medium text-sindoor uppercase">
                   Target date
                 </p>
-                <p className="text-ink">
+                <p className="text-deep-ink">
                   {commission.target_date || "Not specified"}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-terracotta uppercase">
+                <p className="text-xs font-medium text-sindoor uppercase">
                   Delivery region
                 </p>
-                <p className="text-ink">
+                <p className="text-deep-ink">
                   {commission.delivery_region || "Not specified"}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-terracotta uppercase">
+                <p className="text-xs font-medium text-sindoor uppercase">
                   Status
                 </p>
-                <p className="text-ink">{commission.status}</p>
+                <p className="text-deep-ink">{commission.status}</p>
               </div>
             </div>
 
-            <div className="mt-8 pt-8 border-t border-border">
-              <h3 className="text-lg font-serif font-semibold text-ink mb-4">
+            <div className="mt-8 pt-8 border-t border-sand-border">
+              <h3 className="text-lg font-serif font-semibold text-deep-ink mb-4">
                 What happens next
               </h3>
-              <p className="text-muted font-sans leading-relaxed mb-6">
+              <p className="text-muted-ink font-sans leading-relaxed mb-6">
                 Our team will review your request and get back to you with a
                 quote. You can track the status here at any time using your
                 reference ID.
               </p>
 
-              <div className="flex items-center gap-3 text-sm text-muted font-sans">
+              <div className="flex items-center gap-3 text-sm text-muted-ink font-sans">
                 <p className="flex items-center gap-2">
                   <span>✓</span> Request received
                 </p>

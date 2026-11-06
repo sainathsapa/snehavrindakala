@@ -23,47 +23,57 @@ export default function DesignSystemPage() {
         <SectionHeading
           eyebrow="Design system"
           title="SnehaVrinda Kala"
-          description="Indian-authentic, gallery-calm interface tokens and reusable primitives."
+          description="Indian-art-house colour, type, and reusable primitives."
         />
 
         <Section className="py-0">
-          <h3 className="font-serif text-2xl font-semibold text-ink mb-4">Colour</h3>
+          <h3 className="font-serif text-2xl font-semibold text-deep-ink mb-4">
+            Colour
+          </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
             {[
-              ["Ivory", "bg-ivory", "#F4EFE6"],
-              ["Paper", "bg-paper", "#F7F2E8"],
-              ["Surface", "bg-surface", "#FFFDF8"],
-              ["Ink", "bg-ink", "#221F1A"],
-              ["Madder", "bg-madder", "#A63D2F"],
-              ["Indigo", "bg-indigo", "#1F2A44"],
-              ["Haldi", "bg-haldi", "#D9A441"],
-              ["Peacock", "bg-peacock", "#1E6F6A"],
-              ["Rose", "bg-rose", "#9C3F63"],
-              ["Sage", "bg-sage", "#6F7F5B"],
-              ["Gold", "bg-gold", "#B8860B"],
-              ["Border", "bg-border", "#D8CCB8"],
+              ["Rang Paper", "bg-rang-paper", "#FFF7E8"],
+              ["Surface", "bg-surface", "#FFFCF5"],
+              ["Deep Ink", "bg-deep-ink", "#2B211E"],
+              ["Muted Ink", "bg-muted-ink", "#675A52"],
+              ["Sindoor", "bg-sindoor", "#C84636"],
+              ["Marigold", "bg-marigold", "#E6A72E"],
+              ["Kumkum", "bg-kumkum", "#9F2947"],
+              ["Peacock", "bg-peacock", "#176D6A"],
+              ["Indigo", "bg-indigo", "#263A63"],
+              ["Leaf", "bg-leaf", "#557447"],
+              ["Haldi", "bg-haldi", "#F0C45B"],
+              ["Gulabi", "bg-gulabi", "#D98291"],
+              ["Terracotta", "bg-terracotta", "#B96E4B"],
+              ["Sand Border", "bg-sand-border", "#DCCBB4"],
             ].map(([name, className, hex]) => (
               <div key={name} className="space-y-2">
-                <div className={`h-16 rounded-lg border border-border ${className}`} />
-                <p className="text-xs font-medium text-ink">{name}</p>
-                <p className="text-xs text-muted font-mono">{hex}</p>
+                <div className={`h-16 rounded-lg border border-sand-border ${className}`} />
+                <p className="text-xs font-medium text-deep-ink">{name}</p>
+                <p className="text-xs text-muted-ink font-mono">{hex}</p>
               </div>
             ))}
           </div>
         </Section>
 
         <Section className="py-0">
-          <h3 className="font-serif text-2xl font-semibold text-ink mb-4">Typography</h3>
+          <h3 className="font-serif text-2xl font-semibold text-deep-ink mb-4">
+            Typography
+          </h3>
           <div className="space-y-4">
-            <p className="font-serif text-4xl text-ink">Cormorant Garamond — editorial headings</p>
-            <p className="font-sans text-base text-muted">
+            <p className="font-serif text-4xl text-deep-ink">
+              Cormorant Garamond — editorial headings
+            </p>
+            <p className="font-sans text-base text-muted-ink">
               Manrope — body, forms, filters, and commerce UI.
             </p>
           </div>
         </Section>
 
         <Section className="py-0">
-          <h3 className="font-serif text-2xl font-semibold text-ink mb-4">Buttons</h3>
+          <h3 className="font-serif text-2xl font-semibold text-deep-ink mb-4">
+            Buttons
+          </h3>
           <div className="flex flex-wrap gap-4">
             <Button variant="primary">Primary</Button>
             <Button variant="secondary">Secondary</Button>
@@ -73,27 +83,32 @@ export default function DesignSystemPage() {
         </Section>
 
         <Section className="py-0">
-          <h3 className="font-serif text-2xl font-semibold text-ink mb-4">Badges</h3>
+          <h3 className="font-serif text-2xl font-semibold text-deep-ink mb-4">
+            Badges
+          </h3>
           <div className="flex flex-wrap gap-3">
             <Badge>Default</Badge>
-            <Badge variant="madder">Madder</Badge>
-            <Badge variant="indigo">Indigo</Badge>
+            <Badge variant="sindoor">Sindoor</Badge>
             <Badge variant="peacock">Peacock</Badge>
+            <Badge variant="marigold">Marigold</Badge>
             <Badge variant="haldi">Haldi</Badge>
             <Badge variant="outline">Outline</Badge>
           </div>
         </Section>
 
         <Section className="py-0">
-          <h3 className="font-serif text-2xl font-semibold text-ink mb-4">Card</h3>
+          <h3 className="font-serif text-2xl font-semibold text-deep-ink mb-4">
+            Card
+          </h3>
           <Card elevated className="max-w-md">
             <CardHeader>
               <CardTitle>Hand-painted terracotta diya</CardTitle>
               <CardDescription>Ready to ship · Made in Jaipur</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted font-sans">
-                A quiet surface for artwork, with warm ivory, madder, and indigo accents.
+              <p className="text-sm text-muted-ink font-sans">
+                A quiet surface for artwork, with warm rang paper, sindoor, and
+                indigo accents.
               </p>
             </CardContent>
           </Card>

@@ -16,19 +16,19 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-offset-2";
   const variants = {
     primary:
-      "bg-terracotta text-white hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2",
+      "bg-sindoor text-rang-paper hover:bg-sindoor/90 focus:ring-sindoor border-transparent",
     secondary:
-      "bg-surface text-ink border border-border hover:bg-paper focus:outline-none focus:ring-2 focus:ring-indigo focus:ring-offset-2",
+      "bg-peacock text-rang-paper hover:bg-peacock/90 focus:ring-peacock border-transparent",
     text:
-      "text-ink hover:bg-paper focus:outline-none focus:ring-2 focus:ring-indigo focus:ring-offset-2",
+      "text-sindoor hover:bg-haldi/20 focus:ring-sindoor border-transparent",
   };
   const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg",
+    sm: "px-3 py-1.5 text-sm rounded-md",
+    md: "px-4 py-2 text-base rounded-md",
+    lg: "px-6 py-3 text-lg rounded-md",
   };
 
   return (
@@ -40,7 +40,7 @@ export function Button({
       {isLoading ? (
         <span className="flex items-center gap-2">
           <svg
-            className="animate-spin h-4 w-4 text-white"
+            className="animate-spin h-4 w-4 text-rang-paper"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"

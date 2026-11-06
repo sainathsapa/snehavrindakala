@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const configTailwind = require("@snehavrinda-kala/config-tailwind");
+
 module.exports = {
   darkMode: ["class"],
   content: [
@@ -17,7 +19,9 @@ module.exports = {
       },
     },
     extend: {
+      // Brand palette from config-tailwind (build plan Section 4.2)
       colors: {
+        ...configTailwind.theme.extend.colors,
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -60,6 +64,7 @@ module.exports = {
       fontFamily: {
         serif: ["var(--font-serif)"],
         sans: ["var(--font-sans)"],
+        devanagari: ["var(--font-devanagari)"],
       },
       keyframes: {
         "accordion-down": {
@@ -67,13 +72,23 @@ module.exports = {
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "slide-up": {
+          from: { transform: "translateY(6px)", opacity: "0" },
+          to: { transform: "translateY(0)", opacity: "1" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.6s ease-out both",
+        "slide-up": "slide-up 0.5s ease-out both",
       },
     },
   },

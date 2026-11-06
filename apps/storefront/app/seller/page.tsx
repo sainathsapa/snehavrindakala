@@ -55,7 +55,7 @@ export default async function SellerDashboardPage() {
                       application.status === "approved"
                         ? "peacock"
                         : application.status === "rejected"
-                        ? "madder"
+                        ? "sindoor"
                         : "haldi"
                     }
                   >

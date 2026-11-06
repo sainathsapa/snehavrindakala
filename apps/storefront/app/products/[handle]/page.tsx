@@ -36,8 +36,8 @@ export default async function ProductDetailPage({
   return (
     <main className="py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <nav className="mb-8 text-sm text-muted font-sans">
-          <Link href="/shop" className="hover:text-terracotta transition-colors">
+        <nav className="mb-8 text-sm text-muted-ink font-sans">
+          <Link href="/shop" className="hover:text-sindoor transition-colors">
             ← Back to shop
           </Link>
         </nav>
@@ -45,7 +45,7 @@ export default async function ProductDetailPage({
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="flex flex-col gap-4">
             {images.length > 0 ? (
-              <div className="relative aspect-square rounded-xl border border-border bg-surface overflow-hidden">
+              <div className="relative aspect-square rounded-xl border border-sand-border bg-surface overflow-hidden">
                 <img
                   src={images[0].url}
                   alt={product.title}
@@ -53,8 +53,8 @@ export default async function ProductDetailPage({
                 />
               </div>
             ) : (
-              <div className="relative aspect-square rounded-xl border border-border bg-paper flex items-center justify-center">
-                <span className="text-muted">No image available</span>
+              <div className="relative aspect-square rounded-xl border border-sand-border bg-rang-paper flex items-center justify-center">
+                <span className="text-muted-ink">No image available</span>
               </div>
             )}
             {images.slice(1).length > 0 && (
@@ -64,7 +64,7 @@ export default async function ProductDetailPage({
                     key={img.id || idx}
                     src={img.url}
                     alt={product.title}
-                    className="w-full h-24 object-cover rounded-md border border-border hover:border-terracotta cursor-pointer transition-colors"
+                    className="w-full h-24 object-cover rounded-md border border-sand-border hover:border-sindoor cursor-pointer transition-colors"
                   />
                 ))}
               </div>
@@ -73,43 +73,43 @@ export default async function ProductDetailPage({
 
           <div className="flex flex-col gap-6">
             <div>
-              <span className="text-xs font-medium text-terracotta uppercase tracking-wider">
+              <span className="text-xs font-medium text-sindoor uppercase tracking-wider">
                 {product.category?.name || "Art"}
               </span>
-              <h1 className="text-4xl md:text-5xl font-serif font-semibold text-ink tracking-tight">
+              <h1 className="text-4xl md:text-5xl font-serif font-semibold text-deep-ink tracking-tight">
                 {product.title}
               </h1>
               {product.subtitle && (
-                <p className="mt-2 text-lg text-muted font-sans">
+                <p className="mt-2 text-lg text-muted-ink font-sans">
                   {product.subtitle}
                 </p>
               )}
             </div>
 
-            <div className="border-y border-border py-4">
+            <div className="border-y border-sand-border py-4">
               <div className="flex items-baseline gap-4">
-                <span className="text-3xl font-serif font-bold text-ink">
+                <span className="text-3xl font-serif font-bold text-deep-ink">
                   {formatPrice(price, currency)}
                 </span>
                 {price != null && (
-                  <span className="text-sm text-muted font-sans">{currency}</span>
+                  <span className="text-sm text-muted-ink font-sans">{currency}</span>
                 )}
               </div>
-              <p className="mt-2 text-sm text-muted font-sans capitalize">
+              <p className="mt-2 text-sm text-muted-ink font-sans capitalize">
                 {stockType.replace(/_/g, " ")}
               </p>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-serif font-semibold text-ink">
+              <h3 className="text-lg font-serif font-semibold text-deep-ink">
                 Description
               </h3>
-              <p className="text-muted font-sans leading-relaxed whitespace-pre-line">
+              <p className="text-muted-ink font-sans leading-relaxed whitespace-pre-line">
                 {product.description || "Details coming soon."}
               </p>
             </div>
 
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-sand-border">
               <AddToCart
                 variantId={variantId}
                 disabled={isCustomOnly || !variantId}

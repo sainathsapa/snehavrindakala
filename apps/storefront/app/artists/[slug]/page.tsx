@@ -25,15 +25,15 @@ export default async function ArtistProfilePage({
   return (
     <main className="py-10">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <nav className="mb-8 text-sm text-muted font-sans">
-          <Link href="/artists" className="hover:text-terracotta transition-colors">
+        <nav className="mb-8 text-sm text-muted-ink font-sans">
+          <Link href="/artists" className="text-sindoor transition-colors">
             ← Back to artists
           </Link>
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="lg:w-1/3">
-            <div className="relative aspect-square rounded-xl border border-border bg-surface overflow-hidden mb-6">
+            <div className="relative aspect-square rounded-xl border border-sand-border bg-surface overflow-hidden mb-6">
               {artist.portrait_media_id ? (
                 <img
                   src={`/images/artists/${artist.portrait_media_id}.jpg`}
@@ -41,8 +41,8 @@ export default async function ArtistProfilePage({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-paper flex items-center justify-center">
-                  <span className="text-muted">Artist portrait</span>
+                <div className="w-full h-full bg-rang-paper flex items-center justify-center">
+                  <span className="text-muted-ink">Artist portrait</span>
                 </div>
               )}
             </div>
@@ -61,11 +61,11 @@ export default async function ArtistProfilePage({
           </div>
 
           <div className="flex-1">
-            <h1 className="text-4xl md:text-5xl font-serif font-semibold text-ink tracking-tight mb-2">
+            <h1 className="text-4xl md:text-5xl font-serif font-semibold text-deep-ink tracking-tight mb-2">
               {artist.display_name}
             </h1>
             {artist.bio && (
-              <p className="text-lg text-muted font-sans leading-relaxed mb-6">
+              <p className="text-lg text-muted-ink font-sans leading-relaxed mb-6">
                 {artist.bio}
               </p>
             )}
@@ -73,14 +73,14 @@ export default async function ArtistProfilePage({
             <div className="space-y-6">
               {artist.disciplines && artist.disciplines.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-ink uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-deep-ink uppercase tracking-wider mb-3">
                     Disciplines
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {artist.disciplines.map((d: string) => (
                       <span
                         key={d}
-                        className="px-3 py-1 rounded-md border border-border bg-paper text-sm text-muted"
+                        className="px-3 py-1 rounded-md border border-sand-border bg-rang-paper text-sm text-muted-ink"
                       >
                         {d}
                       </span>
@@ -91,14 +91,14 @@ export default async function ArtistProfilePage({
 
               {artist.techniques && artist.techniques.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-ink uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-deep-ink uppercase tracking-wider mb-3">
                     Techniques
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {artist.techniques.map((t: string) => (
                       <span
                         key={t}
-                        className="px-3 py-1 rounded-md border border-border bg-paper text-sm text-muted"
+                        className="px-3 py-1 rounded-md border border-sand-border bg-rang-paper text-sm text-muted-ink"
                       >
                         {t}
                       </span>

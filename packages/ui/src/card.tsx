@@ -7,7 +7,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export function Card({ className, elevated = false, ...props }: CardProps) {
   return (
     <div
-      className={`rounded-xl border border-border bg-surface ${elevated ? "shadow-soft" : ""} ${className ?? ""}`}
+      className={`rounded-xl border border-sand-border bg-surface ${elevated ? "shadow-lifted" : ""} ${className ?? ""}`}
       {...props}
     />
   );
@@ -18,11 +18,11 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
 }
 
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={`font-serif text-xl font-semibold text-ink ${className ?? ""}`} {...props} />;
+  return <h3 className={`font-serif text-xl font-semibold text-deep-ink ${className ?? ""}`} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={`text-sm text-muted font-sans ${className ?? ""}`} {...props} />;
+  return <p className={`text-sm text-muted-ink font-sans ${className ?? ""}`} {...props} />;
 }
 
 export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

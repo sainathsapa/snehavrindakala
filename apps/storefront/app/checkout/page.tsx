@@ -21,16 +21,16 @@ export default async function CheckoutPage({
     return (
       <main className="py-10">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink mb-8">
+          <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
             Checkout
           </h1>
-          <div className="rounded-xl border border-border bg-surface p-8 text-center">
-            <p className="text-lg text-muted font-sans mb-6">
+          <div className="rounded-xl border border-sand-border bg-surface p-8 text-center">
+            <p className="text-lg text-muted-ink font-sans mb-6">
               Your cart is empty.
             </p>
             <Link
               href="/shop"
-              className="inline-flex items-center gap-2 text-sm font-medium text-terracotta hover:underline"
+              className="inline-flex items-center gap-2 text-sm font-medium text-sindoor hover:underline"
             >
               Browse products →
             </Link>
@@ -43,7 +43,7 @@ export default async function CheckoutPage({
   return (
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink mb-8">
+        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
           Checkout
         </h1>
 
@@ -70,15 +70,15 @@ export default async function CheckoutPage({
         )}
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <section className="rounded-xl border border-border bg-surface p-8">
-            <h2 className="text-xl font-serif font-semibold text-ink mb-6">
+          <section className="rounded-xl border border-sand-border bg-surface p-8">
+            <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
               Order Summary
             </h2>
-            <ul className="space-y-4 text-muted font-sans">
+            <ul className="space-y-4 text-muted-ink font-sans">
               {items.map((item) => (
                 <li
                   key={item.id}
-                  className="flex justify-between gap-4 border-b border-border pb-3"
+                  className="flex justify-between gap-4 border-b border-sand-border pb-3"
                 >
                   <span>
                     {item.product_title || item.title || "Product"}{" "}
@@ -92,22 +92,22 @@ export default async function CheckoutPage({
                   </span>
                 </li>
               ))}
-              <li className="flex justify-between font-serif font-semibold text-ink pt-2">
+              <li className="flex justify-between font-serif font-semibold text-deep-ink pt-2">
                 <span>Total</span>
                 <span>{formatPrice(cart?.total ?? 0, cart?.currency_code)}</span>
               </li>
             </ul>
           </section>
 
-          <section className="rounded-xl border border-border bg-surface p-8">
-            <h2 className="text-xl font-serif font-semibold text-ink mb-6">
+          <section className="rounded-xl border border-sand-border bg-surface p-8">
+            <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
               Delivery Details
             </h2>
             <form action={saveCheckoutDetailsAction} className="space-y-4">
               <div>
                 <label
                   htmlFor="full_name"
-                  className="block text-sm font-medium text-ink mb-1"
+                  className="block text-sm font-medium text-deep-ink mb-1"
                 >
                   Full name
                 </label>
@@ -117,14 +117,14 @@ export default async function CheckoutPage({
                   type="text"
                   autoComplete="name"
                   required
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-ink mb-1"
+                    className="block text-sm font-medium text-deep-ink mb-1"
                   >
                     Email
                   </label>
@@ -134,13 +134,13 @@ export default async function CheckoutPage({
                     type="email"
                     autoComplete="email"
                     required
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="phone"
-                    className="block text-sm font-medium text-ink mb-1"
+                    className="block text-sm font-medium text-deep-ink mb-1"
                   >
                     Phone
                   </label>
@@ -150,14 +150,14 @@ export default async function CheckoutPage({
                     type="tel"
                     autoComplete="tel"
                     required
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
               </div>
               <div>
                 <label
                   htmlFor="address"
-                  className="block text-sm font-medium text-ink mb-1"
+                  className="block text-sm font-medium text-deep-ink mb-1"
                 >
                   Delivery address
                 </label>
@@ -167,14 +167,14 @@ export default async function CheckoutPage({
                   rows={3}
                   autoComplete="street-address"
                   required
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label
                     htmlFor="city"
-                    className="block text-sm font-medium text-ink mb-1"
+                    className="block text-sm font-medium text-deep-ink mb-1"
                   >
                     City
                   </label>
@@ -184,13 +184,13 @@ export default async function CheckoutPage({
                     type="text"
                     autoComplete="address-level2"
                     required
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="state"
-                    className="block text-sm font-medium text-ink mb-1"
+                    className="block text-sm font-medium text-deep-ink mb-1"
                   >
                     State
                   </label>
@@ -200,13 +200,13 @@ export default async function CheckoutPage({
                     type="text"
                     autoComplete="address-level1"
                     required
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="postal_code"
-                    className="block text-sm font-medium text-ink mb-1"
+                    className="block text-sm font-medium text-deep-ink mb-1"
                   >
                     PIN code
                   </label>
@@ -218,17 +218,17 @@ export default async function CheckoutPage({
                     pattern="[0-9]{6}"
                     autoComplete="postal-code"
                     required
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-terracotta"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-terracotta text-white rounded-md font-medium hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2 transition-colors"
+                className="w-full py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
               >
                 Save delivery details
               </button>
-              <p className="text-xs text-muted font-sans">
+              <p className="text-xs text-muted-ink font-sans">
                 Online payment is not enabled in this environment. Your cart and
                 delivery details are saved on the backend; our team will contact
                 you to complete payment.
@@ -240,7 +240,7 @@ export default async function CheckoutPage({
         <div className="mt-8 text-center">
           <Link
             href="/cart"
-            className="text-sm text-muted font-sans hover:text-terracotta transition-colors"
+            className="text-sm text-muted-ink font-sans hover:text-sindoor transition-colors"
           >
             ← Back to cart
           </Link>

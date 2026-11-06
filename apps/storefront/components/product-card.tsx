@@ -27,32 +27,32 @@ export function ProductCard({
   };
 
   return (
-    <article className="group relative rounded-xl border border-border bg-surface overflow-hidden transition-all hover:shadow-md">
+    <article className="group relative rounded-xl border border-sand-border bg-surface overflow-hidden transition-all hover:shadow-md">
       {isNew && (
-        <span className="absolute top-3 left-3 z-10 px-2 py-1 text-[10px] font-semibold text-terracotta uppercase tracking-wider bg-white/80 backdrop-blur rounded">
+        <span className="absolute top-3 left-3 z-10 px-2 py-1 text-[10px] font-semibold text-sindoor uppercase tracking-wider bg-rang-paper/80 backdrop-blur rounded">
           New
         </span>
       )}
-      <div className="relative aspect-square overflow-hidden bg-paper">
+      <div className="relative aspect-square overflow-hidden bg-rang-paper">
         <img
           src={image}
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
-        <span className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-ink/90 text-[11px] text-white font-sans font-medium">
+        <span className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-deep-ink/90 text-[11px] text-white font-sans font-medium">
           {stockLabels[stockType] ?? stockType.replace(/_/g, " ")}
         </span>
       </div>
       <div className="p-4">
         <Link href={`/products/${handle}`} className="block">
-          <h3 className="text-lg font-serif font-semibold text-ink leading-tight">
+          <h3 className="text-lg font-serif font-semibold text-deep-ink leading-tight">
             {title}
           </h3>
-          <p className="mt-1 text-xs text-muted font-sans">{artist}</p>
+          <p className="mt-1 text-xs text-muted-ink font-sans">{artist}</p>
         </Link>
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-lg font-sans font-bold text-ink">
+          <span className="text-lg font-sans font-bold text-deep-ink">
             {formatPrice(price)}
           </span>
         </div>

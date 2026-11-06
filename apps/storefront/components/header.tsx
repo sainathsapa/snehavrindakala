@@ -26,7 +26,7 @@ export function Header() {
             className="flex items-center gap-2"
             aria-label="SnehaVrinda Kala home"
           >
-            <span className="text-xl font-serif font-bold text-ink tracking-tight">
+            <span className="text-xl font-serif font-bold text-deep-ink tracking-tight">
               SnehaVrinda
             </span>
             <span className="text-xl font-serif font-bold text-terracotta tracking-tight">
@@ -39,14 +39,14 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-muted hover:text-terracotta transition-colors"
+                className="text-muted-ink hover:text-terracotta transition-colors"
               >
                 {link.label}
               </Link>
             ))}
             <Link
               href="/cart"
-              className="ml-6 flex items-center gap-2 text-muted hover:text-terracotta transition-colors relative"
+              className="ml-6 flex items-center gap-2 text-muted-ink hover:text-terracotta transition-colors relative"
               aria-label="Cart"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,7 +61,7 @@ export function Header() {
             </Link>
             <Link
               href="/account"
-              className="ml-4 text-muted hover:text-terracotta transition-colors"
+              className="ml-4 text-muted-ink hover:text-terracotta transition-colors"
               aria-label="Account"
             >
               Account
@@ -69,7 +69,7 @@ export function Header() {
           </nav>
 
           <button
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-muted hover:bg-paper hover:text-terracotta focus:outline-none"
+            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-muted-ink hover:bg-rang-paper hover:text-terracotta focus:outline-none"
             onClick={() => setMobileMenuOpen((open) => !open)}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -97,7 +97,7 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-muted hover:bg-paper hover:text-terracotta"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-muted-ink hover:bg-rang-paper hover:text-terracotta"
                 >
                   {link.label}
                 </Link>
@@ -105,7 +105,7 @@ export function Header() {
               <div className="pt-4">
                 <Link
                   href="/cart"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-muted hover:bg-paper hover:text-terracotta flex items-center gap-2"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-muted-ink hover:bg-rang-paper hover:text-terracotta flex items-center gap-2"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -119,7 +119,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/account"
-                  className="mt-2 block px-3 py-2 rounded-md text-base font-medium text-muted hover:bg-paper hover:text-terracotta"
+                  className="mt-2 block px-3 py-2 rounded-md text-base font-medium text-muted-ink hover:bg-rang-paper hover:text-terracotta"
                 >
                   Account
                 </Link>

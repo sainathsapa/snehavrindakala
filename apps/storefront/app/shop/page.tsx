@@ -24,12 +24,12 @@ export default async function ShopPage({
   }
 
   return (
-    <main className="py-10">
+    <main className="py-10 bg-rang-paper">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink mb-8">
+        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
           All products
         </h1>
-        <p className="mb-8 text-lg text-muted font-sans leading-relaxed">
+        <p className="mb-8 text-lg text-muted-ink font-sans leading-relaxed">
           Browse our curated catalogue. Each listing shows the maker, materials,
           care details, and whether it is ready to ship or made to order.
         </p>
@@ -55,12 +55,12 @@ export default async function ShopPage({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-lg text-muted font-sans mb-6">
+            <p className="text-lg text-muted-ink font-sans mb-6">
               The catalogue is being refreshed. Please check back shortly.
             </p>
             <Link
               href="/art-forms"
-              className="px-6 py-3 bg-terracotta text-white rounded-md font-medium hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2 transition-colors"
+              className="px-6 py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
             >
               Browse Art Forms
             </Link>

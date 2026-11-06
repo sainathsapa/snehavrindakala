@@ -41,10 +41,10 @@ export default function ArtFormsPage() {
   return (
     <main className="py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink mb-8">
+        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
           Shop by art form
         </h1>
-        <p className="mb-8 text-lg text-muted font-sans">
+        <p className="mb-8 text-lg text-muted-ink font-sans">
           Browse curated collections organized by medium and technique. Each
           collection shows the maker, materials, and care details.
         </p>
@@ -52,15 +52,15 @@ export default function ArtFormsPage() {
           {artForms.map((form) => (
             <section
               key={form.href}
-              className="rounded-xl border border-border bg-surface p-8 hover:shadow-md transition-shadow"
+              className="rounded-xl border border-sand-border bg-surface p-8 hover:shadow-md transition-shadow"
             >
-              <h2 className="text-2xl font-serif font-semibold text-ink mb-2">
+              <h2 className="text-2xl font-serif font-semibold text-deep-ink mb-2">
                 {form.name}
               </h2>
-              <p className="text-muted font-sans">{form.description}</p>
+              <p className="text-muted-ink font-sans">{form.description}</p>
               <a
                 href={form.href}
-                className="mt-4 inline-block text-sm font-medium text-terracotta hover:underline"
+                className="mt-4 inline-block text-sm font-medium text-sindoor hover:underline"
               >
                 Explore {form.name} →
               </a>
