@@ -45,15 +45,20 @@ async function adminLogin() {
     body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
   });
   if (status !== 200 && status !== 201) {
-    throw new Error(
-      `Admin login failed (${status}): ${JSON.stringify(body)}. Set ADMIN_EMAIL/ADMIN_PASSWORD in .env.`
+    console.warn(
+      `⚠ Medusa admin login failed (${status}). Admin-only seeding (regions, sales channels, products) will be skipped. `
+        + `Set MEDUSA_ADMIN_EMAIL/MEDUSA_ADMIN_PASSWORD for a Medusa system admin user.`
     );
+    adminToken = null;
+    return;
   }
   adminToken = body.token || body.access_token || body.session?.token;
   if (!adminToken) {
-    throw new Error(`Admin login returned no token: ${JSON.stringify(body)}`);
+    console.warn("⚠ Medusa admin login returned no token. Admin-only seeding will be skipped.");
+    adminToken = null;
+    return;
   }
-  console.log("✓ Authenticated as admin");
+  console.log("✓ Authenticated as Medusa admin");
 }
 
 async function getList(path) {
@@ -294,13 +299,25 @@ async function ensureAdminCustomer() {
 async function main() {
   console.log(`🌱 Seeding SnehaVrinda Kala against ${BACKEND_URL}`);
   await adminLogin();
-  const regionId = await ensureRegion();
-  const salesChannelId = await ensureSalesChannel(regionId);
-  await ensurePublishableKey(salesChannelId);
-  const categoryIds = await ensureCategories();
-  const artistIds = await ensureArtists();
-  await ensureProducts(categoryIds);
-  if (artistIds[0]) await ensureCommission(artistIds[0]);
+
+  // Admin-only seeding (requires Medusa system admin credentials).
+  // These create regions, sales channels, products, artists — needed for
+  // the storefront to have data, but optional for admin panel access.
+  if (adminToken) {
+    const regionId = await ensureRegion();
+    const salesChannelId = await ensureSalesChannel(regionId);
+    await ensurePublishableKey(salesChannelId);
+    const categoryIds = await ensureCategories();
+    const artistIds = await ensureArtists();
+    await ensureProducts(categoryIds);
+    if (artistIds[0]) await ensureCommission(artistIds[0]);
+  } else {
+    console.warn("⚠ Skipping admin-only seeding (regions, products, artists). "
+      + "Create a Medusa system admin user to seed catalogue data.");
+  }
+
+  // Customer account creation is public — works without admin auth.
+  // This is what lets you log into the admin panel.
   await ensureAdminCustomer();
   console.log("✅ Seed complete.");
 }
