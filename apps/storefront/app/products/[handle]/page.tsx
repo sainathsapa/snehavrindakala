@@ -4,7 +4,7 @@ import {
   getStockType,
   medusa,
 } from "@/lib/medusa";
-import { AddToCart } from "@/components/add-to-cart";
+import { ProductOptions } from "@/components/product-options";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -98,6 +98,15 @@ export default async function ProductDetailPage({
               <p className="mt-2 text-sm text-muted-ink font-sans capitalize">
                 {stockType.replace(/_/g, " ")}
               </p>
+
+              <ProductOptions
+                variants={variants}
+                price={price}
+                currency={currency}
+                stockType={stockType}
+                isCustomOnly={isCustomOnly}
+                handle={handle}
+              />
             </div>
 
             <div className="space-y-4">
@@ -107,18 +116,6 @@ export default async function ProductDetailPage({
               <p className="text-muted-ink font-sans leading-relaxed whitespace-pre-line">
                 {product.description || "Details coming soon."}
               </p>
-            </div>
-
-            <div className="pt-4 border-t border-sand-border">
-              <AddToCart
-                variantId={variantId}
-                disabled={isCustomOnly || !variantId}
-                disabledReason={
-                  isCustomOnly
-                    ? "This piece is made to order through our commission process."
-                    : "This product is not available for online purchase yet."
-                }
-              />
             </div>
           </div>
         </div>
