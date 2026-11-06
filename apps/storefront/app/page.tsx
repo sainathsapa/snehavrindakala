@@ -53,7 +53,7 @@ const artForms = [
 
 export default function Home() {
   return (
-    <main>
+    <main className="min-h-screen bg-background">
       {/* Hero — full-width brand statement */}
       <section className="py-12 md:py-24 bg-rang-paper">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
