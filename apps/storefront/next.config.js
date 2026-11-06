@@ -18,6 +18,11 @@ const nextConfig = {
       { protocol: "https", hostname: "cdn.sanity.io" },
       { protocol: "https", hostname: backendUrl.hostname },
       { protocol: "http", hostname: backendUrl.hostname },
+      // S3 / CloudFront media storage (build plan Section 12.6)
+      {
+        protocol: "https",
+        hostname: process.env.NEXT_PUBLIC_MEDIA_DOMAIN || "media.snehavrindakala.example",
+      },
     ],
   },
   async headers() {

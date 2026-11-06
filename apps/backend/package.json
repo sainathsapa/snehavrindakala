@@ -19,6 +19,8 @@
     "studio": "pnpm exec medusa develop"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1162.0",
+    "@aws-sdk/s3-request-presigner": "^3.1162.0",
     "@medusajs/cli": "^2.22.3",
     "@medusajs/medusa": "^2.3.0",
     "@medusajs/types": "^2.3.0",
