@@ -11,17 +11,24 @@ import type {
  * List artists with filtering and pagination (internal admin).
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const artistService = req.scope.resolve(
-    "artistModuleService"
-  ) as ArtistService;
+  const artistService = req.scope.resolve("artist") as ArtistService;
 
   const { offset, limit, status, q } = req.query as unknown as ArtistFilter;
 
-  const { artists, count } = await artistService.listArtists({
-    offset: offset ? Number(offset) : 0,
-    limit: limit ? Number(limit) : 20,
-    status,
-    q,
+  const offsetNum = offset ? Number(offset) : 0;
+  const limitNum = limit ? Number(limit) : 20;
+  const where: Record<string, any> = {};
+  if (status) where.status = status;
+  if (q) {
+    where.$or = [
+      { display_name: { $ilike: `%${q}%` } },
+      { slug: { $ilike: `%${q}%` } },
+    ];
+  }
+  const [artists, count] = await artistService.listAndCountArtists(where, {
+    skip: offsetNum,
+    take: limitNum,
+    order: { created_at: "DESC" },
   });
 
   return res.status(200).json({
@@ -37,9 +44,7 @@ async function GET(req: MedusaRequest, res: MedusaResponse) {
  * Create an artist record (internal admin).
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const artistService = req.scope.resolve(
-    "artistModuleService"
-  ) as ArtistService;
+  const artistService = req.scope.resolve("artist") as ArtistService;
 
   const body = req.body as CreateArtistInput;
 

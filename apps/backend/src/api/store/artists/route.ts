@@ -6,9 +6,7 @@ import type { ArtistService } from "../../../modules/artist/service";
  * List public (approved) artists for customer discovery.
  */
 async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const artistService = req.scope.resolve(
-    "artistModuleService"
-  ) as ArtistService;
+  const artistService = req.scope.resolve("artist") as ArtistService;
 
   const { offset, limit, q } = req.query as unknown as {
     offset?: string;
@@ -16,11 +14,19 @@ async function GET(req: MedusaRequest, res: MedusaResponse) {
     q?: string;
   };
 
-  const { artists, count } = await artistService.listArtists({
-    offset: offset ? Number(offset) : 0,
-    limit: limit ? Number(limit) : 20,
-    status: "approved",
-    q,
+  const offsetNum = offset ? Number(offset) : 0;
+  const limitNum = limit ? Number(limit) : 20;
+  const where: Record<string, any> = { status: "approved" };
+  if (q) {
+    where.$or = [
+      { display_name: { $ilike: `%${q}%` } },
+      { slug: { $ilike: `%${q}%` } },
+    ];
+  }
+  const [artists, count] = await artistService.listAndCountArtists(where, {
+    skip: offsetNum,
+    take: limitNum,
+    order: { created_at: "DESC" },
   });
 
   // Public-safe projection - no contact email/phone

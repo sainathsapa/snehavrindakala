@@ -7,9 +7,7 @@ import type { CommissionService } from "../../../modules/commission/service";
  * Reference ID returned for customer tracking.
  */
 async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const commissionService = req.scope.resolve(
-    "commissionModuleService"
-  ) as CommissionService;
+  const commissionService = req.scope.resolve("commission") as CommissionService;
 
   const body = req.body as any;
 

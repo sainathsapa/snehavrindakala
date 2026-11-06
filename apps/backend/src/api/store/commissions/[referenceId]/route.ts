@@ -6,9 +6,7 @@ import type { CommissionService } from "../../../../modules/commission/service";
  * Customer-safe commission status lookup by public reference ID.
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const commissionService = req.scope.resolve(
-    "commissionModuleService"
-  ) as CommissionService;
+  const commissionService = req.scope.resolve("commission") as CommissionService;
   const { referenceId } = req.params as { referenceId: string };
 
   const commission = await commissionService.getCommissionRequestByReference(

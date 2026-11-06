@@ -42,6 +42,9 @@ importers:
       '@medusajs/draft-order':
         specifier: ^2.22.3
         version: 2.22.3(abb53f0382dc797b3f0de5073802e718)
+      '@mikro-orm/migrations':
+        specifier: 6.6.17
+        version: 6.6.17(@mikro-orm/core@6.6.17)(@types/node@22.15.0)(pg@8.23.1)(supports-color@8.1.1)
       '@types/node':
         specifier: 22.15.0
         version: 22.15.0
