@@ -67,6 +67,48 @@ const NAV_ITEMS = [
     icon: "💸",
     role: "manager" as const,
   },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    icon: "⚙️",
+    role: "super_admin" as const,
+  },
+  {
+    href: "/admin/analytics",
+    label: "Analytics",
+    icon: "📈",
+    role: "viewer" as const,
+  },
+  {
+    href: "/admin/discounts",
+    label: "Discounts",
+    icon: "🏷️",
+    role: "manager" as const,
+  },
+  {
+    href: "/admin/i18n",
+    label: "i18n",
+    icon: "🌐",
+    role: "super_admin" as const,
+  },
+  {
+    href: "/admin/tax",
+    label: "Tax (GST)",
+    icon: "🧾",
+    role: "manager" as const,
+  },
+  {
+    href: "/admin/audit-log",
+    label: "Audit Log",
+    icon: "📋",
+    role: "super_admin" as const,
+  },
+  {
+    href: "/admin/notifications",
+    label: "Notifications",
+    icon: "🔔",
+    role: "manager" as const,
+  },
 ];
 
 interface AdminLayoutProps {

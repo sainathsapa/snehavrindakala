@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@snehavrinda-kala/ui";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 interface Ticket {
   id: string;
@@ -26,8 +26,8 @@ interface TicketReply {
 }
 
 export default function TicketDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [replies, setReplies] = useState<TicketReply[]>([]);
   const [loading, setLoading] = useState(true);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@snehavrinda-kala/ui";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 interface ProductVariant {
   id?: string;
@@ -32,8 +32,8 @@ interface ProductFormData {
 }
 
 export default function ProductEditPage() {
-  const params = useParams();
-  const id = params.id as string;
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
