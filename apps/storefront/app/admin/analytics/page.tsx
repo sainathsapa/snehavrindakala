@@ -13,6 +13,13 @@ interface StatCard {
   color: string;
 }
 
+interface LowStockItem {
+  id: string;
+  title: string;
+  handle: string;
+  variants: any[];
+}
+
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<{
     total_revenue: number;
@@ -23,11 +30,13 @@ export default function AnalyticsPage() {
     status_distribution: any[];
     recent_orders: any[];
   } | null>(null);
+  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [period, setPeriod] = useState("30");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAnalytics();
+    loadLowStock();
   }, [period]);
 
   async function loadAnalytics() {
@@ -45,6 +54,28 @@ export default function AnalyticsPage() {
       console.error("Failed to load analytics", err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadLowStock() {
+    try {
+      const res = await fetch("/api/admin/products?limit=500", {
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const products = data.products || [];
+        const lowStock = products.filter(
+          (p: any) =>
+            p.variants &&
+            p.variants.some(
+              (v: any) => v.stock_quantity !== undefined && v.stock_quantity <= 10
+            )
+        );
+        setLowStockItems(lowStock);
+      }
+    } catch (err) {
+      console.error("Failed to load low stock", err);
     }
   }
 
@@ -127,6 +158,69 @@ export default function AnalyticsPage() {
             color="text-indigo"
           />
         </div>
+
+        {/* Low stock alert */}
+        {lowStockItems.length > 0 && (
+          <div className="mb-8 rounded-xl border border-terracotta/20 bg-terracotta/5 p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-terracotta">⚠️</span>
+              <div>
+                <h3 className="text-lg font-serif font-semibold text-terracotta">
+                  Low Stock Alert ({lowStockItems.length})
+                </h3>
+                <p className="text-sm text-muted-ink font-sans">
+                  Products with stock ≤ 10 need restocking.
+                </p>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                    <th className="px-4 py-3">Product</th>
+                    <th className="px-4 py-3 text-right">Stock</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-sand-border">
+                  {lowStockItems.slice(0, 5).map((p) => {
+                    const minStock = Math.min(
+                      ...(p.variants?.map((v: any) => v.stock_quantity) || [0])
+                    );
+                    return (
+                      <tr key={p.id} className="text-sm">
+                        <td className="px-4 py-3 font-sans text-deep-ink">
+                          {p.title}
+                        </td>
+                        <td className="px-4 py-3 font-sans text-deep-ink text-right">
+                          {minStock}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                              minStock === 0
+                                ? "bg-sindoor/10 text-sindoor border border-sindoor/20"
+                                : "bg-terracotta/10 text-terracotta border border-terracotta/20"
+                            }`}
+                          >
+                            {minStock === 0 ? "Out of stock" : "Low stock"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {lowStockItems.length > 5 && (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-3 text-center text-sm text-muted-ink font-sans">
+                        And {lowStockItems.length - 5} more products...
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Charts row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

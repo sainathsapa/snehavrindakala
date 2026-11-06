@@ -3,13 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@snehavrinda-kala/ui";
+import { ImageUpload } from "@/components/image-upload";
 
 interface ProductVariant {
   id?: string;
   title: string;
   sku: string;
+  stock_quantity: number;
   prices: Array<{ currency_code: string; amount: number }>;
-  inventory_quantity?: number;
 }
 
 interface ProductImage {
@@ -30,6 +31,8 @@ interface ProductFormData {
   options: Array<{ title: string; values: string[] }>;
 }
 
+const LOW_STOCK_THRESHOLD = 10;
+
 export default function ProductFormPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -42,11 +45,78 @@ export default function ProductFormPage() {
     category_id: "",
     is_new: false,
     variants: [
-      { title: "Default", sku: "", prices: [{ currency_code: "inr", amount: 0 }] },
+      {
+        title: "Default",
+        sku: "",
+        stock_quantity: 0,
+        prices: [{ currency_code: "inr", amount: 0 }],
+      },
     ],
     images: [],
     options: [{ title: "Size", values: ["Default"] }],
   });
+
+  const lowStockVariants = form.variants.filter(
+    (v) => v.stock_quantity <= LOW_STOCK_THRESHOLD && v.stock_quantity > 0
+  );
+  const outOfStockVariants = form.variants.filter((v) => v.stock_quantity === 0);
+
+  const handleInputChange = (field: string, value: string) => {
+    setForm({ ...form, [field]: value });
+  };
+
+  const addVariant = () => {
+    setForm({
+      ...form,
+      variants: [
+        ...form.variants,
+        {
+          title: `Variant ${form.variants.length + 1}`,
+          sku: "",
+          stock_quantity: 0,
+          prices: [{ currency_code: "inr", amount: 0 }],
+        },
+      ],
+    });
+  };
+
+  const removeVariant = (index: number) => {
+    if (form.variants.length <= 1) return;
+    setForm({
+      ...form,
+      variants: form.variants.filter((_, i) => i !== index),
+    });
+  };
+
+  const updateVariantField = (
+    variantIndex: number,
+    field: string,
+    value: string | number
+  ) => {
+    const newVariants = [...form.variants];
+    (newVariants[variantIndex] as any)[field] = value;
+    setForm({ ...form, variants: newVariants });
+  };
+
+  const addImage = () => {
+    setForm({
+      ...form,
+      images: [...form.images, { url: "", rank: form.images.length }],
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setForm({
+      ...form,
+      images: form.images.filter((_, i) => i !== index),
+    });
+  };
+
+  const updateImageUrl = (imageIndex: number, url: string) => {
+    const newImages = [...form.images];
+    newImages[imageIndex].url = url;
+    setForm({ ...form, images: newImages });
+  };
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -83,36 +153,6 @@ export default function ProductFormPage() {
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setForm({ ...form, [field]: value });
-  };
-
-  const addVariant = () => {
-    setForm({
-      ...form,
-      variants: [
-        ...form.variants,
-        { title: `Variant ${form.variants.length + 1}`, sku: "", prices: [{ currency_code: "inr", amount: 0 }] },
-      ],
-    });
-  };
-
-  const removeVariant = (index: number) => {
-    if (form.variants.length <= 1) return;
-    setForm({
-      ...form,
-      variants: form.variants.filter((_, i) => i !== index),
-    });
-  };
-
-  const addImage = () => {
-    setForm({ ...form, images: [...form.images, { url: "", rank: form.images.length }] });
-  };
-
-  const removeImage = (index: number) => {
-    setForm({ ...form, images: form.images.filter((_, i) => i !== index) });
-  };
-
   return (
     <main className="py-8">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -139,6 +179,28 @@ export default function ProductFormPage() {
           }`}>
             {message.text}
           </p>
+        )}
+
+        {/* Low stock warning */}
+        {(outOfStockVariants.length > 0 || lowStockVariants.length > 0) && (
+          <div className="mb-6 rounded-lg border border-terracotta/20 bg-terracotta/5 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-terracotta">⚠️</span>
+              <div>
+                <p className="text-sm font-medium text-terracotta font-sans">
+                  Inventory Alert
+                </p>
+                <p className="text-xs text-terracotta font-sans">
+                  {outOfStockVariants.length > 0
+                    ? `${outOfStockVariants.length} variant(s) out of stock`
+                    : ""}
+                  {lowStockVariants.length > 0
+                    ? `${lowStockVariants.length} variant(s) low stock (≤${LOW_STOCK_THRESHOLD})`
+                    : ""}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         <form onSubmit={handleSave} className="space-y-8">
@@ -237,7 +299,7 @@ export default function ProductFormPage() {
           <div className="rounded-xl border border-sand-border bg-surface p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-serif font-semibold text-deep-ink">
-                Variants & Pricing
+                Variants & Inventory
               </h2>
               <button
                 type="button"
@@ -266,39 +328,76 @@ export default function ProductFormPage() {
                       Remove
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <label className="block text-xs font-sans font-medium text-muted-ink">Title</label>
+                      <label className="block text-xs font-sans font-medium text-muted-ink">
+                        Title
+                      </label>
                       <input
                         value={variant.title}
                         onChange={(e) => {
-                          const newVariants = [...form.variants];
-                          newVariants[idx].title = e.target.value;
-                          setForm({ ...form, variants: newVariants });
+                          updateVariantField(idx, "title", e.target.value);
                         }}
                         className="w-full px-2 py-1 rounded border border-sand-border bg-surface text-sm font-sans"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="block text-xs font-sans font-medium text-muted-ink">SKU</label>
+                      <label className="block text-xs font-sans font-medium text-muted-ink">
+                        SKU
+                      </label>
                       <input
                         value={variant.sku}
                         onChange={(e) => {
-                          const newVariants = [...form.variants];
-                          newVariants[idx].sku = e.target.value;
-                          setForm({ ...form, variants: newVariants });
+                          updateVariantField(idx, "sku", e.target.value);
                         }}
                         className="w-full px-2 py-1 rounded border border-sand-border bg-surface text-sm font-sans"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="block text-xs font-sans font-medium text-muted-ink">Price (INR)</label>
+                      <label className="block text-xs font-sans font-medium text-muted-ink">
+                        Stock Qty
+                      </label>
+                      <input
+                        type="number"
+                        value={variant.stock_quantity}
+                        onChange={(e) => {
+                          updateVariantField(
+                            idx,
+                            "stock_quantity",
+                            parseInt(e.target.value) || 0
+                          );
+                        }}
+                        className={`w-full px-2 py-1 rounded border text-sm font-sans ${
+                          variant.stock_quantity === 0
+                            ? "border-sindoor"
+                            : variant.stock_quantity <= LOW_STOCK_THRESHOLD
+                              ? "border-terracotta"
+                              : "border-leaf"
+                        }`}
+                      />
+                      {variant.stock_quantity === 0 && (
+                        <p className="text-[10px] text-sindoor font-sans">
+                          Out of stock
+                        </p>
+                      )}
+                      {variant.stock_quantity > 0 &&
+                        variant.stock_quantity <= LOW_STOCK_THRESHOLD && (
+                          <p className="text-[10px] text-terracotta font-sans">
+                            Low stock
+                          </p>
+                        )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-sans font-medium text-muted-ink">
+                        Price (INR)
+                      </label>
                       <input
                         type="number"
                         value={variant.prices[0]?.amount || ""}
                         onChange={(e) => {
                           const newVariants = [...form.variants];
-                          newVariants[idx].prices[0].amount = parseFloat(e.target.value) || 0;
+                          (newVariants[idx] as any).prices[0].amount =
+                            parseFloat(e.target.value) || 0;
                           setForm({ ...form, variants: newVariants });
                         }}
                         className="w-full px-2 py-1 rounded border border-sand-border bg-surface text-sm font-sans"
@@ -314,7 +413,7 @@ export default function ProductFormPage() {
           <div className="rounded-xl border border-sand-border bg-surface p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-serif font-semibold text-deep-ink">
-                Images
+                Product Images
               </h2>
               <button
                 type="button"
@@ -324,38 +423,49 @@ export default function ProductFormPage() {
                 + Add Image
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {form.images.map((img, idx) => (
-                <div key={img.id || idx} className="border border-sand-border rounded-lg p-3 bg-surface">
-                  <div className="aspect-square bg-rang-paper flex items-center justify-center relative overflow-hidden">
-                    {img.url ? (
-                      <img src={img.url} alt={`Product image ${idx + 1}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-sm text-muted-ink">No image</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(idx)}
-                      className="absolute top-2 right-2 text-sindoor hover:text-sindoor/90"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-xs font-sans font-medium text-muted-ink">Image URL</label>
-                    <input
-                      value={img.url}
-                      onChange={(e) => {
-                        const newImages = [...form.images];
-                        newImages[idx].url = e.target.value;
-                        setForm({ ...form, images: newImages });
-                      }}
-                      className="w-full px-2 py-1 rounded border border-sand-border bg-surface text-sm font-sans"
-                    />
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {form.images.length === 0 ? (
+                <div className="col-span-full py-12 text-center rounded-xl border border-dashed border-sand-border bg-surface/50">
+                  <div className="text-2xl mb-2">📷</div>
+                  <p className="text-sm text-muted-ink font-sans">
+                    No images added. Upload product photos below.
+                  </p>
+                  <ImageUpload
+                    value=""
+                    onChange={(url) => {
+                      addImage();
+                      updateImageUrl(form.images.length - 1, url);
+                    }}
+                  />
                 </div>
-              ))}
+              ) : (
+                form.images.map((img, idx) => (
+                  <div key={img.id || idx} className="border border-sand-border rounded-lg overflow-hidden">
+                    <div className="aspect-square relative bg-rang-paper">
+                      {img.url ? (
+                        <img
+                          src={img.url}
+                          alt={`Product image ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageUpload value="" onChange={(url) => updateImageUrl(idx, url)} />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        className="absolute top-2 right-2 p-1 bg-sindoor text-rang-paper rounded-full hover:bg-sindoor/90 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
+            <p className="mt-2 text-xs text-muted-ink font-sans">
+              Upload product photos using drag-and-drop. Multiple images supported.
+            </p>
           </div>
 
           {/* Submit */}
