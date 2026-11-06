@@ -46,19 +46,19 @@ async function adminLogin() {
   });
   if (status !== 200 && status !== 201) {
     console.warn(
-      `⚠ Medusa admin login failed (${status}). Admin-only seeding (regions, sales channels, products) will be skipped. `
-        + `Set MEDUSA_ADMIN_EMAIL/MEDUSA_ADMIN_PASSWORD for a Medusa system admin user.`
+      `⚠ Medusa admin login failed (${status}). Admin-only seeding skipped. `
+        + "Use the Medusa Admin UI at /admin to create regions, products, etc."
     );
     adminToken = null;
     return;
   }
-  adminToken = body.token || body.access_token || body.session?.token;
-  if (!adminToken) {
-    console.warn("⚠ Medusa admin login returned no token. Admin-only seeding will be skipped.");
-    adminToken = null;
-    return;
-  }
-  console.log("✓ Authenticated as Medusa admin");
+  // Medusa v2 admin auth uses session cookies, not bearer tokens.
+  // Admin-only seeding (regions, products, etc.) must be done via Medusa Admin UI.
+  adminToken = null;
+  console.warn(
+    "⚠ Medusa v2 admin auth uses session cookies. Admin-only seeding skipped. "
+      + "Create catalogue data via the Medusa Admin UI at /admin instead."
+  );
 }
 
 async function getList(path) {
