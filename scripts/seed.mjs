@@ -63,8 +63,18 @@ async function adminLogin() {
 
 async function getList(path) {
   const { status, body } = await request(path);
-  if (!status) return [];
-  return body?.result ?? body?.artists ?? body?.regions ?? body ?? [];
+  if (!status || !body) return [];
+  // Handle Medusa v2 admin API response shapes
+  if (Array.isArray(body)) return body;
+  if (body?.result && Array.isArray(body.result)) return body.result;
+  if (body?.regions && Array.isArray(body.regions)) return body.regions;
+  if (body?.sales_channels && Array.isArray(body.sales_channels))
+    return body.sales_channels;
+  if (body?.artists && Array.isArray(body.artists)) return body.artists;
+  if (body?.data && Array.isArray(body.data)) return body.data;
+  if (body?.items && Array.isArray(body.items)) return body.items;
+  console.warn(`⚠ Unexpected response shape from ${path}: ${JSON.stringify(body).slice(0, 200)}`);
+  return [];
 }
 
 async function post(path, payload) {
