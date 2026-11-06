@@ -67,7 +67,7 @@ export function Header() {
               Account
             </Link>
             <Link
-              href="/admin/partners"
+              href="/admin"
               className="ml-4 text-muted-ink hover:text-terracotta transition-colors"
               aria-label="Admin panel"
             >

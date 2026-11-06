@@ -7,8 +7,60 @@ import {
 import { ProductOptions } from "@/components/product-options";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { slugify } from "@/lib/slugs";
 
 export const dynamic = "force-dynamic";
+
+export async function generateStaticParams() {
+  try {
+    const products = await medusa.listAllProducts({ limit: 500 });
+    return products.map((p) => ({ handle: p.handle }));
+  } catch {
+    return [];
+  }
+}
+
+export const metadata = async ({ params }: { params: Promise<{ handle: string }> }) => {
+  const { handle } = await params;
+  let product: Awaited<ReturnType<typeof medusa.getProduct>>["product"] | null = null;
+  try {
+    const { product: prod } = await medusa.getProduct(handle);
+    product = prod;
+  } catch {
+    // handled in component
+  }
+  if (!product) return { title: "Product not found" };
+  const price = getProductPrice(product);
+  const currency = (product.variants?.[0]?.calculated_price?.currency_code || "inr").toUpperCase();
+  return {
+    title: `${product.title} | SnehaVrinda Kala`,
+    description:
+      product.description ||
+      `${product.title} — ${formatPrice(price, currency)} by SnehaVrinda Kala.`,
+    alternates: {
+      canonical: `/products/${product.handle}`,
+    },
+    openGraph: {
+      title: product.title,
+      description: product.description || undefined,
+      type: "product",
+      url: `/products/${product.handle}`,
+      images: product.images
+        ? product.images.map((i) => ({ url: i.url }))
+        : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.title,
+      description: product.description || undefined,
+      images: product.images
+        ? product.images.map((i) => i.url)
+        : [],
+    },
+    price: price != null ? (price / 100).toString() : undefined,
+    priceCurrency: currency,
+  };
+};
 
 export default async function ProductDetailPage({
   params,
@@ -65,6 +117,50 @@ export default async function ProductDetailPage({
                   ? "https://schema.org/PreOrder"
                   : "https://schema.org/InStock",
             },
+          }),
+        }}
+      />
+      <script
+        id="schema-breadcrumb"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+                  "http://localhost:3000"}`,
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Shop",
+                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+                  "http://localhost:3000"}/shop`,
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: product.category?.name || "Art",
+                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+                  "http://localhost:3000"}/shop/${
+                  product.category?.handle || slugify(
+                    product.category?.name || "art"
+                  )
+                }`,
+              },
+              {
+                "@type": "ListItem",
+                position: 4,
+                name: product.title,
+                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+                  "http://localhost:3000"}/products/${product.handle}`,
+              },
+            ],
           }),
         }}
       />

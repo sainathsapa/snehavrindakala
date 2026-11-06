@@ -4,6 +4,46 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+export async function generateStaticParams() {
+  try {
+    const artists = await medusa.listAllArtists({ limit: 500 });
+    return artists.map((a) => ({ slug: a.slug }));
+  } catch {
+    return [];
+  }
+}
+
+export const metadata = async ({ params }: { params: Promise<{ slug: string }> }) => {
+  const { slug } = await params;
+  let artist: any = null;
+  try {
+    const { artist: artistData } = await medusa.getArtist(slug);
+    artist = artistData;
+  } catch {
+    // handled in component
+  }
+  if (!artist) return { title: "Artist not found" };
+  return {
+    title: `${artist.display_name} | SnehaVrinda Kala`,
+    description:
+      artist.bio ||
+      `${artist.display_name} is an artist featured on SnehaVrinda Kala.`,
+    alternates: {
+      canonical: `/artists/${artist.slug}`,
+    },
+    openGraph: {
+      title: artist.display_name,
+      description: artist.bio || undefined,
+      type: "profile",
+      url: `/artists/${artist.slug}`,
+      profile: {
+        firstName: artist.display_name,
+        username: artist.slug,
+      },
+    },
+  };
+};
+
 export default async function ArtistProfilePage({
   params,
 }: {

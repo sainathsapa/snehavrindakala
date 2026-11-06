@@ -1,8 +1,19 @@
 import { getProductPrice, getStockType, medusa } from "@/lib/medusa";
 import { ProductCard } from "@/components/product-card";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getArtFormByQuery } from "@/lib/slugs";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "All Products | SnehaVrinda Kala",
+  description:
+    "Browse our curated catalogue of ready-to-ship artwork, made-to-order pieces, and custom commissions from Indian makers.",
+  alternates: {
+    canonical: "/shop",
+  },
+};
 
 export default async function ShopPage({
   searchParams,
@@ -10,13 +21,21 @@ export default async function ShopPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
+
+  // Redirect legacy query-param URLs to SEO-friendly paths (/shop?q=Folk → /shop/folk)
+  if (q?.trim()) {
+    const artForm = getArtFormByQuery(q.trim());
+    if (artForm) {
+      redirect(`/shop/${artForm.slug}`);
+    }
+  }
+
   let products: Awaited<
     ReturnType<typeof medusa.listProducts>
   >["products"] = [];
   try {
     const { products: productsData } = await medusa.listProducts({
       limit: 100,
-      q: q?.trim() || undefined,
     });
     products = productsData;
   } catch (err) {

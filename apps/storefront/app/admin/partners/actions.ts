@@ -21,15 +21,25 @@ async function getAuthToken(): Promise<string | undefined> {
   return cookieStore.get("medusa_auth_token")?.value;
 }
 
+const PUBLISHABLE_KEY =
+  process.env.MEDUSA_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
+  "";
+
+async function adminHeaders(token: string): Promise<Record<string, string>> {
+  return {
+    Authorization: `Bearer ${token}`,
+    "x-publishable-api-key": PUBLISHABLE_KEY,
+    Accept: "application/json",
+  };
+}
+
 export async function isAdmin(): Promise<boolean> {
   const token = await getAuthToken();
   if (!token) return false;
   try {
     const res = await fetch(`${BACKEND_URL}/store/customers/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
+      headers: await adminHeaders(token),
       cache: "no-store",
     });
     if (!res.ok) return false;
@@ -65,10 +75,7 @@ export async function listArtists(): Promise<ArtistRow[]> {
   if (!token) return [];
   try {
     const res = await fetch(`${BACKEND_URL}/admin/artists?limit=100`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
+      headers: await adminHeaders(token),
       cache: "no-store",
     });
     if (!res.ok) return [];

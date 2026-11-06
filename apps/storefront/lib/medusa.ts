@@ -260,6 +260,48 @@ class MedusaClient {
     );
   }
 
+  async listAllProducts(params?: {
+    limit?: number;
+    q?: string;
+    category?: string;
+  }): Promise<MedusaProduct[]> {
+    const all: MedusaProduct[] = [];
+    let offset = 0;
+    const pageSize = Math.min(params?.limit ?? 100, 100);
+    while (true) {
+      const { products, count } = await this.listProducts({
+        limit: pageSize,
+        offset,
+        q: params?.q,
+        category: params?.category,
+      });
+      all.push(...products);
+      if (all.length >= (count ?? 0)) break;
+      offset += pageSize;
+    }
+    return all;
+  }
+
+  async listAllArtists(params?: {
+    limit?: number;
+    q?: string;
+  }): Promise<MedusaArtist[]> {
+    const all: MedusaArtist[] = [];
+    let offset = 0;
+    const pageSize = Math.min(params?.limit ?? 100, 100);
+    while (true) {
+      const { artists, count } = await this.listArtists({
+        limit: pageSize,
+        offset,
+        q: params?.q,
+      });
+      all.push(...artists);
+      if (all.length >= (count ?? 0)) break;
+      offset += pageSize;
+    }
+    return all;
+  }
+
   // Regions / carts
   async listRegions(): Promise<{ regions: any[] }> {
     return this.request<{ regions: any[] }>("/store/regions");

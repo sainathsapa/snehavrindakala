@@ -1,41 +1,4 @@
-const artForms = [
-  {
-    name: "Painting & Drawing",
-    description:
-      "Original paintings, sketches, portraits, prints, and illustration across mediums.",
-    href: "/shop?q=Painting",
-  },
-  {
-    name: "Traditional & Folk Art",
-    description:
-      "Region- and technique-led work with careful cultural attribution and provenance.",
-    href: "/shop?q=Folk",
-  },
-  {
-    name: "Home & Decorative Art",
-    description:
-      "Wall décor, sculpture, ceramics, lamps, and decorative objects for the home.",
-    href: "/shop?q=Home%20%26%20Decorative",
-  },
-  {
-    name: "Textile & Fibre Art",
-    description:
-      "Embroidery, weaving, crochet, macramé, and textile décor in natural fibres.",
-    href: "/shop?q=Textile",
-  },
-  {
-    name: "Paper, Stationery & Books",
-    description:
-      "Paper art, handmade cards, journals, calligraphy, and creative stationery.",
-    href: "/shop?q=Paper",
-  },
-  {
-    name: "Wearable Art",
-    description:
-      "Art jewellery, accessories, painted apparel, and wearable craft pieces.",
-    href: "/shop?q=Wearable",
-  },
-];
+import { artFormSlugs } from "@/lib/slugs";
 
 export default function ArtFormsPage() {
   return (
@@ -49,9 +12,9 @@ export default function ArtFormsPage() {
           collection shows the maker, materials, and care details.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {artForms.map((form) => (
+          {artFormSlugs.map((form) => (
             <section
-              key={form.href}
+              key={form.slug}
               className="rounded-xl border border-sand-border bg-surface p-8 hover:shadow-md transition-shadow"
             >
               <h2 className="text-2xl font-serif font-semibold text-deep-ink mb-2">
@@ -59,7 +22,7 @@ export default function ArtFormsPage() {
               </h2>
               <p className="text-muted-ink font-sans">{form.description}</p>
               <a
-                href={form.href}
+                href={`/shop/${form.slug}`}
                 className="mt-4 inline-block text-sm font-medium text-sindoor hover:underline"
               >
                 Explore {form.name} →

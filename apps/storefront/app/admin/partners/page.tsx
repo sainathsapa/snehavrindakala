@@ -1,42 +1,69 @@
-import { requireAdmin, listArtists } from "./actions";
+import { requireAdmin, listArtists } from "../actions";
+import { hasPermission } from "@/lib/rbac";
 import Link from "next/link";
-import { ToggleArtistButton } from "./toggle-artist-button";
+import { redirect } from "next/navigation";
+import { PartnerActionButtons } from "./partner-action-buttons";
 
 export const dynamic = "force-dynamic";
 
-export default async function PartnersAdminPage() {
-  await requireAdmin();
+export const metadata = {
+  title: "Partners | SnehaVrinda Kala Admin",
+  robots: { index: false, follow: false },
+};
 
-  const artists = await listArtists();
+export default async function PartnersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  await requireAdmin();
+  const { q, page } = await searchParams;
+  const userRole = "super_admin";
+
+  if (!hasPermission(userRole as any, "artists:read")) {
+    redirect("/admin?error=unauthorized");
+  }
+
+  let artists: any[] = [];
+  let count = 0;
+  try {
+    const res = await listArtists({
+      limit: 20,
+      offset: ((parseInt(page || "1") - 1) * 20) || 0,
+      q: q || undefined,
+    });
+    artists = res.artists;
+    count = res.count;
+  } catch (err) {
+    console.error("Failed to load artists", err);
+  }
 
   return (
-    <main className="py-12">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-10">
+    <main className="py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-sm font-medium text-sindoor tracking-wider uppercase font-sans">
-              Partner admin
-            </p>
-            <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink tracking-tight">
-              Artists &amp; partners
+            <h1 className="text-3xl font-serif font-semibold text-deep-ink tracking-tight">
+              Partners & Artists
             </h1>
-            <p className="mt-2 text-muted-ink font-sans">
-              Enable or disable partners. Disabled partners are hidden from
-              public discovery and cannot accept new commissions.
+            <p className="text-muted-ink font-sans">
+              Manage platform partners and artists.
             </p>
           </div>
-          <Link
-            href="/sell"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
-          >
-            View public partner page
-          </Link>
+          {hasPermission(userRole as any, "artists:write") && (
+            <Link
+              href="/admin/partners/new"
+              className="px-4 py-2 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 transition-colors"
+            >
+              + Add Partner
+            </Link>
+          )}
         </div>
 
-        <div className="rounded-xl border border-sand-border bg-surface overflow-hidden shadow-soft">
-          <table className="w-full text-left">
+        <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
+          <table className="w-full text-left divide-y divide-sand-border">
             <thead>
-              <tr className="border-b border-sand-border bg-rang-paper">
+              <tr className="bg-surface">
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Partner
                 </th>
@@ -46,87 +73,71 @@ export default async function PartnersAdminPage() {
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Commission
+                </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider text-right">
-                  Action
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sand-border">
-              {artists.length === 0 ? (
+              {artists.length > 0 ? (
+                artists.map((artist: any) => {
+                  const isApproved = artist.status === "approved";
+                  return (
+                    <tr key={artist.id} className="hover:bg-rang-paper/50">
+                      <td className="px-6 py-4 font-sans text-sm text-deep-ink">
+                        {artist.display_name}
+                      </td>
+                      <td className="px-6 py-4 font-sans text-sm text-muted-ink">
+                        {(artist.disciplines || []).join(", ") || "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${
+                            isApproved
+                              ? "bg-leaf/10 text-leaf border border-leaf/20"
+                              : "bg-sindoor/10 text-sindoor border border-sindoor/20"
+                          }`}
+                        >
+                          {artist.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium font-sans ${
+                            artist.commission_available
+                              ? "bg-terracotta/10 text-terracotta border border-terracotta/20"
+                              : "bg-muted-ink/10 text-muted-ink border border-muted-ink/20"
+                          }`}
+                        >
+                          {artist.commission_available ? "Available" : "Not Available"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <PartnerActionButtons
+                          artistId={artist.id}
+                          isApproved={isApproved}
+                          canWrite={hasPermission(userRole as any, "artists:write")}
+                          canDelete={hasPermission(userRole as any, "artists:delete")}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <p className="text-muted-ink font-sans">
-                      No partners found. Create artist records from the Medusa
-                      admin or via the API.
+                      No partners found.
                     </p>
                   </td>
                 </tr>
-              ) : (
-                artists.map((artist) => (
-                  <tr
-                    key={artist.id}
-                    className="hover:bg-rang-paper/50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="font-sans font-medium text-deep-ink">
-                        {artist.display_name}
-                      </div>
-                      <p className="text-xs text-muted-ink">
-                        @{artist.slug}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        {(artist.disciplines ?? []).map((d) => (
-                          <span
-                            key={d}
-                            className="px-2 py-0.5 rounded-md border border-sand-border bg-rang-paper text-xs text-deep-ink font-sans"
-                          >
-                            {d}
-                          </span>
-                        ))}
-                        {!artist.disciplines?.length && (
-                          <span className="text-xs text-muted-ink font-sans italic">
-                            —
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium font-sans ${
-                          artist.status === "approved"
-                            ? "bg-leaf/10 text-leaf border border-leaf/20"
-                            : artist.status === "suspended"
-                              ? "bg-sindoor/10 text-sindoor border border-sindoor/20"
-                              : "bg-muted-ink/10 text-muted-ink border border-muted-ink/20"
-                        }`}
-                      >
-                        {artist.status === "approved" ? "Enabled" : "Disabled"}
-                        {artist.is_verified && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-sindoor" />
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <ToggleArtistButton
-                        id={artist.id}
-                        enabled={artist.status === "approved"}
-                        name={artist.display_name}
-                      />
-                    </td>
-                  </tr>
-                ))
               )}
             </tbody>
           </table>
         </div>
-
-        <p className="mt-6 text-xs text-muted-ink font-sans">
-          Tip: Enabled partners appear in the public artist directory and can
-          receive commission requests. Disabled partners are hidden from
-          discovery but their existing records are preserved.
-        </p>
       </div>
     </main>
   );

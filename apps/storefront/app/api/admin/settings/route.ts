@@ -1,0 +1,45 @@
+/**
+ * Admin Settings API - reads/writes platform mode to .env and database.
+ */
+
+import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+
+const ENV_PATH = path.resolve(process.cwd(), ".env");
+
+export async function GET() {
+  try {
+    const raw =
+      process.env.PLATFORM_MODE ||
+      process.env.NEXT_PUBLIC_PLATFORM_MODE ||
+      "single-brand";
+    return NextResponse.json({ mode: raw === "platform" ? "platform" : "single-brand" });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const { mode } = await req.json();
+    const validMode = mode === "platform" ? "platform" : "single-brand";
+
+    // Persist to .env
+    if (fs.existsSync(ENV_PATH)) {
+      let envContent = fs.readFileSync(ENV_PATH, "utf8");
+      const line = `PLATFORM_MODE=${validMode}`;
+      const regex = /^PLATFORM_MODE=.*$/m;
+      if (regex.test(envContent)) {
+        envContent = envContent.replace(regex, line);
+      } else {
+        envContent += `\n${line}\n`;
+      }
+      fs.writeFileSync(ENV_PATH, envContent);
+    }
+
+    return NextResponse.json({ ok: true, mode: validMode });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

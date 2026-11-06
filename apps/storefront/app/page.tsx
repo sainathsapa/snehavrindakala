@@ -1,55 +1,22 @@
 import Link from "next/link";
+import { artFormSlugs, slugify } from "@/lib/slugs";
 
-const artForms = [
-  {
-    name: "Painting & Drawing",
-    description:
-      "Original paintings, sketches, portraits, prints, illustration.",
-    href: "/shop?q=Painting",
-    image: "/images/artforms/painting.svg",
-    color: "bg-sindoor/10 border-sindoor/20",
-  },
-  {
-    name: "Traditional & Folk Art",
-    description:
-      "Region- and technique-led work with careful cultural attribution.",
-    href: "/shop?q=Folk",
-    image: "/images/artforms/folk.svg",
-    color: "bg-peacock/10 border-peacock/20",
-  },
-  {
-    name: "Home & Decorative Art",
-    description:
-      "Wall décor, sculpture, ceramics, lamps, decorative objects.",
-    href: "/shop?q=Home%20%26%20Decorative",
-    image: "/images/artforms/decor.svg",
-    color: "bg-terracotta/10 border-terracotta/20",
-  },
-  {
-    name: "Textile & Fibre Art",
-    description:
-      "Embroidery, weaving, crochet, macramé, textile décor.",
-    href: "/shop?q=Textile",
-    image: "/images/artforms/textile.svg",
-    color: "bg-gulabi/10 border-gulabi/20",
-  },
-  {
-    name: "Paper, Stationery & Books",
-    description:
-      "Paper art, cards, journals, calligraphy, creative stationery.",
-    href: "/shop?q=Paper",
-    image: "/images/artforms/stationery.svg",
-    color: "bg-indigo/10 border-indigo/20",
-  },
-  {
-    name: "Wearable Art",
-    description:
-      "Art jewellery, accessories, painted apparel, wearable craft.",
-    href: "/shop?q=Wearable",
-    image: "/images/artforms/wearable.svg",
-    color: "bg-leaf/10 border-leaf/20",
-  },
-];
+const artFormColors: Record<string, string> = {
+  painting: "bg-sindoor/10 border-sindoor/20",
+  folk: "bg-peacock/10 border-peacock/20",
+  "home-decor": "bg-terracotta/10 border-terracotta/20",
+  textile: "bg-gulabi/10 border-gulabi/20",
+  paper: "bg-indigo/10 border-indigo/20",
+  wearable: "bg-leaf/10 border-leaf/20",
+};
+
+const artForms = artFormSlugs.map((form) => ({
+  name: form.name,
+  description: form.description,
+  href: `/shop/${form.slug}`,
+  image: `/images/artforms/${slugify(form.name)}.svg`,
+  color: artFormColors[form.slug] || "border border-sand-border",
+}));
 
 export default function Home() {
   return (
