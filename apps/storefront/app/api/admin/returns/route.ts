@@ -83,8 +83,8 @@ export async function POST(req: Request) {
     const id = `ret_${uuidv4().slice(0, 8)}`;
 
     const rows = await query(
-      `INSERT INTO return_requests (id, order_id, customer_id, customer_email, reason, items, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, 'pending', now(), now())
+      `INSERT INTO return_requests (id, order_id, customer_id, customer_email, reason, status, items, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6, now(), now())
        RETURNING *`,
       [id, order_id, customer_id, customer_email, reason, items || "[]"]
     );

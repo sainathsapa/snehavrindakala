@@ -7,8 +7,8 @@ export type LedgerEntryState = "pending" | "paid" | "reversed";
 export type LedgerSourceType = "order" | "commission";
 
 export const EarningsLedgerEntry = model.define("earnings_ledger_entry", {
-  id: model.id().primaryKey(),
-  partner_id: model.id(),
+  id: model.text().primaryKey(),
+  partner_id: model.text(),
   source_type: model.enum(["order", "commission"]),
   source_id: model.text(),
   gross_basis: model.number(),

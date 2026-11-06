@@ -1,6 +1,10 @@
 /**
  * GET /api/admin/analytics/dashboard - Dashboard analytics data
  * Returns revenue, orders, top products, monthly trends
+ *
+ * Medusa v2 stores order totals on the line items / order summary rather
+ * than a `total` column on the `order` table, and customer email on
+ * `order.email`. The queries below use the v2 schema.
  */
 
 import { NextResponse } from "next/server";
@@ -28,38 +32,48 @@ export async function GET(req: Request) {
   }
   try {
     const { searchParams } = new URL(req.url);
-    const period = searchParams.get("period") || "30"; // days
+    const requested = parseInt(searchParams.get("period") || "30", 10);
+    // Keep the interval numeric before interpolating it into SQL.
+    const period = Math.max(1, Math.min(3650, Number.isFinite(requested) ? requested : 30));
 
-    // Total revenue
+    // Total revenue / orders / customers. Totals come from current-version
+    // line items; cancelled orders are excluded.
     const revenueRows = await query(`
-      SELECT COALESCE(SUM(total), 0) as total_revenue,
-             COUNT(*) as total_orders,
-             COUNT(DISTINCT customer_email) as unique_customers
-      FROM "order"
-      WHERE payment_status = 'paid'
-        AND created_at >= NOW() - INTERVAL '${period} days'
+      SELECT COALESCE(SUM(li.unit_price * oi.quantity), 0) as total_revenue,
+             COUNT(DISTINCT o.id) as total_orders,
+             COUNT(DISTINCT o.customer_id) as unique_customers
+      FROM "order" o
+      JOIN order_item oi ON oi.order_id = o.id AND oi.version = o.version
+      JOIN order_line_item li ON li.id = oi.item_id
+      WHERE o.canceled_at IS NULL
+        AND o.created_at >= NOW() - INTERVAL '${period} days'
     `);
 
     // Monthly revenue trend
     const monthlyRows = await query(`
-      SELECT DATE_TRUNC('month', created_at) as month,
-             COALESCE(SUM(total), 0) as revenue,
-             COUNT(*) as orders
-      FROM "order"
-      WHERE payment_status = 'paid'
-        AND created_at >= NOW() - INTERVAL '12 months'
-      GROUP BY DATE_TRUNC('month', created_at)
+      SELECT DATE_TRUNC('month', o.created_at) as month,
+             COALESCE(SUM(li.unit_price * oi.quantity), 0) as revenue,
+             COUNT(DISTINCT o.id) as orders
+      FROM "order" o
+      JOIN order_item oi ON oi.order_id = o.id AND oi.version = o.version
+      JOIN order_line_item li ON li.id = oi.item_id
+      WHERE o.canceled_at IS NULL
+        AND o.created_at >= NOW() - INTERVAL '12 months'
+      GROUP BY DATE_TRUNC('month', o.created_at)
       ORDER BY month ASC
     `);
 
     // Top products
     const topProductsRows = await query(`
-      SELECT p.title, p.handle, COALESCE(SUM(oi.quantity), 0) as units_sold,
-             COALESCE(SUM(oi.unit_price * oi.quantity), 0) as revenue
-      FROM product p
-      LEFT JOIN order_item oi ON oi.product_id = p.id
-      LEFT JOIN "order" o ON o.id = oi.order_id AND o.payment_status = 'paid'
-      GROUP BY p.id, p.title, p.handle
+      SELECT li.product_title as title,
+             li.product_handle as handle,
+             COALESCE(SUM(oi.quantity), 0) as units_sold,
+             COALESCE(SUM(li.unit_price * oi.quantity), 0) as revenue
+      FROM order_line_item li
+      JOIN order_item oi ON oi.item_id = li.id
+      JOIN "order" o ON o.id = oi.order_id AND oi.version = o.version
+      WHERE o.canceled_at IS NULL
+      GROUP BY li.product_id, li.product_title, li.product_handle
       ORDER BY units_sold DESC
       LIMIT 10
     `);
@@ -72,11 +86,20 @@ export async function GET(req: Request) {
       ORDER BY count DESC
     `);
 
-    // Recent orders
+    // Recent orders, with a computed total per order
     const recentRows = await query(`
-      SELECT id, customer_email, total, status, payment_status, created_at
-      FROM "order"
-      ORDER BY created_at DESC
+      SELECT o.id,
+             o.email as customer_email,
+             o.status,
+             o.created_at,
+             COALESCE((
+               SELECT SUM(li.unit_price * oi.quantity)
+               FROM order_item oi
+               JOIN order_line_item li ON li.id = oi.item_id
+               WHERE oi.order_id = o.id AND oi.version = o.version
+             ), 0) as total
+      FROM "order" o
+      ORDER BY o.created_at DESC
       LIMIT 10
     `);
 
@@ -86,7 +109,7 @@ export async function GET(req: Request) {
       top_products: topProductsRows,
       status_distribution: statusRows,
       recent_orders: recentRows,
-      period_days: parseInt(period),
+      period_days: period,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

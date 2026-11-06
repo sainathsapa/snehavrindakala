@@ -7,7 +7,7 @@ export type NotificationStatus = "pending" | "sent" | "delivered" | "failed" | "
 export type NotificationChannel = "email" | "whatsapp" | "sms";
 
 export const Notification = model.define("notification", {
-  id: model.id().primaryKey(),
+  id: model.text().primaryKey(),
   recipient: model.text(),
   channel: model.enum(["email", "whatsapp", "sms"]),
   template: model.text(),

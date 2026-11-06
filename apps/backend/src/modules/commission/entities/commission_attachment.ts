@@ -4,8 +4,8 @@
 import { model } from "@medusajs/utils";
 
 export const CommissionAttachment = model.define("commission_attachment", {
-  id: model.id().primaryKey(),
-  commission_request_id: model.id(),
+  id: model.text().primaryKey(),
+  commission_request_id: model.text(),
   object_key: model.text(),
   mime_type: model.text(),
   size_bytes: model.number(),

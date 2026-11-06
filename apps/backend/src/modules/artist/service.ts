@@ -10,6 +10,7 @@ import { Artist } from "./entities/artist";
 import { PartnerApplication } from "./entities/partner_application";
 import { PartnerAgreement } from "./entities/partner_agreement";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
+import { randomUUID } from "crypto";
 import type {
   CreateArtistInput,
   UpdateArtistInput,
@@ -41,6 +42,7 @@ export class ArtistService {
 
     const artist = this.manager_.getRepository(Artist).create({
       ...data,
+      id: randomUUID(),
       status: data.status ?? "pending",
       commission_available: data.commission_available ?? false,
       is_verified: false,
@@ -91,10 +93,11 @@ export class ArtistService {
       ];
     }
 
-    const [artists, count] = await this.manager_.findAndCount(Artist, {
+    const repository = this.manager_.getRepository(Artist);
+    const [artists, count] = await repository.findAndCount({
       where,
-      skip: offset,
-      take: limit,
+      offset,
+      limit,
       orderBy: { created_at: "DESC" },
     });
 

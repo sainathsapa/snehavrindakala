@@ -47,7 +47,12 @@ export async function GET() {
     const rows = await query(
       "SELECT * FROM discount_codes ORDER BY created_at DESC LIMIT 100"
     );
-    return NextResponse.json({ discounts: rows });
+    const discounts = rows.map((row: any) => ({
+      ...row,
+      status: row.is_active ? "active" : "inactive",
+      expires_at: row.ends_at,
+    }));
+    return NextResponse.json({ discounts });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

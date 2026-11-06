@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     const partners = (data.artists || []).map((artist: any) => ({
       id: artist.id,
       name: artist.display_name || artist.name || "",
-      email: artist.email || "",
+      email: artist.contact_email || artist.email || "",
       status: artist.status || (artist.is_verified ? "active" : "pending"),
       commission_rate: artist.commission_rate || 0,
       created_at: artist.created_at || "",

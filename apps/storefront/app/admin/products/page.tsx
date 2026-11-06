@@ -60,7 +60,12 @@ export default function ProductsPage() {
               #{p.id.slice(-8)}
             </td>
             <td className="px-6 py-4 font-sans text-sm text-deep-ink">
-              {p.title}
+              <Link
+                href={`/admin/products/${p.id}/edit`}
+                className="text-sindoor font-medium hover:underline"
+              >
+                {p.title}
+              </Link>
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {p.slug}
@@ -99,6 +104,12 @@ export default function ProductsPage() {
               Manage product catalog.
             </p>
           </div>
+          <Link
+            href="/admin/products/new"
+            className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors"
+          >
+            New Product
+          </Link>
         </div>
 
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">

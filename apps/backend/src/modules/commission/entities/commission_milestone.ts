@@ -12,9 +12,9 @@ export type MilestoneStatus =
   | "completed";
 
 export const CommissionMilestone = model.define("commission_milestone", {
-  id: model.id().primaryKey(),
-  commission_request_id: model.id(),
-  commission_quote_id: model.id().nullable(),
+  id: model.text().primaryKey(),
+  commission_request_id: model.text(),
+  commission_quote_id: model.text().nullable(),
   name: model.text(),
   sequence: model.number().default(0),
   description: model.text().nullable(),

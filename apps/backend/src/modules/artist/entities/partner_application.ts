@@ -5,8 +5,8 @@
 import { model } from "@medusajs/utils";
 
 export const PartnerApplication = model.define("partner_application", {
-  id: model.id().primaryKey(),
-  artist_id: model.id().nullable(),
+  id: model.text().primaryKey(),
+  artist_id: model.text().nullable(),
   applicant_name: model.text(),
   email: model.text(),
   phone: model.text().nullable(),

@@ -53,7 +53,12 @@ export default function CustomersPage() {
               #{c.id.slice(-8)}
             </td>
             <td className="px-6 py-4 font-sans text-sm text-deep-ink">
-              {c.first_name} {c.last_name}
+              <Link
+                href={`/admin/customers/${c.id}`}
+                className="text-sindoor font-medium hover:underline"
+              >
+                {c.first_name} {c.last_name}
+              </Link>
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {c.email}

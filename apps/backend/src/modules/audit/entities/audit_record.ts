@@ -4,7 +4,7 @@
 import { model } from "@medusajs/utils";
 
 export const AuditRecord = model.define("audit_record", {
-  id: model.id().primaryKey(),
+  id: model.text().primaryKey(),
   actor: model.text(),
   actor_role: model.text().nullable(),
   action: model.text(),

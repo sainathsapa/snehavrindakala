@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface Customer {
   id: string;
@@ -26,8 +26,8 @@ interface Order {
 }
 
 export default function CustomerDetailPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : "";
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

@@ -18,7 +18,18 @@ export async function GET() {
       process.env.PLATFORM_MODE ||
       process.env.NEXT_PUBLIC_PLATFORM_MODE ||
       "single-brand";
-    return NextResponse.json({ mode: raw === "platform" ? "platform" : "single-brand" });
+    const mode = raw === "platform" ? "platform" : "single-brand";
+    return NextResponse.json({
+      mode,
+      settings: [
+        {
+          key: "platform_mode",
+          value: mode,
+          description:
+            "Single-brand storefront or multi-vendor platform mode.",
+        },
+      ],
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -31,6 +42,10 @@ export async function POST(req: Request) {
   try {
     const { mode } = await req.json();
     const validMode = mode === "platform" ? "platform" : "single-brand";
+
+    // Keep the in-memory value in sync for this process even when the
+    // container has no writable .env file.
+    process.env.PLATFORM_MODE = validMode;
 
     // Persist to .env
     if (fs.existsSync(ENV_PATH)) {

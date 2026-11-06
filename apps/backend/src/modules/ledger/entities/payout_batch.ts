@@ -6,8 +6,8 @@ import { model } from "@medusajs/utils";
 export type PayoutBatchStatus = "draft" | "submitted" | "paid" | "failed" | "reconciled";
 
 export const PayoutBatch = model.define("payout_batch", {
-  id: model.id().primaryKey(),
-  partner_id: model.id(),
+  id: model.text().primaryKey(),
+  partner_id: model.text(),
   period_start: model.text(),
   period_end: model.text(),
   line_item_count: model.number(),

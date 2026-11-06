@@ -6,8 +6,8 @@ import { model } from "@medusajs/utils";
 export type QuoteStatus = "draft" | "sent" | "accepted" | "expired" | "declined";
 
 export const CommissionQuote = model.define("commission_quote", {
-  id: model.id().primaryKey(),
-  commission_request_id: model.id(),
+  id: model.text().primaryKey(),
+  commission_request_id: model.text(),
   version: model.number().default(1),
   scope: model.text(),
   deliverables: model.text().nullable(),

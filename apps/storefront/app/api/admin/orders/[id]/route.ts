@@ -41,10 +41,12 @@ export async function GET(
       process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
       "";
 
+    const fields =
+      "id,display_id,status,email,currency_code,subtotal,tax_total,shipping_total,discount_total,total,created_at,*customer,*shipping_address,*billing_address,*items,*payment_collections,*fulfillments";
     const res = await adminFetch(
       BACKEND_URL,
       PUBLISHABLE_KEY,
-      `/admin/orders/${id}`
+      `/admin/orders/${id}?fields=${encodeURIComponent(fields)}`
     );
 
     if (!res.ok) {
@@ -53,7 +55,7 @@ export async function GET(
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data.order ?? data);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

@@ -51,7 +51,12 @@ export default function CategoriesPage() {
               #{c.id.slice(-8)}
             </td>
             <td className="px-6 py-4 font-sans text-sm text-deep-ink">
-              {c.name}
+              <Link
+                href={`/admin/categories/${c.id}/edit`}
+                className="text-sindoor font-medium hover:underline"
+              >
+                {c.name}
+              </Link>
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {c.slug}
@@ -84,6 +89,12 @@ export default function CategoriesPage() {
               Manage product categories.
             </p>
           </div>
+          <Link
+            href="/admin/categories/new"
+            className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors"
+          >
+            New Category
+          </Link>
         </div>
 
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">

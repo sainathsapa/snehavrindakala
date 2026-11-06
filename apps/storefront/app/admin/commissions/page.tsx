@@ -21,7 +21,7 @@ export default function CommissionsPage() {
       .then((r) => r.json())
       .then((data: any) => {
         setCommissions(
-          (data.commissions || []).map((c: any) => ({
+          (data.payouts || data.commissions || []).map((c: any) => ({
             id: c.id || "",
             artist_name: c.artist_name || "",
             amount: c.amount || 0,

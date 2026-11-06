@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface Ticket {
   id: string;
@@ -24,8 +24,8 @@ interface TicketReply {
 }
 
 export default function TicketDetailPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : "";
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [replies, setReplies] = useState<TicketReply[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,10 +42,9 @@ export default function TicketDetailPage() {
   async function loadTicket(ticketId: string) {
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"}/api/tickets/${ticketId}`,
-        { cache: "no-store" }
-      );
+      const res = await fetch(`/api/admin/tickets/${ticketId}`, {
+        cache: "no-store",
+      });
       if (res.ok) {
         const data = await res.json();
         setTicket(data.ticket);
@@ -85,18 +84,15 @@ export default function TicketDetailPage() {
     if (!newReply.trim()) return;
     setReplying(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"}/api/admin/tickets/${id}/reply`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: newReply,
-            author: "Admin",
-            author_type: "staff",
-          }),
-        }
-      );
+      const res = await fetch(`/api/admin/tickets/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: newReply,
+          author: "Admin",
+          author_type: "staff",
+        }),
+      });
       if (res.ok) {
         setNewReply("");
         setReplying(false);
@@ -219,7 +215,7 @@ export default function TicketDetailPage() {
             <thead>
               <tr className="bg-surface">
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
-                  Artist
+                  Author
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Message

@@ -6,7 +6,7 @@
 import { model } from "@medusajs/utils";
 
 export const Artist = model.define("artist", {
-  id: model.id().primaryKey(),
+  id: model.text().primaryKey(),
   display_name: model.text(),
   slug: model.text().unique(),
   bio: model.text().nullable(),

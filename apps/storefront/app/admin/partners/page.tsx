@@ -91,6 +91,12 @@ export default function PartnersPage() {
               Manage partner artists.
             </p>
           </div>
+          <Link
+            href="/admin/partners/new"
+            className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors"
+          >
+            New Partner
+          </Link>
         </div>
 
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">

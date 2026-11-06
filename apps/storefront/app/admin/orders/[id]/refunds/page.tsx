@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@snehavrinda-kala/ui";
 
 interface Refund {
@@ -15,8 +15,8 @@ interface Refund {
 }
 
 export default function OrderRefundsPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : "";
   const [refunds, setRefunds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

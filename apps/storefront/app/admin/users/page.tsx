@@ -24,7 +24,9 @@ export default function UsersPage() {
             id: u.id || "",
             email: u.email || "",
             role: u.role || "",
-            status: u.status || "",
+            status:
+              u.status ??
+              (u.is_active === false ? "inactive" : "active"),
             created_at: u.created_at || "",
           }))
         );

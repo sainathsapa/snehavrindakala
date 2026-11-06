@@ -28,9 +28,9 @@ export type CommissionStatus =
   | "Disputed";
 
 export const CommissionRequest = model.define("commission_request", {
-  id: model.id().primaryKey(),
+  id: model.text().primaryKey(),
   reference_id: model.text().unique(),
-  customer_id: model.id().nullable(),
+  customer_id: model.text().nullable(),
   art_form: model.text(),
   brief: model.text(),
   intended_use: model.text().nullable(),
@@ -62,7 +62,7 @@ export const CommissionRequest = model.define("commission_request", {
     "Refunded",
     "Disputed",
   ]).default("New"),
-  assigned_artist_id: model.id().nullable(),
+  assigned_artist_id: model.text().nullable(),
   metadata: model.json().nullable(),
 });
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface Order {
   id: string;
@@ -16,8 +16,8 @@ interface Order {
 }
 
 export default function OrderDetailPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : "";
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 

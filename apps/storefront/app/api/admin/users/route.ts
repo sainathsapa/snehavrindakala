@@ -112,15 +112,17 @@ export async function PATCH(req: Request) {
       params.push(is_active);
       updates.push(`is_active = $${params.length}`);
     }
+    if (updates.length === 0) {
+      return NextResponse.json(
+        { error: "No fields to update" },
+        { status: 400 }
+      );
+    }
+
     params.push(id);
-    updates.push(`updated_at = now()`);
-    updates.push(`id = $${params.length}`);
+    const sql = `UPDATE admin_users SET ${updates.join(", ")}, updated_at = now() WHERE id = $${params.length} RETURNING id, email, role, is_active`;
 
-    const sql = `UPDATE admin_users SET ${updates.slice(0, -1).join(", ")} WHERE id = $${params.length} RETURNING id, email, role, is_active`;
-    // Fix: rebuild properly
-    const sql2 = `UPDATE admin_users SET ${updates.filter((_, i) => i < updates.length - 1).join(", ")} WHERE id = $${params.length} RETURNING id, email, role, is_active`;
-
-    const rows = await query(sql2, params);
+    const rows = await query(sql, params);
     if (rows.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

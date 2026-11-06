@@ -11,7 +11,7 @@ export type IntegrationEventProcessingState =
   | "dead_letter";
 
 export const IntegrationEvent = model.define("integration_event", {
-  id: model.id().primaryKey(),
+  id: model.text().primaryKey(),
   provider: model.text(),
   event_id: model.text(),
   event_type: model.text(),

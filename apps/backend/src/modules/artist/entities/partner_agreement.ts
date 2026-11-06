@@ -4,8 +4,8 @@
 import { model } from "@medusajs/utils";
 
 export const PartnerAgreement = model.define("partner_agreement", {
-  id: model.id().primaryKey(),
-  artist_id: model.id(),
+  id: model.text().primaryKey(),
+  artist_id: model.text(),
   agreement_type: model.text(),
   version: model.text(),
   effective_date: model.dateTime(),

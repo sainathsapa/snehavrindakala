@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface Product {
   id: string;
@@ -15,8 +15,8 @@ interface Product {
 }
 
 export default function EditProductPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : "";
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

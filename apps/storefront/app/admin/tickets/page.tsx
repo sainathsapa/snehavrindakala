@@ -24,7 +24,7 @@ export default function TicketsPage() {
             id: t.id || "",
             subject: t.subject || "",
             status: t.status || "",
-            customer_email: t.customer_email || "",
+            customer_email: t.email || t.customer_email || "",
             created_at: t.created_at || "",
           }))
         );
@@ -51,7 +51,12 @@ export default function TicketsPage() {
               #{t.id.slice(-8)}
             </td>
             <td className="px-6 py-4 font-sans text-sm text-deep-ink">
-              {t.subject}
+              <Link
+                href={`/admin/tickets/${t.id}`}
+                className="text-sindoor font-medium hover:underline"
+              >
+                {t.subject}
+              </Link>
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {t.customer_email}

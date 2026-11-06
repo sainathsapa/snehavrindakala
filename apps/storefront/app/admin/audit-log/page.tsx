@@ -23,10 +23,10 @@ export default function AuditLogPage() {
         setLogs(
           (data.logs || []).map((l: any) => ({
             id: l.id || "",
-            actor_email: l.actor_email || "",
+            actor_email: l.user_email || l.actor_email || "",
             action: l.action || "",
-            resource_type: l.resource_type || "",
-            resource_id: l.resource_id || "",
+            resource_type: l.entity_type || l.resource_type || "",
+            resource_id: l.entity_id || l.resource_id || "",
             created_at: l.created_at || "",
           }))
         );
