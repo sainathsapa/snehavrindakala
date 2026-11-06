@@ -1,32 +1,22 @@
 /**
- * Partner application entity (plain class).
+ * Partner application entity (DML).
+ * Reviewed by admin before a partner record is activated.
  */
-export class PartnerApplication {
-  id!: string;
-  artist_id?: string | null;
-  applicant_name!: string;
-  email!: string;
-  phone?: string | null;
-  disciplines?: string[] | null;
-  portfolio_references?: string[] | null;
-  pricing_range?: string | null;
-  capacity?: string | null;
-  production_times?: string | null;
-  packaging_ability?: string | null;
-  review_status!: "pending" | "approved" | "rejected";
-  reviewer_id?: string | null;
-  review_notes?: string | null;
-  created_at!: Date;
-  updated_at!: Date;
+import { model } from "@medusajs/utils";
 
-  constructor(data?: Partial<PartnerApplication>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.created_at = this.created_at || new Date();
-    this.updated_at = new Date();
-  }
-}
+export const PartnerApplication = model.define("partner_application", {
+  id: model.id().primaryKey(),
+  artist_id: model.id().nullable(),
+  applicant_name: model.text(),
+  email: model.text(),
+  phone: model.text().nullable(),
+  disciplines: model.array().nullable(),
+  portfolio_references: model.array().nullable(),
+  pricing_range: model.text().nullable(),
+  capacity: model.text().nullable(),
+  production_times: model.text().nullable(),
+  packaging_ability: model.text().nullable(),
+  review_status: model.enum(["pending", "approved", "rejected"]).default("pending"),
+  reviewer_id: model.text().nullable(),
+  review_notes: model.text().nullable(),
+});

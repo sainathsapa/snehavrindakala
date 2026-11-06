@@ -1,5 +1,16 @@
+/**
+ * Audit service. Security-sensitive operation records (DML).
+ *
+ * DML entities are registered with MikroORM via
+ * MedusaServiceModelObjectsSymbol.
+ */
 import { AuditRecord } from "./entities/audit_record";
+import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import type { CreateAuditRecordInput } from "./types";
+
+const MODEL_OBJECTS = {
+  AuditRecord,
+};
 
 export class AuditService {
   protected readonly manager_: any;
@@ -8,8 +19,8 @@ export class AuditService {
     this.manager_ = manager;
   }
 
-  async record(data: CreateAuditRecordInput): Promise<AuditRecord> {
-    const record = new AuditRecord(data);
+  async record(data: CreateAuditRecordInput): Promise<any> {
+    const record = this.manager_.getRepository(AuditRecord).create(data);
     return this.manager_.persistAndFlush(record);
   }
 
@@ -20,8 +31,9 @@ export class AuditService {
     action?: string;
     offset?: number;
     limit?: number;
-  } = {}): Promise<{ records: AuditRecord[]; count: number }> {
-    const { entity, entity_id, actor, action, offset = 0, limit = 50 } = filter;
+  } = {}): Promise<{ records: any[]; count: number }> {
+    const { entity, entity_id, actor, action, offset = 0, limit = 50 } =
+      filter;
     const where: Record<string, any> = {};
     if (entity) where.entity = entity;
     if (entity_id) where.entity_id = entity_id;
@@ -38,3 +50,6 @@ export class AuditService {
     return { records, count };
   }
 }
+
+// Register DML entities with Medusa/MikroORM metadata at module load time.
+(AuditService as any)[MedusaServiceModelObjectsSymbol] = MODEL_OBJECTS;

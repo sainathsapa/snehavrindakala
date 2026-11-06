@@ -1,30 +1,17 @@
 /**
- * Private reference/customer upload for a commission request (plain class).
+ * Private reference/customer upload for a commission request (DML).
  */
-export class CommissionAttachment {
-  id!: string;
-  commission_request_id!: string;
-  object_key!: string;
-  mime_type!: string;
-  size_bytes!: number;
-  original_filename?: string | null;
-  scan_complete!: boolean;
-  scan_passed!: boolean;
-  scan_result?: string | null;
-  retention_delete_at?: Date | null;
-  created_at!: Date;
-  updated_at!: Date;
+import { model } from "@medusajs/utils";
 
-  constructor(data?: Partial<CommissionAttachment>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.scan_complete = this.scan_complete ?? false;
-    this.scan_passed = this.scan_passed ?? false;
-    this.created_at = this.created_at || new Date();
-    this.updated_at = new Date();
-  }
-}
+export const CommissionAttachment = model.define("commission_attachment", {
+  id: model.id().primaryKey(),
+  commission_request_id: model.id(),
+  object_key: model.text(),
+  mime_type: model.text(),
+  size_bytes: model.number(),
+  original_filename: model.text().nullable(),
+  scan_complete: model.boolean().default(false),
+  scan_passed: model.boolean().default(false),
+  scan_result: model.text().nullable(),
+  retention_delete_at: model.dateTime().nullable(),
+});

@@ -1,25 +1,14 @@
 /**
- * Commission revision tracking customer briefs and artist responses (plain class).
+ * Commission revision tracking customer briefs and artist responses (DML).
  */
-export class CommissionRevision {
-  id!: string;
-  commission_request_id!: string;
-  milestone_id!: string;
-  revision_number!: number;
-  customer_brief?: string | null;
-  artist_response?: string | null;
-  approval_record?: Record<string, any> | null;
-  created_at!: Date;
-  updated_at!: Date;
+import { model } from "@medusajs/utils";
 
-  constructor(data?: Partial<CommissionRevision>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.created_at = this.created_at || new Date();
-    this.updated_at = new Date();
-  }
-}
+export const CommissionRevision = model.define("commission_revision", {
+  id: model.id().primaryKey(),
+  commission_request_id: model.id(),
+  milestone_id: model.id(),
+  revision_number: model.number().default(1),
+  customer_brief: model.text().nullable(),
+  artist_response: model.text().nullable(),
+  approval_record: model.json().nullable(),
+});

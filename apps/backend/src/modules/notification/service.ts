@@ -1,5 +1,16 @@
+/**
+ * Notification service. Transactional email/message records (DML).
+ *
+ * DML entities are registered with MikroORM via
+ * MedusaServiceModelObjectsSymbol.
+ */
 import { Notification } from "./entities/notification";
+import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import type { SendNotificationInput } from "./types";
+
+const MODEL_OBJECTS = {
+  Notification,
+};
 
 export class NotificationService {
   protected readonly manager_: any;
@@ -8,10 +19,10 @@ export class NotificationService {
     this.manager_ = manager;
   }
 
-  async sendNotification(data: SendNotificationInput): Promise<Notification> {
+  async sendNotification(data: SendNotificationInput): Promise<any> {
     const { to, template, data: templateData, channel = "email" } = data;
 
-    const notification = new Notification({
+    const notification = this.manager_.getRepository(Notification).create({
       recipient: to,
       channel,
       template,
@@ -24,7 +35,8 @@ export class NotificationService {
       notification.status = "sent";
     } catch (err) {
       notification.status = "failed";
-      notification.error_message = err instanceof Error ? err.message : String(err);
+      notification.error_message =
+        err instanceof Error ? err.message : String(err);
     }
 
     return this.manager_.persistAndFlush(notification);
@@ -36,10 +48,7 @@ export class NotificationService {
     template: string,
     templateData: Record<string, any>
   ): Promise<void> {
-    const {
-      AWS_SES_ACCESS_KEY_ID,
-      FROM_EMAIL,
-    } = process.env;
+    const { AWS_SES_ACCESS_KEY_ID, FROM_EMAIL } = process.env;
 
     if (!AWS_SES_ACCESS_KEY_ID || !FROM_EMAIL) {
       console.log(
@@ -56,7 +65,7 @@ export class NotificationService {
     template?: string;
     offset?: number;
     limit?: number;
-  } = {}): Promise<{ notifications: Notification[]; count: number }> {
+  } = {}): Promise<{ notifications: any[]; count: number }> {
     const { recipient, status, template, offset = 0, limit = 50 } = filter;
     const where: Record<string, any> = {};
     if (recipient) where.recipient = recipient;
@@ -76,3 +85,6 @@ export class NotificationService {
     return { notifications, count };
   }
 }
+
+// Register DML entities with Medusa/MikroORM metadata at module load time.
+(NotificationService as any)[MedusaServiceModelObjectsSymbol] = MODEL_OBJECTS;

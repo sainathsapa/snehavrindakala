@@ -1,30 +1,20 @@
 /**
- * Notification record for transactional emails/messages (plain class).
+ * Notification record for transactional emails/messages (DML).
  */
+import { model } from "@medusajs/utils";
+
 export type NotificationStatus = "pending" | "sent" | "delivered" | "failed" | "bounced";
 export type NotificationChannel = "email" | "whatsapp" | "sms";
 
-export class Notification {
-  id!: string;
-  recipient!: string;
-  channel!: NotificationChannel;
-  template!: string;
-  data?: Record<string, any> | null;
-  status!: NotificationStatus;
-  provider_message_id?: string | null;
-  error_message?: string | null;
-  created_at!: Date;
-  updated_at!: Date;
-
-  constructor(data?: Partial<Notification>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.status = this.status ?? "pending";
-    this.created_at = new Date();
-    this.updated_at = new Date();
-  }
-}
+export const Notification = model.define("notification", {
+  id: model.id().primaryKey(),
+  recipient: model.text(),
+  channel: model.enum(["email", "whatsapp", "sms"]),
+  template: model.text(),
+  data: model.json().nullable(),
+  status: model
+    .enum(["pending", "sent", "delivered", "failed", "bounced"])
+    .default("pending"),
+  provider_message_id: model.text().nullable(),
+  error_message: model.text().nullable(),
+});

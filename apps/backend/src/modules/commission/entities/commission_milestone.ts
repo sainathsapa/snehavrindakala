@@ -1,6 +1,8 @@
 /**
- * Commission milestone with proof upload and approval tracking (plain class).
+ * Commission milestone with proof upload and approval tracking (DML).
  */
+import { model } from "@medusajs/utils";
+
 export type MilestoneStatus =
   | "pending"
   | "in_progress"
@@ -9,29 +11,22 @@ export type MilestoneStatus =
   | "rejected"
   | "completed";
 
-export class CommissionMilestone {
-  id!: string;
-  commission_request_id!: string;
-  commission_quote_id?: string | null;
-  name!: string;
-  sequence!: number;
-  description?: string | null;
-  due_date?: Date | null;
-  status!: MilestoneStatus;
-  proof_object_key?: string | null;
-  approval_record?: Record<string, any> | null;
-  created_at!: Date;
-  updated_at!: Date;
-
-  constructor(data?: Partial<CommissionMilestone>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.status = this.status ?? "pending";
-    this.created_at = this.created_at || new Date();
-    this.updated_at = new Date();
-  }
-}
+export const CommissionMilestone = model.define("commission_milestone", {
+  id: model.id().primaryKey(),
+  commission_request_id: model.id(),
+  commission_quote_id: model.id().nullable(),
+  name: model.text(),
+  sequence: model.number().default(0),
+  description: model.text().nullable(),
+  due_date: model.dateTime().nullable(),
+  status: model.enum([
+    "pending",
+    "in_progress",
+    "proof_submitted",
+    "approved",
+    "rejected",
+    "completed",
+  ]).default("pending"),
+  proof_object_key: model.text().nullable(),
+  approval_record: model.json().nullable(),
+});

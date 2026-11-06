@@ -1,27 +1,16 @@
 /**
- * Partner agreement entity (plain class).
+ * Partner agreement entity (DML).
  */
-export class PartnerAgreement {
-  id!: string;
-  artist_id!: string;
-  agreement_type!: string;
-  version!: string;
-  effective_date!: Date;
-  expiry_date?: Date | null;
-  commercial_terms_ref?: string | null;
-  signed_document_ref?: string | null;
-  signed_at?: Date | null;
-  created_at!: Date;
-  updated_at!: Date;
+import { model } from "@medusajs/utils";
 
-  constructor(data?: Partial<PartnerAgreement>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.created_at = this.created_at || new Date();
-    this.updated_at = new Date();
-  }
-}
+export const PartnerAgreement = model.define("partner_agreement", {
+  id: model.id().primaryKey(),
+  artist_id: model.id(),
+  agreement_type: model.text(),
+  version: model.text(),
+  effective_date: model.dateTime(),
+  expiry_date: model.dateTime().nullable(),
+  commercial_terms_ref: model.text().nullable(),
+  signed_document_ref: model.text().nullable(),
+  signed_at: model.dateTime().nullable(),
+});

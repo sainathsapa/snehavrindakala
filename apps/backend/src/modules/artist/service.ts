@@ -1,6 +1,15 @@
+/**
+ * Artist service. Business logic for artist/partner management.
+ *
+ * The DML entities (Artist, PartnerApplication, PartnerAgreement) are
+ * registered with MikroORM via MedusaServiceModelObjectsSymbol so the
+ * module's data model is resolved at runtime. This fixes the "model
+ * metadata" failures that previously caused 500s on artist endpoints.
+ */
 import { Artist } from "./entities/artist";
 import { PartnerApplication } from "./entities/partner_application";
 import { PartnerAgreement } from "./entities/partner_agreement";
+import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import type {
   CreateArtistInput,
   UpdateArtistInput,
@@ -9,10 +18,12 @@ import type {
   CreatePartnerAgreementInput,
 } from "./types";
 
-/**
- * Artist service. Business logic for artist/partner management.
- * Medusa injects the EntityManager for data access.
- */
+const MODEL_OBJECTS = {
+  Artist,
+  PartnerApplication,
+  PartnerAgreement,
+};
+
 export class ArtistService {
   protected readonly manager_: any;
 
@@ -20,7 +31,7 @@ export class ArtistService {
     this.manager_ = manager;
   }
 
-  async createArtist(data: CreateArtistInput): Promise<Artist> {
+  async createArtist(data: CreateArtistInput): Promise<any> {
     const existing = await this.manager_.findOne(Artist, {
       slug: data.slug,
     });
@@ -28,7 +39,7 @@ export class ArtistService {
       throw new Error(`Artist with slug "${data.slug}" already exists`);
     }
 
-    const artist = new Artist({
+    const artist = this.manager_.getRepository(Artist).create({
       ...data,
       status: data.status ?? "pending",
       commission_available: data.commission_available ?? false,
@@ -37,13 +48,13 @@ export class ArtistService {
     return this.manager_.persistAndFlush(artist);
   }
 
-  async updateArtist(id: string, data: UpdateArtistInput): Promise<Artist> {
+  async updateArtist(id: string, data: UpdateArtistInput): Promise<any> {
     const artist = await this.manager_.findOne(Artist, { id });
     if (!artist) {
       throw new Error(`Artist ${id} not found`);
     }
 
-    Object.assign(artist, data);
+    this.manager_.getRepository(Artist).assign(artist, data);
     artist.updated_at = new Date();
     return this.manager_.persistAndFlush(artist);
   }
@@ -56,16 +67,16 @@ export class ArtistService {
     await this.manager_.removeAndFlush(artist);
   }
 
-  async getArtist(id: string): Promise<Artist | null> {
+  async getArtist(id: string): Promise<any | null> {
     return this.manager_.findOne(Artist, { id });
   }
 
-  async getArtistBySlug(slug: string): Promise<Artist | null> {
+  async getArtistBySlug(slug: string): Promise<any | null> {
     return this.manager_.findOne(Artist, { slug });
   }
 
   async listArtists(filter: ArtistFilter = {}): Promise<{
-    artists: Artist[];
+    artists: any[];
     count: number;
   }> {
     const { offset = 0, limit = 20, status, q } = filter;
@@ -90,7 +101,7 @@ export class ArtistService {
     return { artists, count };
   }
 
-  async approveArtist(id: string, reviewerId: string): Promise<Artist> {
+  async approveArtist(id: string, reviewerId: string): Promise<any> {
     const artist = await this.manager_.findOne(Artist, { id });
     if (!artist) {
       throw new Error(`Artist ${id} not found`);
@@ -100,7 +111,7 @@ export class ArtistService {
     return this.manager_.persistAndFlush(artist);
   }
 
-  async suspendArtist(id: string): Promise<Artist> {
+  async suspendArtist(id: string): Promise<any> {
     const artist = await this.manager_.findOne(Artist, { id });
     if (!artist) {
       throw new Error(`Artist ${id} not found`);
@@ -111,8 +122,8 @@ export class ArtistService {
 
   async createPartnerApplication(
     data: CreatePartnerApplicationInput
-  ): Promise<PartnerApplication> {
-    const app = new PartnerApplication(data);
+  ): Promise<any> {
+    const app = this.manager_.getRepository(PartnerApplication).create(data);
     return this.manager_.persistAndFlush(app);
   }
 
@@ -121,7 +132,7 @@ export class ArtistService {
     offset?: number;
     limit?: number;
   } = {}): Promise<{
-    applications: PartnerApplication[];
+    applications: any[];
     count: number;
   }> {
     const { review_status, offset = 0, limit = 20 } = filter;
@@ -148,7 +159,7 @@ export class ArtistService {
     status: "approved" | "rejected",
     reviewerId: string,
     notes?: string
-  ): Promise<PartnerApplication> {
+  ): Promise<any> {
     const app = await this.manager_.findOne(PartnerApplication, { id });
     if (!app) {
       throw new Error(`Partner application ${id} not found`);
@@ -168,12 +179,18 @@ export class ArtistService {
 
   async createPartnerAgreement(
     data: CreatePartnerAgreementInput
-  ): Promise<PartnerAgreement> {
-    const agreement = new PartnerAgreement(data);
+  ): Promise<any> {
+    const agreement = this.manager_
+      .getRepository(PartnerAgreement)
+      .create(data);
     return this.manager_.persistAndFlush(agreement);
   }
 
-  async getPartnerAgreementsByArtist(artistId: string): Promise<PartnerAgreement[]> {
+  async getPartnerAgreementsByArtist(artistId: string): Promise<any[]> {
     return this.manager_.find(PartnerAgreement, { artist_id: artistId });
   }
 }
+
+// Register DML entities with Medusa/MikroORM metadata at module load time.
+// The Module() wrapper reads service[MedusaServiceModelObjectsSymbol].
+(ArtistService as any)[MedusaServiceModelObjectsSymbol] = MODEL_OBJECTS;

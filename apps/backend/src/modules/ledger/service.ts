@@ -1,10 +1,24 @@
-import { EarningsLedgerEntry } from "./entities/earnings_ledger_entry";
-import { PayoutBatch } from "./entities/payout_batch";
+/**
+ * Ledger service. Partner earnings and payout batch records (DML).
+ *
+ * DML entities are registered with MikroORM via
+ * MedusaServiceModelObjectsSymbol.
+ */
+import {
+  EarningsLedgerEntry,
+  PayoutBatch,
+} from "./entities/index";
+import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import type {
   CreateEarningsLedgerEntryInput,
   CreatePayoutBatchInput,
   UpdatePayoutBatchInput,
 } from "./types";
+
+const MODEL_OBJECTS = {
+  EarningsLedgerEntry,
+  PayoutBatch,
+};
 
 export class LedgerService {
   protected readonly manager_: any;
@@ -13,12 +27,22 @@ export class LedgerService {
     this.manager_ = manager;
   }
 
-  async createEarningsLedgerEntry(data: CreateEarningsLedgerEntryInput): Promise<EarningsLedgerEntry> {
-    const entry = new EarningsLedgerEntry(data);
+  async createEarningsLedgerEntry(
+    data: CreateEarningsLedgerEntryInput
+  ): Promise<any> {
+    const entry = this.manager_
+      .getRepository(EarningsLedgerEntry)
+      .create({
+        ...data,
+        deductions: data.deductions ?? 0,
+        fee_share: data.fee_share ?? 0,
+        currency: data.currency ?? "INR",
+        state: data.state ?? "pending",
+      });
     return this.manager_.persistAndFlush(entry);
   }
 
-  async getEarningsLedgerEntry(id: string): Promise<EarningsLedgerEntry | null> {
+  async getEarningsLedgerEntry(id: string): Promise<any | null> {
     return this.manager_.findOne(EarningsLedgerEntry, { id });
   }
 
@@ -30,7 +54,7 @@ export class LedgerService {
       offset?: number;
       limit?: number;
     } = {}
-  ): Promise<{ entries: EarningsLedgerEntry[]; count: number }> {
+  ): Promise<{ entries: any[]; count: number }> {
     const { state, source_type, offset = 0, limit = 50 } = filter;
     const where: Record<string, any> = { partner_id: partnerId };
     if (state) where.state = state;
@@ -52,7 +76,7 @@ export class LedgerService {
   async markEntryPaid(
     id: string,
     metadata?: Record<string, any>
-  ): Promise<EarningsLedgerEntry> {
+  ): Promise<any> {
     const entry = await this.manager_.findOne(EarningsLedgerEntry, { id });
     if (!entry) {
       throw new Error(`Ledger entry ${id} not found`);
@@ -71,7 +95,7 @@ export class LedgerService {
     id: string,
     reason: string,
     actorId: string
-  ): Promise<EarningsLedgerEntry> {
+  ): Promise<any> {
     const entry = await this.manager_.findOne(EarningsLedgerEntry, { id });
     if (!entry) {
       throw new Error(`Ledger entry ${id} not found`);
@@ -90,26 +114,35 @@ export class LedgerService {
   }
 
   async getPendingEarningsByPartner(partnerId: string): Promise<{
-    entries: EarningsLedgerEntry[];
+    entries: any[];
     total_minor: number;
   }> {
     const entries = await this.manager_.find(EarningsLedgerEntry, {
-      partner_id: partnerId,
-      state: "pending",
+      where: { partner_id: partnerId, state: "pending" },
+      orderBy: { created_at: "DESC" },
     });
     let total_minor = 0;
     for (const e of entries) {
-      total_minor += Number(e.gross_basis || 0) - Number(e.deductions || 0) - Number(e.fee_share || 0);
+      total_minor +=
+        Number(e.gross_basis || 0) -
+        Number(e.deductions || 0) -
+        Number(e.fee_share || 0);
     }
     return { entries, total_minor };
   }
 
-  async createPayoutBatch(data: CreatePayoutBatchInput): Promise<PayoutBatch> {
-    const batch = new PayoutBatch(data);
+  async createPayoutBatch(data: CreatePayoutBatchInput): Promise<any> {
+    const batch = this.manager_
+      .getRepository(PayoutBatch)
+      .create({
+        ...data,
+        currency: data.currency ?? "INR",
+        status: data.status ?? "draft",
+      });
     return this.manager_.persistAndFlush(batch);
   }
 
-  async getPayoutBatch(id: string): Promise<PayoutBatch | null> {
+  async getPayoutBatch(id: string): Promise<any | null> {
     return this.manager_.findOne(PayoutBatch, { id });
   }
 
@@ -118,7 +151,7 @@ export class LedgerService {
     status?: string;
     offset?: number;
     limit?: number;
-  } = {}): Promise<{ batches: PayoutBatch[]; count: number }> {
+  } = {}): Promise<{ batches: any[]; count: number }> {
     const { partner_id, status, offset = 0, limit = 20 } = filter;
     const where: Record<string, any> = {};
     if (partner_id) where.partner_id = partner_id;
@@ -134,7 +167,10 @@ export class LedgerService {
     return { batches, count };
   }
 
-  async updatePayoutBatch(id: string, data: UpdatePayoutBatchInput): Promise<PayoutBatch> {
+  async updatePayoutBatch(
+    id: string,
+    data: UpdatePayoutBatchInput
+  ): Promise<any> {
     const batch = await this.manager_.findOne(PayoutBatch, { id });
     if (!batch) {
       throw new Error(`Payout batch ${id} not found`);
@@ -144,7 +180,10 @@ export class LedgerService {
     return this.manager_.persistAndFlush(batch);
   }
 
-  async submitPayoutBatch(id: string, providerReference: string): Promise<PayoutBatch> {
+  async submitPayoutBatch(
+    id: string,
+    providerReference: string
+  ): Promise<any> {
     const batch = await this.manager_.findOne(PayoutBatch, { id });
     if (!batch) {
       throw new Error(`Payout batch ${id} not found`);
@@ -154,7 +193,10 @@ export class LedgerService {
     return this.manager_.persistAndFlush(batch);
   }
 
-  async markPayoutBatchPaid(id: string, providerReference: string): Promise<PayoutBatch> {
+  async markPayoutBatchPaid(
+    id: string,
+    providerReference: string
+  ): Promise<any> {
     const batch = await this.manager_.findOne(PayoutBatch, { id });
     if (!batch) {
       throw new Error(`Payout batch ${id} not found`);
@@ -164,7 +206,7 @@ export class LedgerService {
     return this.manager_.persistAndFlush(batch);
   }
 
-  async reconcilePayoutBatch(id: string): Promise<PayoutBatch> {
+  async reconcilePayoutBatch(id: string): Promise<any> {
     const batch = await this.manager_.findOne(PayoutBatch, { id });
     if (!batch) {
       throw new Error(`Payout batch ${id} not found`);
@@ -174,3 +216,6 @@ export class LedgerService {
     return this.manager_.persistAndFlush(batch);
   }
 }
+
+// Register DML entities with Medusa/MikroORM metadata at module load time.
+(LedgerService as any)[MedusaServiceModelObjectsSymbol] = MODEL_OBJECTS;

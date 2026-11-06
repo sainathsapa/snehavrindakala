@@ -7,11 +7,16 @@ import { PartnerAgreement } from "./entities/partner_agreement";
 
 export const ARTIST_MODULE = "artist";
 
+export { Artist, PartnerApplication, PartnerAgreement };
+export { ArtistService };
+
+/**
+ * The artist module. Models (Artist, PartnerApplication, PartnerAgreement)
+ * are auto-registered with MikroORM via ArtistService extending
+ * MedusaService({ Artist, PartnerApplication, PartnerAgreement }).
+ */
 export const artistModule: ModuleExports<typeof ArtistService> = {
   service: ArtistService,
 };
-
-export { ArtistService, Artist, PartnerApplication, PartnerAgreement };
-
 
 export default Module(ARTIST_MODULE, { service: ArtistService });

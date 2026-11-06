@@ -1,0 +1,31 @@
+{
+  "name": "snehavrinda-kala",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SnehaVrinda Kala — Indian art house and creative-commerce platform (Next.js + Medusa v2 + PostgreSQL)",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "audit": "pnpm audit",
+    "db:setup": "pnpm --filter @snehavrinda-kala/backend db:setup",
+    "migrations:run": "pnpm --filter @snehavrinda-kala/backend migrations:run",
+    "seed": "node scripts/seed.mjs",
+    "postinstall": "pnpm --filter @snehavrinda-kala/backend typecheck && pnpm --filter @snehavrinda-kala/storefront typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "eslint": "^9.26.0",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

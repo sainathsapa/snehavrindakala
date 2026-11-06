@@ -1,25 +1,16 @@
 /**
- * Audit record for security-sensitive operations (plain class).
+ * Audit record for security-sensitive operations (DML).
  */
-export class AuditRecord {
-  id!: string;
-  actor!: string;
-  actor_role?: string | null;
-  action!: string;
-  entity!: string;
-  entity_id!: string;
-  before?: Record<string, any> | null;
-  after?: Record<string, any> | null;
-  request_correlation_id?: string | null;
-  timestamp!: Date;
+import { model } from "@medusajs/utils";
 
-  constructor(data?: Partial<AuditRecord>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.timestamp = new Date();
-  }
-}
+export const AuditRecord = model.define("audit_record", {
+  id: model.id().primaryKey(),
+  actor: model.text(),
+  actor_role: model.text().nullable(),
+  action: model.text(),
+  entity: model.text(),
+  entity_id: model.text(),
+  before: model.json().nullable(),
+  after: model.json().nullable(),
+  request_correlation_id: model.text().nullable(),
+});

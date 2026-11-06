@@ -1,5 +1,16 @@
+/**
+ * Integration event service. Idempotent webhook event ledger (DML).
+ *
+ * DML entities are registered with MikroORM via
+ * MedusaServiceModelObjectsSymbol.
+ */
 import { IntegrationEvent } from "./entities/integration_event";
+import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import type { CreateIntegrationEventInput } from "./types";
+
+const MODEL_OBJECTS = {
+  IntegrationEvent,
+};
 
 export class IntegrationEventService {
   protected readonly manager_: any;
@@ -8,73 +19,96 @@ export class IntegrationEventService {
     this.manager_ = manager;
   }
 
-  async recordEvent(data: CreateIntegrationEventInput): Promise<IntegrationEvent> {
+  async recordEvent(data: CreateIntegrationEventInput): Promise<any> {
     const existing = await this.manager_.findOne(IntegrationEvent, {
-      provider: data.provider,
-      event_id: data.event_id,
+      where: { provider: data.provider, event_id: data.event_id },
     });
     if (existing) {
       return existing;
     }
 
-    const event = new IntegrationEvent(data);
+    const event = this.manager_
+      .getRepository(IntegrationEvent)
+      .create({
+        ...data,
+        processing_state: data.processing_state ?? "received",
+        attempt_count: data.attempt_count ?? 0,
+        received_at: data.received_at ?? new Date(),
+      });
     return this.manager_.persistAndFlush(event);
   }
 
-  async getEvent(id: string): Promise<IntegrationEvent | null> {
+  async getEvent(id: string): Promise<any | null> {
     return this.manager_.findOne(IntegrationEvent, { id });
   }
 
   async getEventByProviderAndId(
     provider: string,
     eventId: string
-  ): Promise<IntegrationEvent | null> {
-    return this.manager_.findOne(IntegrationEvent, { provider, event_id: eventId });
+  ): Promise<any | null> {
+    return this.manager_.findOne(IntegrationEvent, {
+      provider,
+      event_id: eventId,
+    });
   }
 
-  async markProcessing(id: string): Promise<IntegrationEvent> {
+  async markProcessing(id: string): Promise<any> {
     const event = await this.manager_.findOne(IntegrationEvent, { id });
     if (!event) {
       throw new Error(`Integration event ${id} not found`);
     }
-    event.processing_state = "processing";
-    event.attempt_count = (event.attempt_count || 0) + 1;
-    return this.manager_.persistAndFlush(event);
+
+    await this.manager_.getRepository(IntegrationEvent).update(id, {
+      processing_state: "processing",
+      attempt_count: (event.attempt_count || 0) + 1,
+    });
+    return this.manager_.findOne(IntegrationEvent, { id });
   }
 
-  async markProcessed(id: string): Promise<IntegrationEvent> {
+  async markProcessed(id: string): Promise<any> {
     const event = await this.manager_.findOne(IntegrationEvent, { id });
     if (!event) {
       throw new Error(`Integration event ${id} not found`);
     }
-    event.processing_state = "processed";
-    event.processed_at = new Date();
-    return this.manager_.persistAndFlush(event);
+
+    await this.manager_.getRepository(IntegrationEvent).update(id, {
+      processing_state: "processed",
+      processed_at: new Date(),
+    });
+    return this.manager_.findOne(IntegrationEvent, { id });
   }
 
-  async markFailed(id: string, error: string): Promise<IntegrationEvent> {
+  async markFailed(id: string, error: string): Promise<any> {
     const event = await this.manager_.findOne(IntegrationEvent, { id });
     if (!event) {
       throw new Error(`Integration event ${id} not found`);
     }
-    event.processing_state = "failed";
-    event.last_error = error;
-    return this.manager_.persistAndFlush(event);
-  }
 
-  async markDeadLetter(id: string): Promise<IntegrationEvent> {
-    const event = await this.manager_.findOne(IntegrationEvent, { id });
-    if (!event) {
-      throw new Error(`Integration event ${id} not found`);
-    }
-    event.processing_state = "dead_letter";
-    return this.manager_.persistAndFlush(event);
-  }
-
-  async listFailedEvents(limit: number = 50): Promise<IntegrationEvent[]> {
-    return this.manager_.find(IntegrationEvent, {
+    await this.manager_.getRepository(IntegrationEvent).update(id, {
       processing_state: "failed",
-    }, { orderBy: { updated_at: "ASC" }, take: limit });
+      last_error: error,
+    });
+    return this.manager_.findOne(IntegrationEvent, { id });
+  }
+
+  async markDeadLetter(id: string): Promise<any> {
+    const event = await this.manager_.findOne(IntegrationEvent, { id });
+    if (!event) {
+      throw new Error(`Integration event ${id} not found`);
+    }
+
+    await this.manager_.getRepository(IntegrationEvent).update(id, {
+      processing_state: "dead_letter",
+    });
+    return this.manager_.findOne(IntegrationEvent, { id });
+  }
+
+  async listFailedEvents(limit: number = 50): Promise<any[]> {
+    return this.manager_.find(IntegrationEvent, {
+      where: { processing_state: "failed" },
+      orderBy: { updated_at: "ASC" },
+      take: limit,
+    });
   }
 
   async listEventsByProvider(
@@ -84,7 +118,7 @@ export class IntegrationEventService {
       offset?: number;
       limit?: number;
     } = {}
-  ): Promise<{ events: IntegrationEvent[]; count: number }> {
+  ): Promise<{ events: any[]; count: number }> {
     const { processing_state, offset = 0, limit = 50 } = filter;
     const where: Record<string, any> = { provider };
     if (processing_state) where.processing_state = processing_state;
@@ -99,3 +133,6 @@ export class IntegrationEventService {
     return { events, count };
   }
 }
+
+// Register DML entities with Medusa/MikroORM metadata at module load time.
+(IntegrationEventService as any)[MedusaServiceModelObjectsSymbol] = MODEL_OBJECTS;

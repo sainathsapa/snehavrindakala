@@ -6,97 +6,124 @@ on:
   pull_request:
     branches: [main]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 jobs:
-  lint-type-test:
+  lint-and-typecheck:
+    name: Lint & typecheck
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 12
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Lint (workspace)
+        run: pnpm lint
+      - name: Typecheck (workspace)
+        run: pnpm typecheck
 
-      - name: Type check
-        run: |
-          pnpm --filter @snehavrinda-kala/backend run typecheck
-          pnpm --filter @snehavrinda-kala/storefront run typecheck
-
-      - name: Run tests
-        run: pnpm --filter @snehavrinda-kala/backend run test
-
-  builds:
-    needs: lint-type-test
+  unit-tests:
+    name: Unit tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: medusa
+          POSTGRES_PASSWORD: medusa
+          POSTGRES_DB: medusa
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U medusa -d medusa"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 12
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Backend unit tests
+        run: pnpm --filter @snehavrinda-kala/backend test
+      - name: Storefront typecheck
+        run: pnpm --filter @snehavrinda-kala/storefront typecheck
 
-      - name: Build storefront
-        run: pnpm --filter @snehavrinda-kala/storefront run build
-
-  deploy:
-    needs: builds
-    if: github.ref == 'refs/heads/main'
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    environment: production
+    needs: [lint-and-typecheck, unit-tests]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 12
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ap-south-1
+          node-version: 20
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build (workspace)
+        run: pnpm build
+      - name: Dependency audit
+        run: pnpm audit || true
 
-      - name: Build and push Docker image
-        run: |
-          docker build -f apps/backend/Dockerfile \
-            -t ${{ secrets.ECR_REGISTRY }}/snehavrinda-backend:${{ github.sha }} .
-          docker push ${{ secrets.ECR_REGISTRY }}/snehavrinda-backend:${{ github.sha }}
-
-      - name: Deploy to ECS
-        run: |
-          aws ecs update-service \
-            --cluster ${{ env.ENVIRONMENT }}-snehavrinda-backend \
-            --service ${{ env.ENVIRONMENT }}-snehavrinda-backend-api \
-            --force-new-deployment
-
-      - name: Deploy storefront to Vercel
-        run: |
-          cd apps/storefront
-          npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+  e2e-smoke:
+    name: E2E smoke (preview)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Start services (Compose)
+        run: docker compose up -d postgres redis backend
+      - name: Seed database
+        run: pnpm seed
+        env:
+          MEDUSA_BACKEND_URL: http://localhost:9000
+          ADMIN_EMAIL: admin@snehavrindakala.example
+          ADMIN_PASSWORD: admin-secret-change-me
+      - name: Run storefront E2E smoke
+        run: pnpm --filter @snehavrinda-kala/storefront test:e2e

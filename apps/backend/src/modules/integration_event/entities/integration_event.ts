@@ -1,6 +1,8 @@
 /**
- * Integration event ledger for idempotent webhook processing (plain class).
+ * Integration event ledger for idempotent webhook processing (DML).
  */
+import { model } from "@medusajs/utils";
+
 export type IntegrationEventProcessingState =
   | "received"
   | "processing"
@@ -8,30 +10,18 @@ export type IntegrationEventProcessingState =
   | "failed"
   | "dead_letter";
 
-export class IntegrationEvent {
-  id!: string;
-  provider!: string;
-  event_id!: string;
-  event_type!: string;
-  received_at!: Date;
-  payload?: Record<string, any> | null;
-  signature_result?: string | null;
-  processing_state!: IntegrationEventProcessingState;
-  attempt_count!: number;
-  last_error?: string | null;
-  processed_at?: Date | null;
-  updated_at!: Date;
-
-  constructor(data?: Partial<IntegrationEvent>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.received_at = new Date();
-    this.processing_state = this.processing_state ?? "received";
-    this.attempt_count = this.attempt_count ?? 0;
-    this.updated_at = new Date();
-  }
-}
+export const IntegrationEvent = model.define("integration_event", {
+  id: model.id().primaryKey(),
+  provider: model.text(),
+  event_id: model.text(),
+  event_type: model.text(),
+  received_at: model.dateTime(),
+  payload: model.json().nullable(),
+  signature_result: model.text().nullable(),
+  processing_state: model
+    .enum(["received", "processing", "processed", "failed", "dead_letter"])
+    .default("received"),
+  attempt_count: model.number().default(0),
+  last_error: model.text().nullable(),
+  processed_at: model.dateTime().nullable(),
+});

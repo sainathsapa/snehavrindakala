@@ -1,32 +1,22 @@
 /**
- * Artist domain entity (plain class, no ORM decorator dependency).
- * Medusa v2 modules manage persistence through their data layer.
+ * Artist domain entity (DML).
+ * Registered via model.define so Medusa v2 / MikroORM can resolve metadata
+ * at runtime. Medusa auto-adds created_at, updated_at, deleted_at.
  */
-export class Artist {
-  id!: string;
-  display_name!: string;
-  slug!: string;
-  bio?: string | null;
-  disciplines?: string[] | null;
-  techniques?: string[] | null;
-  region?: string | null;
-  portrait_media_id?: string | null;
-  contact_email?: string | null;
-  phone?: string | null;
-  status!: "pending" | "approved" | "suspended";
-  commission_available!: boolean;
-  is_verified!: boolean;
-  created_at!: Date;
-  updated_at!: Date;
+import { model } from "@medusajs/utils";
 
-  constructor(data?: Partial<Artist>) {
-    if (data) {
-      Object.assign(this, data);
-    }
-    if (!this.id) {
-      this.id = crypto.randomUUID();
-    }
-    this.created_at = this.created_at || new Date();
-    this.updated_at = new Date();
-  }
-}
+export const Artist = model.define("artist", {
+  id: model.id().primaryKey(),
+  display_name: model.text(),
+  slug: model.text().unique(),
+  bio: model.text().nullable(),
+  disciplines: model.array().nullable(),
+  techniques: model.array().nullable(),
+  region: model.text().nullable(),
+  portrait_media_id: model.text().nullable(),
+  contact_email: model.text().nullable(),
+  phone: model.text().nullable(),
+  status: model.enum(["pending", "approved", "suspended"]).default("pending"),
+  commission_available: model.boolean().default(false),
+  is_verified: model.boolean().default(false),
+});

@@ -11,14 +11,14 @@
     "test": "playwright test"
   },
   "dependencies": {
+    "@sanity/image-url": "^1.1.0",
     "@snehavrinda-kala/types": "workspace:*",
     "@snehavrinda-kala/ui": "workspace:*",
-    "next": "15.2.3",
+    "next": "15.5.28",
+    "next-sanity": "^9.4.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "sanity": "^6.22.0",
-    "next-sanity": "^9.4.0",
-    "@sanity/image-url": "^1.1.0"
+    "sanity": "^6.22.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
