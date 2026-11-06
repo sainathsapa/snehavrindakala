@@ -30,20 +30,20 @@ export default function SellPage() {
             <Card key={item.title} elevated>
               <CardContent className="p-6">
                 <Badge variant="peacock">Creator benefit</Badge>
-                <h3 className="mt-4 font-serif text-xl font-semibold text-ink">
+                <h3 className="mt-4 font-serif text-xl font-semibold text-deep-ink">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm text-muted font-sans">{item.body}</p>
+                <p className="mt-2 text-sm text-muted-ink font-sans">{item.body}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
         <div className="mt-10 rounded-xl border border-border bg-surface p-8">
-          <h2 className="text-2xl font-serif font-semibold text-ink">
+          <h2 className="text-2xl font-serif font-semibold text-deep-ink">
             How it works
           </h2>
-          <ol className="mt-4 grid gap-4 md:grid-cols-4 text-sm text-muted font-sans">
+          <ol className="mt-4 grid gap-4 md:grid-cols-4 text-sm text-muted-ink font-sans">
             <li>1. Submit your studio profile and portfolio.</li>
             <li>2. Our team reviews quality, capacity, and fit.</li>
             <li>3. Approved creators list products and receive commissions.</li>
@@ -52,7 +52,7 @@ export default function SellPage() {
           <div className="mt-8">
             <Link
               href="/seller"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-madder text-white rounded-md font-medium hover:bg-madder/90 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-sindoor text-white rounded-md font-medium hover:bg-sindoor/90 transition-colors"
             >
               Start your application
             </Link>

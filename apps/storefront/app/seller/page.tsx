@@ -34,10 +34,10 @@ export default async function SellerDashboardPage() {
         <p className="text-sm font-medium text-madder uppercase tracking-wider">
           Creator studio
         </p>
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink">
+        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink">
           Sell with SnehaVrinda Kala
         </h1>
-        <p className="mt-2 max-w-2xl text-muted font-sans">
+        <p className="mt-2 max-w-2xl text-muted-ink font-sans">
           Apply, track your application, and manage the work you create for our
           customers.
         </p>
@@ -61,15 +61,15 @@ export default async function SellerDashboardPage() {
                   >
                     {application.status ?? "submitted"}
                   </Badge>
-                  <p className="text-sm text-muted font-sans">
+                  <p className="text-sm text-muted-ink font-sans">
                     {application.studio_name || "Your studio"}
                   </p>
-                  <p className="text-xs text-muted font-sans">
+                  <p className="text-xs text-muted-ink font-sans">
                     Submitted {application.submitted_at ? new Date(application.submitted_at).toLocaleDateString("en-IN") : "recently"}
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted font-sans">
+                <p className="text-sm text-muted-ink font-sans">
                   You have not submitted an application yet.
                 </p>
               )}
@@ -83,7 +83,7 @@ export default async function SellerDashboardPage() {
             <CardContent>
               <form action={applySellerAction} className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label htmlFor="studio_name" className="block text-sm font-medium text-ink mb-1">
+                  <label htmlFor="studio_name" className="block text-sm font-medium text-deep-ink mb-1">
                     Studio / artist name
                   </label>
                   <input
@@ -92,11 +92,11 @@ export default async function SellerDashboardPage() {
                     type="text"
                     required
                     defaultValue={application?.studio_name ?? ""}
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div>
-                  <label htmlFor="disciplines" className="block text-sm font-medium text-ink mb-1">
+                  <label htmlFor="disciplines" className="block text-sm font-medium text-deep-ink mb-1">
                     Disciplines
                   </label>
                   <input
@@ -105,11 +105,11 @@ export default async function SellerDashboardPage() {
                     type="text"
                     placeholder="Painting, ceramics, textile..."
                     defaultValue={application?.disciplines ?? ""}
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div>
-                  <label htmlFor="capacity" className="block text-sm font-medium text-ink mb-1">
+                  <label htmlFor="capacity" className="block text-sm font-medium text-deep-ink mb-1">
                     Monthly capacity
                   </label>
                   <input
@@ -118,11 +118,11 @@ export default async function SellerDashboardPage() {
                     type="text"
                     placeholder="e.g. 10-15 pieces"
                     defaultValue={application?.capacity ?? ""}
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label htmlFor="portfolio" className="block text-sm font-medium text-ink mb-1">
+                  <label htmlFor="portfolio" className="block text-sm font-medium text-deep-ink mb-1">
                     Portfolio / Instagram / website
                   </label>
                   <input
@@ -131,11 +131,11 @@ export default async function SellerDashboardPage() {
                     type="url"
                     placeholder="https://"
                     defaultValue={application?.portfolio ?? ""}
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label htmlFor="notes" className="block text-sm font-medium text-ink mb-1">
+                  <label htmlFor="notes" className="block text-sm font-medium text-deep-ink mb-1">
                     Tell us about your practice
                   </label>
                   <textarea
@@ -143,7 +143,7 @@ export default async function SellerDashboardPage() {
                     name="notes"
                     rows={4}
                     defaultValue={application?.notes ?? ""}
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -165,21 +165,21 @@ export default async function SellerDashboardPage() {
           </CardHeader>
           <CardContent>
             {commissions.length === 0 ? (
-              <p className="text-muted font-sans">
+              <p className="text-muted-ink font-sans">
                 Commission requests linked to your account will appear here.
               </p>
             ) : (
               <ul className="space-y-3">
                 {commissions.map((request: any) => (
-                  <li key={request.reference_id} className="border-b border-border pb-3 last:border-0 last:pb-0">
+                  <li key={request.reference_id} className="border-b border-sand-border pb-3 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-4">
-                      <span className="font-medium text-ink">{request.art_form}</span>
+                      <span className="font-medium text-deep-ink">{request.art_form}</span>
                       <Badge variant="outline">{request.status}</Badge>
                     </div>
-                    <p className="mt-1 text-sm text-muted font-sans line-clamp-2">
+                    <p className="mt-1 text-sm text-muted-ink font-sans line-clamp-2">
                       {request.brief}
                     </p>
-                    <p className="mt-1 text-xs text-muted font-sans">
+                    <p className="mt-1 text-xs text-muted-ink font-sans">
                       {request.reference_id}
                     </p>
                   </li>
