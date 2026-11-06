@@ -1,5 +1,5 @@
 /**
- * PATCH /api/tickets/[id] - Update ticket status
+ * GET /api/tickets/[id] - Get ticket detail with replies
  */
 
 import { NextResponse } from "next/server";
@@ -20,18 +20,12 @@ async function query(sql: string, params: any[] = []) {
   }
 }
 
-export async function PATCH(
+export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = await req.json();
-    const { status } = body;
-
-    if (!status) {
-      return NextResponse.json({ error: "Missing status" }, { status: 400 });
-    }
 
     await query(
       `CREATE TABLE IF NOT EXISTS support_tickets (
@@ -48,16 +42,35 @@ export async function PATCH(
       )`
     );
 
-    const rows = await query(
-      `UPDATE support_tickets SET status = $1, updated_at = now() WHERE id = $2 RETURNING *`,
-      [status, id]
+    await query(
+      `CREATE TABLE IF NOT EXISTS ticket_replies (
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+        ticket_id TEXT NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+        message TEXT NOT NULL,
+        author TEXT,
+        author_type TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT now()
+      )`
     );
 
-    if (rows.length === 0) {
+    const ticketRows = await query(
+      "SELECT * FROM support_tickets WHERE id = $1",
+      [id]
+    );
+
+    if (ticketRows.length === 0) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ ticket: rows[0] });
+    const replyRows = await query(
+      "SELECT * FROM ticket_replies WHERE ticket_id = $1 ORDER BY created_at ASC",
+      [id]
+    );
+
+    return NextResponse.json({
+      ticket: ticketRows[0],
+      replies: replyRows,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

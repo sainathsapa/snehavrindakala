@@ -190,7 +190,7 @@ export default function TicketsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link
-                          href={`/admin/tickets/${ticket.id}`}
+                          href={`/admin/tickets/[id]?id=${ticket.id}`}
                           className="text-sm font-medium text-sindoor hover:underline mr-2"
                         >
                           View

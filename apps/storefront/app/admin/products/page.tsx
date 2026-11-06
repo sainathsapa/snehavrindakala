@@ -191,7 +191,7 @@ function ProductCard({
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
           <Link
-            href={`/admin/products/${product.id}`}
+            href={`/admin/products/[id]/edit?id=${product.id}`}
             className="block"
           >
             <h3 className="font-serif font-semibold text-deep-ink leading-tight line-clamp-2">
@@ -200,7 +200,7 @@ function ProductCard({
           </Link>
           {canWrite && (
             <Link
-              href={`/admin/products/${product.id}/edit`}
+              href={`/admin/products/[id]/edit?id=${product.id}`}
               className="text-xs text-sindoor hover:underline"
             >
               Edit
