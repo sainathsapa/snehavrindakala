@@ -1,9 +1,9 @@
-/**
- * Migration: create artist module tables.
- * Tables: artist, partner_application, partner_agreement
- */
-export const up = `
-  CREATE TABLE IF NOT EXISTS "artist" (
+import { Migration } from "@mikro-orm/migrations";
+
+export class Migration20261105000001 extends Migration {
+
+  async up(): Promise<void> {
+    this.addSql(`CREATE TABLE IF NOT EXISTS "artist" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "display_name" text NOT NULL,
     "slug" text NOT NULL UNIQUE,
@@ -57,11 +57,12 @@ export const up = `
   CREATE INDEX IF NOT EXISTS idx_artist_slug ON "artist"("slug");
   CREATE INDEX IF NOT EXISTS idx_artist_status ON "artist"("status");
   CREATE INDEX IF NOT EXISTS idx_partner_application_review_status ON "partner_application"("review_status");
-  CREATE INDEX IF NOT EXISTS idx_partner_agreement_artist_id ON "partner_agreement"("artist_id");
-`;
+  CREATE INDEX IF NOT EXISTS idx_partner_agreement_artist_id ON "partner_agreement"("artist_id");`);
+  }
 
-export const down = `
-  DROP TABLE IF EXISTS "partner_agreement" CASCADE;
+  async down(): Promise<void> {
+    this.addSql(`DROP TABLE IF EXISTS "partner_agreement" CASCADE;
   DROP TABLE IF EXISTS "partner_application" CASCADE;
-  DROP TABLE IF EXISTS "artist" CASCADE;
-`;
+  DROP TABLE IF EXISTS "artist" CASCADE;`);
+  }
+}

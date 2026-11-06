@@ -1,8 +1,9 @@
-/**
- * Migration: create ledger module tables.
- */
-export const up = `
-  CREATE TABLE IF NOT EXISTS "earnings_ledger_entry" (
+import { Migration } from "@mikro-orm/migrations";
+
+export class Migration20261105000003 extends Migration {
+
+  async up(): Promise<void> {
+    this.addSql(`CREATE TABLE IF NOT EXISTS "earnings_ledger_entry" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "partner_id" text NOT NULL,
     "source_type" text NOT NULL,
@@ -36,10 +37,11 @@ export const up = `
   CREATE INDEX IF NOT EXISTS idx_ledger_entry_state ON "earnings_ledger_entry"("state");
   CREATE INDEX IF NOT EXISTS idx_ledger_entry_source ON "earnings_ledger_entry"("source_type", "source_id");
   CREATE INDEX IF NOT EXISTS idx_payout_batch_partner_id ON "payout_batch"("partner_id");
-  CREATE INDEX IF NOT EXISTS idx_payout_batch_status ON "payout_batch"("status");
-`;
+  CREATE INDEX IF NOT EXISTS idx_payout_batch_status ON "payout_batch"("status");`);
+  }
 
-export const down = `
-  DROP TABLE IF EXISTS "payout_batch" CASCADE;
-  DROP TABLE IF EXISTS "earnings_ledger_entry" CASCADE;
-`;
+  async down(): Promise<void> {
+    this.addSql(`DROP TABLE IF EXISTS "payout_batch" CASCADE;
+  DROP TABLE IF EXISTS "earnings_ledger_entry" CASCADE;`);
+  }
+}

@@ -1,4 +1,3 @@
-import { MedusaService } from "@medusajs/utils";
 import { Artist } from "./entities/artist";
 import { PartnerApplication } from "./entities/partner_application";
 import { PartnerAgreement } from "./entities/partner_agreement";
@@ -14,13 +13,12 @@ import type {
  * Artist service. Business logic for artist/partner management.
  * Medusa injects the EntityManager for data access.
  */
-
-export class ArtistService extends MedusaService({
-  Artist,
-  PartnerApplication,
-  PartnerAgreement,
-}) {
+export class ArtistService {
   protected readonly manager_: any;
+
+  constructor({ manager }: { manager: any }) {
+    this.manager_ = manager;
+  }
 
   async createArtist(data: CreateArtistInput): Promise<Artist> {
     const existing = await this.manager_.findOne(Artist, {
@@ -59,16 +57,37 @@ export class ArtistService extends MedusaService({
   }
 
   async getArtist(id: string): Promise<Artist | null> {
-    try {
-      return await (this as any).retrieveArtist(id);
-    } catch {
-      return null;
-    }
+    return this.manager_.findOne(Artist, { id });
   }
 
   async getArtistBySlug(slug: string): Promise<Artist | null> {
-    const artists = await (this as any).listArtists({ slug }, { take: 1 });
-    return artists?.[0] ?? null;
+    return this.manager_.findOne(Artist, { slug });
+  }
+
+  async listArtists(filter: ArtistFilter = {}): Promise<{
+    artists: Artist[];
+    count: number;
+  }> {
+    const { offset = 0, limit = 20, status, q } = filter;
+    const where: Record<string, any> = {};
+    if (status) {
+      where.status = status;
+    }
+    if (q) {
+      where.$or = [
+        { display_name: { $ilike: `%${q}%` } },
+        { slug: { $ilike: `%${q}%` } },
+      ];
+    }
+
+    const [artists, count] = await this.manager_.findAndCount(Artist, {
+      where,
+      skip: offset,
+      take: limit,
+      orderBy: { created_at: "DESC" },
+    });
+
+    return { artists, count };
   }
 
   async approveArtist(id: string, reviewerId: string): Promise<Artist> {
@@ -95,6 +114,33 @@ export class ArtistService extends MedusaService({
   ): Promise<PartnerApplication> {
     const app = new PartnerApplication(data);
     return this.manager_.persistAndFlush(app);
+  }
+
+  async listPartnerApplications(filter: {
+    review_status?: string;
+    offset?: number;
+    limit?: number;
+  } = {}): Promise<{
+    applications: PartnerApplication[];
+    count: number;
+  }> {
+    const { review_status, offset = 0, limit = 20 } = filter;
+    const where: Record<string, any> = {};
+    if (review_status) {
+      where.review_status = review_status;
+    }
+
+    const [applications, count] = await this.manager_.findAndCount(
+      PartnerApplication,
+      {
+        where,
+        skip: offset,
+        take: limit,
+        orderBy: { created_at: "DESC" },
+      }
+    );
+
+    return { applications, count };
   }
 
   async reviewPartnerApplication(

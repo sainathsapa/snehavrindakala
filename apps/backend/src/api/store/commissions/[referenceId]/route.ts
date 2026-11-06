@@ -1,18 +1,11 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/types";
 import type { CommissionService } from "../../../../modules/commission/service";
 
-/**
- * GET /store/commissions/:referenceId
- * Customer-safe commission status lookup by public reference ID.
- */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const commissionService = req.scope.resolve("commission") as CommissionService;
   const { referenceId } = req.params as { referenceId: string };
 
-  const commission = await commissionService.getCommissionRequestByReference(
-    referenceId
-  );
-
+  const commission = await commissionService.getCommissionRequestByReference(referenceId);
   if (!commission) {
     return res.status(404).json({ error: "Commission request not found" });
   }

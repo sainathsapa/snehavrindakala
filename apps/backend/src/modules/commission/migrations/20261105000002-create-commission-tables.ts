@@ -1,8 +1,9 @@
-/**
- * Migration: create commission module tables.
- */
-export const up = `
-  CREATE TABLE IF NOT EXISTS "commission_request" (
+import { Migration } from "@mikro-orm/migrations";
+
+export class Migration20261105000002 extends Migration {
+
+  async up(): Promise<void> {
+    this.addSql(`CREATE TABLE IF NOT EXISTS "commission_request" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "reference_id" text NOT NULL UNIQUE,
     "customer_id" uuid,
@@ -87,13 +88,14 @@ export const up = `
   CREATE INDEX IF NOT EXISTS idx_commission_request_assigned_artist_id ON "commission_request"("assigned_artist_id");
   CREATE INDEX IF NOT EXISTS idx_commission_quote_request_id ON "commission_quote"("commission_request_id");
   CREATE INDEX IF NOT EXISTS idx_commission_milestone_request_id ON "commission_milestone"("commission_request_id");
-  CREATE INDEX IF NOT EXISTS idx_commission_revision_milestone_id ON "commission_revision"("milestone_id");
-`;
+  CREATE INDEX IF NOT EXISTS idx_commission_revision_milestone_id ON "commission_revision"("milestone_id");`);
+  }
 
-export const down = `
-  DROP TABLE IF EXISTS "commission_revision" CASCADE;
+  async down(): Promise<void> {
+    this.addSql(`DROP TABLE IF EXISTS "commission_revision" CASCADE;
   DROP TABLE IF EXISTS "commission_milestone" CASCADE;
   DROP TABLE IF EXISTS "commission_quote" CASCADE;
   DROP TABLE IF EXISTS "commission_attachment" CASCADE;
-  DROP TABLE IF EXISTS "commission_request" CASCADE;
-`;
+  DROP TABLE IF EXISTS "commission_request" CASCADE;`);
+  }
+}
