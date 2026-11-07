@@ -1,32 +1,59 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 
 interface Commission {
   id: string;
+  artist_id: string;
   artist_name: string;
   amount: number;
   currency_code: string;
   status: string;
+  paid_at: string | null;
   created_at: string;
 }
 
+interface Partner {
+  id: string;
+  name: string;
+}
+
+const emptyForm = {
+  artist_id: "",
+  amount: "",
+  currency_code: "inr",
+  notes: "",
+};
+
+const statusClasses: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  paid: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-700",
+};
+
 export default function CommissionsPage() {
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetch("/api/admin/commissions?limit=20", { cache: "no-store" })
+  const loadCommissions = useCallback(() => {
+    fetch("/api/admin/commissions?limit=100", { cache: "no-store" })
       .then((r) => r.json())
       .then((data: any) => {
         setCommissions(
           (data.payouts || data.commissions || []).map((c: any) => ({
             id: c.id || "",
+            artist_id: c.artist_id || "",
             artist_name: c.artist_name || "",
-            amount: c.amount || 0,
+            amount: Number(c.amount || 0),
             currency_code: c.currency_code || "inr",
             status: c.status || "",
+            paid_at: c.paid_at || null,
             created_at: c.created_at || "",
           }))
         );
@@ -34,6 +61,90 @@ export default function CommissionsPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadCommissions();
+    fetch("/api/admin/partners?limit=100", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data: any) => {
+        setPartners(
+          (data.partners || []).map((p: any) => ({
+            id: p.id || "",
+            name: p.name || "",
+          }))
+        );
+      })
+      .catch(() => {});
+  }, [loadCommissions]);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/commissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artist_id: form.artist_id,
+          amount: Math.round(Number(form.amount) * 100),
+          currency_code: form.currency_code,
+          notes: form.notes,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create payout");
+      setForm(emptyForm);
+      setShowForm(false);
+      loadCommissions();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function updateStatus(commission: Commission, status: string) {
+    setActionId(commission.id);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/commissions/${commission.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update payout");
+      loadCommissions();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionId(null);
+    }
+  }
+
+  async function removeCommission(commission: Commission) {
+    if (
+      !confirm(
+        `Delete payout of ₹${(commission.amount / 100).toFixed(2)} to ${commission.artist_name}?`
+      )
+    )
+      return;
+    setActionId(commission.id);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/commissions/${commission.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete payout");
+      loadCommissions();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -61,20 +172,62 @@ export default function CommissionsPage() {
             <td className="px-6 py-4 font-sans text-sm text-deep-ink text-right">
               {(c.amount / 100).toFixed(2)}
             </td>
-            <td className="px-6 py-4 font-sans text-sm text-deep-ink">
-              {c.status}
+            <td className="px-6 py-4 font-sans text-sm">
+              <span
+                className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                  statusClasses[c.status] || "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {c.status}
+              </span>
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {new Date(c.created_at).toLocaleDateString()}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm">
+              <div className="flex items-center gap-3">
+                {c.status !== "paid" && (
+                  <button
+                    onClick={() => updateStatus(c, "paid")}
+                    disabled={actionId === c.id}
+                    className="text-green-700 font-medium hover:underline disabled:opacity-50"
+                  >
+                    Mark paid
+                  </button>
+                )}
+                {c.status !== "pending" && (
+                  <button
+                    onClick={() => updateStatus(c, "pending")}
+                    disabled={actionId === c.id}
+                    className="text-sindoor font-medium hover:underline disabled:opacity-50"
+                  >
+                    Mark pending
+                  </button>
+                )}
+                {c.status !== "cancelled" && (
+                  <button
+                    onClick={() => updateStatus(c, "cancelled")}
+                    disabled={actionId === c.id}
+                    className="text-red-600 font-medium hover:underline disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={() => removeCommission(c)}
+                  disabled={actionId === c.id}
+                  className="text-red-600 font-medium hover:underline disabled:opacity-50"
+                >
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         ))
       : (
           <tr>
-            <td colSpan={6} className="px-6 py-12 text-center">
-              <p className="text-muted-ink font-sans">
-                No commissions found.
-              </p>
+            <td colSpan={7} className="px-6 py-12 text-center">
+              <p className="text-muted-ink font-sans">No commissions found.</p>
             </td>
           </tr>
         );
@@ -91,7 +244,109 @@ export default function CommissionsPage() {
               Manage artist commissions and payouts.
             </p>
           </div>
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors"
+          >
+            {showForm ? "Cancel" : "New Payout"}
+          </button>
         </div>
+
+        {error && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-sans text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {showForm && (
+          <form
+            onSubmit={handleCreate}
+            className="mb-6 rounded-xl border border-sand-border bg-surface p-6"
+          >
+            <h2 className="mb-4 text-lg font-serif font-semibold text-deep-ink">
+              Record Commission Payout
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Artist *
+                </span>
+                <select
+                  required
+                  value={form.artist_id}
+                  onChange={(e) =>
+                    setForm({ ...form, artist_id: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                >
+                  <option value="">Select artist…</option>
+                  {partners.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Amount (₹) *
+                </span>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  placeholder="500.00"
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Currency
+                </span>
+                <select
+                  value={form.currency_code}
+                  onChange={(e) =>
+                    setForm({ ...form, currency_code: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                >
+                  <option value="inr">INR</option>
+                  <option value="usd">USD</option>
+                </select>
+              </label>
+              <label className="block sm:col-span-3">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Notes
+                </span>
+                <input
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  placeholder="Q3 sales commission"
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors disabled:opacity-50"
+              >
+                {submitting ? "Saving..." : "Record Payout"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="rounded-md border border-sand-border px-4 py-2 text-sm font-sans font-medium text-deep-ink hover:bg-rang-paper transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
 
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <table className="w-full text-left divide-y divide-sand-border">
@@ -114,6 +369,9 @@ export default function CommissionsPage() {
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Created
+                </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Actions
                 </th>
               </tr>
             </thead>
