@@ -12,6 +12,44 @@ import {
   signAdminSession,
 } from "@/lib/admin-session";
 
+// Simple in-memory rate limiter: 5 failed attempts per IP per 15 minutes
+const FAILED_ATTEMPTS = new Map<string, { count: number; firstAttempt: number }>();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX_ATTEMPTS = 5;
+
+function getIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return "unknown";
+}
+
+function checkRateLimit(ip: string): { allowed: boolean; remaining?: number } {
+  const now = Date.now();
+  const record = FAILED_ATTEMPTS.get(ip);
+  if (!record || now - record.firstAttempt > RATE_LIMIT_WINDOW) {
+    FAILED_ATTEMPTS.set(ip, { count: 1, firstAttempt: now });
+    return { allowed: true };
+  }
+  if (record.count >= RATE_LIMIT_MAX_ATTEMPTS) {
+    const remaining = Math.ceil(
+      (RATE_LIMIT_WINDOW - (now - record.firstAttempt)) / 1000 / 60
+    );
+    return { allowed: false, remaining: Math.max(remaining, 1) };
+  }
+  record.count++;
+  return { allowed: true };
+}
+
+function recordFailedAttempt(ip: string) {
+  const now = Date.now();
+  const record = FAILED_ATTEMPTS.get(ip);
+  if (!record || now - record.firstAttempt > RATE_LIMIT_WINDOW) {
+    FAILED_ATTEMPTS.set(ip, { count: 1, firstAttempt: now });
+  } else {
+    record.count++;
+  }
+}
+
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .split(",")
   .map((e) => e.trim().toLowerCase())
@@ -64,6 +102,18 @@ async function verifyAdminUserPassword(
 }
 
 export async function POST(req: Request) {
+  // Rate limiting
+  const ip = getIp(req);
+  const limit = checkRateLimit(ip);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        error: `Too many failed login attempts. Try again in ${limit.remaining} minute(s).`,
+      },
+      { status: 429 }
+    );
+  }
+
   let body: { email?: string; password?: string };
   try {
     body = await req.json();
@@ -119,6 +169,7 @@ export async function POST(req: Request) {
   }
 
   if (!role) {
+    recordFailedAttempt(ip);
     return NextResponse.json(
       { error: "Invalid email or password" },
       { status: 401 }

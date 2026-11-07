@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Icon } from "@snehavrinda-kala/ui";
+import { useAdminRole } from "@/lib/hooks/use-admin-role";
 
 interface Order {
   id: string;
@@ -27,6 +28,8 @@ export default function OrdersPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState("");
   const [actionError, setActionError] = useState("");
+  const { can } = useAdminRole();
+  const canCancelOrders = can("orders:delete");
   const LIMIT = 20;
 
   const loadOrders = useCallback(() => {
@@ -199,7 +202,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Bulk action toolbar */}
-        {selectedIds.size > 0 && (
+        {selectedIds.size > 0 && canCancelOrders && (
           <div className="mb-4 rounded-xl border border-sand-border bg-surface p-4 flex items-center gap-3">
             <span className="text-sm font-sans text-muted-ink">
               {selectedIds.size} selected
