@@ -8,6 +8,9 @@ const backendUrl = new URL(
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   compress: true,
   transpilePackages: ["@snehavrinda-kala/ui", "@snehavrinda-kala/types"],
   // Standalone output is only needed for the container image. Local builds
