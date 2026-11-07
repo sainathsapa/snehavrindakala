@@ -23,6 +23,41 @@ async function adminFetch(
   return fetch(`${backendUrl}${path}`, { ...options, headers });
 }
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  try {
+    const { id } = await params;
+    const BACKEND_URL =
+      process.env.MEDUSA_BACKEND_URL ||
+      process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+      "http://localhost:9000";
+    const PUBLISHABLE_KEY =
+      process.env.MEDUSA_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
+      "";
+
+    const res = await adminFetch(
+      BACKEND_URL,
+      PUBLISHABLE_KEY,
+      `/admin/product-categories/${id}`
+    );
+
+    if (!res.ok) {
+      const error = await res.text();
+      return NextResponse.json({ error }, { status: res.status });
+    }
+
+    return NextResponse.json(await res.json());
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

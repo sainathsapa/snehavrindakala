@@ -53,10 +53,17 @@ export async function GET(req: Request) {
     if (type === "orders") {
       filename = "orders";
       rows = await query(`
-        SELECT id, status, fulfillment_status, payment_status,
-               total, currency_code, customer_email, created_at, updated_at
-        FROM "order"
-        ORDER BY created_at DESC
+        SELECT o.id, o.status, o.email AS customer_email, o.currency_code,
+               COALESCE(SUM(li.unit_price * oi.quantity), 0) AS total,
+               o.created_at, o.updated_at
+        FROM "order" o
+        LEFT JOIN order_item oi
+          ON oi.order_id = o.id AND oi.version = o.version
+        LEFT JOIN order_line_item li ON li.id = oi.item_id
+        WHERE o.deleted_at IS NULL
+        GROUP BY o.id, o.status, o.email, o.currency_code,
+                 o.created_at, o.updated_at
+        ORDER BY o.created_at DESC
         LIMIT 10000
       `);
     } else if (type === "products") {
@@ -64,6 +71,7 @@ export async function GET(req: Request) {
       rows = await query(`
         SELECT id, title, handle, status, description, created_at, updated_at
         FROM product
+        WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 10000
       `);
@@ -73,6 +81,7 @@ export async function GET(req: Request) {
         SELECT id, email, first_name, last_name, phone, has_account,
                created_at, updated_at
         FROM customer
+        WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 10000
       `);

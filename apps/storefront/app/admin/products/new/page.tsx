@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function NewProductPage() {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState("draft");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("inr");
   const [saving, setSaving] = useState(false);
@@ -89,10 +89,10 @@ export default function NewProductPage() {
                     onChange={(e) => setStatus(e.target.value)}
                     className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
                   >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="proposed">Proposed</option>
+                    <option value="rejected">Rejected</option>
                   </select>
                 </div>
                 <div>

@@ -47,7 +47,8 @@ export class ArtistService {
       commission_available: data.commission_available ?? false,
       is_verified: false,
     });
-    return this.manager_.persistAndFlush(artist);
+    await this.manager_.persistAndFlush(artist);
+    return artist;
   }
 
   async updateArtist(id: string, data: UpdateArtistInput): Promise<any> {
@@ -58,7 +59,8 @@ export class ArtistService {
 
     this.manager_.getRepository(Artist).assign(artist, data);
     artist.updated_at = new Date();
-    return this.manager_.persistAndFlush(artist);
+    await this.manager_.persistAndFlush(artist);
+    return artist;
   }
 
   async deleteArtist(id: string): Promise<void> {
@@ -94,8 +96,7 @@ export class ArtistService {
     }
 
     const repository = this.manager_.getRepository(Artist);
-    const [artists, count] = await repository.findAndCount({
-      where,
+    const [artists, count] = await repository.findAndCount(where, {
       offset,
       limit,
       orderBy: { created_at: "DESC" },
@@ -111,7 +112,8 @@ export class ArtistService {
     }
     artist.status = "approved";
     artist.is_verified = true;
-    return this.manager_.persistAndFlush(artist);
+    await this.manager_.persistAndFlush(artist);
+    return artist;
   }
 
   async suspendArtist(id: string): Promise<any> {
@@ -120,14 +122,18 @@ export class ArtistService {
       throw new Error(`Artist ${id} not found`);
     }
     artist.status = "suspended";
-    return this.manager_.persistAndFlush(artist);
+    await this.manager_.persistAndFlush(artist);
+    return artist;
   }
 
   async createPartnerApplication(
     data: CreatePartnerApplicationInput
   ): Promise<any> {
-    const app = this.manager_.getRepository(PartnerApplication).create(data);
-    return this.manager_.persistAndFlush(app);
+    const app = this.manager_
+      .getRepository(PartnerApplication)
+      .create({ ...data, id: randomUUID() });
+    await this.manager_.persistAndFlush(app);
+    return app;
   }
 
   async listPartnerApplications(filter: {
@@ -146,10 +152,10 @@ export class ArtistService {
 
     const [applications, count] = await this.manager_.findAndCount(
       PartnerApplication,
+      where,
       {
-        where,
-        skip: offset,
-        take: limit,
+        offset,
+        limit,
         orderBy: { created_at: "DESC" },
       }
     );
@@ -171,13 +177,13 @@ export class ArtistService {
     app.reviewer_id = reviewerId;
     app.review_notes = notes ?? null;
 
-    const updated = await this.manager_.persistAndFlush(app);
+    await this.manager_.persistAndFlush(app);
 
     if (status === "approved" && app.artist_id) {
       await this.approveArtist(app.artist_id, reviewerId);
     }
 
-    return updated;
+    return app;
   }
 
   async createPartnerAgreement(
@@ -185,8 +191,9 @@ export class ArtistService {
   ): Promise<any> {
     const agreement = this.manager_
       .getRepository(PartnerAgreement)
-      .create(data);
-    return this.manager_.persistAndFlush(agreement);
+      .create({ ...data, id: randomUUID() });
+    await this.manager_.persistAndFlush(agreement);
+    return agreement;
   }
 
   async getPartnerAgreementsByArtist(artistId: string): Promise<any[]> {

@@ -59,6 +59,28 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
+    const { title, slug, status, total, currency_code } = body;
+    const validStatuses = ["draft", "published", "proposed", "rejected"];
+    const amount = Number(total) || 0;
+
+    const update: Record<string, unknown> = {};
+    if (title !== undefined) update.title = title;
+    if (slug !== undefined) update.handle = slug;
+    if (validStatuses.includes(status)) update.status = status;
+
+    if (amount > 0) {
+      const { product } = await getAdminProduct(id);
+      const variant = (product as any).variants?.[0];
+      if (variant?.id) {
+        update.variants = [
+          {
+            id: variant.id,
+            prices: [{ amount, currency_code: currency_code || "inr" }],
+          },
+        ];
+      }
+    }
+
     const BACKEND_URL =
       process.env.MEDUSA_BACKEND_URL ||
       process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
@@ -74,7 +96,7 @@ export async function PATCH(
       `/admin/products/${id}`,
       {
         method: "POST",
-        body: JSON.stringify(body),
+        body: JSON.stringify(update),
       }
     );
 

@@ -6,6 +6,7 @@
  */
 import { AuditRecord } from "./entities/audit_record";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
+import { randomUUID } from "crypto";
 import type { CreateAuditRecordInput } from "./types";
 
 const MODEL_OBJECTS = {
@@ -20,8 +21,11 @@ export class AuditService {
   }
 
   async record(data: CreateAuditRecordInput): Promise<any> {
-    const record = this.manager_.getRepository(AuditRecord).create(data);
-    return this.manager_.persistAndFlush(record);
+    const record = this.manager_
+      .getRepository(AuditRecord)
+      .create({ ...data, id: randomUUID(), timestamp: new Date() });
+    await this.manager_.persistAndFlush(record);
+    return record;
   }
 
   async list(filter: {
@@ -40,12 +44,15 @@ export class AuditService {
     if (actor) where.actor = actor;
     if (action) where.action = action;
 
-    const [records, count] = await this.manager_.findAndCount(AuditRecord, {
+    const [records, count] = await this.manager_.findAndCount(
+      AuditRecord,
       where,
-      skip: offset,
-      take: limit,
-      orderBy: { timestamp: "DESC" },
-    });
+      {
+        offset,
+        limit,
+        orderBy: { timestamp: "DESC" },
+      }
+    );
 
     return { records, count };
   }

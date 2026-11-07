@@ -35,6 +35,28 @@ export async function POST(req: Request) {
   }
   try {
     const body = await req.json();
+    const { title, slug, status, total, currency_code } = body;
+    const validStatuses = ["draft", "published", "proposed", "rejected"];
+    const productStatus = validStatuses.includes(status) ? status : "draft";
+    const amount = Number(total) || 0;
+
+    const payload: Record<string, unknown> = {
+      title,
+      handle: slug || undefined,
+      status: productStatus,
+    };
+    if (amount > 0) {
+      payload.options = [{ title: "Default", values: ["Default"] }];
+      payload.variants = [
+        {
+          title: "Default",
+          sku: slug || undefined,
+          options: { Default: "Default" },
+          prices: [{ amount, currency_code: currency_code || "inr" }],
+        },
+      ];
+    }
+
     const BACKEND_URL =
       process.env.MEDUSA_BACKEND_URL ||
       process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
@@ -44,6 +66,24 @@ export async function POST(req: Request) {
       process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
       "";
 
+    // Attach the default sales channel so the product is visible on the
+    // storefront (Medusa only exposes products in a sales channel).
+    try {
+      const scRes = await fetch(`${BACKEND_URL}/admin/sales-channels?limit=1`, {
+        headers: {
+          "x-publishable-api-key": PUBLISHABLE_KEY,
+          ...(await adminAuthHeader()),
+        },
+      });
+      if (scRes.ok) {
+        const scData = await scRes.json();
+        const channelId = scData.sales_channels?.[0]?.id;
+        if (channelId) payload.sales_channels = [{ id: channelId }];
+      }
+    } catch {
+      // Product will still be created; it can be assigned to a channel later.
+    }
+
     const res = await fetch(`${BACKEND_URL}/admin/products`, {
       method: "POST",
       headers: {
@@ -51,7 +91,7 @@ export async function POST(req: Request) {
         "x-publishable-api-key": PUBLISHABLE_KEY,
         ...(await adminAuthHeader()),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {

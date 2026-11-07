@@ -24,7 +24,7 @@ export default function CategoriesPage() {
             id: c.id || "",
             name: c.name || "",
             slug: c.slug || "",
-            status: c.status || "",
+            status: c.status || (c.is_active ? "active" : "draft"),
             created_at: c.created_at || "",
           }))
         );

@@ -67,11 +67,19 @@ export default function PartnersPage() {
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {new Date(p.created_at).toLocaleDateString()}
             </td>
+            <td className="px-6 py-4 font-sans text-sm">
+              <Link
+                href={`/admin/partners/${p.id}/edit`}
+                className="text-sindoor font-medium hover:underline"
+              >
+                Edit
+              </Link>
+            </td>
           </tr>
         ))
       : (
           <tr>
-            <td colSpan={6} className="px-6 py-12 text-center">
+            <td colSpan={7} className="px-6 py-12 text-center">
               <p className="text-muted-ink font-sans">
                 No partners found.
               </p>
@@ -120,6 +128,9 @@ export default function PartnersPage() {
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Created
+                </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Actions
                 </th>
               </tr>
             </thead>

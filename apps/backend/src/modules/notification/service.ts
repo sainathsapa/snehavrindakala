@@ -6,6 +6,7 @@
  */
 import { Notification } from "./entities/notification";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
+import { randomUUID } from "crypto";
 import type { SendNotificationInput } from "./types";
 
 const MODEL_OBJECTS = {
@@ -23,6 +24,7 @@ export class NotificationService {
     const { to, template, data: templateData, channel = "email" } = data;
 
     const notification = this.manager_.getRepository(Notification).create({
+      id: randomUUID(),
       recipient: to,
       channel,
       template,
@@ -39,7 +41,9 @@ export class NotificationService {
         err instanceof Error ? err.message : String(err);
     }
 
-    return this.manager_.persistAndFlush(notification);
+    await this.manager_.persistAndFlush(notification);
+
+    return notification;
   }
 
   private async sendViaSES(
@@ -74,10 +78,10 @@ export class NotificationService {
 
     const [notifications, count] = await this.manager_.findAndCount(
       Notification,
+      where,
       {
-        where,
-        skip: offset,
-        take: limit,
+        offset,
+        limit,
         orderBy: { created_at: "DESC" },
       }
     );

@@ -23,6 +23,7 @@ export default function CategoryCreatePage() {
         body: JSON.stringify({
           name: form.name,
           description: form.description,
+          is_active: true,
           is_internal: false,
         }),
       });

@@ -37,10 +37,10 @@ export async function GET() {
   try {
     const [totalOrders, totalProducts, totalCustomers, totalArtists] =
       await Promise.all([
-        count(`SELECT COUNT(*)::int AS count FROM "order"`),
-        count(`SELECT COUNT(*)::int AS count FROM product`),
-        count(`SELECT COUNT(*)::int AS count FROM customer`),
-        count(`SELECT COUNT(*)::int AS count FROM artist`),
+        count(`SELECT COUNT(*)::int AS count FROM "order" WHERE deleted_at IS NULL`),
+        count(`SELECT COUNT(*)::int AS count FROM product WHERE deleted_at IS NULL`),
+        count(`SELECT COUNT(*)::int AS count FROM customer WHERE deleted_at IS NULL`),
+        count(`SELECT COUNT(*)::int AS count FROM artist WHERE deleted_at IS NULL`),
       ]);
 
     return NextResponse.json({

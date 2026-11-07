@@ -13,4 +13,5 @@ export const AuditRecord = model.define("audit_record", {
   before: model.json().nullable(),
   after: model.json().nullable(),
   request_correlation_id: model.text().nullable(),
+  timestamp: model.dateTime(),
 });

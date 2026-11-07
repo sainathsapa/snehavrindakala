@@ -9,6 +9,7 @@ import {
   PayoutBatch,
 } from "./entities/index";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
+import { randomUUID } from "crypto";
 import type {
   CreateEarningsLedgerEntryInput,
   CreatePayoutBatchInput,
@@ -34,12 +35,14 @@ export class LedgerService {
       .getRepository(EarningsLedgerEntry)
       .create({
         ...data,
+        id: randomUUID(),
         deductions: data.deductions ?? 0,
         fee_share: data.fee_share ?? 0,
         currency: data.currency ?? "INR",
         state: data.state ?? "pending",
       });
-    return this.manager_.persistAndFlush(entry);
+    await this.manager_.persistAndFlush(entry);
+    return entry;
   }
 
   async getEarningsLedgerEntry(id: string): Promise<any | null> {
@@ -62,10 +65,10 @@ export class LedgerService {
 
     const [entries, count] = await this.manager_.findAndCount(
       EarningsLedgerEntry,
+      where,
       {
-        where,
-        skip: offset,
-        take: limit,
+        offset,
+        limit,
         orderBy: { created_at: "DESC" },
       }
     );
@@ -88,7 +91,8 @@ export class LedgerService {
         ...metadata,
       };
     }
-    return this.manager_.persistAndFlush(entry);
+    await this.manager_.persistAndFlush(entry);
+    return entry;
   }
 
   async reverseEntry(
@@ -110,17 +114,19 @@ export class LedgerService {
       reversed_by: actorId,
       reversal_reason: reason,
     };
-    return this.manager_.persistAndFlush(entry);
+    await this.manager_.persistAndFlush(entry);
+    return entry;
   }
 
   async getPendingEarningsByPartner(partnerId: string): Promise<{
     entries: any[];
     total_minor: number;
   }> {
-    const entries = await this.manager_.find(EarningsLedgerEntry, {
-      where: { partner_id: partnerId, state: "pending" },
-      orderBy: { created_at: "DESC" },
-    });
+    const entries = await this.manager_.find(
+      EarningsLedgerEntry,
+      { partner_id: partnerId, state: "pending" },
+      { orderBy: { created_at: "DESC" } }
+    );
     let total_minor = 0;
     for (const e of entries) {
       total_minor +=
@@ -136,10 +142,12 @@ export class LedgerService {
       .getRepository(PayoutBatch)
       .create({
         ...data,
+        id: randomUUID(),
         currency: data.currency ?? "INR",
         status: data.status ?? "draft",
       });
-    return this.manager_.persistAndFlush(batch);
+    await this.manager_.persistAndFlush(batch);
+    return batch;
   }
 
   async getPayoutBatch(id: string): Promise<any | null> {
@@ -157,12 +165,15 @@ export class LedgerService {
     if (partner_id) where.partner_id = partner_id;
     if (status) where.status = status;
 
-    const [batches, count] = await this.manager_.findAndCount(PayoutBatch, {
+    const [batches, count] = await this.manager_.findAndCount(
+      PayoutBatch,
       where,
-      skip: offset,
-      take: limit,
-      orderBy: { created_at: "DESC" },
-    });
+      {
+        offset,
+        limit,
+        orderBy: { created_at: "DESC" },
+      }
+    );
 
     return { batches, count };
   }
@@ -177,7 +188,8 @@ export class LedgerService {
     }
     Object.assign(batch, data);
     batch.updated_at = new Date();
-    return this.manager_.persistAndFlush(batch);
+    await this.manager_.persistAndFlush(batch);
+    return batch;
   }
 
   async submitPayoutBatch(
@@ -190,7 +202,8 @@ export class LedgerService {
     }
     batch.status = "submitted";
     batch.provider_reference = providerReference;
-    return this.manager_.persistAndFlush(batch);
+    await this.manager_.persistAndFlush(batch);
+    return batch;
   }
 
   async markPayoutBatchPaid(
@@ -203,7 +216,8 @@ export class LedgerService {
     }
     batch.status = "paid";
     batch.provider_reference = providerReference;
-    return this.manager_.persistAndFlush(batch);
+    await this.manager_.persistAndFlush(batch);
+    return batch;
   }
 
   async reconcilePayoutBatch(id: string): Promise<any> {
@@ -213,7 +227,8 @@ export class LedgerService {
     }
     batch.status = "reconciled";
     batch.reconciled_at = new Date();
-    return this.manager_.persistAndFlush(batch);
+    await this.manager_.persistAndFlush(batch);
+    return batch;
   }
 }
 

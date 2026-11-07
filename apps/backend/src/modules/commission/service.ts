@@ -14,6 +14,7 @@ import {
   CommissionRevision,
 } from "./entities/index";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
+import { randomUUID } from "crypto";
 import type { CommissionStatus } from "./entities/commission_request";
 import type { QuoteStatus } from "./entities/commission_quote";
 import { COMMISSION_TRANSITIONS } from "./entities/commission_request";
@@ -48,8 +49,9 @@ export class CommissionService {
   ): Promise<any> {
     const req = this.manager_
       .getRepository(CommissionRequest)
-      .create({ ...data, status: data.status ?? "New" });
-    return this.manager_.persistAndFlush(req);
+      .create({ ...data, id: randomUUID(), status: data.status ?? "New" });
+    await this.manager_.persistAndFlush(req);
+    return req;
   }
 
   async getCommissionRequest(id: string): Promise<any | null> {
@@ -78,10 +80,10 @@ export class CommissionService {
 
     const [requests, count] = await this.manager_.findAndCount(
       CommissionRequest,
+      where,
       {
-        where,
-        skip: offset,
-        take: limit,
+        offset,
+        limit,
         orderBy: { created_at: "DESC" },
       }
     );
@@ -106,7 +108,8 @@ export class CommissionService {
 
     req.status = newStatus;
     req.updated_at = new Date();
-    return this.manager_.persistAndFlush(req);
+    await this.manager_.persistAndFlush(req);
+    return req;
   }
 
   async assignArtist(id: string, artistId: string): Promise<any> {
@@ -116,14 +119,18 @@ export class CommissionService {
     }
     req.assigned_artist_id = artistId;
     req.updated_at = new Date();
-    return this.manager_.persistAndFlush(req);
+    await this.manager_.persistAndFlush(req);
+    return req;
   }
 
   async createCommissionAttachment(
     data: CreateCommissionAttachmentInput
   ): Promise<any> {
-    const att = this.manager_.getRepository(CommissionAttachment).create(data);
-    return this.manager_.persistAndFlush(att);
+    const att = this.manager_
+      .getRepository(CommissionAttachment)
+      .create({ ...data, id: randomUUID() });
+    await this.manager_.persistAndFlush(att);
+    return att;
   }
 
   async listAttachmentsByCommission(
@@ -146,7 +153,8 @@ export class CommissionService {
     att.scan_complete = true;
     att.scan_passed = passed;
     att.scan_result = result ?? null;
-    return this.manager_.persistAndFlush(att);
+    await this.manager_.persistAndFlush(att);
+    return att;
   }
 
   async createCommissionQuote(
@@ -159,10 +167,12 @@ export class CommissionService {
 
     const quote = this.manager_.getRepository(CommissionQuote).create({
       ...data,
+      id: randomUUID(),
       version,
       status: "draft",
     });
-    return this.manager_.persistAndFlush(quote);
+    await this.manager_.persistAndFlush(quote);
+    return quote;
   }
 
   async getCommissionQuote(id: string): Promise<any | null> {
@@ -185,7 +195,8 @@ export class CommissionService {
     }
     Object.assign(quote, data);
     quote.updated_at = new Date();
-    return this.manager_.persistAndFlush(quote);
+    await this.manager_.persistAndFlush(quote);
+    return quote;
   }
 
   async acceptQuote(id: string): Promise<any> {
@@ -194,14 +205,18 @@ export class CommissionService {
       throw new Error(`Commission quote ${id} not found`);
     }
     quote.status = "accepted";
-    return this.manager_.persistAndFlush(quote);
+    await this.manager_.persistAndFlush(quote);
+    return quote;
   }
 
   async createCommissionMilestone(
     data: CreateCommissionMilestoneInput
   ): Promise<any> {
-    const ms = this.manager_.getRepository(CommissionMilestone).create(data);
-    return this.manager_.persistAndFlush(ms);
+    const ms = this.manager_
+      .getRepository(CommissionMilestone)
+      .create({ ...data, id: randomUUID() });
+    await this.manager_.persistAndFlush(ms);
+    return ms;
   }
 
   async listMilestonesByCommission(
@@ -222,7 +237,8 @@ export class CommissionService {
     }
     Object.assign(ms, data);
     ms.updated_at = new Date();
-    return this.manager_.persistAndFlush(ms);
+    await this.manager_.persistAndFlush(ms);
+    return ms;
   }
 
   async submitMilestoneProof(
@@ -235,7 +251,8 @@ export class CommissionService {
     }
     ms.proof_object_key = proofObjectKey;
     ms.status = "proof_submitted";
-    return this.manager_.persistAndFlush(ms);
+    await this.manager_.persistAndFlush(ms);
+    return ms;
   }
 
   async approveMilestone(
@@ -248,7 +265,8 @@ export class CommissionService {
     }
     ms.status = "approved";
     ms.approval_record = approvalRecord;
-    return this.manager_.persistAndFlush(ms);
+    await this.manager_.persistAndFlush(ms);
+    return ms;
   }
 
   async createCommissionRevision(
@@ -261,9 +279,11 @@ export class CommissionService {
 
     const rev = this.manager_.getRepository(CommissionRevision).create({
       ...data,
+      id: randomUUID(),
       revision_number,
     });
-    return this.manager_.persistAndFlush(rev);
+    await this.manager_.persistAndFlush(rev);
+    return rev;
   }
 
   async listRevisionsByMilestone(milestoneId: string): Promise<any[]> {

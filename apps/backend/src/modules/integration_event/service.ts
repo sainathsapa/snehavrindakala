@@ -6,6 +6,7 @@
  */
 import { IntegrationEvent } from "./entities/integration_event";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
+import { randomUUID } from "crypto";
 import type { CreateIntegrationEventInput } from "./types";
 
 const MODEL_OBJECTS = {
@@ -21,7 +22,8 @@ export class IntegrationEventService {
 
   async recordEvent(data: CreateIntegrationEventInput): Promise<any> {
     const existing = await this.manager_.findOne(IntegrationEvent, {
-      where: { provider: data.provider, event_id: data.event_id },
+      provider: data.provider,
+      event_id: data.event_id,
     });
     if (existing) {
       return existing;
@@ -31,11 +33,13 @@ export class IntegrationEventService {
       .getRepository(IntegrationEvent)
       .create({
         ...data,
+        id: randomUUID(),
         processing_state: data.processing_state ?? "received",
         attempt_count: data.attempt_count ?? 0,
         received_at: data.received_at ?? new Date(),
       });
-    return this.manager_.persistAndFlush(event);
+    await this.manager_.persistAndFlush(event);
+    return event;
   }
 
   async getEvent(id: string): Promise<any | null> {
@@ -104,11 +108,14 @@ export class IntegrationEventService {
   }
 
   async listFailedEvents(limit: number = 50): Promise<any[]> {
-    return this.manager_.find(IntegrationEvent, {
-      where: { processing_state: "failed" },
-      orderBy: { updated_at: "ASC" },
-      take: limit,
-    });
+    return this.manager_.find(
+      IntegrationEvent,
+      { processing_state: "failed" },
+      {
+        orderBy: { updated_at: "ASC" },
+        limit,
+      }
+    );
   }
 
   async listEventsByProvider(
@@ -123,12 +130,15 @@ export class IntegrationEventService {
     const where: Record<string, any> = { provider };
     if (processing_state) where.processing_state = processing_state;
 
-    const [events, count] = await this.manager_.findAndCount(IntegrationEvent, {
+    const [events, count] = await this.manager_.findAndCount(
+      IntegrationEvent,
       where,
-      skip: offset,
-      take: limit,
-      orderBy: { received_at: "DESC" },
-    });
+      {
+        offset,
+        limit,
+        orderBy: { received_at: "DESC" },
+      }
+    );
 
     return { events, count };
   }
