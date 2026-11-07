@@ -38,14 +38,24 @@ export async function GET(
     const price = variant?.prices?.[0]?.amount ?? anyProduct.total ?? 0;
     const currency =
       variant?.prices?.[0]?.currency_code || anyProduct.currency_code || "inr";
+    const category =
+      anyProduct.category ||
+      (Array.isArray(anyProduct.categories) && anyProduct.categories.length > 0
+        ? anyProduct.categories[0]
+        : null);
     return NextResponse.json({
       ...anyProduct,
       slug: anyProduct.handle || anyProduct.slug || "",
       total: price,
       currency_code: currency,
-      category: anyProduct.category
-        ? { id: anyProduct.category.id, name: anyProduct.category.name }
+      category: category
+        ? {
+            id: category.id,
+            name: category.name,
+            handle: category.handle,
+          }
         : null,
+      category_id: category?.id || "",
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -70,7 +80,16 @@ export async function PATCH(
     if (title !== undefined) update.title = title;
     if (slug !== undefined) update.handle = slug;
     if (validStatuses.includes(status)) update.status = status;
-    if (category_id !== undefined) update.category_id = [category_id];
+    if (category_id !== undefined) {
+      // Medusa v2 uses `categories` for product↔category links. An empty
+      // value clears the link instead of sending an invalid category id.
+      const ids = (Array.isArray(category_id) ? category_id : [category_id])
+        .map((value: any) =>
+          typeof value === "string" ? value : value?.id
+        )
+        .filter(Boolean);
+      update.categories = ids.map((id: string) => ({ id }));
+    }
 
     if (amount > 0) {
       const { product } = await getAdminProduct(id);

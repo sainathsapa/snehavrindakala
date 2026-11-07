@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getAuthToken } from "@/lib/auth";
 import { medusa, formatPrice } from "@/lib/medusa";
+import { getAdminOrder } from "@/lib/admin";
+import { getOrderShipment } from "@/lib/shipping/store";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +27,31 @@ export default async function OrderPage({
     }
   }
 
+  // Guest checkout has no customer token, but order ids are unguessable and
+  // the confirmation page must work immediately after payment.
+  if (!order) {
+    try {
+      const { order: adminOrder } = await getAdminOrder(id);
+      order = adminOrder;
+    } catch (error) {
+      console.error("Failed to load order for confirmation", error);
+    }
+  }
+
+  let shipment: Awaited<ReturnType<typeof getOrderShipment>> = null;
+  try {
+    shipment = await getOrderShipment(id);
+  } catch (error) {
+    console.error("Failed to load shipment", error);
+  }
+
   if (!order) {
     return (
       <main className="py-10">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-xl border border-sand-border bg-surface p-12 text-center">
             <p className="text-lg text-muted-ink font-sans mb-6">
-              You need to be signed in to view this order.
+              We could not find this order.
             </p>
             <Link
               href="/account/login"
@@ -220,6 +240,66 @@ export default async function OrderPage({
             </dl>
           </section>
         )}
+
+        {shipment && (
+          <section className="mt-8 rounded-xl border border-sand-border bg-surface p-8">
+            <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
+              Shipment
+            </h2>
+            <dl className="space-y-3 text-sm font-sans">
+              <div className="flex justify-between">
+                <dt className="text-muted-ink">Status</dt>
+                <dd className="text-deep-ink font-medium capitalize">
+                  {shipment.status?.replace(/_/g, " ")}
+                </dd>
+              </div>
+              {shipment.courier_name && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-ink">Courier</dt>
+                  <dd className="text-deep-ink">
+                    {shipment.courier_name}
+                    {shipment.courier_service
+                      ? ` · ${shipment.courier_service}`
+                      : ""}
+                  </dd>
+                </div>
+              )}
+              {shipment.awb_code && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-ink">AWB / Tracking no.</dt>
+                  <dd className="text-deep-ink font-mono text-xs">
+                    {shipment.awb_code}
+                  </dd>
+                </div>
+              )}
+            </dl>
+            {shipment.tracking_url && (
+              <a
+                href={shipment.tracking_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-sindoor hover:underline"
+              >
+                Track your shipment →
+              </a>
+            )}
+          </section>
+        )}
+
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+          <Link
+            href="/shop"
+            className="text-sm text-muted-ink font-sans hover:text-sindoor transition-colors"
+          >
+            ← Continue shopping
+          </Link>
+          <Link
+            href={`/account/returns?order_id=${order.id}`}
+            className="text-sm font-medium text-sindoor hover:underline"
+          >
+            Need to return something? Request a return →
+          </Link>
+        </div>
       </div>
     </main>
   );

@@ -49,10 +49,11 @@ export async function GET(req: Request) {
           const prodData = await prodRes.json();
           return {
             ...cat,
+            slug: cat.handle || cat.slug || "",
             product_count: prodData.count ?? 0,
           };
         } catch {
-          return { ...cat, product_count: 0 };
+          return { ...cat, slug: cat.handle || cat.slug || "", product_count: 0 };
         }
       })
     );

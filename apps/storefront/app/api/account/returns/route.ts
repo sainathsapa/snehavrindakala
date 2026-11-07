@@ -1,14 +1,19 @@
 /**
  * POST /api/account/returns - Customer creates a return request
- * GET /api/account/returns - Customer lists their return requests
+ * GET  /api/account/returns - Customer lists their return requests
+ *
+ * Uses the same `return_requests` table as the admin panel so requests show
+ * up immediately in /admin/returns.
  */
 
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getAuthToken } from "@/lib/auth";
 import { medusa } from "@/lib/medusa";
 
 const DATABASE_URL =
-  process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
+  process.env.DATABASE_URL ||
+  "postgresql://medusa:medusa@localhost:5432/medusa";
 
 async function query(sql: string, params: any[] = []) {
   const { Pool } = require("pg");
@@ -25,7 +30,7 @@ async function query(sql: string, params: any[] = []) {
 
 async function ensureTable() {
   await query(`
-    CREATE TABLE IF NOT EXISTS customer_return_requests (
+    CREATE TABLE IF NOT EXISTS return_requests (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
       order_id TEXT NOT NULL,
       customer_id TEXT,
@@ -51,31 +56,55 @@ export async function POST(req: Request) {
 
     if (!order_id || !reason) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Order and reason are required" },
         { status: 400 }
       );
     }
 
-    // Verify the order belongs to this customer
+    // Verify the order belongs to the signed-in customer. The Store API
+    // scopes order reads to the bearer token, so this doubles as an
+    // ownership check.
+    let order: any;
     try {
-      const order = await medusa.getOrder(order_id);
-      if (!order) {
-        return NextResponse.json({ error: "Order not found" }, { status: 404 });
-      }
+      order = await medusa.getOrder(order_id, token);
     } catch {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    let customer: any = null;
+    try {
+      const result = await medusa.getCurrentCustomer(token);
+      customer = result.customer;
+    } catch {
+      customer = null;
+    }
+
+    const customerEmail =
+      order.email || customer?.email || order.customer?.email || "";
+    if (!customerEmail) {
+      return NextResponse.json(
+        { error: "No email is associated with this order" },
+        { status: 400 }
+      );
+    }
+
     await ensureTable();
 
-    const { v4: uuidv4 } = require("uuid");
-    const id = `ret_${uuidv4().slice(0, 8)}`;
-
+    const id = `ret_${randomUUID().slice(0, 8)}`;
     const rows = await query(
-      `INSERT INTO customer_return_requests (id, order_id, customer_email, reason, status, items, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, 'pending', $5, now(), now())
+      `INSERT INTO return_requests
+         (id, order_id, customer_id, customer_email, reason, status, items,
+          created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6, now(), now())
        RETURNING *`,
-      [id, order_id, "", reason, JSON.stringify(items || [])]
+      [
+        id,
+        order_id,
+        order.customer_id || customer?.id || null,
+        customerEmail,
+        reason,
+        JSON.stringify(items || []),
+      ]
     );
 
     return NextResponse.json({ return: rows[0] }, { status: 201 });
@@ -94,11 +123,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    let customer: any = null;
+    try {
+      const result = await medusa.getCurrentCustomer(token);
+      customer = result.customer;
+    } catch {
+      customer = null;
+    }
+
     await ensureTable();
 
-    const rows = await query(
-      "SELECT * FROM customer_return_requests ORDER BY created_at DESC LIMIT 100"
-    );
+    const rows = customer?.id
+      ? await query(
+          `SELECT * FROM return_requests
+           WHERE customer_id = $1 OR customer_email = $2
+           ORDER BY created_at DESC LIMIT 100`,
+          [customer.id, customer.email || ""]
+        )
+      : [];
 
     return NextResponse.json({ returns: rows });
   } catch (err: any) {

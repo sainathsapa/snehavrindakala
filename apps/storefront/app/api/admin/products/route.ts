@@ -21,7 +21,12 @@ export async function GET(req: Request) {
       limit: parseInt(searchParams.get("limit") || "20"),
       offset: parseInt(searchParams.get("offset") || "0"),
       q: searchParams.get("q") || undefined,
-      category: searchParams.get("category") || undefined,
+      // The category detail page sends `category_id`; accept both spellings.
+      category:
+        searchParams.get("category") ||
+        searchParams.get("category_id") ||
+        undefined,
+      status: searchParams.get("status") || undefined,
     });
     return NextResponse.json(data);
   } catch (err: any) {
@@ -46,7 +51,9 @@ export async function POST(req: Request) {
       status: productStatus,
     };
     if (category_id) {
-      payload.category_id = [category_id];
+      // Medusa v2 links products to categories through `categories`, not
+      // `category_id` (which is only a list-filter query param).
+      payload.categories = [{ id: category_id }];
     }
     if (amount > 0) {
       payload.options = [{ title: "Default", values: ["Default"] }];

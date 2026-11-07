@@ -22,7 +22,7 @@ async function query(sql: string, params: any[] = []) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -41,10 +41,52 @@ export async function GET() {
       )
     `);
 
-    const rows = await query(
-      "SELECT * FROM return_requests ORDER BY created_at DESC LIMIT 100"
+    const { searchParams } = new URL(req.url);
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
+    const offset = parseInt(searchParams.get("offset") || "0") || 0;
+    const status = searchParams.get("status") || "";
+    const orderId = searchParams.get("order_id") || "";
+    const q = (searchParams.get("q") || "").trim();
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (status) {
+      params.push(status);
+      conditions.push(`status = $${params.length}`);
+    }
+    if (orderId) {
+      params.push(orderId);
+      conditions.push(`order_id = $${params.length}`);
+    }
+    if (q) {
+      params.push(`%${q}%`);
+      const ref = `$${params.length}`;
+      conditions.push(
+        `(id ILIKE ${ref} OR order_id ILIKE ${ref} OR customer_email ILIKE ${ref} OR reason ILIKE ${ref})`
+      );
+    }
+
+    const where = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    const countRows = await query(
+      `SELECT COUNT(*)::int AS count FROM return_requests ${where}`,
+      params
     );
-    return NextResponse.json({ returns: rows });
+
+    const rows = await query(
+      `SELECT * FROM return_requests ${where}
+       ORDER BY created_at DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
+    );
+
+    return NextResponse.json({
+      returns: rows,
+      count: countRows[0]?.count ?? rows.length,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

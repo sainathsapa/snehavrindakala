@@ -64,6 +64,9 @@ export default function AccountReturnsPage() {
   };
 
   useEffect(() => {
+    // Preselect the order when arriving from an order confirmation link.
+    const orderId = new URLSearchParams(window.location.search).get("order_id");
+    if (orderId) setFormOrderId(orderId);
     loadReturns();
     loadOrders();
   }, []);

@@ -26,6 +26,12 @@ export function CheckoutPayment({
     amount: number;
     currency: string;
     status: string;
+    shipping_amount?: number;
+    shipping?: {
+      courier_name: string;
+      service_name: string;
+      expected_delivery: string;
+    } | null;
   } | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,31 +101,34 @@ export function CheckoutPayment({
     );
   }
 
-  const shippingTotal = shippingRate ? shippingRate.rate / 100 : 0;
-  const grandTotal = (session.amount / 100) + shippingTotal;
+  // The server includes shipping in `amount`, so the grand total is simply
+  // the Razorpay order amount. Fall back to the quote for display if needed.
+  const effectiveShipping = session.shipping
+    ? {
+        courier_name: session.shipping.courier_name,
+        service_name: session.shipping.service_name,
+        rate: session.shipping_amount ?? 0,
+        expected_delivery: session.shipping.expected_delivery,
+      }
+    : shippingRate;
+  const grandTotal = session.amount / 100;
 
   return (
     <div className="space-y-6">
-      <div className="border-y border-sand-border py-4">
-        <div className="flex items-baseline justify-between">
-          <span className="text-lg font-sans text-muted-ink">Order total</span>
-          <span className="text-2xl font-serif font-bold text-deep-ink">
-            {formatPrice(session.amount, session.currency)}
-          </span>
-        </div>
-      </div>
-
-      {shippingRate && (
+      {effectiveShipping && (
         <div className="border-y border-sand-border py-4">
           <div className="flex items-baseline justify-between">
             <span className="text-lg font-sans text-muted-ink">Shipping</span>
             <span className="text-2xl font-serif font-bold text-deep-ink">
-              {shippingRate.rate === 0 ? "FREE" : `₹${shippingRate.rate / 100}`}
+              {effectiveShipping.rate === 0
+                ? "FREE"
+                : `₹${effectiveShipping.rate / 100}`}
             </span>
           </div>
           <div className="text-sm text-muted-ink font-sans mt-1">
-            {shippingRate.courier_name} • {shippingRate.service_name}
-            {shippingRate.expected_delivery && ` • Est. delivery: ${shippingRate.expected_delivery}`}
+            {effectiveShipping.courier_name} • {effectiveShipping.service_name}
+            {effectiveShipping.expected_delivery &&
+              ` • Est. delivery: ${effectiveShipping.expected_delivery}`}
           </div>
         </div>
       )}
@@ -131,11 +140,14 @@ export function CheckoutPayment({
             ₹{grandTotal.toFixed(2)}
           </span>
         </div>
+        <p className="text-xs text-muted-ink font-sans mt-1">
+          Includes shipping and taxes.
+        </p>
       </div>
 
       <RazorpayPayButton
         orderId={session.razorpay_order_id}
-        amount={Math.round(grandTotal * 100)}
+        amount={session.amount}
         currency={session.currency}
         name="SnehaVrinda Kala"
         description={`Order · ₹${formatPrice(session.amount, session.currency)}`}

@@ -2,9 +2,98 @@ import { getProductPrice, getStockType, medusa } from "@/lib/medusa";
 import { ProductCard } from "@/components/product-card";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getArtFormBySlug, artFormSlugs } from "@/lib/slugs";
+import { getArtFormBySlug, artFormSlugs, slugify } from "@/lib/slugs";
 
 export const dynamic = "force-dynamic";
+
+interface ResolvedCategory {
+  id?: string;
+  name: string;
+  handle: string;
+  description: string;
+  /** Fallback text query when no Medusa category exists yet. */
+  query?: string;
+}
+
+interface StoreCategory {
+  id: string;
+  name: string;
+  handle: string;
+  description?: string | null;
+}
+
+/**
+ * Resolve a URL segment to a real Medusa product category.
+ *
+ * Resolution order:
+ *  1. Exact category handle (e.g. `/shop/folk-art`).
+ *  2. Slugified category name (e.g. `/shop/folk-art`).
+ *  3. Legacy art-form slug -> matching category name (e.g. `/shop/folk`).
+ *  4. Legacy art-form slug -> catalogue text search (keeps old SEO URLs alive).
+ */
+async function resolveCategory(param: string): Promise<ResolvedCategory | null> {
+  const legacy = getArtFormBySlug(param);
+
+  try {
+    const { product_categories } = await medusa.listProductCategories({
+      limit: 100,
+    });
+    const categories = (product_categories || []) as StoreCategory[];
+
+    const exact = categories.find(
+      (category) =>
+        category.handle === param || slugify(category.name) === param
+    );
+    if (exact) {
+      return {
+        id: exact.id,
+        name: exact.name,
+        handle: exact.handle || slugify(exact.name),
+        description:
+          exact.description ||
+          legacy?.description ||
+          "Browse this collection of handmade works from Indian makers.",
+      };
+    }
+
+    if (legacy) {
+      const query = legacy.query.toLowerCase();
+      const matching = categories.find(
+        (category) =>
+          category.name.toLowerCase().includes(query) ||
+          (category.handle || "").toLowerCase().includes(slugify(query))
+      );
+      if (matching) {
+        return {
+          id: matching.id,
+          name: matching.name,
+          handle: matching.handle || slugify(matching.name),
+          description:
+            matching.description || legacy.description,
+        };
+      }
+      return {
+        name: legacy.name,
+        handle: legacy.slug,
+        description: legacy.description,
+        query: legacy.query,
+      };
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Failed to resolve category from Medusa", err);
+    if (legacy) {
+      return {
+        name: legacy.name,
+        handle: legacy.slug,
+        description: legacy.description,
+        query: legacy.query,
+      };
+    }
+    return null;
+  }
+}
 
 export function generateStaticParams() {
   return artFormSlugs.map((form) => ({
@@ -12,22 +101,26 @@ export function generateStaticParams() {
   }));
 }
 
-export const metadata = async ({ params }: { params: Promise<{ category: string }> }) => {
+export const metadata = async ({
+  params,
+}: {
+  params: Promise<{ category: string }>;
+}) => {
   const { category } = await params;
-  const artForm = getArtFormBySlug(category);
+  const resolved = await resolveCategory(category);
   return {
-    title: artForm
-      ? `${artForm.name} | SnehaVrinda Kala`
+    title: resolved
+      ? `${resolved.name} | SnehaVrinda Kala`
       : "Collection | SnehaVrinda Kala",
-    description: artForm
-      ? artForm.description
+    description: resolved
+      ? resolved.description
       : "Browse curated collections by art form at SnehaVrinda Kala.",
     alternates: {
-      canonical: artForm ? `/shop/${artForm.slug}` : `/shop/${category}`,
+      canonical: resolved ? `/shop/${resolved.handle}` : `/shop/${category}`,
     },
     openGraph: {
-      title: artForm ? `${artForm.name} | SnehaVrinda Kala` : undefined,
-      description: artForm ? artForm.description : undefined,
+      title: resolved ? `${resolved.name} | SnehaVrinda Kala` : undefined,
+      description: resolved ? resolved.description : undefined,
       type: "website",
     },
   };
@@ -39,9 +132,9 @@ export default async function ShopCategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category } = await params;
-  const artForm = getArtFormBySlug(category);
+  const resolved = await resolveCategory(category);
 
-  if (!artForm) {
+  if (!resolved) {
     notFound();
   }
 
@@ -54,7 +147,7 @@ export default async function ShopCategoryPage({
   try {
     const { products: productsData } = await medusa.listProducts({
       limit: 100,
-      q: artForm.query,
+      ...(resolved.id ? { category: resolved.id } : { q: resolved.query }),
     });
     products = productsData;
   } catch (err) {
@@ -80,8 +173,8 @@ export default async function ShopCategoryPage({
       {
         "@type": "ListItem",
         position: 3,
-        name: artForm.name,
-        item: `${baseUrl}/shop/${artForm.slug}`,
+        name: resolved.name,
+        item: `${baseUrl}/shop/${resolved.handle}`,
       },
     ],
   };
@@ -103,15 +196,15 @@ export default async function ShopCategoryPage({
           </Link>
           <span className="mx-2 text-muted-ink">/</span>
           <span className="text-sindoor font-medium">
-            {artForm.name}
+            {resolved.name}
           </span>
         </nav>
 
         <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-4">
-          {artForm.name}
+          {resolved.name}
         </h1>
         <p className="mb-8 text-lg text-muted-ink font-sans leading-relaxed">
-          {artForm.description}
+          {resolved.description}
         </p>
 
         {products.length > 0 ? (

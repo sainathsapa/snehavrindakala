@@ -22,6 +22,8 @@ const statusClasses: Record<string, string> = {
 const STATUS_OPTIONS = ["pending", "approved", "rejected", "completed"];
 
 export default function ReturnsPage() {
+  const [orderFilter, setOrderFilter] = useState("");
+
   const [returns, setReturns] = useState<Return[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export default function ReturnsPage() {
       offset: String((page - 1) * LIMIT),
       q: search,
       ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+      ...(orderFilter ? { order_id: orderFilter } : {}),
     });
     fetch(`/api/admin/returns?${params.toString()}`, { cache: "no-store" })
       .then((r) => r.json())
@@ -56,7 +59,13 @@ export default function ReturnsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [page, search, statusFilter, LIMIT, returns.length]);
+  }, [page, search, statusFilter, orderFilter, LIMIT, returns.length]);
+
+  useEffect(() => {
+    // Support /admin/returns?order_id=... links from the order detail page.
+    const orderId = new URLSearchParams(window.location.search).get("order_id");
+    if (orderId) setOrderFilter(orderId);
+  }, []);
 
   useEffect(() => {
     loadReturns();

@@ -1,28 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@snehavrinda-kala/ui";
+import { universalSearch, type SearchResult } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
-
-interface SearchResult {
-  type: "product" | "category" | "artist";
-  id: string;
-  title: string;
-  subtitle?: string | null;
-  description?: string | null;
-  image?: string | null;
-  price?: number | null;
-  currency?: string;
-  handle?: string | null;
-  url: string;
-  matchScore: number;
-}
-
-interface SearchResponse {
-  results: SearchResult[];
-  query: string;
-  count: number;
-}
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -41,17 +22,9 @@ export default async function SearchPage({
   let count = 0;
 
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000";
-    const res = await fetch(
-      `${baseUrl}/api/store/search?q=${encodeURIComponent(q)}`,
-      { cache: "no-store" }
-    );
-    if (res.ok) {
-      const data = (await res.json()) as SearchResponse;
-      results = data.results;
-      count = data.count;
-    }
+    const data = await universalSearch(q);
+    results = data.results;
+    count = data.count;
   } catch (error) {
     console.error("Failed to load search results", error);
   }

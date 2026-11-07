@@ -25,10 +25,12 @@ FROM deps AS builder
 
 WORKDIR /app
 
-# NEXT_PUBLIC_STOREFRONT_URL is baked at build time for sitemap, canonical,
-# and JSON-LD URLs. Pass it via docker-compose build args.
+# NEXT_PUBLIC_* values are baked at build time. Pass them via
+# docker-compose build args.
 ARG NEXT_PUBLIC_STOREFRONT_URL=http://localhost:3000
 ENV NEXT_PUBLIC_STOREFRONT_URL=$NEXT_PUBLIC_STOREFRONT_URL
+ARG NEXT_PUBLIC_RAZORPAY_KEY_ID=
+ENV NEXT_PUBLIC_RAZORPAY_KEY_ID=$NEXT_PUBLIC_RAZORPAY_KEY_ID
 
 COPY apps/storefront ./apps/storefront
 COPY packages/ui ./packages/ui

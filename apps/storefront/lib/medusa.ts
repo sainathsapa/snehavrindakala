@@ -21,6 +21,16 @@ const DEFAULT_CURRENCY =
 
 const REGION_ID = process.env.MEDUSA_REGION_ID || undefined;
 
+/**
+ * The publishable key may be linked to more than one sales channel, in which
+ * case Medusa refuses to create a cart unless we name the channel explicitly.
+ * Keep a known-good channel id as a fallback so the storefront keeps selling.
+ */
+const SALES_CHANNEL_ID =
+  process.env.MEDUSA_SALES_CHANNEL_ID ||
+  process.env.NEXT_PUBLIC_MEDUSA_SALES_CHANNEL_ID ||
+  "sc_01M6QMMBSV8S75TW9HTZJ6ZQK0";
+
 const REQUEST_TIMEOUT_MS = Number(
   process.env.MEDUSA_REQUEST_TIMEOUT_MS || 10_000
 );
@@ -66,6 +76,7 @@ export interface MedusaProduct {
   variants?: MedusaVariant[];
   images?: MedusaProductImage[];
   category?: { id: string; name: string; handle?: string } | null;
+  categories?: Array<{ id: string; name: string; handle?: string }> | null;
   collection?: { id: string; title: string } | null;
   material?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -223,6 +234,9 @@ class MedusaClient {
     searchParams.set("offset", String(params.offset ?? 0));
     searchParams.set("order", params.order ?? "-created_at");
     if (REGION_ID) searchParams.set("region_id", REGION_ID);
+    // Store API hides categories by default; request them so product cards,
+    // breadcrumbs, and category filters can show real catalog data.
+    searchParams.set("fields", "*categories");
     if (params.category) {
       searchParams.append("category_id[]", params.category);
     }
@@ -239,12 +253,30 @@ class MedusaClient {
     q?: string;
     handle?: string;
   }): Promise<{ products: MedusaProduct[]; count: number }> {
-    return this.request<{
+    const data = await this.request<{
       products: MedusaProduct[];
       count: number;
       limit: number;
       offset: number;
     }>(`/store/products?${this.productQuery(params ?? {})}`);
+
+    // Medusa returns `categories`; expose the first one as `category` so the
+    // existing UI (product cards, detail page, breadcrumbs) keeps working.
+    return {
+      ...data,
+      products: (data.products || []).map((product) => ({
+        ...product,
+        category:
+          product.category ||
+          (product.categories && product.categories.length > 0
+            ? {
+                id: product.categories[0].id,
+                name: product.categories[0].name,
+                handle: product.categories[0].handle,
+              }
+            : null),
+      })),
+    };
   }
 
   async getProduct(handle: string): Promise<{ product: MedusaProduct }> {
@@ -323,7 +355,10 @@ class MedusaClient {
     const region = regionId || (await this.resolveRegionId());
     return this.request<{ cart: MedusaCart }>("/store/carts", {
       method: "POST",
-      body: JSON.stringify({ region_id: region }),
+      body: JSON.stringify({
+        region_id: region,
+        ...(SALES_CHANNEL_ID ? { sales_channel_id: SALES_CHANNEL_ID } : {}),
+      }),
     }).then((r) => r.cart);
   }
 
@@ -361,6 +396,44 @@ class MedusaClient {
         body: JSON.stringify(item),
       }
     ).then((r) => r.cart);
+  }
+
+  /**
+   * Ensure the cart has a Medusa payment collection + session.
+   *
+   * We charge the customer through Razorpay directly, but Medusa still needs
+   * an initialized payment session before `/store/carts/:id/complete` will
+   * convert the cart into an order.
+   */
+  async ensurePaymentSession(
+    cartId: string,
+    providerId = "pp_system_default"
+  ): Promise<any> {
+    const { payment_collection } = await this.request<{
+      payment_collection: any;
+    }>("/store/payment-collections", {
+      method: "POST",
+      body: JSON.stringify({ cart_id: cartId }),
+    });
+
+    if (
+      payment_collection?.payment_sessions?.some(
+        (session: any) => session.provider_id === providerId
+      )
+    ) {
+      return payment_collection;
+    }
+
+    const result = await this.request<{ payment_collection: any }>(
+      `/store/payment-collections/${encodeURIComponent(
+        payment_collection.id
+      )}/payment-sessions`,
+      {
+        method: "POST",
+        body: JSON.stringify({ provider_id: providerId }),
+      }
+    );
+    return result.payment_collection;
   }
 
   async updateLineItem(
@@ -405,9 +478,10 @@ class MedusaClient {
   }
 
   // Orders
-  async getOrder(orderId: string): Promise<MedusaOrder> {
+  async getOrder(orderId: string, token?: string): Promise<MedusaOrder> {
     return this.request<{ order: MedusaOrder }>(
-      `/store/orders/${encodeURIComponent(orderId)}`
+      `/store/orders/${encodeURIComponent(orderId)}`,
+      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
     ).then((r) => r.order);
   }
 

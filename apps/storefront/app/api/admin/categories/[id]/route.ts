@@ -52,7 +52,34 @@ export async function GET(
       return NextResponse.json({ error }, { status: res.status });
     }
 
-    return NextResponse.json(await res.json());
+    const data = await res.json();
+    const category = data.product_category || data.category || data;
+
+    // Attach the live product count so the category detail page and admin
+    // list agree on how many products are linked.
+    let productCount = 0;
+    try {
+      const countRes = await adminFetch(
+        BACKEND_URL,
+        PUBLISHABLE_KEY,
+        `/admin/products?category_id=${encodeURIComponent(id)}&limit=1&fields=id`
+      );
+      if (countRes.ok) {
+        const countData = await countRes.json();
+        productCount = countData.count ?? 0;
+      }
+    } catch {
+      productCount = 0;
+    }
+
+    return NextResponse.json({
+      ...data,
+      product_category: {
+        ...category,
+        slug: category.handle || category.slug || "",
+        product_count: productCount,
+      },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

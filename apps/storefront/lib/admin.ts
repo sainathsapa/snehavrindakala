@@ -129,11 +129,32 @@ export interface AdminProduct {
   handle: string;
   description: string;
   status: string;
-  category?: { id: string; name: string };
+  category?: { id: string; name: string; handle?: string } | null;
+  category_id?: string;
+  categories?: Array<{ id: string; name: string; handle?: string }>;
   variants?: any[];
   images?: any[];
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Medusa returns category links as `categories`. The admin UI expects a
+ * single `category` object plus a `category_id` string, so normalise both.
+ */
+function normalizeAdminProduct(product: any): AdminProduct {
+  const categories = Array.isArray(product?.categories)
+    ? product.categories
+    : [];
+  const category = product?.category || categories[0] || null;
+  return {
+    ...product,
+    category: category
+      ? { id: category.id, name: category.name, handle: category.handle }
+      : null,
+    category_id: category?.id || "",
+    categories,
+  };
 }
 
 export interface AdminCategory {
@@ -192,7 +213,13 @@ export async function listAdminOrders(params?: {
 }
 
 export async function getAdminOrder(orderId: string): Promise<{ order: AdminOrder }> {
-  const res = await adminRequest(`/admin/orders/${encodeURIComponent(orderId)}`);
+  // Expand the relations needed by the confirmation page, invoice, and
+  // Shiprocket shipment payload (address, items, customer).
+  const fields =
+    "id,display_id,status,email,currency_code,subtotal,tax_total,shipping_total,discount_total,total,created_at,updated_at,customer_id,*customer,*shipping_address,*billing_address,*items,*payment_collections,*fulfillments,*shipping_methods";
+  const res = await adminRequest(
+    `/admin/orders/${encodeURIComponent(orderId)}?fields=${encodeURIComponent(fields)}`
+  );
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`Failed to fetch order: ${res.status} ${body}`);
@@ -222,28 +249,40 @@ export async function listAdminProducts(params?: {
   offset?: number;
   q?: string;
   category?: string;
+  status?: string;
 }): Promise<{ products: AdminProduct[]; count: number }> {
   const searchParams = new URLSearchParams();
   searchParams.set("limit", String(params?.limit ?? 50));
   searchParams.set("offset", String(params?.offset ?? 0));
+  // `*categories` expands the relation while keeping the default fields.
+  searchParams.set("fields", "*categories");
   if (params?.q) searchParams.set("q", params.q);
   if (params?.category) searchParams.set("category_id", params.category);
+  // Medusa expects array filters, e.g. `status[]=published`.
+  if (params?.status) searchParams.append("status[]", params.status);
 
   const res = await adminRequest(`/admin/products?${searchParams.toString()}`);
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`Failed to fetch products: ${res.status} ${body}`);
   }
-  return res.json();
+  const data = await res.json();
+  return {
+    ...data,
+    products: (data.products || []).map(normalizeAdminProduct),
+  };
 }
 
 export async function getAdminProduct(productId: string): Promise<{ product: AdminProduct }> {
-  const res = await adminRequest(`/admin/products/${encodeURIComponent(productId)}`);
+  const res = await adminRequest(
+    `/admin/products/${encodeURIComponent(productId)}?fields=*categories`
+  );
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`Failed to fetch product: ${res.status} ${body}`);
   }
-  return res.json();
+  const data = await res.json();
+  return { ...data, product: normalizeAdminProduct(data.product) };
 }
 
 export async function createAdminProduct(data: Record<string, unknown>): Promise<{ product: AdminProduct }> {
@@ -295,7 +334,9 @@ export async function listAdminCategories(params?: {
   searchParams.set("limit", String(params?.limit ?? 50));
   searchParams.set("offset", String(params?.offset ?? 0));
   if (params?.q) searchParams.set("q", params.q);
-  if (params?.status) searchParams.set("status", params.status);
+  // Product categories use `is_active`, not a `status` field.
+  if (params?.status === "active") searchParams.set("is_active", "true");
+  else if (params?.status === "draft") searchParams.set("is_active", "false");
 
   const res = await adminRequest(`/admin/product-categories?${searchParams.toString()}`);
   if (!res.ok) {

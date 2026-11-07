@@ -42,16 +42,48 @@ export default async function ShopPage({
     console.error("Failed to load products from Medusa", err);
   }
 
+  let categories: Array<{
+    id: string;
+    name: string;
+    handle: string;
+  }> = [];
+  try {
+    const { product_categories } = await medusa.listProductCategories({
+      limit: 100,
+    });
+    categories = (product_categories || []).map((category: any) => ({
+      id: category.id,
+      name: category.name,
+      handle: category.handle,
+    }));
+  } catch (err) {
+    console.error("Failed to load product categories from Medusa", err);
+  }
+
   return (
     <main className="py-10 bg-rang-paper">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
           All products
         </h1>
-        <p className="mb-8 text-lg text-muted-ink font-sans leading-relaxed">
+        <p className="mb-6 text-lg text-muted-ink font-sans leading-relaxed">
           Browse our curated catalogue. Each listing shows the maker, materials,
           care details, and whether it is ready to ship or made to order.
         </p>
+
+        {categories.length > 0 && (
+          <div className="mb-8 flex flex-wrap gap-2" aria-label="Product categories">
+            {categories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/shop/${category.handle}`}
+                className="rounded-full border border-sand-border bg-surface px-4 py-1.5 text-sm font-sans text-deep-ink hover:border-sindoor hover:text-sindoor transition-colors"
+              >
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

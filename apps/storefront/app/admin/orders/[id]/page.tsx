@@ -15,6 +15,20 @@ interface OrderLineItem {
   total: number;
 }
 
+interface Shipment {
+  id: string;
+  order_id: string;
+  shipment_id: string | null;
+  awb_code: string | null;
+  courier_name: string | null;
+  courier_service: string | null;
+  tracking_url: string | null;
+  label_url: string | null;
+  pickup_location: string | null;
+  status: string;
+  created_at: string;
+}
+
 interface Order {
   id: string;
   display_id?: number | string;
@@ -42,8 +56,11 @@ export default function OrderDetailPage() {
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const [order, setOrder] = useState<Order | null>(null);
+  const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [creatingShipment, setCreatingShipment] = useState(false);
+  const [shipmentError, setShipmentError] = useState("");
   const [actionError, setActionError] = useState("");
 
   useEffect(() => {
@@ -84,8 +101,31 @@ export default function OrderDetailPage() {
           setLoading(false);
         })
         .catch(() => setLoading(false));
+
+      fetch(`/api/admin/orders/${id}/shipment`, { cache: "no-store" })
+        .then((r) => r.json())
+        .then((data: any) => setShipment(data.shipment || null))
+        .catch(() => {});
     }
   }, [id]);
+
+  async function handleCreateShipment() {
+    if (!order) return;
+    setCreatingShipment(true);
+    setShipmentError("");
+    try {
+      const res = await fetch(`/api/admin/orders/${id}/shipment`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create shipment");
+      setShipment(data.shipment || null);
+    } catch (err: any) {
+      setShipmentError(err.message || "Failed to create shipment");
+    } finally {
+      setCreatingShipment(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -349,6 +389,91 @@ export default function OrderDetailPage() {
                     </ul>
                   </div>
                 )}
+            </div>
+
+            <div className="rounded-xl border border-sand-border bg-surface p-6">
+              <h3 className="text-sm font-sans font-semibold text-muted-ink uppercase tracking-wider mb-4">
+                Shipping
+              </h3>
+
+              {shipment ? (
+                <div className="space-y-3 text-sm font-sans">
+                  <div className="flex justify-between">
+                    <dt className="text-muted-ink">Status</dt>
+                    <dd className="text-deep-ink text-right capitalize">
+                      {shipment.status?.replace(/_/g, " ")}
+                    </dd>
+                  </div>
+                  {shipment.courier_name && (
+                    <div className="flex justify-between">
+                      <dt className="text-muted-ink">Courier</dt>
+                      <dd className="text-deep-ink text-right">
+                        {shipment.courier_name}
+                        {shipment.courier_service
+                          ? ` · ${shipment.courier_service}`
+                          : ""}
+                      </dd>
+                    </div>
+                  )}
+                  {shipment.awb_code && (
+                    <div className="flex justify-between">
+                      <dt className="text-muted-ink">AWB</dt>
+                      <dd className="text-deep-ink text-right font-mono text-xs">
+                        {shipment.awb_code}
+                      </dd>
+                    </div>
+                  )}
+                  <div className="flex gap-3 pt-2">
+                    {shipment.tracking_url && (
+                      <a
+                        href={shipment.tracking_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sindoor hover:underline"
+                      >
+                        Track shipment →
+                      </a>
+                    )}
+                    {shipment.label_url && (
+                      <a
+                        href={shipment.label_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sindoor hover:underline"
+                      >
+                        Shipping label →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-ink font-sans">
+                    No shipment has been created for this order yet.
+                  </p>
+                  <button
+                    onClick={handleCreateShipment}
+                    disabled={creatingShipment}
+                    className="w-full rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 disabled:opacity-50 transition-colors"
+                  >
+                    {creatingShipment ? "Creating shipment…" : "Create shipment"}
+                  </button>
+                  {shipmentError && (
+                    <p className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700 font-sans">
+                      {shipmentError}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-4 border-t border-sand-border pt-4">
+                <Link
+                  href={`/admin/returns?order_id=${order.id}`}
+                  className="text-sm font-sans text-sindoor hover:underline"
+                >
+                  View return requests →
+                </Link>
+              </div>
             </div>
           </div>
         </div>
