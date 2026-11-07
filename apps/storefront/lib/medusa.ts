@@ -399,6 +399,17 @@ class MedusaClient {
     ).then((r) => r.order);
   }
 
+  /**
+   * Complete an order after payment. Converts a paid cart into an order
+   * and returns the order record.
+   */
+  async completeOrder(cartId: string): Promise<MedusaOrder> {
+    return this.request<{ order: MedusaOrder }>(
+      `/store/carts/${encodeURIComponent(cartId)}/complete`,
+      { method: "POST" }
+    ).then((r) => r.order);
+  }
+
   // Customers
   async getCustomer(customerId: string): Promise<any> {
     return this.request<{ customer: any }>(

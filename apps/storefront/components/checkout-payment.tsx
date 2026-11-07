@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { medusa, formatPrice } from "@/lib/medusa";
 import { RazorpayPayButton } from "./razorpay-checkout";
 import { Button } from "@snehavrinda-kala/ui";
+import { useRouter } from "next/navigation";
 
 export function CheckoutPayment({
   cartTotal,
@@ -14,6 +15,7 @@ export function CheckoutPayment({
   currency: string;
   cartId: string;
 }) {
+  const router = useRouter();
   const [session, setSession] = useState<{
     razorpay_order_id: string;
     amount: number;
@@ -22,6 +24,7 @@ export function CheckoutPayment({
   } | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completing, setCompleting] = useState(false);
 
   const createSession = async () => {
     setCreating(true);
@@ -42,6 +45,28 @@ export function CheckoutPayment({
       setError(err instanceof Error ? err.message : "Failed to create payment order.");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentId: string) => {
+    setCompleting(true);
+    try {
+      const res = await fetch("/api/store/checkout/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart_id: cartId, payment_id: paymentId }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        setError(body.error || "Order could not be completed.");
+        setCompleting(false);
+        return;
+      }
+      const body = await res.json();
+      router.push(`/order/${body.order_id}?paid=1`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Order could not be completed.");
+      setCompleting(false);
     }
   };
 
@@ -81,14 +106,17 @@ export function CheckoutPayment({
         currency={session.currency}
         name="SnehaVrinda Kala"
         description={`Order · ₹${formatPrice(session.amount, session.currency)}`}
-        onSuccess={(paymentId) => {
-          // Handled inside RazorpayPayButton (renders success)
-        }}
+        onSuccess={handlePaymentSuccess}
         onError={(message) => {
           setError(message);
           setSession(null);
         }}
       />
+      {completing && (
+        <div className="text-center py-4">
+          <p className="text-sm text-muted-ink font-sans">Completing order…</p>
+        </div>
+      )}
     </div>
   );
 }
