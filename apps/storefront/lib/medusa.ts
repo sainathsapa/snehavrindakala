@@ -94,18 +94,30 @@ export interface MedusaCart {
   email?: string | null;
   created_at: string;
   updated_at: string;
+  shipping_address?: any;
+  billing_address?: any;
 }
 
 export interface MedusaOrder {
   id: string;
+  display_id?: number | string;
   status: string;
   fulfillment_status: string;
   payment_status: string;
   total: number;
+  subtotal?: number;
+  tax_total?: number;
+  shipping_total?: number;
+  discount_total?: number;
   currency_code: string;
   items: MedusaCartLineItem[];
   created_at: string;
   updated_at: string;
+  customer?: any;
+  shipping_address?: any;
+  billing_address?: any;
+  payment_collections?: any[];
+  fulfillments?: any[];
 }
 
 export interface MedusaArtist {

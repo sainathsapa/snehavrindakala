@@ -92,7 +92,8 @@ export default async function JournalPage() {
                     <p className="text-sm text-muted-ink font-sans mb-4 line-clamp-3">
                       {post.excerpt}
                     </p>
-                  </div>
+                  )}
+                </div>
               </article>
             ))}
           </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { Icon } from "@snehavrinda-kala/ui";
 
 interface Partner {
   id: string;
@@ -12,12 +13,25 @@ interface Partner {
   created_at: string;
 }
 
+const STATUS_OPTIONS = ["pending", "approved", "active", "inactive"];
+
 export default function PartnersPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const LIMIT = 20;
 
-  useEffect(() => {
-    fetch("/api/admin/partners?limit=20", { cache: "no-store" })
+  const loadPartners = useCallback(() => {
+    const params = new URLSearchParams({
+      limit: String(LIMIT),
+      offset: String((page - 1) * LIMIT),
+      q: search,
+      ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+    });
+    fetch(`/api/admin/partners?${params.toString()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data: any) => {
         setPartners(
@@ -30,20 +44,17 @@ export default function PartnersPage() {
             created_at: p.created_at || "",
           }))
         );
+        setTotalCount(data.count ?? partners.length);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [page, search, statusFilter, LIMIT, partners.length]);
 
-  if (loading) {
-    return (
-      <main className="py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-muted-ink font-sans">Loading partners...</p>
-        </div>
-      </main>
-    );
-  }
+  useEffect(() => {
+    loadPartners();
+  }, [loadPartners]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / LIMIT));
 
   const partnerRows =
     partners.length > 0
@@ -103,8 +114,60 @@ export default function PartnersPage() {
             href="/admin/partners/new"
             className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors"
           >
+            <Icon name="add" size={16} className="mr-1" />
             New Partner
           </Link>
+        </div>
+
+        {/* Search & filter */}
+        <div className="mb-6 rounded-xl border border-sand-border bg-surface p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="relative">
+              <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-ink" />
+              <input
+                type="text"
+                placeholder="Search partner name or email…"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2 rounded-md border border-sand-border bg-white text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-sans font-medium text-muted-ink mb-2 uppercase tracking-wider">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-md border border-sand-border bg-white px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              >
+                <option value="all">All statuses</option>
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                  setPage(1);
+                }}
+                className="rounded-md border border-sand-border bg-white px-4 py-2 text-sm font-sans text-deep-ink hover:bg-rang-paper transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
@@ -139,6 +202,34 @@ export default function PartnersPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <p className="text-sm text-muted-ink font-sans">
+              Showing {partners.length} of {totalCount} partners
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-md border border-sand-border bg-white px-3 py-1.5 text-sm font-sans text-deep-ink disabled:opacity-50 disabled:pointer-events-none hover:bg-rang-paper/50 transition-colors"
+              >
+                <Icon name="chevron-left" size={16} /> Prev
+              </button>
+              <span className="px-2 text-sm font-sans text-muted-ink">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-md border border-sand-border bg-white px-3 py-1.5 text-sm font-sans text-deep-ink disabled:opacity-50 disabled:pointer-events-none hover:bg-rang-paper/50 transition-colors"
+              >
+                Next <Icon name="chevron-right" size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

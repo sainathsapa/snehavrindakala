@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Icon } from "@snehavrinda-kala/ui";
 
 interface Commission {
   id: string;
@@ -31,6 +32,8 @@ const statusClasses: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
 };
 
+const STATUS_OPTIONS = ["pending", "paid", "cancelled"];
+
 export default function CommissionsPage() {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -40,9 +43,20 @@ export default function CommissionsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const LIMIT = 20;
 
   const loadCommissions = useCallback(() => {
-    fetch("/api/admin/commissions?limit=100", { cache: "no-store" })
+    const params = new URLSearchParams({
+      limit: String(LIMIT),
+      offset: String((page - 1) * LIMIT),
+      q: search,
+      ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+    });
+    fetch(`/api/admin/commissions?${params.toString()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data: any) => {
         setCommissions(
@@ -57,10 +71,11 @@ export default function CommissionsPage() {
             created_at: c.created_at || "",
           }))
         );
+        setTotalCount(data.count ?? commissions.length);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [page, search, statusFilter, LIMIT, commissions.length]);
 
   useEffect(() => {
     loadCommissions();
@@ -76,6 +91,8 @@ export default function CommissionsPage() {
       })
       .catch(() => {});
   }, [loadCommissions]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / LIMIT));
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -252,6 +269,57 @@ export default function CommissionsPage() {
           </button>
         </div>
 
+        {/* Search & filter */}
+        <div className="mb-6 rounded-xl border border-sand-border bg-surface p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="relative">
+              <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-ink" />
+              <input
+                type="text"
+                placeholder="Search artist name…"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2 rounded-md border border-sand-border bg-white text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-sans font-medium text-muted-ink mb-2 uppercase tracking-wider">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-md border border-sand-border bg-white px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              >
+                <option value="all">All statuses</option>
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                  setPage(1);
+                }}
+                className="rounded-md border border-sand-border bg-white px-4 py-2 text-sm font-sans text-deep-ink hover:bg-rang-paper transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
         {error && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-sans text-sm text-red-700">
             {error}
@@ -380,6 +448,34 @@ export default function CommissionsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <p className="text-sm text-muted-ink font-sans">
+              Showing {commissions.length} of {totalCount} commissions
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-md border border-sand-border bg-white px-3 py-1.5 text-sm font-sans text-deep-ink disabled:opacity-50 disabled:pointer-events-none hover:bg-rang-paper/50 transition-colors"
+              >
+                <Icon name="chevron-left" size={16} /> Prev
+              </button>
+              <span className="px-2 text-sm font-sans text-muted-ink">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-md border border-sand-border bg-white px-3 py-1.5 text-sm font-sans text-deep-ink disabled:opacity-50 disabled:pointer-events-none hover:bg-rang-paper/50 transition-colors"
+              >
+                Next <Icon name="chevron-right" size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

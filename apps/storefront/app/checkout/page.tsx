@@ -30,8 +30,8 @@ async function getTaxBreakdown(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount, state: state || undefined }),
-      },
-      { cache: "no-store" }
+        cache: "no-store",
+      }
     );
     if (!res.ok) return null;
     return res.json();
@@ -77,7 +77,6 @@ export default async function CheckoutPage({
     cart?.billing_address?.province ||
     undefined;
   const tax = await getTaxBreakdown(cart?.total ?? 0, customerState);
-
   return (
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
