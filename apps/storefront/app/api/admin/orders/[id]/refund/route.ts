@@ -34,7 +34,7 @@ async function adminFetch(
   headers.set("x-publishable-api-key", publishableKey);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) {
-    headers.set("Content-Type": "application/json");
+    headers.set("Content-Type", "application/json");
   }
   return fetch(`${backendUrl}${path}`, { ...options, headers });
 }

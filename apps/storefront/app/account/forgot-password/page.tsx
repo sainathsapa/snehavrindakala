@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@snehavrinda-kala/ui";
 
 export const dynamic = "force-dynamic";
 
-export default function ForgotPasswordPage({
+export default async function ForgotPasswordPage({
   searchParams,
 }: {
   searchParams: Promise<{ sent?: string; error?: string }>;
@@ -21,7 +21,7 @@ export default function ForgotPasswordPage({
               <p className="mt-2 text-sm text-muted font-sans">
                 If an account exists for that email, you’ll receive a reset link.
               </p>
-            </CardContent>
+            </CardHeader>
             <CardContent className="pt-0">
               <Link
                 href="/account/login"

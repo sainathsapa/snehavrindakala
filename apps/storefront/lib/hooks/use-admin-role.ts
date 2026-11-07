@@ -55,9 +55,12 @@ export function useAdminRole(): AdminRoleContextType {
     (resource: string) => {
       if (!user) return false;
       const role = user.role as Role;
-      return can(`${resource}:write`)(undefined as any) || can(`${resource}:delete`)(undefined as any);
+      return hasPermission(
+        role,
+        `${resource}:write` as any
+      ) || hasPermission(role, `${resource}:delete` as any);
     },
-    [user, can]
+    [user]
   );
 
   return { user, loading, can, canManage };
