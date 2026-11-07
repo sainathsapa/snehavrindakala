@@ -24,6 +24,9 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState("");
+  const [actionError, setActionError] = useState("");
   const LIMIT = 20;
 
   const loadOrders = useCallback(() => {
@@ -48,6 +51,7 @@ export default function OrdersPage() {
         }));
         setOrders(rows);
         setTotalCount(data.count ?? rows.length);
+        setSelectedIds(new Set());
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -56,6 +60,49 @@ export default function OrdersPage() {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === orders.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(orders.map((o) => o.id)));
+    }
+  };
+
+  const isSelected = (id: string) => selectedIds.has(id);
+
+  const executeBulkAction = async () => {
+    if (selectedIds.size === 0 || !bulkAction) return;
+    if (bulkAction === "cancel") {
+      if (
+        !window.confirm(
+          `Cancel ${selectedIds.size} selected order(s)? This cannot be undone.`
+        )
+      )
+        return;
+    }
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((orderId) =>
+          fetch(`/api/admin/orders/${orderId}/cancel`, { method: "POST" })
+        )
+      );
+      setSelectedIds(new Set());
+      setBulkAction("");
+      loadOrders();
+    } catch (err: any) {
+      setActionError(err.message || "Bulk action failed");
+    }
+  };
 
   const totalPages = Math.max(1, Math.ceil(totalCount / LIMIT));
   const paginatedOrders = orders.slice(0, LIMIT);
@@ -74,6 +121,14 @@ export default function OrdersPage() {
     paginatedOrders.length > 0
       ? paginatedOrders.map((order: Order) => (
           <tr key={order.id} className="hover:bg-rang-paper/50 transition-colors">
+            <td className="px-6 py-4 text-center">
+              <input
+                type="checkbox"
+                checked={isSelected(order.id)}
+                onChange={() => toggleSelect(order.id)}
+                className="rounded border-sand-border text-sindoor focus:ring-sindoor"
+              />
+            </td>
             <td className="px-6 py-4 font-sans text-sm text-deep-ink">
               <Link
                 href={`/admin/orders/${order.id}`}
@@ -114,7 +169,7 @@ export default function OrdersPage() {
         ))
       : (
           <tr>
-            <td colSpan={6} className="px-6 py-12 text-center">
+            <td colSpan={7} className="px-6 py-12 text-center">
               <p className="text-muted-ink font-sans">
                 No orders found.
               </p>
@@ -142,6 +197,39 @@ export default function OrdersPage() {
             New Order
           </Link>
         </div>
+
+        {/* Bulk action toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="mb-4 rounded-xl border border-sand-border bg-surface p-4 flex items-center gap-3">
+            <span className="text-sm font-sans text-muted-ink">
+              {selectedIds.size} selected
+            </span>
+            <select
+              value={bulkAction}
+              onChange={(e) => setBulkAction(e.target.value)}
+              className="rounded-md border border-sand-border bg-white px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+            >
+              <option value="">Choose action…</option>
+              <option value="cancel">Cancel selected orders</option>
+            </select>
+            <button
+              onClick={executeBulkAction}
+              disabled={!bulkAction}
+              className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 disabled:opacity-50 transition-colors"
+            >
+              Apply
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-sindoor font-medium hover:underline text-sm"
+            >
+              Clear selection
+            </button>
+            {actionError && (
+              <span className="ml-4 text-xs text-red-600">{actionError}</span>
+            )}
+          </div>
+        )}
 
         {/* Search & filter */}
         <div className="mb-6 rounded-xl border border-sand-border bg-surface p-4">
@@ -198,6 +286,14 @@ export default function OrdersPage() {
           <table className="w-full text-left divide-y divide-sand-border">
             <thead>
               <tr className="bg-surface">
+                <th className="px-6 py-4 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === orders.length && orders.length > 0}
+                    onChange={toggleSelectAll}
+                    className="rounded border-sand-border text-sindoor focus:ring-sindoor"
+                  />
+                </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Order
                 </th>
