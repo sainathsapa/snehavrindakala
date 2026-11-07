@@ -164,6 +164,12 @@ export default function OrderDetailPage() {
             >
               Refunds
             </Link>
+            <Link
+              href={`/admin/orders/${id}/invoice`}
+              className="text-sm font-sans text-sindoor hover:underline"
+            >
+              Print Invoice
+            </Link>
           </div>
         </div>
 
