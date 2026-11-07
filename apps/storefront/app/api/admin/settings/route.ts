@@ -1,5 +1,5 @@
 /**
- * Admin Settings API - reads/writes platform mode to .env and database.
+ * Admin Settings API - platform mode plus editable site settings.
  */
 
 import { NextResponse } from "next/server";
@@ -8,6 +8,50 @@ import fs from "fs";
 import path from "path";
 
 const ENV_PATH = path.resolve(process.cwd(), ".env");
+
+const DATABASE_URL =
+  process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
+
+async function query(sql: string, params: any[] = []) {
+  const { Pool } = require("pg");
+  const pool = new Pool({ connectionString: DATABASE_URL });
+  const client = await pool.connect();
+  try {
+    const res = await client.query(sql, params);
+    return res.rows;
+  } finally {
+    client.release();
+    pool.end();
+  }
+}
+
+const DEFAULT_SETTINGS = [
+  { key: "store_name", value: "SnehaVrinda Kala", description: "Store display name." },
+  { key: "default_currency", value: "inr", description: "Default storefront currency code." },
+  { key: "tax_rate", value: "18", description: "Default tax rate in percent." },
+  { key: "tax_included", value: "false", description: "Whether product prices include tax." },
+  { key: "default_locale", value: "en", description: "Default storefront locale." },
+  { key: "supported_locales", value: "en,hi,te", description: "Comma-separated supported locales." },
+];
+
+async function ensureTable() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      description TEXT,
+      updated_at TIMESTAMP NOT NULL DEFAULT now()
+    )
+  `);
+  for (const setting of DEFAULT_SETTINGS) {
+    await query(
+      `INSERT INTO site_settings (key, value, description)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (key) DO NOTHING`,
+      [setting.key, setting.value, setting.description]
+    );
+  }
+}
 
 export async function GET() {
   if (!(await requireAdmin())) {
@@ -19,17 +63,13 @@ export async function GET() {
       process.env.NEXT_PUBLIC_PLATFORM_MODE ||
       "single-brand";
     const mode = raw === "platform" ? "platform" : "single-brand";
-    return NextResponse.json({
-      mode,
-      settings: [
-        {
-          key: "platform_mode",
-          value: mode,
-          description:
-            "Single-brand storefront or multi-vendor platform mode.",
-        },
-      ],
-    });
+
+    await ensureTable();
+    const rows = await query(
+      "SELECT key, value, description FROM site_settings ORDER BY key ASC"
+    );
+
+    return NextResponse.json({ mode, settings: rows });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -40,27 +80,63 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const { mode } = await req.json();
-    const validMode = mode === "platform" ? "platform" : "single-brand";
+    const body = await req.json();
 
-    // Keep the in-memory value in sync for this process even when the
-    // container has no writable .env file.
-    process.env.PLATFORM_MODE = validMode;
+    // Platform mode keeps its .env-backed behavior.
+    if (body.mode !== undefined) {
+      const validMode = body.mode === "platform" ? "platform" : "single-brand";
 
-    // Persist to .env
-    if (fs.existsSync(ENV_PATH)) {
-      let envContent = fs.readFileSync(ENV_PATH, "utf8");
-      const line = `PLATFORM_MODE=${validMode}`;
-      const regex = /^PLATFORM_MODE=.*$/m;
-      if (regex.test(envContent)) {
-        envContent = envContent.replace(regex, line);
-      } else {
-        envContent += `\n${line}\n`;
+      process.env.PLATFORM_MODE = validMode;
+
+      if (fs.existsSync(ENV_PATH)) {
+        let envContent = fs.readFileSync(ENV_PATH, "utf8");
+        const line = `PLATFORM_MODE=${validMode}`;
+        const regex = /^PLATFORM_MODE=.*$/m;
+        if (regex.test(envContent)) {
+          envContent = envContent.replace(regex, line);
+        } else {
+          envContent += `\n${line}\n`;
+        }
+        fs.writeFileSync(ENV_PATH, envContent);
       }
-      fs.writeFileSync(ENV_PATH, envContent);
+
+      return NextResponse.json({ ok: true, mode: validMode });
     }
 
-    return NextResponse.json({ ok: true, mode: validMode });
+    const updates: { key: string; value: string }[] = Array.isArray(body.settings)
+      ? body.settings
+      : body.key
+        ? [{ key: body.key, value: body.value }]
+        : [];
+
+    if (updates.length === 0) {
+      return NextResponse.json(
+        { error: "Provide mode, settings[], or key/value" },
+        { status: 400 }
+      );
+    }
+
+    await ensureTable();
+    for (const update of updates) {
+      if (!update || typeof update.key !== "string" || !update.key) {
+        return NextResponse.json(
+          { error: "Each setting requires a non-empty key" },
+          { status: 400 }
+        );
+      }
+      await query(
+        `INSERT INTO site_settings (key, value)
+         VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE
+           SET value = EXCLUDED.value, updated_at = now()`,
+        [update.key, update.value == null ? "" : String(update.value)]
+      );
+    }
+
+    const rows = await query(
+      "SELECT key, value, description FROM site_settings ORDER BY key ASC"
+    );
+    return NextResponse.json({ ok: true, settings: rows });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
