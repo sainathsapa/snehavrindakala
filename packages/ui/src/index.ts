@@ -6,3 +6,4 @@ export * from "./textarea";
 export * from "./select";
 export * from "./section";
 export * from "./tokens";
+export * from "./icons";

@@ -3,110 +3,87 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Icon, type IconName } from "@snehavrinda-kala/ui";
 
-const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: "📊", role: "viewer" as const },
-  { href: "/admin/orders", label: "Orders", icon: "📦", role: "viewer" as const },
+const NAV_ITEMS: { href: string; label: string; icon: IconName; role: "super_admin" | "manager" | "support" | "viewer" }[] = [
+  { href: "/admin", label: "Dashboard", icon: "dashboard", role: "viewer" },
+  { href: "/admin/orders", label: "Orders", icon: "orders", role: "viewer" as const },
   {
     href: "/admin/products",
     label: "Products",
-    icon: "🎨",
+    icon: "products",
     role: "viewer" as const,
   },
   {
     href: "/admin/categories",
     label: "Categories",
-    icon: "📁",
+    icon: "categories",
     role: "viewer" as const,
   },
   {
     href: "/admin/customers",
     label: "Customers",
-    icon: "👥",
+    icon: "customers",
     role: "viewer" as const,
   },
   {
     href: "/admin/partners",
     label: "Partners",
-    icon: "👩‍🎨",
+    icon: "partners",
     role: "viewer" as const,
   },
   {
     href: "/admin/tickets",
     label: "Support Tickets",
-    icon: "🎫",
+    icon: "tickets",
     role: "viewer" as const,
   },
   {
     href: "/admin/users",
     label: "Users & Roles",
-    icon: "🔐",
+    icon: "users",
     role: "super_admin" as const,
   },
   {
     href: "/admin/settings",
     label: "Settings",
-    icon: "⚙️",
+    icon: "settings",
     role: "super_admin" as const,
   },
   {
     href: "/admin/analytics",
     label: "Analytics",
-    icon: "📈",
+    icon: "analytics",
     role: "viewer" as const,
   },
   {
     href: "/admin/discounts",
     label: "Discounts",
-    icon: "🏷️",
+    icon: "discounts",
     role: "manager" as const,
   },
   {
     href: "/admin/commissions",
     label: "Commissions",
-    icon: "💸",
+    icon: "commissions",
     role: "manager" as const,
-  },
-  {
-    href: "/admin/settings",
-    label: "Settings",
-    icon: "⚙️",
-    role: "super_admin" as const,
-  },
-  {
-    href: "/admin/analytics",
-    label: "Analytics",
-    icon: "📈",
-    role: "viewer" as const,
-  },
-  {
-    href: "/admin/discounts",
-    label: "Discounts",
-    icon: "🏷️",
-    role: "manager" as const,
-  },
-  {
-    href: "/admin/i18n",
-    label: "i18n",
-    icon: "🌐",
-    role: "super_admin" as const,
   },
   {
     href: "/admin/tax",
     label: "Tax (GST)",
-    icon: "🧾",
+    icon: "tax",
     role: "manager" as const,
   },
   {
     href: "/admin/audit-log",
     label: "Audit Log",
-    icon: "📋",
+    icon: "audit-log",
     role: "super_admin" as const,
   },
   {
     href: "/admin/notifications",
     label: "Notifications",
-    icon: "🔔",
+    icon: "notifications",
     role: "manager" as const,
   },
 ];
@@ -135,24 +112,29 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-rang-paper">
+    <div className="min-h-screen flex flex-col bg-rang-paper">
       {/* Mobile sidebar toggle */}
       <div className="md:hidden">
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="px-4 py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90"
         >
-          {collapsed ? "☰ Menu" : "✕ Close"}
+          <Icon
+            name={collapsed ? "close" : "menu"}
+            size={20}
+            className="mr-1"
+          />
+          {collapsed ? "Close" : "Menu"}
         </button>
       </div>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-sand-border transition-all duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-sand-border transition-all duration-300 flex flex-col ${
           collapsed || typeof window === "undefined" ? "-translate-x-full" : "translate-x-0"
-        } md:relative md:translate-x-0 md:!-translate-x-full`}
+        } md:relative md:translate-x-0 md:!-translate-x-full md:h-auto md:static`}
       >
-        <div className="p-6 border-b border-sand-border">
+        <div className="p-6 border-b border-sand-border shrink-0">
           <Link
             href="/admin"
             className="flex items-center gap-2"
@@ -169,7 +151,7 @@ export default function AdminLayout({
           </p>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1 shrink-0 overflow-y-auto">
           {NAV_ITEMS.filter((item) => canAccess(item.role)).map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -183,14 +165,18 @@ export default function AdminLayout({
                     : "text-muted-ink hover:bg-rang-paper/50 hover:text-terracotta"
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
+                <Icon
+                  name={item.icon}
+                  size={18}
+                  className={isActive ? "text-sindoor" : "text-muted-ink"}
+                />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-sand-border">
+        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-sand-border shrink-0">
           <div className="text-xs font-sans text-muted-ink">
             <div className="font-medium text-deep-ink">{user.email}</div>
             <div className="text-terracotta font-medium capitalize">
@@ -207,13 +193,13 @@ export default function AdminLayout({
       </aside>
 
       {/* Main content */}
-      <div
-        className={`transition-all duration-300 md:pl-64 ${
+      <main
+        className={`flex-1 min-h-0 transition-all duration-300 md:pl-64 ${
           collapsed ? "pl-0" : ""
         }`}
       >
         {children}
-      </div>
+      </main>
     </div>
   );
 }
