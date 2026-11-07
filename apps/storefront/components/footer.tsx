@@ -1,4 +1,15 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 export function Footer() {
+  const pathname = usePathname();
+
+  // Hide storefront footer on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <footer className="mt-auto border-t border-sand-border bg-surface">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@snehavrinda-kala/ui";
 
@@ -15,7 +16,13 @@ const navLinks = [
 ];
 
 export function Header() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Hide storefront header on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
