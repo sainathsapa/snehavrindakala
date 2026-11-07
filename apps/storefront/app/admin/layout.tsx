@@ -158,9 +158,9 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-rang-paper">
-      {/* Mobile sidebar toggle */}
-      <div className="md:hidden">
+    <div className="min-h-screen bg-rang-paper relative">
+      {/* Mobile sidebar toggle - fixed top-left, mobile only */}
+      <div className="md:hidden fixed top-4 left-4 z-60">
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="px-4 py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90"
@@ -174,11 +174,11 @@ export default function AdminLayout({
         </button>
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar - fixed on left edge, slides over content on mobile */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-sand-border transition-all duration-300 flex flex-col ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-sand-border transition-transform duration-300 flex flex-col ${
           collapsed ? "-translate-x-full" : "translate-x-0"
-        } md:relative md:translate-x-0 md:h-auto md:static`}
+        }`}
       >
         <div className="p-6 border-b border-sand-border shrink-0">
           <Link
@@ -240,10 +240,10 @@ export default function AdminLayout({
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main content - left padding on desktop for sidebar */}
       <main
-        className={`flex-1 min-h-0 transition-all duration-300 md:pl-64 ${
-          collapsed ? "pl-0" : ""
+        className={`min-h-0 md:pl-64 transition-all duration-300 ${
+          collapsed ? "md:pl-0" : ""
         }`}
       >
         <Suspense
