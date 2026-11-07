@@ -43,6 +43,9 @@ export async function GET(
       slug: anyProduct.handle || anyProduct.slug || "",
       total: price,
       currency_code: currency,
+      category: anyProduct.category
+        ? { id: anyProduct.category.id, name: anyProduct.category.name }
+        : null,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

@@ -9,6 +9,7 @@ interface Category {
   name: string;
   slug: string;
   status: string;
+  product_count: number;
   created_at: string;
 }
 
@@ -39,6 +40,7 @@ export default function CategoriesPage() {
             name: c.name || "",
             slug: c.slug || "",
             status: c.status ?? (c.is_active === false ? "draft" : "active"),
+            product_count: c.product_count ?? 0,
             created_at: c.created_at || "",
           }))
         );
@@ -86,7 +88,7 @@ export default function CategoriesPage() {
             </td>
             <td className="px-6 py-4 font-sans text-sm text-deep-ink">
               <Link
-                href={`/admin/categories/${c.id}/edit`}
+                href={`/admin/categories/${c.id}`}
                 className="text-sindoor font-medium hover:underline"
               >
                 {c.name}
@@ -105,6 +107,9 @@ export default function CategoriesPage() {
               >
                 {c.status}
               </span>
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-deep-ink text-right">
+              {c.product_count}
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {new Date(c.created_at).toLocaleDateString()}
@@ -131,7 +136,7 @@ export default function CategoriesPage() {
         ))
       : (
           <tr>
-            <td colSpan={6} className="px-6 py-12 text-center">
+            <td colSpan={7} className="px-6 py-12 text-center">
               <p className="text-muted-ink font-sans">
                 No categories found.
               </p>
@@ -226,6 +231,9 @@ export default function CategoriesPage() {
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Status
+                </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider text-right">
+                  Products
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Created

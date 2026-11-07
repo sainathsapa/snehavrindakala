@@ -12,6 +12,7 @@ interface Product {
   price: number;
   currency_code: string;
   created_at: string;
+  category?: { id: string; name: string };
 }
 
 const STATUS_OPTIONS = ["draft", "published", "proposed", "rejected"];
@@ -50,6 +51,9 @@ export default function ProductsPage() {
                 p.currency_code ||
                 "inr",
               created_at: p.created_at || "",
+              category: p.category
+                ? { id: p.category.id, name: p.category.name }
+                : null,
             };
           })
         );
@@ -92,6 +96,9 @@ export default function ProductsPage() {
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {p.slug}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm text-muted-ink">
+              {p.category?.name || "—"}
             </td>
             <td className="px-6 py-4 font-sans text-sm">
               <span
@@ -209,6 +216,9 @@ export default function ProductsPage() {
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Slug
+                </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Category
                 </th>
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Status

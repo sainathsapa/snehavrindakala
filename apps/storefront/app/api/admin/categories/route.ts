@@ -23,7 +23,41 @@ export async function GET(req: Request) {
       q: searchParams.get("q") || undefined,
       status: searchParams.get("status") || undefined,
     });
-    return NextResponse.json(data);
+
+    // Attach product_count to each category for one-to-many visibility
+    const BACKEND_URL =
+      process.env.MEDUSA_BACKEND_URL ||
+      process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+      "http://localhost:9000";
+    const PUBLISHABLE_KEY =
+      process.env.MEDUSA_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
+      "";
+
+    const categoriesWithCount = await Promise.all(
+      (data.categories || []).map(async (cat: any) => {
+        try {
+          const prodRes = await fetch(
+            `${BACKEND_URL}/admin/products?category_id=${encodeURIComponent(cat.id)}&limit=1`,
+            {
+              headers: {
+                "x-publishable-api-key": PUBLISHABLE_KEY,
+                ...(await adminAuthHeader()),
+              },
+            }
+          );
+          const prodData = await prodRes.json();
+          return {
+            ...cat,
+            product_count: prodData.count ?? 0,
+          };
+        } catch {
+          return { ...cat, product_count: 0 };
+        }
+      })
+    );
+
+    return NextResponse.json({ ...data, categories: categoriesWithCount });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
