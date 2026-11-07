@@ -288,10 +288,14 @@ export async function deleteAdminProduct(productId: string): Promise<void> {
 export async function listAdminCategories(params?: {
   limit?: number;
   offset?: number;
+  q?: string;
+  status?: string;
 }): Promise<{ categories: AdminCategory[]; count: number }> {
   const searchParams = new URLSearchParams();
   searchParams.set("limit", String(params?.limit ?? 50));
   searchParams.set("offset", String(params?.offset ?? 0));
+  if (params?.q) searchParams.set("q", params.q);
+  if (params?.status) searchParams.set("status", params.status);
 
   const res = await adminRequest(`/admin/product-categories?${searchParams.toString()}`);
   if (!res.ok) {

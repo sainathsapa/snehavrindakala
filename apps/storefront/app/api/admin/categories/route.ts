@@ -20,6 +20,8 @@ export async function GET(req: Request) {
     const data = await listAdminCategories({
       limit: parseInt(searchParams.get("limit") || "20"),
       offset: parseInt(searchParams.get("offset") || "0"),
+      q: searchParams.get("q") || undefined,
+      status: searchParams.get("status") || undefined,
     });
     return NextResponse.json(data);
   } catch (err: any) {
