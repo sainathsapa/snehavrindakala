@@ -25,6 +25,11 @@ FROM deps AS builder
 
 WORKDIR /app
 
+# NEXT_PUBLIC_STOREFRONT_URL is baked at build time for sitemap, canonical,
+# and JSON-LD URLs. Pass it via docker-compose build args.
+ARG NEXT_PUBLIC_STOREFRONT_URL=http://localhost:3000
+ENV NEXT_PUBLIC_STOREFRONT_URL=$NEXT_PUBLIC_STOREFRONT_URL
+
 COPY apps/storefront ./apps/storefront
 COPY packages/ui ./packages/ui
 COPY packages/types ./packages/types
