@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 interface Customer {
   id: string;
@@ -27,10 +27,22 @@ interface Order {
 
 export default function CustomerDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = typeof params.id === "string" ? params.id : "";
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -47,7 +59,14 @@ export default function CustomerDetailPage() {
       );
       if (res.ok) {
         const data = await res.json();
-        setCustomer(data.customer || data);
+        const value = data.customer || data;
+        setCustomer(value);
+        setEditForm({
+          first_name: value.first_name || "",
+          last_name: value.last_name || "",
+          email: value.email || "",
+          phone: value.phone || "",
+        });
       }
     } catch (err) {
       console.error("Failed to load customer", err);
@@ -71,6 +90,52 @@ export default function CustomerDetailPage() {
       console.error("Failed to load customer orders", err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setMessage("");
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/customers/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update customer");
+      const value = data.customer || data;
+      setCustomer(value);
+      setEditing(false);
+      setMessage("Customer updated.");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (
+      !confirm(
+        `Delete customer ${customer.email}? Their orders will remain in the system.`
+      )
+    )
+      return;
+    setDeleting(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/customers/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete customer");
+      router.push("/admin/customers");
+    } catch (err: any) {
+      setError(err.message);
+      setDeleting(false);
     }
   }
 
@@ -112,15 +177,124 @@ export default function CustomerDetailPage() {
             Customer Details
           </h1>
           <p className="text-muted-ink font-sans">
-            Support request from {customer.name}
+            Profile and order history for{" "}
+            {`${customer.first_name || ""} ${customer.last_name || ""}`.trim() ||
+              customer.email}
           </p>
         </div>
 
+        {message && (
+          <div className="mb-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 font-sans text-sm text-green-700">
+            {message}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-sans text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {editing && (
+          <form
+            onSubmit={handleSave}
+            className="rounded-xl border border-sand-border bg-surface p-6 mb-8"
+          >
+            <h2 className="text-lg font-serif font-semibold text-deep-ink mb-4">
+              Edit Customer
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  First name
+                </span>
+                <input
+                  value={editForm.first_name}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, first_name: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Last name
+                </span>
+                <input
+                  value={editForm.last_name}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, last_name: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Email *
+                </span>
+                <input
+                  required
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, email: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Phone
+                </span>
+                <input
+                  value={editForm.phone}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, phone: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="rounded-md border border-sand-border px-4 py-2 text-sm font-sans font-medium text-deep-ink hover:bg-rang-paper transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
         {/* Customer info */}
         <div className="rounded-xl border border-sand-border bg-surface p-6 mb-8">
-          <h2 className="text-lg font-serif font-semibold text-deep-ink mb-4">
-            Profile
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-serif font-semibold text-deep-ink">
+              Profile
+            </h2>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setEditing((v) => !v)}
+                className="text-sindoor font-sans text-sm font-medium hover:underline"
+              >
+                {editing ? "Close editor" : "Edit"}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-red-600 font-sans text-sm font-medium hover:underline disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">Name</p>

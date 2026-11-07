@@ -1,5 +1,6 @@
 /**
  * GET /api/admin/customers - List customers with pagination
+ * POST /api/admin/customers - Create a customer
  */
 
 import { NextResponse } from "next/server";
@@ -53,6 +54,54 @@ export async function GET(req: Request) {
 
     const data = await res.json();
     return NextResponse.json(data);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  try {
+    const body = await req.json();
+    const { email, first_name, last_name, phone, company_name, metadata } =
+      body || {};
+
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    }
+
+    const BACKEND_URL =
+      process.env.MEDUSA_BACKEND_URL ||
+      process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+      "http://localhost:9000";
+    const PUBLISHABLE_KEY =
+      process.env.MEDUSA_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
+      "";
+
+    const res = await adminFetch(BACKEND_URL, PUBLISHABLE_KEY, "/admin/customers", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        first_name,
+        last_name,
+        phone,
+        company_name,
+        metadata,
+      }),
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: text || "Failed to create customer" },
+        { status: res.status }
+      );
+    }
+
+    return NextResponse.json(text ? JSON.parse(text) : {}, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

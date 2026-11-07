@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 interface Customer {
@@ -12,12 +12,23 @@ interface Customer {
   created_at: string;
 }
 
+const emptyForm = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+};
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetch("/api/admin/customers?limit=20", { cache: "no-store" })
+  const loadCustomers = useCallback(() => {
+    fetch("/api/admin/customers?limit=100", { cache: "no-store" })
       .then((r) => r.json())
       .then((data: any) => {
         setCustomers(
@@ -26,7 +37,7 @@ export default function CustomersPage() {
             email: c.email || "",
             first_name: c.first_name || "",
             last_name: c.last_name || "",
-            status: c.status || "",
+            status: c.has_account ? "registered" : "guest",
             created_at: c.created_at || "",
           }))
         );
@@ -34,6 +45,32 @@ export default function CustomersPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create customer");
+      setForm(emptyForm);
+      setShowForm(false);
+      loadCustomers();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -57,26 +94,42 @@ export default function CustomersPage() {
                 href={`/admin/customers/${c.id}`}
                 className="text-sindoor font-medium hover:underline"
               >
-                {c.first_name} {c.last_name}
+                {c.first_name || c.last_name
+                  ? `${c.first_name} ${c.last_name}`.trim()
+                  : "—"}
               </Link>
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {c.email}
             </td>
-            <td className="px-6 py-4 font-sans text-sm text-deep-ink">
-              {c.status}
+            <td className="px-6 py-4 font-sans text-sm">
+              <span
+                className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                  c.status === "registered"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {c.status}
+              </span>
             </td>
             <td className="px-6 py-4 font-sans text-sm text-muted-ink">
               {new Date(c.created_at).toLocaleDateString()}
+            </td>
+            <td className="px-6 py-4 font-sans text-sm">
+              <Link
+                href={`/admin/customers/${c.id}`}
+                className="text-sindoor font-medium hover:underline"
+              >
+                View
+              </Link>
             </td>
           </tr>
         ))
       : (
           <tr>
-            <td colSpan={5} className="px-6 py-12 text-center">
-              <p className="text-muted-ink font-sans">
-                No customers found.
-              </p>
+            <td colSpan={6} className="px-6 py-12 text-center">
+              <p className="text-muted-ink font-sans">No customers found.</p>
             </td>
           </tr>
         );
@@ -93,7 +146,94 @@ export default function CustomersPage() {
               Manage customer accounts.
             </p>
           </div>
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors"
+          >
+            {showForm ? "Cancel" : "New Customer"}
+          </button>
         </div>
+
+        {error && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-sans text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {showForm && (
+          <form
+            onSubmit={handleCreate}
+            className="mb-6 rounded-xl border border-sand-border bg-surface p-6"
+          >
+            <h2 className="mb-4 text-lg font-serif font-semibold text-deep-ink">
+              Create Customer
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  First name
+                </span>
+                <input
+                  value={form.first_name}
+                  onChange={(e) =>
+                    setForm({ ...form, first_name: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Last name
+                </span>
+                <input
+                  value={form.last_name}
+                  onChange={(e) =>
+                    setForm({ ...form, last_name: e.target.value })
+                  }
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Email *
+                </span>
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Phone
+                </span>
+                <input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="rounded-md bg-sindoor px-4 py-2 text-sm font-sans font-medium text-white hover:bg-sindoor/90 transition-colors disabled:opacity-50"
+              >
+                {submitting ? "Creating..." : "Create Customer"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="rounded-md border border-sand-border px-4 py-2 text-sm font-sans font-medium text-deep-ink hover:bg-rang-paper transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
 
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <table className="w-full text-left divide-y divide-sand-border">
@@ -114,11 +254,12 @@ export default function CustomersPage() {
                 <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                   Created
                 </th>
+                <th className="px-6 py-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-sand-border">
-              {customerRows}
-            </tbody>
+            <tbody className="divide-y divide-sand-border">{customerRows}</tbody>
           </table>
         </div>
       </div>
