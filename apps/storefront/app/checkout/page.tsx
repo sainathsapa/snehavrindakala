@@ -40,6 +40,38 @@ async function getTaxBreakdown(
   }
 }
 
+async function getShippingRates(
+  pincode: string,
+  weight: number
+): Promise<
+  Array<{
+    courier_name: string;
+    service_name: string;
+    rate: number;
+    expected_delivery: string;
+  }>
+> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"}/api/store/shipping/rates`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          delivery_postcode: pincode,
+          weight,
+          cod: true,
+        }),
+      }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.rates || [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function CheckoutPage({
   searchParams,
 }: {
@@ -76,7 +108,29 @@ export default async function CheckoutPage({
     cart?.shipping_address?.province ||
     cart?.billing_address?.province ||
     undefined;
+  const customerPincode =
+    cart?.shipping_address?.postal_code ||
+    cart?.billing_address?.postal_code ||
+    undefined;
   const tax = await getTaxBreakdown(cart?.total ?? 0, customerState);
+
+  // Calculate total weight from cart items (assume 0.5kg per item)
+  const totalWeight = items.reduce(
+    (sum, item) => sum + (item.quantity || 1) * 0.5,
+    0
+  );
+
+  // Fetch shipping rates if we have a pincode
+  let shippingRates: Array<{
+    courier_name: string;
+    service_name: string;
+    rate: number;
+    expected_delivery: string;
+  }> = [];
+  if (customerPincode) {
+    shippingRates = await getShippingRates(customerPincode, totalWeight);
+  }
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -89,6 +143,17 @@ export default async function CheckoutPage({
             cartTotal={cart?.total ?? 0}
             currency={cart?.currency_code || "inr"}
             cartId={cart?.id ?? ""}
+            shippingRate={
+              shippingRates[0]
+                ? {
+                    courier_name: shippingRates[0].courier_name,
+                    service_name: shippingRates[0].service_name,
+                    rate: shippingRates[0].rate,
+                    expected_delivery: shippingRates[0].expected_delivery,
+                  }
+                : undefined
+            }
+            shippingAmount={shippingRates[0]?.rate ?? 0}
           />
         )}
 
@@ -166,9 +231,25 @@ export default async function CheckoutPage({
                   )}
                 </>
               )}
+              {shippingRates.length > 0 && (
+                <li className="flex justify-between gap-4 border-b border-sand-border pb-3">
+                  <span className="text-sm text-muted-ink font-sans">
+                    Shipping ({shippingRates[0].courier_name})
+                  </span>
+                  <span className="text-sm text-deep-ink font-sans whitespace-nowrap">
+                    {shippingRates[0].rate === 0 ? "FREE" : `₹${shippingRates[0].rate / 100}`}
+                  </span>
+                </li>
+              )}
               <li className="flex justify-between font-serif font-semibold text-deep-ink pt-2">
                 <span>Total</span>
-                <span>{formatPrice(cart?.total ?? 0, cart?.currency_code)}</span>
+                <span>
+                  {formatPrice(
+                    (cart?.total ?? 0) +
+                      (shippingRates[0]?.rate ?? 0),
+                    cart?.currency_code
+                  )}
+                </span>
               </li>
             </ul>
           </section>

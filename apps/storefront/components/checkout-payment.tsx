@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { medusa, formatPrice } from "@/lib/medusa";
 import { RazorpayPayButton } from "./razorpay-checkout";
 import { Button } from "@snehavrinda-kala/ui";
@@ -10,10 +11,14 @@ export function CheckoutPayment({
   cartTotal,
   currency = "inr",
   cartId,
+  shippingRate,
+  shippingAmount,
 }: {
   cartTotal: number;
   currency: string;
   cartId: string;
+  shippingRate?: { courier_name: string; service_name: string; rate: number; expected_delivery: string };
+  shippingAmount?: number;
 }) {
   const router = useRouter();
   const [session, setSession] = useState<{
@@ -90,6 +95,9 @@ export function CheckoutPayment({
     );
   }
 
+  const shippingTotal = shippingRate ? shippingRate.rate / 100 : 0;
+  const grandTotal = (session.amount / 100) + shippingTotal;
+
   return (
     <div className="space-y-6">
       <div className="border-y border-sand-border py-4">
@@ -100,9 +108,34 @@ export function CheckoutPayment({
           </span>
         </div>
       </div>
+
+      {shippingRate && (
+        <div className="border-y border-sand-border py-4">
+          <div className="flex items-baseline justify-between">
+            <span className="text-lg font-sans text-muted-ink">Shipping</span>
+            <span className="text-2xl font-serif font-bold text-deep-ink">
+              {shippingRate.rate === 0 ? "FREE" : `₹${shippingRate.rate / 100}`}
+            </span>
+          </div>
+          <div className="text-sm text-muted-ink font-sans mt-1">
+            {shippingRate.courier_name} • {shippingRate.service_name}
+            {shippingRate.expected_delivery && ` • Est. delivery: ${shippingRate.expected_delivery}`}
+          </div>
+        </div>
+      )}
+
+      <div className="border-y border-sand-border py-4">
+        <div className="flex items-baseline justify-between">
+          <span className="text-lg font-serif font-bold text-deep-ink">Grand total</span>
+          <span className="text-2xl font-serif font-bold text-deep-ink">
+            ₹{grandTotal.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
       <RazorpayPayButton
         orderId={session.razorpay_order_id}
-        amount={session.amount}
+        amount={Math.round(grandTotal * 100)}
         currency={session.currency}
         name="SnehaVrinda Kala"
         description={`Order · ₹${formatPrice(session.amount, session.currency)}`}
