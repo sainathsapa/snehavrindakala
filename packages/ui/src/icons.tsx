@@ -98,7 +98,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8-8v4M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10L4 7m8 4v3M4 7v10l8 4m0-10V7" />
     </svg>
   ),
   categories: (props) => (
@@ -109,7 +109,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2zM3 7v9m18-9l9 8m-9-8l-9-8m0 12l-9-8m9 8V7l9 8" />
     </svg>
   ),
   customers: (props) => (
@@ -131,7 +131,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-6c0-.71.097-1.402.29-2.047M11 15a2 2 0 10-4 0 2 2 0 004 0z" />
     </svg>
   ),
   tickets: (props) => (
@@ -142,7 +142,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h1a2 2 0 012 2v5a2 2 0 01-2 2H8a2 2 0 01-2-2V9a2 2 0 012-2zM12 7h1a2 2 0 012 2v5a2 2 0 01-2 2h-1a2 2 0 01-2-2V9a2 2 0 012-2zM16 7h1a2 2 0 012 2v5a2 2 0 01-2 2h-1a2 2 0 01-2-2V9a2 2 0 012-2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 7l.418 1.674A2 2 0 005.824 8.6h4.35A2 2 0 0012.176 9.674l.418-1.674M12 13a1 1 0 100-2v1z" />
     </svg>
   ),
   users: (props) => (
@@ -153,7 +153,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
     </svg>
   ),
   settings: (props) => (
@@ -208,7 +208,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h7a2 2 0 012 2v10a2 2 0 01-2 2zM9 9V7m12 8v-2.5c0-.621-.504-1.125-1.125-1.125h-.25c-.621 0-1.125.504-1.125 1.125V19m-11 0v-3a2 2 0 00-2-2H9a2 2 0 00-2 2v3z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
     </svg>
   ),
   "audit-log": (props) => (
@@ -407,7 +407,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 011.168.95l.842 1.685a1 1 0 001.168.95h3.282a1 1 0 011-1.72l-.841-1.68a1 1 0 00-.168-1.02l-.842-1.685a1 1 0 01-1.168-.95h-3.28a1 1 0 00-1.168.95l-.842 1.685a1 1 0 00-.168 1.02l-.842 1.685a1 1 0 01-1.168.95H5a2 2 0 01-2-2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 011.168.95l.842 1.685a1 1 0 001.168.95h3.282a1 1 0 011-1.72l-.841-1.68a1 1 0 00-.168-1.02l-.842-1.685a1 1 0 01-1.168-.95H5a2 2 0 01-2-2z" />
     </svg>
   ),
   home: (props) => (
@@ -660,7 +660,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 19v-1a2 2 0 00-2-2H7a2 2 0 00-2 2v1m3-10v5a2 2 0 002 2h4a2 2 0 002-2V9zM5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 19v-1a2 2 0 00-2-2H7a2 2 0 00-2 2v1m3-10v5a2 2 0 002 2h4a2 2 0 002-2V9zM5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 002-2v5a2 2 0 002 2z" />
     </svg>
   ),
   "credit-card": (props) => (
@@ -720,12 +720,7 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
   ),
 };
 
-export function Icon({
-  name,
-  size = 20,
-  className,
-  ...props
-}: IconProps): ReactNode {
+export function Icon({ name, size = 20, className, ...props }: IconProps) {
   const Comp = ICONS[name];
   if (!Comp) return null;
   return (
