@@ -20,6 +20,8 @@ export default function OrderDetailPage() {
   const id = typeof params.id === "string" ? params.id : "";
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -62,6 +64,29 @@ export default function OrderDetailPage() {
     );
   }
 
+  async function handleCancel() {
+    if (
+      !window.confirm(`Cancel order #{order.id.slice(-8)}? This cannot be undone.`)
+    )
+      return;
+    setCancelling(true);
+    setActionError("");
+    try {
+      const res = await fetch(`/api/admin/orders/${id}/cancel`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to cancel order");
+      setOrder((prev) =>
+        prev ? { ...prev, status: "cancelled" } : null
+      );
+    } catch (err: any) {
+      setActionError(err.message);
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   return (
     <main className="py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -74,12 +99,18 @@ export default function OrderDetailPage() {
               Order #{order.id.slice(-6)}
             </h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <span
               className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${getStatusClass(order.status)}`}
             >
               {order.status}
             </span>
+            <Link
+              href={`/admin/orders/${id}/refunds`}
+              className="text-sm font-sans text-sindoor hover:underline"
+            >
+              Refunds
+            </Link>
           </div>
         </div>
 
@@ -142,6 +173,29 @@ export default function OrderDetailPage() {
                 </td>
                 <td className="px-6 py-4 font-sans text-sm text-muted-ink">
                   {new Date(order.created_at).toLocaleDateString()}
+                </td>
+              </tr>
+              <tr className="hover:bg-rang-paper/50 transition-colors">
+                <td className="px-6 py-4 font-sans text-sm text-muted-ink uppercase tracking-wider">
+                  Actions
+                </td>
+                <td className="px-6 py-4 font-sans text-sm text-deep-ink">
+                  {order.paymentStatus !== "refunded" &&
+                  (order.status === "pending" || order.status === "processing") && (
+                    <button
+                      onClick={handleCancel}
+                      disabled={cancelling}
+                      className="text-red-600 font-medium hover:underline disabled:opacity-50"
+                    >
+                      {cancelling ? "Cancelling…" : "Cancel order"}
+                    </button>
+                  )}
+                  {order.status === "cancelled" && (
+                    <span className="text-xs text-muted-ink">Cancelled</span>
+                  )}
+                  {actionError && (
+                    <p className="mt-2 text-xs text-red-600">{actionError}</p>
+                  )}
                 </td>
               </tr>
             </tbody>
