@@ -59,7 +59,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { title, slug, status, total, currency_code } = body;
+    const { title, slug, status, total, currency_code, category_id } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const amount = Number(total) || 0;
 
@@ -67,6 +67,7 @@ export async function PATCH(
     if (title !== undefined) update.title = title;
     if (slug !== undefined) update.handle = slug;
     if (validStatuses.includes(status)) update.status = status;
+    if (category_id !== undefined) update.category_id = [category_id];
 
     if (amount > 0) {
       const { product } = await getAdminProduct(id);

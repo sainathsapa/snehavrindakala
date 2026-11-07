@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   }
   try {
     const body = await req.json();
-    const { title, slug, status, total, currency_code } = body;
+    const { title, slug, status, total, currency_code, category_id } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const productStatus = validStatuses.includes(status) ? status : "draft";
     const amount = Number(total) || 0;
@@ -45,6 +45,9 @@ export async function POST(req: Request) {
       handle: slug || undefined,
       status: productStatus,
     };
+    if (category_id) {
+      payload.category_id = [category_id];
+    }
     if (amount > 0) {
       payload.options = [{ title: "Default", values: ["Default"] }];
       payload.variants = [
