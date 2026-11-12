@@ -3,22 +3,9 @@
  */
 
 import { NextResponse } from "next/server";
+import { query } from "@/lib/db";
 
-const DATABASE_URL =
-  process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
 
-async function query(sql: string, params: any[] = []) {
-  const { Pool } = require("pg");
-  const pool = new Pool({ connectionString: DATABASE_URL });
-  const client = await pool.connect();
-  try {
-    const res = await client.query(sql, params);
-    return res.rows;
-  } finally {
-    client.release();
-    pool.end();
-  }
-}
 
 export async function GET() {
   try {

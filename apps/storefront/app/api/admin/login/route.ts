@@ -11,6 +11,7 @@ import {
   ADMIN_SESSION_MAX_AGE,
   signAdminSession,
 } from "@/lib/admin-session";
+import { query } from "@/lib/db";
 
 // Simple in-memory rate limiter: 5 failed attempts per IP per 15 minutes
 const FAILED_ATTEMPTS = new Map<string, { count: number; firstAttempt: number }>();
@@ -58,30 +59,25 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
-const DATABASE_URL =
-  process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
-
 async function lookupAdminUser(email: string): Promise<{
   role: string;
   passwordHash: string;
 } | null> {
   try {
-    const { Pool } = require("pg");
-    const pool = new Pool({ connectionString: DATABASE_URL });
-    const client = await pool.connect();
-    try {
-      const res = await client.query(
-        "SELECT role, password_hash, is_active FROM admin_users WHERE lower(email) = $1 LIMIT 1",
-        [email]
-      );
-      const row = res.rows[0];
-      if (!row || row.is_active === false) return null;
-      return { role: row.role || "viewer", passwordHash: row.password_hash || "" };
-    } finally {
-      client.release();
-      pool.end();
-    }
+    const rows = await query<{
+      role: string;
+      password_hash: string;
+      is_active: boolean;
+    }>(
+      "SELECT role, password_hash, is_active FROM admin_users WHERE lower(email) = $1 LIMIT 1",
+      [email]
+    );
+
+    const row = rows[0];
+    if (!row || row.is_active === false) return null;
+    return { role: row.role || "viewer", passwordHash: row.password_hash || "" };
   } catch {
+    // Table absent or unreachable: fall through to the env-based admin.
     return null;
   }
 }

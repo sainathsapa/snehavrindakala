@@ -1,13 +1,11 @@
+import { query } from "@/lib/db";
+
 /**
  * Persistence for Shiprocket shipments.
  *
  * Medusa does not know about Shiprocket, so shipment ids, AWB numbers, and
  * tracking links are stored alongside the order id in Postgres.
  */
-
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  "postgresql://medusa:medusa@localhost:5432/medusa";
 
 export interface OrderShipment {
   id: string;
@@ -26,18 +24,6 @@ export interface OrderShipment {
   updated_at: string;
 }
 
-async function query(sql: string, params: any[] = []) {
-  const { Pool } = require("pg");
-  const pool = new Pool({ connectionString: DATABASE_URL });
-  const client = await pool.connect();
-  try {
-    const res = await client.query(sql, params);
-    return res.rows;
-  } finally {
-    client.release();
-    pool.end();
-  }
-}
 
 async function ensureTable() {
   await query(`
