@@ -7,47 +7,48 @@
  * purposeful section backgrounds, art-form tiles, editorial bands, buttons,
  * labels and footer treatments — never as generic minimal SaaS chrome.
  *
- * Core brand palette (build plan Section 4.2):
- *   rang-paper #FFF7E8   warm primary canvas (handmade paper)
- *   marigold   #E6A72E   optimistic highlight / campaign band
- *   sindoor    #C84636   primary action / emphasis
- *   kumkum     #9F2947   deep rose/wine editorial accent
- *   peacock    #176D6A   teal trust/availability accent
+ * Core brand palette — matched to the brand design references
+ * (see docs/design-system.md):
+ *   rang-paper #F8EBDD   parchment canvas
+ *   surface    #FFF7EC   ivory card/form surface
+ *   deep-ink   #42170F   main text on light (deep brown)
+ *   muted-ink  #6B5347   supporting text
+ *   sand-border #E2CFB6  borders/dividers
+ *   kumkum     #7B1019   primary action (burgundy)
+ *   sindoor    #8F201D   emphasis / danger
+ *   terracotta #B74620   earthy craft accent, links
+ *   marigold   #E6A72E   optimistic highlight
+ *   haldi      #F0C45B   warm feature blocks
+ *   peacock    #176D6A   teal trust/availability
  *   indigo     #263A63   deep blue section / footer
  *   leaf       #557447   nature/green craft accent
- *   haldi      #F0C45B   bright warm yellow feature blocks
- *   gulabi     #D98291   rose-pink decorative accent
- *   terracotta #B96E4B   earthy craft material accent
- *   deep-ink   #2B211E   main text on light
- *   muted-ink  #675A52   supporting text
- *   sand-border #DCCBB4  borders/dividers
- *   surface    #FFFCF5   product/form surfaces
+ *   gulabi     #D98291   rose decorative accent
  */
 module.exports = {
   theme: {
     extend: {
       colors: {
         // Surfaces
-        "rang-paper": "#FFF7E8",
-        surface: "#FFFCF5",
+        "rang-paper": "#F8EBDD",
+        surface: "#FFF7EC",
 
         // Text
-        "deep-ink": "#2B211E",
-        "muted-ink": "#675A52",
+        "deep-ink": "#42170F",
+        "muted-ink": "#6B5347",
 
         // Borders
-        "sand-border": "#DCCBB4",
+        "sand-border": "#E2CFB6",
 
         // Brand accents
         marigold: "#E6A72E",
-        sindoor: "#C84636",
-        kumkum: "#9F2947",
+        sindoor: "#8F201D",
+        kumkum: "#7B1019",
         peacock: "#176D6A",
         indigo: "#263A63",
         leaf: "#557447",
         haldi: "#F0C45B",
         gulabi: "#D98291",
-        terracotta: "#B96E4B",
+        terracotta: "#B74620",
       },
       spacing: {
         0: "0px",

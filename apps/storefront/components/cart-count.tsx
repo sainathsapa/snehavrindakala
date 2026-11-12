@@ -36,14 +36,14 @@ export function CartCount({ className = "" }: { className?: string }) {
     };
   }, [refresh]);
 
-  if (count === null || count === 0) return null;
-
+  // The reference always shows the bag's count, including zero, so the badge
+  // reads as part of the icon rather than popping in when something is added.
   return (
     <span
-      className={`inline-flex min-w-[18px] items-center justify-center rounded-full bg-sindoor px-1.5 py-0.5 text-[10px] font-semibold leading-none text-rang-paper ${className}`}
-      aria-label={`${count} item${count === 1 ? "" : "s"} in cart`}
+      className={`absolute -right-1.5 -top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-kumkum px-1 text-[9px] font-semibold leading-none text-rang-paper ${className}`}
+      aria-label={`${count ?? 0} item${count === 1 ? "" : "s"} in cart`}
     >
-      {count > 99 ? "99+" : count}
+      {count === null ? "" : count > 99 ? "99+" : count}
     </span>
   );
 }

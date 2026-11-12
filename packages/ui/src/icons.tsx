@@ -48,6 +48,7 @@ export type IconName =
   | "phone"
   | "home"
   | "shop"
+  | "cart"
   | "journal"
   | "star"
   | "heart"
@@ -323,6 +324,13 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
     <Svg {...props}>
       <path d="M3 9h18l-1.5 11a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1L3 9z" />
       <path d="M8 9V6a4 4 0 0 1 8 0v3" />
+    </Svg>
+  ),
+  // Shopping bag with a handle — the header's bag affordance.
+  cart: (props) => (
+    <Svg {...props}>
+      <path d="M4.5 8h15l-1 12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1L4.5 8z" />
+      <path d="M8.5 8V5.5a3.5 3.5 0 0 1 7 0V8" />
     </Svg>
   ),
   journal: (props) => (

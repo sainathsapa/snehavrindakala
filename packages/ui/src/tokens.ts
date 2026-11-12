@@ -10,24 +10,24 @@
  */
 
 export const brandColors = {
-  // Surfaces
-  "rang-paper": "#FFF7E8",
-  surface: "#FFFCF5",
-  // Text
-  "deep-ink": "#2B211E",
-  "muted-ink": "#675A52",
+  // Surfaces — parchment and ivory, per the brand design references
+  "rang-paper": "#F8EBDD",
+  surface: "#FFF7EC",
+  // Text — deep brown ink, not neutral grey
+  "deep-ink": "#42170F",
+  "muted-ink": "#6B5347",
   // Borders
-  "sand-border": "#DCCBB4",
+  "sand-border": "#E2CFB6",
   // Brand accents
   marigold: "#E6A72E",
-  sindoor: "#C84636",
-  kumkum: "#9F2947",
+  sindoor: "#8F201D",
+  kumkum: "#7B1019",
   peacock: "#176D6A",
   indigo: "#263A63",
   leaf: "#557447",
   haldi: "#F0C45B",
   gulabi: "#D98291",
-  terracotta: "#B96E4B",
+  terracotta: "#B74620",
 } as const;
 
 export type BrandColor = keyof typeof brandColors;
@@ -54,10 +54,10 @@ export function border(color: BrandColor): string {
 }
 
 export const brand = {
-  // Primary action colour (sindoor) on light surfaces
-  primary: "sindoor",
-  primaryForeground: "white",
-  // Warm paper canvas
+  // Primary action colour (burgundy) on light surfaces
+  primary: "kumkum",
+  primaryForeground: "rang-paper",
+  // Parchment canvas
   background: "rang-paper",
   backgroundForeground: "deep-ink",
   // Card/product surface

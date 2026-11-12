@@ -3,13 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@snehavrinda-kala/ui";
 import { Icon } from "@snehavrinda-kala/ui";
 import { CartCount } from "./cart-count";
 
+/**
+ * Navigation mirrors the brand reference: a single centred row of restrained
+ * sans-serif links, with the logo mark and wordmark on the left and thin-line
+ * utility icons on the right.
+ */
 const navLinks = [
-  { label: "Shop", href: "/shop" },
-  { label: "Art Forms", href: "/art-forms" },
+  { label: "Discover", href: "/shop", chevron: true },
+  { label: "Art Forms", href: "/art-forms", chevron: true },
   { label: "Artists", href: "/artists" },
   { label: "Custom Art", href: "/custom-art" },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody
@@ -80,212 +84,221 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-40 border-b border-sand-border/70 bg-rang-paper/95 backdrop-blur supports-[backdrop-filter]:bg-rang-paper/85">
+      <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+        <div className="flex h-[88px] items-center gap-6">
+          {/* Brand cluster: sprig + rule, then the lotus mark and wordmark. */}
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-1.5"
+            className="flex shrink-0 items-center gap-4"
             aria-label="SnehaVrinda Kala home"
           >
-            <span className="font-serif text-xl font-bold tracking-tight text-deep-ink">
-              SnehaVrinda
+            <span className="hidden flex-col items-center gap-1 text-terracotta sm:flex">
+              <svg width="18" height="26" viewBox="0 0 18 26" fill="none" aria-hidden="true">
+                <path d="M9 25V9" stroke="currentColor" strokeWidth="1" opacity="0.55" />
+                <path d="M9 11c-4 0-7-2.5-7-5.5 4 0 7 2 7 5.5z" fill="currentColor" />
+                <path d="M9 16c4 0 7-2.5 7-5.5-4 0-7 2-7 5.5z" fill="currentColor" opacity="0.65" />
+              </svg>
+              <span className="h-3 w-px bg-terracotta/40" aria-hidden="true" />
             </span>
-            <span className="font-serif text-xl font-bold tracking-tight text-terracotta">
-              Kala
+
+            <svg
+              width="34"
+              height="34"
+              viewBox="0 0 34 34"
+              fill="none"
+              className="shrink-0 text-kumkum"
+              aria-hidden="true"
+            >
+              <path
+                d="M17 30c0-6 4-9 4-13a4 4 0 10-8 0c0 4 4 7 4 13z"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M17 26c-3.5 0-6-2.5-6-5.5 3.5 0 6 2 6 5.5zM17 26c3.5 0 6-2.5 6-5.5-3.5 0-6 2-6 5.5z"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M17 13V6M11 9l3 2M23 9l-3 2"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span className="flex flex-col leading-none">
+              <span className="font-serif text-[26px] font-semibold tracking-tight text-deep-ink">
+                SnehaVrinda <span className="text-kumkum">Kala</span>
+              </span>
+              <span className="mt-1.5 font-sans text-[9px] uppercase tracking-[0.28em] text-muted-ink">
+                Art · Culture · Conscious Living
+              </span>
             </span>
           </Link>
 
-          <div className="mx-4 hidden min-w-0 flex-1 items-center md:flex lg:mx-6 lg:max-w-sm">
-            <form
-              onSubmit={handleSearchSubmit}
-              className="relative w-full"
+          {/* Centred links. Hidden below lg; the mobile sheet carries them. */}
+          <nav className="mx-auto hidden items-center gap-7 lg:flex">
+            {visibleLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`group flex items-center gap-1 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                  pathname === link.href
+                    ? "text-kumkum"
+                    : "text-deep-ink/85 hover:text-kumkum"
+                }`}
+              >
+                {link.label}
+                {link.chevron && (
+                  <Icon
+                    name="chevron-down"
+                    size={13}
+                    className="mt-px text-muted-ink/70 transition-transform group-hover:translate-y-0.5"
+                  />
+                )}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Utilities: thin-line icons, per the reference. */}
+          <div className="ml-auto flex shrink-0 items-center gap-4 lg:ml-0">
+            <div className="relative hidden md:block">
+              <form onSubmit={handleSearchSubmit}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search"
+                  aria-label="Search"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    debouncedSearch(e.target.value);
+                  }}
+                  onFocus={() => setSearchOpen(searchQuery.length >= 2)}
+                  onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+                  className="w-28 rounded-full border border-sand-border bg-surface/70 py-1.5 pl-8 pr-3 font-sans text-[13px] text-deep-ink transition-[width] placeholder:text-muted-ink/70 focus:w-52 focus:outline-none focus:ring-1 focus:ring-kumkum/40"
+                />
+                <Icon
+                  name="search"
+                  size={14}
+                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-ink"
+                />
+              </form>
+
+              {searchOpen && searchResults.length > 0 && !searchLoading && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border border-sand-border bg-surface shadow-lifted">
+                  {searchResults.map((result) => (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(result.url);
+                        setSearchOpen(false);
+                        setSearchResults([]);
+                        setSearchQuery("");
+                      }}
+                      className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-rang-paper/60"
+                    >
+                      <Icon
+                        name={typeIcons[result.type] as any}
+                        size={14}
+                        className="shrink-0 text-muted-ink"
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate font-sans text-sm font-medium text-deep-ink">
+                          {result.title}
+                        </span>
+                        <span className="block truncate font-sans text-xs text-muted-ink">
+                          {result.type === "product" && result.price != null
+                            ? `₹${result.price / 100} · Product`
+                            : result.type}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                  {searchLoading && (
+                    <div className="p-2 font-sans text-xs text-muted-ink">
+                      Searching…
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <Link
+              href="/account"
+              aria-label="Account"
+              className="hidden text-deep-ink/75 transition-colors hover:text-kumkum sm:block"
             >
+              <Icon name="user" size={19} />
+            </Link>
+
+            <Link
+              href="/admin"
+              aria-label="Admin panel"
+              className="hidden text-deep-ink/75 transition-colors hover:text-kumkum lg:block"
+            >
+              <Icon name="lock" size={19} />
+            </Link>
+
+            <Link
+              href="/cart"
+              aria-label="Cart"
+              className="relative text-deep-ink/75 transition-colors hover:text-kumkum"
+            >
+              <Icon name="cart" size={19} />
+              <CartCount />
+            </Link>
+
+            <button
+              className="inline-flex items-center justify-center text-deep-ink/75 transition-colors hover:text-kumkum lg:hidden"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
+              aria-label={mobileMenuOpen ? "Close main menu" : "Open main menu"}
+            >
+              <Icon name={mobileMenuOpen ? "close" : "menu"} size={21} />
+            </button>
+          </div>
+        </div>
+
+        {mobileMenuOpen && (
+          <div
+            id="mobile-menu"
+            className="border-t border-sand-border/70 pb-6 pt-2 lg:hidden"
+          >
+            <div className="relative mb-3 mt-3">
               <input
-                ref={searchInputRef}
                 type="text"
-                placeholder="Search products, artists, categories…"
+                placeholder="Search artworks, artists, art forms…"
+                aria-label="Search"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   debouncedSearch(e.target.value);
                 }}
-                onFocus={() => setSearchOpen(searchQuery.length >= 2)}
-                onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-md border border-sand-border bg-white text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                className="w-full rounded-full border border-sand-border bg-surface py-2.5 pl-10 pr-4 font-sans text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-1 focus:ring-kumkum/40"
               />
               <Icon
                 name="search"
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-ink"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-ink"
               />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-ink hover:text-sindoor"
-              >
-                <Icon name="search" size={16} />
-              </button>
-            </form>
-
-            {searchOpen && searchResults.length > 0 && !searchLoading && (
-              <div className="absolute z-50 mt-1 w-full rounded-xl border border-sand-border bg-white shadow-xl">
-                {searchResults.map((result) => (
-                  <button
-                    key={`${result.type}-${result.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push(result.url);
-                      setSearchOpen(false);
-                      setSearchResults([]);
-                      setSearchQuery("");
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-rang-paper/50"
-                  >
-                    <Icon
-                      name={typeIcons[result.type] as any}
-                      size={14}
-                      className="text-muted-ink"
-                    />
-                    <div>
-                      <div className="text-sm font-sans font-medium text-deep-ink truncate">
-                        {result.title}
-                      </div>
-                      <div className="text-xs text-muted-ink truncate">
-                        {result.type === "product" && result.price != null
-                          ? `₹${result.price / 100} • Product`
-                          : result.type}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-                {searchLoading && (
-                  <div className="p-2 text-xs text-muted-ink">
-                    Searching…
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-6 text-sm font-sans font-medium">
+            </div>
             {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="whitespace-nowrap text-muted-ink hover:text-terracotta transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-md px-1 py-3 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
               >
                 {link.label}
               </Link>
             ))}
-          </nav>
-
-          {/* Utilities stay aligned right and never wrap; the nav sits between
-              the brand and these, so the three groups cannot collide. */}
-          <div className="flex shrink-0 items-center gap-5 text-sm font-sans font-medium">
-            <Link
-              href="/cart"
-              className="relative flex items-center gap-2 text-muted-ink hover:text-terracotta transition-colors"
-              aria-label="Cart"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M16 11V7a4 4 0 00-8-8v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
-              <span className="hidden xl:inline">Cart</span>
-              <CartCount />
-            </Link>
-            <Link
-              href="/account"
-              className="hidden text-muted-ink hover:text-terracotta transition-colors sm:inline"
-              aria-label="Account"
-            >
-              Account
-            </Link>
-            <Link
-              href="/admin"
-              className="hidden text-muted-ink hover:text-terracotta transition-colors lg:inline"
-              aria-label="Admin panel"
-            >
-              Admin
-            </Link>
-          </div>
-
-          <button
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-muted-ink hover:bg-rang-paper hover:text-terracotta focus:outline-none"
-            onClick={() => setMobileMenuOpen((open) => !open)}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="mobile-menu"
-            aria-label="Open main menu"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {mobileMenuOpen && (
-          <div id="mobile-menu" className="md:hidden bg-background border-t border-border">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="space-y-2 py-4">
-                <div className="relative mb-4">
-                  <input
-                    type="text"
-                    placeholder="Search products, artists, categories…"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      debouncedSearch(e.target.value);
-                    }}
-                    className="w-full pl-10 pr-4 py-2 rounded-md border border-sand-border bg-surface text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                  />
-                  <Icon
-                    name="search"
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-ink"
-                  />
-                </div>
-                {visibleLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-muted-ink hover:bg-rang-paper hover:text-terracotta"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                <div className="pt-4">
-                  <Link
-                    href="/cart"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-muted-ink hover:bg-rang-paper hover:text-terracotta flex items-center gap-2"
-                  >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 11V7a4 4 0 00-8-8v4M5 9h14l1 12H4L5 9z"
-                      />
-                    </svg>
-                    Cart
-                    <CartCount className="ml-1" />
-                  </Link>
-                  <Link
-                    href="/account"
-                    className="mt-2 block px-3 py-2 rounded-md text-base font-medium text-muted-ink hover:bg-rang-paper hover:text-terracotta"
-                  >
-                    Account
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

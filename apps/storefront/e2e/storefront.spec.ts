@@ -42,13 +42,17 @@ test.describe("browse and discover", () => {
     const response = await page.goto("/search");
 
     expect(response?.status()).toBe(200);
-    await expect(page.getByLabel("Search")).toBeVisible();
+    // The header also exposes a search field, so scope to the page's own form.
+    await expect(page.getByRole("searchbox")).toBeVisible();
   });
 
   test("search by keyword runs and reports results honestly", async ({ page }) => {
     await page.goto("/search");
-    await page.getByLabel("Search").fill("madhubani");
-    await page.getByRole("button", { name: /^search$/i }).click();
+    await page.getByRole("searchbox").fill("madhubani");
+    await page
+      .getByRole("main")
+      .getByRole("button", { name: /^search$/i })
+      .click();
 
     await expect(page).toHaveURL(/[?&]q=madhubani/);
 

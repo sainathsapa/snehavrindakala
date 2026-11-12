@@ -11,55 +11,79 @@ export function Footer() {
   }
 
   return (
-    <footer className="mt-auto border-t border-sand-border bg-surface">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+    <footer className="mt-auto border-t border-sand-border bg-rang-paper">
+      <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12 py-14">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
           <div className="col-span-2 md:col-span-1">
-            <span className="text-xl font-serif font-bold text-deep-ink tracking-tight">
-              SnehaVrinda Kala
+            <span className="flex items-center gap-3">
+              <svg
+                width="26"
+                height="26"
+                viewBox="0 0 34 34"
+                fill="none"
+                className="shrink-0 text-kumkum"
+                aria-hidden="true"
+              >
+                <path
+                  d="M17 30c0-6 4-9 4-13a4 4 0 10-8 0c0 4 4 7 4 13z"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M17 26c-3.5 0-6-2.5-6-5.5 3.5 0 6 2 6 5.5zM17 26c3.5 0 6-2.5 6-5.5-3.5 0-6 2-6 5.5z"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="font-serif text-xl font-semibold tracking-tight text-deep-ink">
+                SnehaVrinda <span className="text-kumkum">Kala</span>
+              </span>
             </span>
-            <p className="mt-4 max-w-xs text-sm text-muted-ink font-sans leading-relaxed">
-              Art made, curated, personalized, and shared by creators.
+            <p className="mt-4 max-w-xs font-sans text-sm leading-relaxed text-muted-ink">
+              Art made, curated, personalized, and shared by creators. Bring
+              home a piece of India&apos;s soul.
             </p>
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-deep-ink uppercase tracking-wider mb-4">
+            <h4 className="mb-4 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-terracotta">
               Shop
             </h4>
-            <ul className="space-y-2 text-sm text-muted-ink font-sans">
-              <li><a href="/shop" className="hover:text-terracotta transition-colors">All products</a></li>
-              <li><a href="/art-forms" className="hover:text-terracotta transition-colors">Art forms</a></li>
-              <li><a href="/custom-art" className="hover:text-terracotta transition-colors">Custom art</a></li>
+            <ul className="space-y-2.5 font-sans text-sm text-muted-ink">
+              <li><a href="/shop" className="hover:text-kumkum transition-colors">All artworks</a></li>
+              <li><a href="/art-forms" className="hover:text-kumkum transition-colors">Art forms</a></li>
+              <li><a href="/custom-art" className="hover:text-kumkum transition-colors">Custom art</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-deep-ink uppercase tracking-wider mb-4">
+            <h4 className="mb-4 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-terracotta">
               Learn
             </h4>
-            <ul className="space-y-2 text-sm text-muted-ink font-sans">
-              <li><a href="/journal" className="hover:text-terracotta transition-colors">Journal</a></li>
-              <li><a href="/artists" className="hover:text-terracotta transition-colors">Artists</a></li>
-              <li><a href="/about" className="hover:text-terracotta transition-colors">About</a></li>
+            <ul className="space-y-2.5 font-sans text-sm text-muted-ink">
+              <li><a href="/journal" className="hover:text-kumkum transition-colors">Journal</a></li>
+              <li><a href="/artists" className="hover:text-kumkum transition-colors">Our artists</a></li>
+              <li><a href="/about" className="hover:text-kumkum transition-colors">About</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-deep-ink uppercase tracking-wider mb-4">
+            <h4 className="mb-4 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-terracotta">
               Policies
             </h4>
-            <ul className="space-y-2 text-sm text-muted-ink font-sans">
-              <li><a href="/policies/shipping" className="hover:text-terracotta transition-colors">Shipping</a></li>
-              <li><a href="/policies/returns" className="hover:text-terracotta transition-colors">Returns &amp; refunds</a></li>
-              <li><a href="/policies/privacy" className="hover:text-terracotta transition-colors">Privacy</a></li>
-              <li><a href="/policies/terms" className="hover:text-terracotta transition-colors">Terms</a></li>
+            <ul className="space-y-2.5 font-sans text-sm text-muted-ink">
+              <li><a href="/policies/shipping" className="hover:text-kumkum transition-colors">Shipping</a></li>
+              <li><a href="/policies/returns" className="hover:text-kumkum transition-colors">Returns &amp; refunds</a></li>
+              <li><a href="/policies/privacy" className="hover:text-kumkum transition-colors">Privacy</a></li>
+              <li><a href="/policies/terms" className="hover:text-kumkum transition-colors">Terms</a></li>
             </ul>
           </div>
         </div>
-        <div className="mt-12 border-t border-sand-border pt-8">
-          <div className="max-w-md mx-auto text-center md:text-left md:mx-0">
-            <h3 className="font-serif text-xl font-semibold text-deep-ink mb-3">
+        <div className="mt-12 border-t border-sand-border pt-10">
+          <div className="mx-auto max-w-md text-center md:mx-0 md:text-left">
+            <h3 className="mb-3 font-serif text-xl font-semibold text-deep-ink">
               Join the art house
             </h3>
-            <p className="text-sm text-muted-ink font-sans mb-4">
+            <p className="mb-4 font-sans text-sm text-muted-ink">
               New collections, artist stories, and workshop invitations.
             </p>
             <form
@@ -74,11 +98,11 @@ export function Footer() {
                   placeholder="Your email"
                   aria-label="Your email"
                   required
-                  className="flex-1 rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                  className="flex-1 rounded-full border border-sand-border bg-surface px-4 py-2.5 font-sans text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-1 focus:ring-kumkum/40"
                 />
                 <button
                   type="submit"
-                  className="rounded-md bg-sindoor px-6 py-2 font-medium text-rang-paper transition-colors hover:bg-sindoor/90"
+                  className="rounded-full bg-kumkum px-6 py-2.5 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
                 >
                   Subscribe
                 </button>
@@ -89,7 +113,7 @@ export function Footer() {
                 <input
                   name="consent"
                   type="checkbox"
-                  className="mt-0.5 shrink-0 text-sindoor focus:ring-sindoor"
+                  className="mt-0.5 shrink-0 text-kumkum focus:ring-kumkum"
                   required
                 />
                 <span>
@@ -100,13 +124,13 @@ export function Footer() {
             </form>
           </div>
         </div>
-        <div className="border-t border-sand-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-ink font-sans">
+        <div className="mt-10 flex flex-col justify-between gap-4 border-t border-sand-border pt-8 md:flex-row md:items-center">
+          <p className="font-sans text-xs text-muted-ink">
             SnehaVrinda Kala. All rights reserved.
           </p>
-          <div className="flex items-center gap-6 text-xs text-muted-ink font-sans">
-            <a href="mailto:hello@snehavrindakala.example" className="hover:text-terracotta transition-colors">Contact</a>
-            <a href="/about" className="hover:text-terracotta transition-colors">Partner with us</a>
+          <div className="flex items-center gap-6 font-sans text-xs text-muted-ink">
+            <a href="mailto:hello@snehavrindakala.example" className="hover:text-kumkum transition-colors">Contact</a>
+            <a href="/about" className="hover:text-kumkum transition-colors">Partner with us</a>
           </div>
         </div>
       </div>
