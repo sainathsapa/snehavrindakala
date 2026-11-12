@@ -54,29 +54,39 @@ export default function LoginPage() {
         )}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-sans font-medium text-deep-ink mb-2"
+            >
               Email Address
             </label>
             <input
+              id="email"
               type="email"
               name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="username"
               className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
-              placeholder="sneha@sainath.com"
+              placeholder="you@example.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-sans font-medium text-deep-ink mb-2"
+            >
               Password
             </label>
             <input
+              id="password"
               type="password"
               name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
               className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
             />
           </div>

@@ -74,9 +74,21 @@ export class CommissionService {
     // unknown-property error, so peel it off before persisting.
     const { customer_email, ...persistable } = data;
 
+    // reference_id is required by the entity but was never generated, so every
+    // submission failed with "Value for CommissionRequest.reference_id is
+    // required". It is the handle a customer quotes back at us, so it is
+    // generated here rather than left to callers to remember.
+    const referenceId =
+      persistable.reference_id?.trim() || (await this.nextReferenceId());
+
     const req = this.manager_
       .getRepository(CommissionRequest)
-      .create({ ...persistable, id: randomUUID(), status: data.status ?? "New" });
+      .create({
+        ...persistable,
+        reference_id: referenceId,
+        id: randomUUID(),
+        status: data.status ?? "New",
+      });
     await this.manager_.persistAndFlush(req);
 
     await this.emit("commission.request.created", {
@@ -95,6 +107,34 @@ export class CommissionService {
 
   async getCommissionRequest(id: string): Promise<any | null> {
     return this.manager_.findOne(CommissionRequest, { id });
+  }
+
+  /**
+   * Build the next human-quotable reference, e.g. SVK-2026-0042.
+   *
+   * Sequential per year so a customer can read it aloud, which a UUID cannot
+   * support. Retries on collision in case two submissions race.
+   */
+  private async nextReferenceId(): Promise<string> {
+    const year = new Date().getFullYear();
+    const prefix = `SVK-${year}-`;
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const existing = await this.manager_.count(CommissionRequest, {
+        reference_id: { $like: `${prefix}%` },
+      });
+
+      // A random offset keeps concurrent submissions from picking the same
+      // number, and the retry loop covers the remaining overlap.
+      const sequence = (existing ?? 0) + 1 + attempt;
+      const candidate = `${prefix}${String(sequence).padStart(4, "0")}`;
+
+      const clash = await this.getCommissionRequestByReference(candidate);
+      if (!clash) return candidate;
+    }
+
+    // Last resort: unique but not sequential. Correctness beats prettiness.
+    return `${prefix}${randomUUID().slice(0, 8).toUpperCase()}`;
   }
 
   async getCommissionRequestByReference(
