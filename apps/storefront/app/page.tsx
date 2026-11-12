@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { artFormSlugs, slugify } from "@/lib/slugs";
+import { artFormSlugs } from "@/lib/slugs";
 
 const artFormColors: Record<string, string> = {
   painting: "bg-sindoor/10 border-sindoor/20",
@@ -14,7 +14,11 @@ const artForms = artFormSlugs.map((form) => ({
   name: form.name,
   description: form.description,
   href: `/shop/${form.slug}`,
-  image: `/images/artforms/${slugify(form.name)}.svg`,
+  // Art-form SVGs are named after the short slug (painting.svg, folk.svg), not
+  // the slugified display name — slugifying "Painting & Drawing" produced
+  // "painting-and-drawing.svg", which does not exist, so every category card
+  // rendered as a broken image.
+  image: `/images/artforms/${form.slug}.svg`,
   color: artFormColors[form.slug] || "border border-sand-border",
 }));
 
@@ -78,24 +82,29 @@ export default function Home() {
               <Link
                 key={form.href}
                 href={form.href}
-                className={`group block relative aspect-square rounded-xl overflow-hidden border transition-all hover:shadow-lifted ${form.color}`}
+                className={`group flex flex-col overflow-hidden rounded-xl border transition-all hover:shadow-lifted ${form.color}`}
               >
-                <img
-                  src={form.image}
-                  alt={form.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-deep-ink/20 group-hover:bg-deep-ink/0 transition-colors" />
-                <div className="absolute inset-0 flex items-end p-6">
-                  <div>
-                    <h3 className="text-xl font-serif font-semibold text-deep-ink">
-                      {form.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-ink font-sans line-clamp-2">
-                      {form.description}
-                    </p>
-                  </div>
+                {/* The art-form SVGs have wildly different aspect ratios (one is
+                    1200x200, another 700x700) and carry their own artwork titles,
+                    so cropping them to a square both cut the artwork apart and
+                    pushed its lettering through the card copy. Contain them in a
+                    fixed band instead, and keep the copy on a solid surface. */}
+                <div className="relative flex h-40 items-center justify-center overflow-hidden bg-rang-paper">
+                  <img
+                    src={form.image}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="border-t border-sand-border/60 p-5">
+                  <h3 className="font-serif text-lg font-semibold text-deep-ink">
+                    {form.name}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 font-sans text-sm text-muted-ink">
+                    {form.description}
+                  </p>
                 </div>
               </Link>
             ))}

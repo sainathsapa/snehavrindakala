@@ -1,5 +1,19 @@
 import type { ReactNode, SVGProps } from "react";
 
+/**
+ * Icon set for the storefront and admin panel.
+ *
+ * Every path here is hand-checked 24x24 geometry on a stroked grid: shapes are
+ * closed where they should be, coordinates stay inside the viewBox, and each
+ * name describes what is actually drawn. The previous set had paths copied out
+ * of unrelated icon families — several overflowed the canvas (values like 895
+ * and 126) and others drew nothing recognisable, so a nav label and its glyph
+ * disagreed.
+ *
+ * Icons inherit `currentColor` and take their size from the `size` prop, so
+ * they follow text colour and never need per-usage styling.
+ */
+
 export type IconName =
   | "dashboard"
   | "orders"
@@ -41,6 +55,7 @@ export type IconName =
   | "unlock"
   | "chevron-left"
   | "chevron-right"
+  | "chevron-down"
   | "plus"
   | "minus"
   | "check"
@@ -67,662 +82,427 @@ interface IconProps extends SVGProps<SVGSVGElement> {
   className?: string;
 }
 
-const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
-  dashboard: (props) => (
+/** A stroked 24x24 SVG. Children are the paths for one icon. */
+function Svg({
+  children,
+  ...props
+}: SVGProps<SVGSVGElement> & { children: ReactNode }) {
+  return (
     <svg
-      {...props}
-      fill="none"
       viewBox="0 0 24 24"
+      fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth={1.75}
+      aria-hidden="true"
+      {...props}
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h7a2 2 0 012 2v10a2 2 0 01-2 2zM9 9V7m12 8v-2.5c0-.621-.504-1.125-1.125-1.125h-.25c-.621 0-1.125.504-1.125 1.125V19m-11 0v-3a2 2 0 00-2-2H9a2 2 0 00-2 2v3z" />
+      {children}
     </svg>
+  );
+}
+
+const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
+  /* ---- navigation ---- */
+  dashboard: (props) => (
+    <Svg {...props}>
+      <rect x="3" y="3" width="7" height="9" rx="1.5" />
+      <rect x="14" y="3" width="7" height="5" rx="1.5" />
+      <rect x="14" y="12" width="7" height="9" rx="1.5" />
+      <rect x="3" y="16" width="7" height="5" rx="1.5" />
+    </Svg>
   ),
   orders: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8-8v4M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M6 2h12a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" />
+      <path d="M9 7h6M9 11h6M9 15h4" />
+    </Svg>
   ),
   products: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10L4 7m8 4v3M4 7v10l8 4m0-10V7" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 3 3 7.5v9L12 21l9-4.5v-9L12 3z" />
+      <path d="M3 7.5 12 12l9-4.5" />
+      <path d="M12 12v9" />
+    </Svg>
   ),
   categories: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2zM3 7v9m18-9l9 8m-9-8l-9-8m0 12l-9-8m9 8V7l9 8" />
-    </svg>
+    <Svg {...props}>
+      <rect x="3" y="3" width="8" height="8" rx="1.5" />
+      <rect x="13" y="3" width="8" height="8" rx="1.5" />
+      <rect x="3" y="13" width="8" height="8" rx="1.5" />
+      <rect x="13" y="13" width="8" height="8" rx="1.5" />
+    </Svg>
   ),
   customers: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 5.5a3.5 3.5 0 0 1 0 7" />
+      <path d="M17.5 14.2A6 6 0 0 1 21 20" />
+    </Svg>
   ),
   partners: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-6c0-.71.097-1.402.29-2.047M11 15a2 2 0 10-4 0 2 2 0 004 0z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="8" cy="9" r="3" />
+      <circle cx="17" cy="7" r="2.5" />
+      <path d="M2.5 19a5.5 5.5 0 0 1 11 0" />
+      <path d="M14.5 19a4.5 4.5 0 0 1 7 0" />
+    </Svg>
   ),
   tickets: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 7l.418 1.674A2 2 0 005.824 8.6h4.35A2 2 0 0012.176 9.674l.418-1.674M12 13a1 1 0 100-2v1z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a2.5 2.5 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2.5 2.5 0 0 0 0-6z" />
+      <path d="M14 8v1M14 12v1M14 16v1" />
+    </Svg>
   ),
   users: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="7" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </Svg>
   ),
   settings: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6" />
+    </Svg>
   ),
   analytics: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+      <path d="M7 15l4-5 3 3 5-7" />
+    </Svg>
   ),
   discounts: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M4 4h16v16a4 4 0 01-4-4H8m0 0a4 4 0 01-4 4m8-12h8m-8 16v8m-8-4H4m12 4h8m-8-4V8m0 0L8 12m4-4l4 4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.8 0L3.4 14.2a2 2 0 0 1-.6-1.6l.5-7.1a2 2 0 0 1 1.9-1.9l7.1-.5a2 2 0 0 1 1.6.6l6.4 6.4a2 2 0 0 1 0 2.9z" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+    </Svg>
   ),
   commissions: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0018 0z" />
-    </svg>
+    <Svg {...props}>
+      {/* A handshake: an agreed bespoke piece between two parties. */}
+      <path d="M2.5 12.5 6 9l3.5 3" />
+      <path d="M21.5 12.5 18 9l-3.5 3" />
+      <path d="M6 9.5 9.5 6l5 0L18 9.5" />
+      <path d="M9.5 15.5 12 13l2.5 2.5" />
+      <path d="M8 13.5 9.5 15l1.5-1.5" />
+    </Svg>
   ),
   tax: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="8" cy="8" r="2" />
+      <circle cx="16" cy="16" r="2" />
+      <path d="M19 5 5 19" />
+    </Svg>
   ),
   "audit-log": (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M14 2H6a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7l-5-5z" />
+      <path d="M14 2v5h5" />
+      <path d="M8 13h8M8 17h5" />
+    </Svg>
   ),
   notifications: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-    </svg>
+    <Svg {...props}>
+      <path d="M18 8a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6" />
+      <path d="M10.3 21a2 2 0 0 0 3.4 0" />
+    </Svg>
   ),
+
+  /* ---- chrome ---- */
   menu: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
+    <Svg {...props}>
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </Svg>
   ),
   close: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
   ),
   logout: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-    </svg>
+    <Svg {...props}>
+      <path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </Svg>
   ),
   search: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5 21 21" />
+    </Svg>
   ),
   filter: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M3 5h18l-7 8v6l-4 2v-8L3 5z" />
+    </Svg>
   ),
+
+  /* ---- actions ---- */
   edit: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </Svg>
   ),
   delete: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
+    <Svg {...props}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+      <path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6" />
+      <path d="M10 11v6M14 11v6" />
+    </Svg>
   ),
   view: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7m-13.052 0c-.707 2.057-1.998 4.057-3.448 5.623A5.882 5.882 0 0112 20c2.531 0 4.818-1.482 5.694-3.588C17.424 16.998 18.715 19 21.542 19" />
-    </svg>
+    <Svg {...props}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </Svg>
   ),
   add: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Svg>
   ),
   save: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M19 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h11l4 4v13a1 1 0 0 1-1 1z" />
+      <path d="M8 3v6h7V3" />
+      <rect x="8" y="13" width="8" height="8" rx="1" />
+    </Svg>
   ),
   cancel: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9l6 6M15 9l-6 6" />
+    </Svg>
   ),
   archive: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7H4m0 0v12m0 0l3.592-3.592a1 1 0 011.41-.09l1.364.682A1 1 0 0013 17.32V17h4v.32a1 1 0 001.41-.09l1.364-.682a1 1 0 011.41.09L20 19v-7m-4-3V4m0 0V4m0 0h1m0 0h-1m-5 15H4m-5 0a2 2 0 01-2-2V5a2 2 0 012-2h13a2 2 0 012 2v10a2 2 0 01-2 2z" />
-    </svg>
+    <Svg {...props}>
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
+      <path d="M10 12h4" />
+    </Svg>
   ),
   clock: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </Svg>
   ),
+
+  /* ---- people & contact ---- */
   user: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </Svg>
   ),
   mail: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
+    <Svg {...props}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2" />
+      <path d="M3 7l9 6 9-6" />
+    </Svg>
   ),
   phone: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 011.168.95l.842 1.685a1 1 0 001.168.95h3.282a1 1 0 011-1.72l-.841-1.68a1 1 0 00-.168-1.02l-.842-1.685a1 1 0 01-1.168-.95H5a2 2 0 01-2-2z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M21 16.9v2.6a2 2 0 0 1-2.2 2 19.5 19.5 0 0 1-8.5-3 19 19 0 0 1-5.9-5.9 19.5 19.5 0 0 1-3-8.6A2 2 0 0 1 3.4 2H6a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L7.1 9.9a15.5 15.5 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.4c1 .3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z" />
+    </Svg>
   ),
+
+  /* ---- commerce ---- */
   home: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-    </svg>
+    <Svg {...props}>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
+      <path d="M10 21v-6h4v6" />
+    </Svg>
   ),
   shop: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M3 9h18l-1.5 11a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1L3 9z" />
+      <path d="M8 9V6a4 4 0 0 1 8 0v3" />
+    </Svg>
   ),
   journal: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22V4.5z" />
+      <path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20" />
+      <path d="M8 7h8M8 11h5" />
+    </Svg>
   ),
   star: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927a.3-.3 0 00-.52 0l-1.507 1.07a.3.3 0 01-.395-.068l-1.342-.983a.3.3 0 00-.455.1l-1.173 1.573a.3.3 0 01-.25.282l-0.793 2.43a.3.3 0 00.219.356l2.006.524a.3.3 0 01.262.142l1.342.983a.3.3 0 00.395-.068l1.507-1.07a.3.3 0 01.395 0l1.507 1.07a.3.3 0 00.395-.068l1.342-.983a.3.3 0 01.455-.1l1.173-1.573a.3.3 0 01.25-.282l0.793-2.43a.3.3 0 00-.219-.356l-2.006-.524a.3.3 0 01-.262-.142l-1.342-.983a.3.3 0 00-.395.068l-1.507 1.07a.3.3 0 01-.52 0z" />
-    </svg>
+    <Svg {...props}>
+      <path d="m12 3 2.8 5.9 6.2.8-4.5 4.5 1.1 6.3-5.6-3-5.6 3 1.1-6.3L3 9.7l6.2-.8L12 3z" />
+    </Svg>
   ),
   heart: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 20s-7.5-4.7-7.5-9.6A4.4 4.4 0 0 1 12 7.4a4.4 4.4 0 0 1 7.5 3C19.5 15.3 12 20 12 20z" />
+    </Svg>
   ),
   lock: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
+    <Svg {...props}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </Svg>
   ),
   unlock: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
+    <Svg {...props}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 7.5-2" />
+    </Svg>
   ),
+
+  /* ---- chevrons & maths ---- */
   "chevron-left": (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-    </svg>
+    <Svg {...props}>
+      <path d="M15 5l-7 7 7 7" />
+    </Svg>
   ),
   "chevron-right": (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
+    <Svg {...props}>
+      <path d="M9 5l7 7-7 7" />
+    </Svg>
+  ),
+  "chevron-down": (props) => (
+    <Svg {...props}>
+      <path d="M5 9l7 7 7-7" />
+    </Svg>
   ),
   plus: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Svg>
   ),
   minus: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M5 12h14" />
+    </Svg>
   ),
   check: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
+    <Svg {...props}>
+      <path d="M4 12.5 9.5 18 20 6.5" />
+    </Svg>
   ),
   x: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
   ),
   "external-link": (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-4l-4-4m0 0L8 8m4-4 4 4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M14 4h6v6" />
+      <path d="M20 4 11 13" />
+      <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+    </Svg>
   ),
+
+  /* ---- files & data ---- */
   print: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-2a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2zm0 0v2m0-6v4m0 0h6" />
-    </svg>
+    <Svg {...props}>
+      <path d="M7 8V3h10v5" />
+      <rect x="3" y="8" width="18" height="8" rx="2" />
+      <path d="M7 16h10v5H7z" />
+    </Svg>
   ),
   download: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 3v12" />
+      <path d="M7 10.5 12 15l5-4.5" />
+      <path d="M4 19h16" />
+    </Svg>
   ),
   upload: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 16V4" />
+      <path d="M7 8.5 12 4l5 4.5" />
+      <path d="M4 20h16" />
+    </Svg>
   ),
   link: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4 4 0 015.566 5.566l.196.196a4 4 0 01-5.566-5.566l-.196-.196zm-5.482 0a4 4 0 00-5.566-5.566l-.196-.196a4 4 0 005.566 5.566l.196.196zM14 10a2 2 0 114 0h2m-4 0v2m0 0H4m4 6h2m-4 0v2m0 0H4" />
-    </svg>
+    <Svg {...props}>
+      <path d="M10 13a4 4 0 0 0 5.7 0l2.6-2.6a4 4 0 0 0-5.7-5.7L11.5 6" />
+      <path d="M14 11a4 4 0 0 0-5.7 0l-2.6 2.6a4 4 0 0 0 5.7 5.7L12.5 18" />
+    </Svg>
   ),
   calendar: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
+    <Svg {...props}>
+      <rect x="3.5" y="5" width="17" height="16" rx="2" />
+      <path d="M3.5 10h17" />
+      <path d="M8 3v4M16 3v4" />
+    </Svg>
   ),
   tag: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a1 1 0 010 1.414l-4.586 4.586a1 1 0 01-1.414 0l-7-7A1 1 0 017 7zM3 10l6-6m0 0l6 6m-6-6v6" />
-    </svg>
+    <Svg {...props}>
+      <path d="M4 12.6 12.6 4H20v7.4L11.4 20z" />
+      <circle cx="16" cy="8" r="1.4" />
+    </Svg>
   ),
   percent: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13 12V2m0 12v10m-7-7h10m-10 0H3m0 0l10 10m-10-10V2" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="7.5" cy="7.5" r="2.5" />
+      <circle cx="16.5" cy="16.5" r="2.5" />
+      <path d="M19 5 5 19" />
+    </Svg>
   ),
   money: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0018 0z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12h7" />
+      <path d="M12 8c-1.4 0-2.2.7-2.2 1.6 0 1.9 4.4 1.1 4.4 3.1 0 1-1 1.7-2.2 1.7" />
+    </Svg>
   ),
   truck: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 19v-1a2 2 0 00-2-2H7a2 2 0 00-2 2v1m3-10v5a2 2 0 002 2h4a2 2 0 002-2V9zM5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 002-2v5a2 2 0 002 2z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M2.5 7.5h10v9h-10z" />
+      <path d="M12.5 11h4l3 3v2.5h-7" />
+      <circle cx="6.5" cy="18.5" r="1.8" />
+      <circle cx="16.5" cy="18.5" r="1.8" />
+    </Svg>
   ),
   "credit-card": (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2zM2 6h20V4H2z" />
-    </svg>
+    <Svg {...props}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2" />
+      <path d="M2.5 10h19" />
+      <path d="M6 15h3" />
+    </Svg>
   ),
+
+  /* ---- status ---- */
   shield: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 2.5 20 5.5v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6l8-3z" />
+      <path d="M9 12l2 2 4-4" />
+    </Svg>
   ),
   info: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0018 0z" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <path d="M12 8h.01" />
+    </Svg>
   ),
   alert: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
+    <Svg {...props}>
+      <path d="M12 3.5 21.5 20H2.5L12 3.5z" />
+      <path d="M12 10v4" />
+      <path d="M12 17h.01" />
+    </Svg>
   ),
   success: (props) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12.5 11 15.5 16.5 9" />
+    </Svg>
   ),
 };
 
 export function Icon({ name, size = 20, className, ...props }: IconProps) {
   const Comp = ICONS[name];
   if (!Comp) return null;
+
   return (
     <Comp
       {...props}

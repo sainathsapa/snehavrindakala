@@ -58,3 +58,6 @@ coverage/
 
 # Medusa generated
 .medusa/
+
+# Local design references
+ref*.png

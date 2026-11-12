@@ -83,32 +83,32 @@ test.describe("commission brief", () => {
   test("submits a complete brief and shows a reference", async ({ page }) => {
     await page.goto("/custom-art");
 
-    await page.getByLabel(/email/i).fill("asha@example.com");
+    // The footer newsletter also has an email input, so scope to the form.
+    const form = page
+      .locator("form")
+      .filter({ has: page.getByRole("button", { name: /submit request/i }) });
+
+    await form.getByLabel(/email for your quote/i).fill("asha@example.com");
 
     // The form identifies the requester by art form + brief; there is no name
     // field, so drive exactly what the form asks for.
-    await page.getByLabel(/what kind of art/i).selectOption({ index: 1 });
+    await form.getByLabel(/what kind of art/i).selectOption({ index: 1 });
 
-    await page
+    await form
       .getByLabel(/what do you have in mind/i)
       .fill(
         "A Madhubani-style celebration of a family wedding with two peacocks, " +
           "tree of life, and natural pigments on handmade paper."
       );
 
-    await page.getByLabel(/budget/i).fill("10,000 – 20,000");
+    await form.getByLabel(/budget/i).fill("10,000 – 20,000");
 
-    // Both the commission form and the footer newsletter use name="consent",
-    // so scope to the form rather than matching the whole page.
-    const consent = page
-      .locator("form")
-      .filter({ has: page.getByRole("button", { name: /submit request/i }) })
-      .locator('input[name="consent"]');
+    const consent = form.locator('input[name="consent"]');
     if (await consent.count()) {
       await consent.check();
     }
 
-    await page.getByRole("button", { name: /submit request/i }).click();
+    await form.getByRole("button", { name: /submit request/i }).click();
 
     // Success redirects to the status page for the new reference. Failure keeps
     // the form and shows a named error. Either is acceptable, but silently

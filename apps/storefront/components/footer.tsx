@@ -63,33 +63,40 @@ export function Footer() {
               New collections, artist stories, and workshop invitations.
             </p>
             <form
-              className="flex flex-col sm:flex-row gap-3"
+              className="space-y-3"
               action="/api/newsletter"
               method="POST"
             >
-              <input
-                name="email"
-                type="email"
-                placeholder="Your email"
-                required
-                className="flex-1 rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-              />
-              <label className="flex items-start gap-2 text-xs text-muted-ink font-sans leading-snug">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Your email"
+                  aria-label="Your email"
+                  required
+                  className="flex-1 rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                />
+                <button
+                  type="submit"
+                  className="rounded-md bg-sindoor px-6 py-2 font-medium text-rang-paper transition-colors hover:bg-sindoor/90"
+                >
+                  Subscribe
+                </button>
+              </div>
+              {/* Consent sits on its own line: sharing a row with the input
+                  squeezed it into a narrow column of very short wrapped lines. */}
+              <label className="flex items-start gap-2 font-sans text-xs leading-snug text-muted-ink">
                 <input
                   name="consent"
                   type="checkbox"
-                  className="mt-1 text-sindoor focus:ring-sindoor"
+                  className="mt-0.5 shrink-0 text-sindoor focus:ring-sindoor"
                   required
                 />
-                I consent to receive updates from SnehaVrinda Kala. You can
-                unsubscribe anytime.
+                <span>
+                  I consent to receive updates from SnehaVrinda Kala. You can
+                  unsubscribe anytime.
+                </span>
               </label>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 transition-colors"
-              >
-                Subscribe
-              </button>
             </form>
           </div>
         </div>

@@ -11,7 +11,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Icon, type IconName } from "@snehavrinda-kala/ui";
 import { NotificationBell } from "@/components/notification-bell";
 
@@ -84,7 +84,18 @@ export function AdminChrome({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  // Desktop shows the sidebar; mobile starts closed so the page is visible
+  // and the floating Menu button appears. Starting open on a phone covered
+  // the whole screen before anyone asked for navigation.
+  const [collapsed, setCollapsed] = useState(true);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 768px)");
+    const apply = () => setCollapsed(!query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
 
   // The login page lives under /admin but must not show the shell.
   if (pathname === "/admin/login") {
@@ -102,41 +113,65 @@ export function AdminChrome({
 
   return (
     <div className="relative min-h-screen bg-rang-paper">
-      <div className="fixed left-4 top-4 z-60 md:hidden">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? "Open menu" : "Close menu"}
-          className="rounded-md bg-sindoor px-4 py-3 font-medium text-rang-paper hover:bg-sindoor/90"
-        >
-          <Icon name={collapsed ? "menu" : "close"} size={20} className="mr-1" />
-          {collapsed ? "Menu" : "Close"}
-        </button>
-      </div>
+      {/* Floating menu button, shown only while the sidebar is closed. Once
+          open, the sidebar's own close button takes over — a fixed overlay
+          button here would sit on top of the brand. `z-[60]` keeps it above
+          the sidebar (z-50); a literal `z-60` is not a Tailwind class and
+          rendered underneath, leaving the menu impossible to open. */}
+      {collapsed && (
+        <div className="fixed left-4 top-4 z-[60] md:hidden">
+          <button
+            onClick={() => setCollapsed(false)}
+            aria-expanded={false}
+            aria-label="Open menu"
+            className="flex items-center gap-1 rounded-md bg-sindoor px-3 py-2 text-sm font-medium text-rang-paper hover:bg-sindoor/90"
+          >
+            <Icon name="menu" size={18} />
+            Menu
+          </button>
+        </div>
+      )}
+
+      {/* Dim the page behind the mobile sidebar so it does not compete with
+          the nav, and give tapping outside an obvious way to close it. */}
+      {!collapsed && (
+        <div
+          className="fixed inset-0 z-40 bg-deep-ink/30 md:hidden"
+          onClick={() => setCollapsed(true)}
+          aria-hidden="true"
+        />
+      )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sand-border bg-surface transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sand-border bg-surface transition-transform duration-300 md:translate-x-0 ${
           collapsed ? "-translate-x-full" : "translate-x-0"
         }`}
       >
-        <div className="shrink-0 border-b border-sand-border p-6">
-          <div className="flex items-start justify-between gap-2">
-            <Link href="/admin" className="flex items-center gap-2">
-              <span className="font-serif text-xl font-bold tracking-tight text-deep-ink">
+        <div className="shrink-0 border-b border-sand-border px-5 py-5">
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/admin" className="flex items-center gap-1.5">
+              <span className="font-serif text-lg font-bold tracking-tight text-deep-ink">
                 SnehaVrinda
               </span>
-              <span className="font-serif text-xl font-bold tracking-tight text-terracotta">
+              <span className="font-serif text-lg font-bold tracking-tight text-terracotta">
                 Kala
               </span>
             </Link>
             <NotificationBell
               audience={role === "super_admin" ? "admin" : role}
             />
+            <button
+              onClick={() => setCollapsed(true)}
+              aria-label="Close menu"
+              className="rounded-md p-1.5 text-muted-ink hover:bg-rang-paper hover:text-terracotta md:hidden"
+            >
+              <Icon name="close" size={18} />
+            </button>
           </div>
-          <p className="mt-2 font-sans text-xs text-muted-ink">Admin Panel</p>
+          <p className="mt-1 font-sans text-xs text-muted-ink">Admin Panel</p>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+        <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 py-3">
           {visibleItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -148,7 +183,7 @@ export function AdminChrome({
                 href={item.href}
                 onClick={() => setCollapsed(false)}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-4 py-3 font-sans text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 font-sans text-sm font-medium transition-colors ${
                   isActive
                     ? "border border-sindoor/20 bg-sindoor/10 text-sindoor"
                     : "text-muted-ink hover:bg-rang-paper/50 hover:text-terracotta"
@@ -165,14 +200,14 @@ export function AdminChrome({
           })}
         </nav>
 
-        <div className="shrink-0 border-t border-sand-border p-6">
+        <div className="shrink-0 border-t border-sand-border px-5 py-4">
           <div className="font-sans text-xs text-muted-ink">
             <div className="font-medium text-deep-ink">{email}</div>
             <div className="font-medium capitalize text-terracotta">{role}</div>
           </div>
           <button
             onClick={() => router.push("/admin/logout")}
-            className="mt-4 w-full rounded-md border border-sindoor px-4 py-2 text-sm font-medium text-sindoor transition-colors hover:bg-sindoor hover:text-rang-paper"
+            className="mt-3 w-full rounded-md border border-sindoor px-4 py-1.5 text-sm font-medium text-sindoor transition-colors hover:bg-sindoor hover:text-rang-paper"
           >
             Sign Out
           </button>
@@ -180,9 +215,7 @@ export function AdminChrome({
       </aside>
 
       <main
-        className={`min-h-0 transition-all duration-300 md:pl-64 ${
-          collapsed ? "md:pl-0" : ""
-        }`}
+        className={`min-h-0 pt-16 transition-all duration-300 md:pl-64 md:pt-0`}
       >
         <Suspense
           fallback={<div className="p-8 font-sans text-muted-ink">Loading…</div>}

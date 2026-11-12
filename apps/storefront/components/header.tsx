@@ -85,18 +85,18 @@ export function Header({
         <div className="flex h-16 items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2"
+            className="flex shrink-0 items-center gap-1.5"
             aria-label="SnehaVrinda Kala home"
           >
-            <span className="text-xl font-serif font-bold text-deep-ink tracking-tight">
+            <span className="font-serif text-xl font-bold tracking-tight text-deep-ink">
               SnehaVrinda
             </span>
-            <span className="text-xl font-serif font-bold text-terracotta tracking-tight">
+            <span className="font-serif text-xl font-bold tracking-tight text-terracotta">
               Kala
             </span>
           </Link>
 
-          <div className="flex items-center gap-6 md:flex-1 md:max-w-md">
+          <div className="mx-4 hidden min-w-0 flex-1 items-center md:flex lg:mx-6 lg:max-w-sm">
             <form
               onSubmit={handleSearchSubmit}
               className="relative w-full"
@@ -167,19 +167,24 @@ export function Header({
             )}
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-sans font-medium">
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-sans font-medium">
             {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-muted-ink hover:text-terracotta transition-colors"
+                className="whitespace-nowrap text-muted-ink hover:text-terracotta transition-colors"
               >
                 {link.label}
               </Link>
             ))}
+          </nav>
+
+          {/* Utilities stay aligned right and never wrap; the nav sits between
+              the brand and these, so the three groups cannot collide. */}
+          <div className="flex shrink-0 items-center gap-5 text-sm font-sans font-medium">
             <Link
               href="/cart"
-              className="ml-6 flex items-center gap-2 text-muted-ink hover:text-terracotta transition-colors relative"
+              className="relative flex items-center gap-2 text-muted-ink hover:text-terracotta transition-colors"
               aria-label="Cart"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,24 +195,24 @@ export function Header({
                   d="M16 11V7a4 4 0 00-8-8v4M5 9h14l1 12H4L5 9z"
                 />
               </svg>
-              <span className="hidden sm:inline">Cart</span>
+              <span className="hidden xl:inline">Cart</span>
               <CartCount />
             </Link>
             <Link
               href="/account"
-              className="ml-4 text-muted-ink hover:text-terracotta transition-colors"
+              className="hidden text-muted-ink hover:text-terracotta transition-colors sm:inline"
               aria-label="Account"
             >
               Account
             </Link>
             <Link
               href="/admin"
-              className="ml-4 text-muted-ink hover:text-terracotta transition-colors"
+              className="hidden text-muted-ink hover:text-terracotta transition-colors lg:inline"
               aria-label="Admin panel"
             >
               Admin
             </Link>
-          </nav>
+          </div>
 
           <button
             className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-muted-ink hover:bg-rang-paper hover:text-terracotta focus:outline-none"
