@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { addToCartAction } from "@/app/cart/actions";
+import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 import { formatPrice } from "@/lib/medusa";
 import { Button } from "@snehavrinda-kala/ui";
 
@@ -36,10 +36,7 @@ export function ProductOptions({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     variants[0]?.id ?? null
   );
-  const [isPendingAdd, startTransition] = useTransition();
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(
-    null
-  );
+  const { add, isPending: isPendingAdd, result } = useAddToCart();
 
   const selectedVariant = variants.find((v) => v.id === selectedVariantId);
   const inStock =
@@ -130,16 +127,7 @@ export function ProductOptions({
           <button
             type="button"
             disabled={disabled || !inStock || isPendingAdd}
-            onClick={() => {
-              if (!selectedVariantId) return;
-              startTransition(async () => {
-                const response = await addToCartAction(selectedVariantId, 1);
-                setResult(response);
-                if (response.ok) {
-                  window.dispatchEvent(new Event("svk:cart-changed"));
-                }
-              });
-            }}
+            onClick={() => add(selectedVariantId, 1)}
             className="w-full py-4 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             {isPendingAdd ? "Adding…" : "Add to Cart"}

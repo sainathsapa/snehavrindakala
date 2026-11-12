@@ -74,10 +74,12 @@ function canAccess(userRole: string, required: Role): boolean {
 export function AdminChrome({
   email,
   role,
+  platformMode = "single-brand",
   children,
 }: {
   email: string;
   role: string;
+  platformMode?: "platform" | "single-brand";
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -89,9 +91,14 @@ export function AdminChrome({
     return <>{children}</>;
   }
 
-  const visibleItems = NAV_ITEMS.filter((item) =>
-    canAccess(role, item.role)
-  );
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (!canAccess(role, item.role)) return false;
+    // Partner management is meaningless when we are the seller.
+    if (item.href === "/admin/partners" && platformMode !== "platform") {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="relative min-h-screen bg-rang-paper">

@@ -12,7 +12,9 @@ const navLinks = [
   { label: "Art Forms", href: "/art-forms" },
   { label: "Artists", href: "/artists" },
   { label: "Custom Art", href: "/custom-art" },
-  { label: "Sell", href: "/sell" },
+  // Only meaningful in marketplace mode: in single-brand mode there is nobody
+  // to sell on the platform, so the page would be a dead end.
+  { label: "Sell", href: "/sell", platformOnly: true },
   { label: "Journal", href: "/journal" },
   { label: "About", href: "/about" },
 ];
@@ -23,7 +25,11 @@ const typeIcons: Record<string, string> = {
   artist: "partners",
 };
 
-export function Header() {
+export function Header({
+  platformMode = "single-brand",
+}: {
+  platformMode?: "platform" | "single-brand";
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -36,6 +42,10 @@ export function Header() {
   if (pathname.startsWith("/admin")) {
     return null;
   }
+
+  const visibleLinks = navLinks.filter(
+    (link) => !link.platformOnly || platformMode === "platform"
+  );
 
   const debouncedSearch = async (query: string) => {
     if (!query || query.length < 2) {
@@ -158,7 +168,7 @@ export function Header() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-sans font-medium">
-            {navLinks.map((link) => (
+            {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -237,7 +247,7 @@ export function Header() {
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-ink"
                   />
                 </div>
-                {navLinks.map((link) => (
+                {visibleLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 import "./globals.css";
 
 const serif = Cormorant_Garamond({
@@ -57,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${serif.variable} ${sans.variable} font-sans antialiased`}>
-        <Header />
+        <Header platformMode={getPlatformModeFromEnv()} />
         {children}
         <Footer />
         <script

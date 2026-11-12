@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import Link from "next/link";
-import { addToCartAction } from "@/app/cart/actions";
+import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 
 interface AddToCartProps {
   variantId?: string;
@@ -15,10 +14,7 @@ export function AddToCart({
   disabled = false,
   disabledReason,
 }: AddToCartProps) {
-  const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(
-    null
-  );
+  const { add, isPending, result } = useAddToCart();
 
   if (disabled) {
     return (
@@ -36,17 +32,7 @@ export function AddToCart({
       <button
         type="button"
         disabled={!variantId || isPending}
-        onClick={() => {
-          if (!variantId) return;
-          startTransition(async () => {
-            const response = await addToCartAction(variantId, 1);
-            setResult(response);
-            if (response.ok) {
-              // Header badge listens for this instead of re-fetching on nav.
-              window.dispatchEvent(new Event("svk:cart-changed"));
-            }
-          });
-        }}
+        onClick={() => add(variantId, 1)}
         className="w-full py-4 bg-terracotta text-white rounded-xl font-semibold hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
       >
         {isPending ? "Adding…" : "Add to Cart"}

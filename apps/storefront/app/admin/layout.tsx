@@ -13,6 +13,7 @@
 
 import { getAdminIdentity } from "./actions";
 import { AdminChrome } from "@/components/admin-chrome";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,13 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminChrome email={identity.email} role={identity.role}>
+    <AdminChrome
+      email={identity.email}
+      role={identity.role}
+      // Partner management only makes sense in marketplace mode. Resolved on
+      // the server so the item is never sent to the client at all.
+      platformMode={getPlatformModeFromEnv()}
+    >
       {children}
     </AdminChrome>
   );

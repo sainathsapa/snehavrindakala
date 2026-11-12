@@ -651,12 +651,21 @@ export function getStockType(product?: MedusaProduct | null): string {
 
 export function formatPrice(
   amountInMinorUnits: number | null | undefined,
-  currency = "INR"
+  // Default to the configured store currency instead of a hard-coded "INR", so
+  // changing MEDUSA_CURRENCY_CODE does not leave prices labelled in rupees.
+  currency: string = DEFAULT_CURRENCY.toUpperCase()
 ): string {
   if (amountInMinorUnits == null) return "Price on request";
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amountInMinorUnits / 100);
+
+  try {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amountInMinorUnits / 100);
+  } catch {
+    // An unknown currency code throws a RangeError. Showing a plain number is
+    // better than taking down the page that renders it.
+    return `₹${Math.round(amountInMinorUnits / 100).toLocaleString("en-IN")}`;
+  }
 }
