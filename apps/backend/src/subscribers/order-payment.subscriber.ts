@@ -49,8 +49,18 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
         console.error("Failed to record payment.captured event", err);
       }
 
+      // Fetch the order once, up front: fulfilment needs it and so does the
+      // confirmation email. Previously the email fired with only an order id
+      // and an amount, so the customer received a receipt with no items,
+      // no address and no way to act on it.
+      let order: any = null;
       try {
-        const order = await paymentModuleService.retrieveOrder?.(order_id);
+        order = await paymentModuleService.retrieveOrder?.(order_id);
+      } catch (err) {
+        console.error("Failed to retrieve order for confirmation", err);
+      }
+
+      try {
         if (order && order.fulfillment_status !== "fulfilled") {
           await fulfilmentModuleService.createFulfillment?.({
             order_id,
@@ -63,9 +73,31 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
 
       try {
         await notificationModuleService.sendNotification?.({
-          to: data?.customer_email,
+          to: order?.email || data?.customer_email,
           template: "order_confirmation",
-          data: { order_id, amount },
+          data: {
+            order_id,
+            amount,
+            order: order
+              ? {
+                  id: order.id,
+                  display_id: order.display_id,
+                  email: order.email,
+                  currency_code: order.currency_code,
+                  total: order.total,
+                  subtotal: order.subtotal,
+                  shipping_total: order.shipping_total,
+                  items: (order.items || []).map((item: any) => ({
+                    title: item.title || item.product_title,
+                    variant_title: item.variant_title,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    total: item.total,
+                  })),
+                  shipping_address: order.shipping_address || null,
+                }
+              : undefined,
+          },
         });
       } catch (err) {
         console.error("Order confirmation email failed", err);
@@ -97,7 +129,7 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
 
       try {
         await notificationModuleService.sendNotification?.({
-          to: data?.customer_email,
+          to: data?.customer_email || data?.email,
           template: "refund_processed",
           data: { order_id, amount, reason },
         });
@@ -126,10 +158,22 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
       );
 
       try {
+        let shipmentOrder: any = null;
+        try {
+          shipmentOrder = await paymentModuleService.retrieveOrder?.(order_id);
+        } catch (err) {
+          console.error("Failed to retrieve order for shipment email", err);
+        }
+
         await notificationModuleService.sendNotification?.({
-          to: data?.customer_email,
+          to: data?.customer_email || shipmentOrder?.email,
           template: "shipment_confirmed",
-          data: { order_id, tracking_number },
+          data: {
+            order_id,
+            tracking_number,
+            awb_code: data?.awb_code,
+            courier_name: data?.courier_name,
+          },
         });
       } catch (err) {
         console.error("Shipment confirmation failed", err);

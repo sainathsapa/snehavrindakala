@@ -39,18 +39,57 @@ const MODEL_OBJECTS = {
 
 export class CommissionService {
   protected readonly manager_: any;
+  protected readonly eventBus_: any;
 
-  constructor({ manager }: { manager: any }) {
+  constructor({ manager, event_bus }: { manager: any; event_bus?: any }) {
     this.manager_ = manager;
+    this.eventBus_ = event_bus;
+  }
+
+  /**
+   * Emit a domain event without letting a bus failure break the write.
+   *
+   * The commission subscriber has always listened for these names, but nothing
+   * ever emitted them — so no commission notification has ever been sent. The
+   * request is already persisted by the time we get here, so a failed emit is
+   * logged rather than surfaced to the customer as a failed submission.
+   */
+  private async emit(name: string, data: Record<string, any>): Promise<void> {
+    if (!this.eventBus_?.emit) {
+      console.warn(`[commission] no event bus; dropped event "${name}"`);
+      return;
+    }
+    try {
+      await this.eventBus_.emit({ name, data });
+    } catch (err) {
+      console.error(`[commission] failed to emit "${name}"`, err);
+    }
   }
 
   async createCommissionRequest(
     data: CreateCommissionRequestInput
   ): Promise<any> {
+    // `customer_email` is transport metadata for the acknowledgement email, not
+    // a column on commission_request. Passing it to create() would raise an
+    // unknown-property error, so peel it off before persisting.
+    const { customer_email, ...persistable } = data;
+
     const req = this.manager_
       .getRepository(CommissionRequest)
-      .create({ ...data, id: randomUUID(), status: data.status ?? "New" });
+      .create({ ...persistable, id: randomUUID(), status: data.status ?? "New" });
     await this.manager_.persistAndFlush(req);
+
+    await this.emit("commission.request.created", {
+      commission_request_id: req.id,
+      reference_id: req.reference_id,
+      customer_id: req.customer_id,
+      customer_email,
+      art_form: req.art_form,
+      brief: req.brief,
+      budget_range: req.budget_range,
+      target_date: req.target_date,
+    });
+
     return req;
   }
 
@@ -104,9 +143,20 @@ export class CommissionService {
       throw new Error(`Invalid transition from ${req.status} to ${newStatus}`);
     }
 
+    const fromStatus = req.status;
     req.status = newStatus;
     req.updated_at = new Date();
     await this.manager_.persistAndFlush(req);
+
+    await this.emit("commission.status.transitioned", {
+      commission_request_id: req.id,
+      reference_id: req.reference_id,
+      customer_id: req.customer_id,
+      customer_email: (req as any).customer_email,
+      from_status: fromStatus,
+      to_status: newStatus,
+    });
+
     return req;
   }
 

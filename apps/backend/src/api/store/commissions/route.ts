@@ -15,6 +15,7 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   const {
     customer_id,
+    customer_email,
     art_form,
     brief,
     intended_use,
@@ -32,6 +33,9 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const commission = await commissionService.createCommissionRequest({
       customer_id,
+      // Carried into the acknowledgement email; stripped before persistence by
+      // the entity (it is not a column).
+      customer_email,
       art_form,
       brief,
       intended_use,

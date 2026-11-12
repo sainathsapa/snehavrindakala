@@ -5,6 +5,11 @@
 export interface CreateCommissionRequestInput {
   reference_id?: string;
   customer_id?: string;
+  /**
+   * Contact address for acknowledgements. Not persisted on the request — it is
+   * carried through to the notification subscriber only.
+   */
+  customer_email?: string;
   art_form: string;
   brief: string;
   intended_use?: string;

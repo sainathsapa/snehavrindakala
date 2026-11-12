@@ -8,6 +8,8 @@ import { Notification } from "./entities/notification";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import { randomUUID } from "crypto";
 import type { SendNotificationInput } from "./types";
+import { renderTemplate, type TemplateContext } from "./templates";
+import { sendEmail } from "./transport";
 
 const MODEL_OBJECTS = {
   Notification,
@@ -33,12 +35,29 @@ export class NotificationService {
     });
 
     try {
-      await this.sendViaSES(channel, to, template, templateData || {});
-      notification.status = "sent";
+      if (channel === "email") {
+        const outcome = await this.sendViaSES(
+          to,
+          template,
+          templateData || {}
+        );
+        // "skipped" means SES is not configured (development). That is not a
+        // failure — recording it as one would make the admin queue look broken.
+        notification.status = outcome === "sent" ? "sent" : "skipped";
+      } else {
+        console.log(
+          `[Notification] channel "${channel}" is not implemented; skipping (template="${template}")`
+        );
+        notification.status = "skipped";
+      }
     } catch (err) {
       notification.status = "failed";
       notification.error_message =
         err instanceof Error ? err.message : String(err);
+      console.error(
+        `[Notification] Failed to send "${template}" to ${to}:`,
+        err
+      );
     }
 
     await this.manager_.persistAndFlush(notification);
@@ -46,21 +65,44 @@ export class NotificationService {
     return notification;
   }
 
+  private templateContext(): TemplateContext {
+    return {
+      storefrontUrl: (
+        process.env.STOREFRONT_URL ||
+        process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+        "https://snehavrinda.in"
+      ).replace(/\/+$/, ""),
+      contactEmail:
+        process.env.CONTACT_EMAIL ||
+        process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
+        "hello@snehavrinda.in",
+      currency: process.env.MEDUSA_CURRENCY_CODE?.toUpperCase() || "INR",
+    };
+  }
+
   private async sendViaSES(
-    channel: string,
     to: string,
     template: string,
     templateData: Record<string, any>
-  ): Promise<void> {
-    const { AWS_SES_ACCESS_KEY_ID, FROM_EMAIL } = process.env;
-
-    if (!AWS_SES_ACCESS_KEY_ID || !FROM_EMAIL) {
-      console.log(
-        `[Notification] (dev) ${channel} to ${to}: template="${template}"`,
-        templateData
+  ): Promise<"sent" | "skipped"> {
+    if (!to) {
+      throw new Error(
+        `Cannot send "${template}": no recipient address was provided`
       );
-      return;
     }
+
+    const rendered = renderTemplate(
+      template,
+      this.templateContext(),
+      templateData
+    );
+
+    return sendEmail({
+      to,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+    });
   }
 
   async listNotifications(filter: {
