@@ -74,6 +74,12 @@ async function isValidSession(
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
+  // The login page must be reachable while signed out — otherwise there is no
+  // way in. It sits under /admin, so this exemption has to come first.
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
   const sessionToken = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
   const secret =
     process.env.COOKIE_SECRET ||
