@@ -21,7 +21,11 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        window.location.href = "/admin";
+        // Return to the page the user was bounced from, if the middleware
+        // recorded one.
+        const next = new URLSearchParams(window.location.search).get("next");
+        window.location.href =
+          next && next.startsWith("/admin") ? next : "/admin";
       } else {
         setError("Invalid email or password");
         setLoading(false);

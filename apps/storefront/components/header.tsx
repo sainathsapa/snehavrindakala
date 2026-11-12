@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@snehavrinda-kala/ui";
 import { Icon } from "@snehavrinda-kala/ui";
+import { CartCount } from "./cart-count";
 
 const navLinks = [
   { label: "Shop", href: "/shop" },
@@ -180,6 +181,7 @@ export function Header() {
                 />
               </svg>
               <span className="hidden sm:inline">Cart</span>
+              <CartCount />
             </Link>
             <Link
               href="/account"
@@ -258,6 +260,7 @@ export function Header() {
                       />
                     </svg>
                     Cart
+                    <CartCount className="ml-1" />
                   </Link>
                   <Link
                     href="/account"

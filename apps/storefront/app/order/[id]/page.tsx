@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getAuthToken } from "@/lib/auth";
 import { medusa, formatPrice } from "@/lib/medusa";
-import { getAdminOrder } from "@/lib/admin";
 import { getOrderShipment } from "@/lib/shipping/store";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +17,7 @@ export default async function OrderPage({
 
   const token = await getAuthToken();
   let order: any = null;
+  let shipment: Awaited<ReturnType<typeof getOrderShipment>> = null;
 
   if (token) {
     try {
@@ -27,22 +27,16 @@ export default async function OrderPage({
     }
   }
 
-  // Guest checkout has no customer token, but order ids are unguessable and
-  // the confirmation page must work immediately after payment.
-  if (!order) {
+  // Guest checkout has no customer token, so a freshly-paid visitor would have
+  // nowhere to land. The admin API path is deliberately NOT used as a fallback
+  // here: it exposes the full customer record to anyone who guesses an id.
+  // Guests get the confirmation email instead (see the empty state below).
+  if (order) {
     try {
-      const { order: adminOrder } = await getAdminOrder(id);
-      order = adminOrder;
+      shipment = await getOrderShipment(id);
     } catch (error) {
-      console.error("Failed to load order for confirmation", error);
+      console.error("Failed to load shipment", error);
     }
-  }
-
-  let shipment: Awaited<ReturnType<typeof getOrderShipment>> = null;
-  try {
-    shipment = await getOrderShipment(id);
-  } catch (error) {
-    console.error("Failed to load shipment", error);
   }
 
   if (!order) {
@@ -50,8 +44,12 @@ export default async function OrderPage({
       <main className="py-10">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-xl border border-sand-border bg-surface p-12 text-center">
-            <p className="text-lg text-muted-ink font-sans mb-6">
-              We could not find this order.
+            <p className="text-lg text-muted-ink font-sans mb-2">
+              We could not show this order here.
+            </p>
+            <p className="text-sm text-muted-ink font-sans mb-6">
+              If you just paid, your confirmation is on its way by email. Sign in
+              with the address you used at checkout to see it in your account.
             </p>
             <Link
               href="/account/login"

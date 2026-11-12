@@ -135,6 +135,9 @@ export function ProductOptions({
               startTransition(async () => {
                 const response = await addToCartAction(selectedVariantId, 1);
                 setResult(response);
+                if (response.ok) {
+                  window.dispatchEvent(new Event("svk:cart-changed"));
+                }
               });
             }}
             className="w-full py-4 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"

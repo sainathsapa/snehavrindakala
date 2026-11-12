@@ -41,6 +41,10 @@ export function AddToCart({
           startTransition(async () => {
             const response = await addToCartAction(variantId, 1);
             setResult(response);
+            if (response.ok) {
+              // Header badge listens for this instead of re-fetching on nav.
+              window.dispatchEvent(new Event("svk:cart-changed"));
+            }
           });
         }}
         className="w-full py-4 bg-terracotta text-white rounded-xl font-semibold hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"

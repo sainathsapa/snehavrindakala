@@ -1,14 +1,8 @@
-import { createCommissionAction } from "./actions";
+import { CommissionForm } from "@/components/commission-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomArtPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
-  const { error } = await searchParams;
-
+export default async function CustomArtPage() {
   return (
     <main className="py-10">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -55,133 +49,7 @@ export default async function CustomArtPage({
             <h2 className="text-2xl font-serif font-semibold text-deep-ink mb-4">
               Start your request
             </h2>
-            {error && (
-              <div
-                role="alert"
-                className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 font-sans"
-              >
-                {error === "missing"
-                  ? "Please choose an art form and describe your brief."
-                  : "We could not submit your request. Please try again."}
-              </div>
-            )}
-            <form action={createCommissionAction} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="art_form"
-                  className="block text-sm font-medium text-deep-ink mb-1"
-                >
-                  Art form
-                </label>
-                <select
-                  id="art_form"
-                  name="art_form"
-                  required
-                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                >
-                  <option value="">Select an art form</option>
-                  <option>Painting &amp; drawing</option>
-                  <option>Traditional &amp; folk art</option>
-                  <option>Home &amp; décor</option>
-                  <option>Textile &amp; fibre</option>
-                  <option>Paper &amp; stationery</option>
-                  <option>Wearable art</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="brief"
-                  className="block text-sm font-medium text-deep-ink mb-1"
-                >
-                  Brief / description
-                </label>
-                <textarea
-                  id="brief"
-                  name="brief"
-                  rows={4}
-                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                  placeholder="Describe the piece you have in mind…"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="budget_range"
-                    className="block text-sm font-medium text-deep-ink mb-1"
-                  >
-                    Budget range (₹)
-                  </label>
-                  <input
-                    id="budget_range"
-                    name="budget_range"
-                    type="text"
-                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                    placeholder="e.g. 5,000 – 15,000"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="target_date"
-                    className="block text-sm font-medium text-deep-ink mb-1"
-                  >
-                    Target date
-                  </label>
-                  <input
-                    id="target_date"
-                    name="target_date"
-                    type="date"
-                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="delivery_pin"
-                  className="block text-sm font-medium text-deep-ink mb-1"
-                >
-                  Delivery PIN code
-                </label>
-                <input
-                  id="delivery_pin"
-                  name="delivery_pin"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-                  placeholder="XXXXXX"
-                />
-              </div>
-              <div className="pt-4 border-t border-sand-border">
-                <label className="flex items-start gap-3 cursor-pointer text-sm text-deep-ink font-sans">
-                  <input
-                    type="checkbox"
-                    name="consent"
-                    className="mt-1 text-sindoor focus:ring-sindoor"
-                    required
-                  />
-                  <span>
-                    I consent to SnehaVrinda Kala using my submitted reference
-                    materials for this commission. Reference uploads are private
-                    and not shared publicly.{" "}
-                    <a href="/policies/privacy" className="text-sindoor underline">
-                      Read our privacy notice
-                    </a>
-                  </span>
-                </label>
-                <p className="mt-2 text-xs text-muted-ink font-sans">
-                  Reference files are uploaded via a private, short-lived signed
-                  URL and retained only for the duration of the commission.
-                </p>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
-              >
-                Submit request
-              </button>
-            </form>
+            <CommissionForm />
           </section>
         </div>
       </div>
