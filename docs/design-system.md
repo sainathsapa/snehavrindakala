@@ -215,3 +215,51 @@ All icons come from `packages/ui/src/icons.tsx`:
 8. Do focus states exist and is every heading level correct?
 9. Did you add a colour that is not in this document? Add it to all three
    token files, or don't add it.
+
+---
+
+## 9. Imagery
+
+Artwork is the interface. Nothing else should compete with it.
+
+- **Art-form tiles** are square, photographic, and `object-cover`. Six files live
+  in `public/images/artforms/<slug>.jpg`, one per taxonomy slug. They replaced an
+  older set of SVG "artwork" that had titles drawn *into* the image, which no
+  amount of card styling could rescue — the lettering scaled with the artwork and
+  collided with page copy.
+- **Product imagery** lives in `public/images/products/`, served through
+  `next/image` so it is resized and converted per breakpoint.
+- All raster art is exported at **900px on the long edge, quality ~78**. The
+  original 1.3MB generations were served directly and made `/shop` take 9.9s to
+  paint; the same page is now 22ms.
+- Use `next/image` (`fill` + `sizes`) for anything inside a layout grid. A bare
+  `<img>` in a grid will ship the full file to every card.
+- Decorative background art carries `alt=""` and `aria-hidden`; artwork with a
+  name carries a real `alt`.
+
+## 10. Data-backed UI
+
+Two rules that keep the storefront honest when the catalogue is thin:
+
+- **Seed data supplements, never replaces, live data.** The sample catalogue in
+  `data/products.ts` is merged with Medusa results and deduped by handle. A
+  strict either/or fallback meant that one seeded product hid the entire sample
+  set and five collections rendered empty.
+- **Money is always minor units.** `formatPrice` divides by 100. Seed prices are
+  authored in whole rupees and converted once in `lib/catalogue.ts`. Forgetting
+  this shipped `₹2,200` as `₹22`.
+- **Never render a dead action.** Seed items have no Medusa variant, so their
+  detail page shows the work read-only and points at the live collection and
+  custom commissions instead of an "Add to cart" button that cannot work.
+
+## 11. Navigation menus
+
+`Discover` and `Art Forms` open real menus, built on the server in
+`app/layout.tsx` and passed to the header.
+
+- State-driven, not CSS `:hover` — hover menus cannot be reached by keyboard or
+  touch.
+- Close on `Escape`, on outside click, and on route change.
+- `aria-expanded` + `aria-controls` on the trigger; the panel is a `ul` of links.
+- On mobile the sub-links are listed inline under their parent instead of behind
+  a toggle — an extra tap to reveal five links is friction for no gain.

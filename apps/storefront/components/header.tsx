@@ -12,8 +12,8 @@ import { CartCount } from "./cart-count";
  * utility icons on the right.
  */
 const navLinks = [
-  { label: "Discover", href: "/shop", chevron: true },
-  { label: "Art Forms", href: "/art-forms", chevron: true },
+  { label: "Discover", href: "/shop", menu: "shop" as const },
+  { label: "Art Forms", href: "/art-forms", menu: "artforms" as const },
   { label: "Artists", href: "/artists" },
   { label: "Custom Art", href: "/custom-art" },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody
@@ -31,17 +31,48 @@ const typeIcons: Record<string, string> = {
 
 export function Header({
   platformMode = "single-brand",
+  artForms = [],
+  collections = [],
 }: {
   platformMode?: "platform" | "single-brand";
+  artForms?: { label: string; href: string }[];
+  collections?: { name: string; count: number }[];
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Which dropdown is open. CSS-only hover menus cannot be reached by keyboard
+  // or touch, so the menu is explicitly state-driven with click and Escape.
+  const [openMenu, setOpenMenu] = useState<null | "shop" | "artforms">(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenu(null);
+    };
+    const onClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onClick);
+    };
+  }, []);
+
+  // Close menus on navigation, otherwise the panel survives the route change.
+  useEffect(() => {
+    setOpenMenu(null);
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   if (pathname.startsWith("/admin")) {
     return null;
@@ -141,27 +172,107 @@ export function Header({
           </Link>
 
           {/* Centred links. Hidden below lg; the mobile sheet carries them. */}
-          <nav className="mx-auto hidden items-center gap-7 lg:flex">
-            {visibleLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`group flex items-center gap-1 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
-                  pathname === link.href
-                    ? "text-kumkum"
-                    : "text-deep-ink/85 hover:text-kumkum"
-                }`}
-              >
-                {link.label}
-                {link.chevron && (
-                  <Icon
-                    name="chevron-down"
-                    size={13}
-                    className="mt-px text-muted-ink/70 transition-transform group-hover:translate-y-0.5"
-                  />
-                )}
-              </Link>
-            ))}
+          <nav ref={menuRef} className="mx-auto hidden items-center gap-7 lg:flex">
+            {visibleLinks.map((link) => {
+              const menuId = link.menu ? `nav-menu-${link.menu}` : undefined;
+              const isOpen = Boolean(link.menu && openMenu === link.menu);
+              const entries =
+                link.menu === "artforms"
+                  ? artForms
+                  : link.menu === "shop"
+                    ? collections.map((collection) => ({
+                        label: collection.name,
+                        href: `/shop/${collection.name
+                          .toLowerCase()
+                          .replace(/&/g, "and")
+                          .replace(/[^a-z0-9]+/g, "-")
+                          .replace(/^-|-$/g, "")}`,
+                        meta: `${collection.count} piece${collection.count === 1 ? "" : "s"}`,
+                      }))
+                    : [];
+
+              if (!link.menu) {
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                      pathname === link.href
+                        ? "text-kumkum"
+                        : "text-deep-ink/85 hover:text-kumkum"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              }
+
+              return (
+                <div key={link.href} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenMenu(isOpen ? null : link.menu!)}
+                    aria-expanded={isOpen}
+                    aria-controls={menuId}
+                    aria-haspopup="true"
+                    className={`flex items-center gap-1 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                      isOpen || pathname.startsWith(link.href)
+                        ? "text-kumkum"
+                        : "text-deep-ink/85 hover:text-kumkum"
+                    }`}
+                  >
+                    {link.label}
+                    <Icon
+                      name="chevron-down"
+                      size={13}
+                      className={`mt-px text-muted-ink/70 transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <div
+                      id={menuId}
+                      className="absolute left-1/2 top-full z-50 mt-3 w-72 -translate-x-1/2 overflow-hidden rounded-lg border border-sand-border bg-surface shadow-lifted"
+                    >
+                      <ul className="py-2">
+                        {entries.length === 0 && (
+                          <li className="px-4 py-3 font-sans text-xs text-muted-ink">
+                            Nothing listed yet.
+                          </li>
+                        )}
+                        {entries.map((entry: any) => (
+                          <li key={entry.href}>
+                            <Link
+                              href={entry.href}
+                              onClick={() => setOpenMenu(null)}
+                              className="flex items-baseline justify-between gap-3 px-4 py-2 font-sans text-[13.5px] text-deep-ink/85 transition-colors hover:bg-rang-paper/70 hover:text-kumkum"
+                            >
+                              <span className="truncate">{entry.label}</span>
+                              {entry.meta && (
+                                <span className="shrink-0 font-sans text-[11px] text-muted-ink">
+                                  {entry.meta}
+                                </span>
+                              )}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="border-t border-sand-border/70 bg-rang-paper/50 px-4 py-2.5">
+                        <Link
+                          href={link.href}
+                          onClick={() => setOpenMenu(null)}
+                          className="font-sans text-xs font-medium text-terracotta hover:text-kumkum"
+                        >
+                          {link.menu === "shop" ? "All artworks" : "All art forms"} →
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
 
           {/* Utilities: thin-line icons, per the reference. */}
@@ -290,14 +401,32 @@ export function Header({
               />
             </div>
             {visibleLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md px-1 py-3 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
-              >
-                {link.label}
-              </Link>
+              <div key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block rounded-md px-1 py-3 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
+                >
+                  {link.label}
+                </Link>
+                {/* Sub-links are listed inline rather than behind a toggle: on a
+                    phone there is room, and an extra tap to reveal five links is
+                    friction for no gain. */}
+                {link.menu === "artforms" && artForms.length > 0 && (
+                  <div className="mb-1 border-l border-sand-border pl-3">
+                    {artForms.map((form) => (
+                      <Link
+                        key={form.href}
+                        href={form.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1.5 font-sans text-[13px] text-muted-ink hover:text-kumkum"
+                      >
+                        {form.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}

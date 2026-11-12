@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { medusa } from "@/lib/medusa";
 import { artFormSlugs } from "@/lib/slugs";
 import { SectionIntro } from "@/components/ornaments";
@@ -28,7 +29,7 @@ const IMAGE_ALIASES: Record<string, string> = {
 
 function imageFor(slug: string): string | null {
   const resolved = IMAGE_ALIASES[slug] ?? slug;
-  return ART_FORM_IMAGES.has(resolved) ? `/images/artforms/${resolved}.svg` : null;
+  return ART_FORM_IMAGES.has(resolved) ? `/images/artforms/${resolved}.jpg` : null;
 }
 
 export default async function ArtFormsPage() {
@@ -88,11 +89,14 @@ export default async function ArtFormsPage() {
           A shallow artwork banner with the title set over its darkened left,
           as in the reference category page. */}
       <section className="relative min-h-[240px] overflow-hidden lg:min-h-[300px]">
-        <img
+        <Image
           src="/images/hero/hero-art.jpg"
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-right"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-right"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#2A120C]/95 via-[#2A120C]/75 to-[#2A120C]/25" />
 
@@ -135,12 +139,12 @@ export default async function ArtFormsPage() {
                 <Link key={form.key} href={form.href} className="group">
                   <div className="relative aspect-square overflow-hidden rounded-sm bg-surface">
                     {form.image ? (
-                      <img
+                      <Image
                         src={form.image}
-                        alt=""
-                        aria-hidden="true"
-                        className="h-full w-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
-                        loading="lazy"
+                        alt={form.name}
+                        fill
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 280px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <span

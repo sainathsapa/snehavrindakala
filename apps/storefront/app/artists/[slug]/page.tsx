@@ -13,8 +13,11 @@ export async function generateStaticParams() {
   }
 }
 
-export const metadata = async ({ params }: { params: Promise<{ slug: string }> }) => {
-  const { slug } = await params;
+export const metadata = async ({ params }: { params?: Promise<{ slug: string }> }) => {
+  // Next 15 can call this from a client MetadataOutlet with no params; guard
+  // rather than throwing and taking the route down.
+  const slug = (await params)?.slug ?? "";
+  if (!slug) return { title: "SnehaVrinda Kala" };
   let artist: any = null;
   try {
     const { artist: artistData } = await medusa.getArtist(slug);

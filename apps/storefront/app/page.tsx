@@ -1,6 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { artFormSlugs } from "@/lib/slugs";
 import { ArrowLink, SectionIntro } from "@/components/ornaments";
+import { listCatalogue } from "@/lib/catalogue";
+import { formatPrice } from "@/lib/medusa";
 
 const artForms = artFormSlugs.map((form) => ({
   name: form.name,
@@ -10,24 +13,38 @@ const artForms = artFormSlugs.map((form) => ({
   // the slugified display name — slugifying "Painting & Drawing" produced
   // "painting-and-drawing.svg", which does not exist, so every category card
   // rendered as a broken image.
-  image: `/images/artforms/${form.slug}.svg`,
+  image: `/images/artforms/${form.slug}.jpg`,
 }));
 
 /** The five forms the reference features in its first row. */
 const featuredForms = artForms.slice(0, 5);
 
-export default function Home() {
+export default async function Home() {
+  // Real pieces, not art-form swatches: this section is "Curated for You", and
+  // showing category artwork here meant the same six images appeared twice on
+  // one page.
+  let featuredProducts: { handle: string; title: string; price: number | null; image: string }[] = [];
+  try {
+    const catalogue = await listCatalogue();
+    featuredProducts = catalogue.slice(0, 4);
+  } catch {
+    // A homepage must render even if the catalogue is unreachable.
+  }
+
   return (
     <main className="bg-rang-paper">
       {/* ── Hero ──────────────────────────────────────────────────────────
           Full-bleed artwork with the headline set over the pale left side, as
           in the reference: no card, no border — the illustration is the section. */}
       <section className="relative min-h-[520px] overflow-hidden bg-rang-paper lg:min-h-[620px]">
-        <img
+        <Image
           src="/images/hero/hero-art.jpg"
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-right"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-right"
         />
         {/* Widen the pale area behind the copy so text never fights the art. */}
         <div className="absolute inset-0 bg-gradient-to-r from-rang-paper from-30% via-rang-paper/70 via-50% to-transparent to-75% lg:via-rang-paper/45 lg:via-42% lg:to-65%" />
@@ -94,12 +111,12 @@ export default function Home() {
                     className="group"
                   >
                     <div className="relative aspect-square overflow-hidden rounded-sm bg-surface">
-                      <img
+                      <Image
                         src={form.image}
-                        alt=""
-                        aria-hidden="true"
-                        className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
-                        loading="lazy"
+                        alt={form.name}
+                        fill
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 200px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
                     <h3 className="mt-3 font-serif text-base font-semibold text-deep-ink transition-colors group-hover:text-kumkum">
@@ -127,11 +144,13 @@ export default function Home() {
 
       {/* ── Craft journey banner ─────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-[#2A120C]">
-        <img
+        <Image
           src="/images/products/madhubani-painting.jpg"
           alt=""
           aria-hidden="true"
-          className="absolute inset-y-0 left-0 h-full w-full object-cover opacity-40 lg:w-1/2 lg:opacity-100"
+          fill
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          className="object-cover opacity-40 lg:w-1/2 lg:opacity-100"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#2A120C]/80 to-[#2A120C] lg:via-[#2A120C]/70" />
 
@@ -163,22 +182,29 @@ export default function Home() {
 
             <div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {artForms.slice(0, 4).map((form) => (
-                  <Link key={form.href} href={form.href} className="group">
+                {featuredProducts.map((product) => (
+                  <Link
+                    key={product.handle}
+                    href={`/products/${product.handle}`}
+                    className="group"
+                  >
                     <div className="overflow-hidden rounded-sm bg-surface p-3">
                       <div className="relative aspect-square overflow-hidden">
-                        <img
-                          src={form.image}
-                          alt=""
-                          aria-hidden="true"
-                          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
+                        <Image
+                          src={product.image}
+                          alt={product.title}
+                          fill
+                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 240px"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       </div>
                     </div>
-                    <h3 className="mt-3 font-serif text-sm font-semibold text-deep-ink">
-                      {form.name}
+                    <h3 className="mt-3 font-serif text-sm font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum">
+                      {product.title}
                     </h3>
+                    <p className="mt-0.5 font-sans text-xs text-muted-ink">
+                      {formatPrice(product.price)}
+                    </p>
                   </Link>
                 ))}
               </div>
@@ -233,6 +259,49 @@ export default function Home() {
                 Let&apos;s Create
                 <span aria-hidden="true">→</span>
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── The Art of India ────���───────────────────────────────────────────
+          The illustrated panel that closes the reference's second page: full
+          artwork behind, a short statement and one pill action over it. */}
+      <section className="pb-16 lg:pb-24">
+        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <div className="relative overflow-hidden rounded-lg">
+            <div className="relative h-[300px] w-full sm:h-[340px]">
+              <Image
+                src="/images/artforms/textile.jpg"
+                alt=""
+                aria-hidden="true"
+                fill
+                sizes="100vw"
+                className="object-cover"
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#2A120C]/90 via-[#2A120C]/60 to-transparent" />
+            <div className="absolute inset-0 flex items-center">
+              <div className="max-w-md px-6 sm:px-12">
+                <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-haldi">
+                  Our Story
+                </p>
+                <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight text-rang-paper sm:text-4xl">
+                  The Art of India
+                </h2>
+                <p className="mt-3 font-sans text-small leading-relaxed text-rang-paper/80">
+                  Every tradition here began with a maker, a material and a
+                  reason. We work directly with artists across India so the
+                  story travels with the piece.
+                </p>
+                <Link
+                  href="/about"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-rang-paper px-6 py-3 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-white"
+                >
+                  Know More
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
-import { getProductPrice, getStockType, medusa } from "@/lib/medusa";
+import { medusa } from "@/lib/medusa";
+import { listCatalogue } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -30,17 +31,9 @@ export default async function ShopPage({
     }
   }
 
-  let products: Awaited<
-    ReturnType<typeof medusa.listProducts>
-  >["products"] = [];
-  try {
-    const { products: productsData } = await medusa.listProducts({
-      limit: 100,
-    });
-    products = productsData;
-  } catch (err) {
-    console.error("Failed to load products from Medusa", err);
-  }
+  // Live catalogue, falling back to the seed set when Medusa is empty, so the
+  // shop never renders blank while the backend is only partly populated.
+  const items = await listCatalogue();
 
   let categories: Array<{
     id: string;
@@ -85,23 +78,18 @@ export default async function ShopPage({
           </div>
         )}
 
-        {products.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+        {items.length > 0 ? (
+          <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+            {items.map((item) => (
               <ProductCard
-                key={product.id}
-                handle={product.handle}
-                title={product.title}
-                artist={product.category?.name || "SnehaVrinda Kala"}
-                price={getProductPrice(product)}
-                stockType={getStockType(product)}
-                image={
-                  product.thumbnail ||
-                  product.images?.[0]?.url ||
-                  "/images/product-placeholder.svg"
-                }
-                isNew={product.is_new}
-                category={product.category}
+                key={item.handle}
+                handle={item.handle}
+                title={item.title}
+                artist={item.artist}
+                price={item.price}
+                stockType={item.stockType}
+                image={item.image}
+                isNew={item.isNew}
               />
             ))}
           </div>

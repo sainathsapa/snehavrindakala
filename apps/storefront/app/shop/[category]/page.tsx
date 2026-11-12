@@ -1,5 +1,6 @@
-import { getProductPrice, getStockType, medusa } from "@/lib/medusa";
+import { medusa } from "@/lib/medusa";
 import { ProductCard } from "@/components/product-card";
+import { listCatalogueFor } from "@/lib/catalogue";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getArtFormBySlug, artFormSlugs, slugify } from "@/lib/slugs";
@@ -104,10 +105,13 @@ export function generateStaticParams() {
 export const metadata = async ({
   params,
 }: {
-  params: Promise<{ category: string }>;
+  params?: Promise<{ category: string }>;
 }) => {
-  const { category } = await params;
-  const resolved = await resolveCategory(category);
+  // Next 15 may invoke this from a client-side MetadataOutlet with no params,
+  // which throws "Cannot destructure property 'category' of undefined" and
+  // takes the whole route down with a client exception.
+  const category = (await params)?.category ?? "";
+  const resolved = category ? await resolveCategory(category) : null;
   return {
     title: resolved
       ? `${resolved.name} | SnehaVrinda Kala`
@@ -141,17 +145,16 @@ export default async function ShopCategoryPage({
   const baseUrl =
     process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000";
 
-  let products: Awaited<
-    ReturnType<typeof medusa.listProducts>
-  >["products"] = [];
+  let items: Awaited<ReturnType<typeof listCatalogueFor>> = [];
   try {
-    const { products: productsData } = await medusa.listProducts({
-      limit: 100,
-      ...(resolved.id ? { category: resolved.id } : { q: resolved.query }),
-    });
-    products = productsData;
+    // Match on every key this collection could be known by: the Medusa
+    // category handle, its display name, and the taxonomy slug (which may differ
+    // — `/shop/painting` maps to a category that may not exist in Medusa at all).
+    items = await listCatalogueFor(
+      [resolved.handle, resolved.name, category, resolved.query ?? ""].filter(Boolean)
+    );
   } catch (err) {
-    console.error("Failed to load products from Medusa", err);
+    console.error("Failed to load products for category", err);
   }
 
   const breadcrumb = {
@@ -207,35 +210,31 @@ export default async function ShopCategoryPage({
           {resolved.description}
         </p>
 
-        {products.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+        {items.length > 0 ? (
+          <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+            {items.map((item) => (
               <ProductCard
-                key={product.id}
-                handle={product.handle}
-                title={product.title}
-                artist={product.category?.name || "SnehaVrinda Kala"}
-                price={getProductPrice(product)}
-                stockType={getStockType(product)}
-                image={
-                  product.thumbnail ||
-                  product.images?.[0]?.url ||
-                  "/images/product-placeholder.svg"
-                }
-                isNew={product.is_new}
+                key={item.handle}
+                handle={item.handle}
+                title={item.title}
+                artist={item.artist}
+                price={item.price}
+                stockType={item.stockType}
+                image={item.image}
+                isNew={item.isNew}
               />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-lg text-muted-ink font-sans mb-6">
-              No products in this collection yet. Check back soon.
+            <p className="mb-6 font-sans text-lg text-muted-ink">
+              No artworks in this collection yet. Check back soon.
             </p>
             <Link
               href="/shop"
-              className="px-6 py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
+              className="rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
             >
-              Browse all products
+              Browse all artworks
             </Link>
           </div>
         )}

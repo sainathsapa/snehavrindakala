@@ -3,6 +3,8 @@ import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { getPlatformModeFromEnv } from "@/lib/settings";
+import { artFormSlugs } from "@/lib/slugs";
+import { listCatalogueCollections } from "@/lib/catalogue";
 import "./globals.css";
 
 const serif = Cormorant_Garamond({
@@ -48,17 +50,35 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
+  // Nav menus are built on the server: the header is a client component, and
+  // fetching catalogue collections per-open would flash an empty menu.
+  let collections: { name: string; count: number }[] = [];
+  try {
+    collections = await listCatalogueCollections();
+  } catch {
+    // A nav menu must never take the page down.
+  }
+
+  const navArtForms = artFormSlugs.map((form) => ({
+    label: form.name,
+    href: `/shop/${form.slug}`,
+  }));
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${serif.variable} ${sans.variable} font-sans antialiased`}>
-        <Header platformMode={getPlatformModeFromEnv()} />
+        <Header
+          platformMode={getPlatformModeFromEnv()}
+          artForms={navArtForms}
+          collections={collections}
+        />
         {children}
         <Footer />
         <script
