@@ -102,8 +102,14 @@ export default async function AccountPage() {
                           {(order.items?.length ?? 0) === 1 ? "" : "s"}
                         </span>
                         <span>{formatPrice(order.total, order.currency_code)}</span>
-                      </div>
-                    </li>
+                      <a
+                        href={`/account/returns?order_id=${order.id}`}
+                        className="rounded-md border border-sand-border px-3 py-1 text-xs font-medium text-sindoor hover:bg-sindoor/90 transition-colors"
+                      >
+                        Request return
+                      </a>
+                    </div>
+                  </li>
                   ))}
                 </ul>
               )}
