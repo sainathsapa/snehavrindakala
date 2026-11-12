@@ -5,6 +5,8 @@
  * notifications and ledger entries.
  */
 
+import { pushRealtimeNotification } from "../lib/notify";
+
 export const config = {
   event: [
     "commission.request.created",
@@ -110,6 +112,15 @@ export default async function commissionSubscriber(args: any): Promise<void> {
       } catch (err) {
         console.error("Commission acknowledgement failed", err);
       }
+
+      await pushRealtimeNotification({
+        title: "New commission request",
+        message: `${data?.reference_id || commission_request_id}${
+          art_form ? ` — ${art_form}` : ""
+        }. Review the brief and send a quote.`,
+        type: "info",
+        link: `/admin/commissions/${commission_request_id}`,
+      });
       break;
     }
 
@@ -160,6 +171,19 @@ export default async function commissionSubscriber(args: any): Promise<void> {
         });
       } catch (err) {
         console.error("Commission transition notification failed", err);
+      }
+
+      // Quote acceptance and payment are the moments ops needs to act on, so
+      // those get a realtime ping too.
+      if (to_status === "Accepted" || to_status === "Awaiting payment") {
+        await pushRealtimeNotification({
+          title: `Commission ${to_status.toLowerCase()}`,
+          message: `${reference_id || commission_request_id} moved from ${
+            from_status || "—"
+          } to ${to_status}.`,
+          type: to_status === "Accepted" ? "success" : "warning",
+          link: `/admin/commissions/${commission_request_id}`,
+        });
       }
       break;
     }

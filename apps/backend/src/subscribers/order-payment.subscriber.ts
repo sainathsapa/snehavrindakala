@@ -5,6 +5,8 @@
  * notification actions after server-side payment verification.
  */
 
+import { pushRealtimeNotification } from "../lib/notify";
+
 export const config = {
   event: [
     "order.placed",
@@ -102,6 +104,19 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
       } catch (err) {
         console.error("Order confirmation email failed", err);
       }
+
+      // Tell the admin dashboard in realtime. Amounts are in the store
+      // currency's major unit here, so format defensively.
+      await pushRealtimeNotification({
+        title: "New paid order",
+        message: order?.display_id
+          ? `Order #${order.display_id} was paid${
+              order.email ? ` by ${order.email}` : ""
+            }.`
+          : `Order ${order_id} was paid.`,
+        type: "success",
+        link: order_id ? `/admin/orders/${order_id}` : null,
+      });
       break;
     }
 
@@ -136,6 +151,15 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
       } catch (err) {
         console.error("Refund notification failed", err);
       }
+
+      await pushRealtimeNotification({
+        title: "Refund issued",
+        message: `Order ${order_id} was refunded${
+          reason ? `: ${reason}` : "."
+        }`,
+        type: "warning",
+        link: order_id ? `/admin/orders/${order_id}` : null,
+      });
       break;
     }
 
@@ -178,6 +202,15 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
       } catch (err) {
         console.error("Shipment confirmation failed", err);
       }
+
+      await pushRealtimeNotification({
+        title: "Order shipped",
+        message: tracking_number
+          ? `Order ${order_id} shipped. Tracking ${tracking_number}.`
+          : `Order ${order_id} was marked fulfilled.`,
+        type: "info",
+        link: order_id ? `/admin/orders/${order_id}` : null,
+      });
       break;
     }
 

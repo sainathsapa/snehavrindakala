@@ -1,56 +1,49 @@
 /**
- * GET /api/admin/notifications - List notifications for the admin panel.
+ * GET /api/admin/notifications
+ *
+ * Compatibility listing for the admin panel. Delegates to the shared
+ * notification store so there is one source of truth — this route previously
+ * read a different table than the realtime stream, so the list and the bell
+ * could disagree.
+ *
+ * The realtime stream lives at /api/notifications?stream=1.
  */
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/app/admin/actions";
+import { getAdminIdentity } from "@/app/admin/actions";
+import { listNotifications, unreadCount } from "@/lib/notifications";
 
-const DATABASE_URL =
-  process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
-
-async function query(sql: string, params: any[] = []) {
-  const { Pool } = require("pg");
-  const pool = new Pool({ connectionString: DATABASE_URL });
-  const client = await pool.connect();
-  try {
-    const res = await client.query(sql, params);
-    return res.rows;
-  } finally {
-    client.release();
-    pool.end();
-  }
-}
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  if (!(await requireAdmin())) {
+  const identity = await getAdminIdentity();
+  if (!identity) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS notifications (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_email TEXT,
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'info',
-        read BOOLEAN NOT NULL DEFAULT false,
-        created_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const offset = parseInt(searchParams.get("offset") || "0");
-
-    const rows = await query(
-      `SELECT id, title, message, type, read, created_at
-       FROM notifications
-       ORDER BY created_at DESC
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "20", 10) || 20, 1),
+      200
     );
-    return NextResponse.json({ notifications: rows, count: rows.length });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const audience = searchParams.get("audience") || "admin";
+
+    const [notifications, unread] = await Promise.all([
+      listNotifications({ audience, limit }),
+      unreadCount(audience),
+    ]);
+
+    return NextResponse.json({
+      notifications,
+      count: notifications.length,
+      unread,
+    });
+  } catch (err) {
+    console.error("[admin/notifications] failed", err);
+    return NextResponse.json(
+      { error: "Could not load notifications" },
+      { status: 500 }
+    );
   }
 }

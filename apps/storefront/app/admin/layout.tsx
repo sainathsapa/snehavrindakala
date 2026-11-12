@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
 import { Icon, type IconName } from "@snehavrinda-kala/ui";
+import { NotificationBell } from "@/components/notification-bell";
 
 const NAV_ITEMS: { href: string; label: string; icon: IconName; role: "super_admin" | "manager" | "support" | "viewer" }[] = [
   { href: "/admin", label: "Dashboard", icon: "dashboard", role: "viewer" },
@@ -181,17 +182,20 @@ export default function AdminLayout({
         }`}
       >
         <div className="p-6 border-b border-sand-border shrink-0">
-          <Link
-            href="/admin"
-            className="flex items-center gap-2"
-          >
-            <span className="text-xl font-serif font-bold text-deep-ink tracking-tight">
-              SnehaVrinda
-            </span>
-            <span className="text-xl font-serif font-bold text-terracotta tracking-tight">
-              Kala
-            </span>
-          </Link>
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              href="/admin"
+              className="flex items-center gap-2"
+            >
+              <span className="text-xl font-serif font-bold text-deep-ink tracking-tight">
+                SnehaVrinda
+              </span>
+              <span className="text-xl font-serif font-bold text-terracotta tracking-tight">
+                Kala
+              </span>
+            </Link>
+            <NotificationBell audience={user.role === "super_admin" ? "admin" : user.role} />
+          </div>
           <p className="mt-2 text-xs text-muted-ink font-sans">
             Admin Panel
           </p>
