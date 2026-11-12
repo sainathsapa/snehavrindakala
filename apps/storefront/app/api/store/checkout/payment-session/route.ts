@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { medusa } from "@/lib/medusa";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
+import { selectShippingRate } from "@/lib/shipping/select-rate";
 
 const PICKUP_POSTCODE = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
 
@@ -65,16 +66,7 @@ export async function POST(req: Request) {
 
     // Honour the option the customer picked; only trust a rate that is
     // actually offered for this PIN so the amount cannot be tampered with.
-    const selected: ShippingRate | undefined = requestedRate
-      ? rates.find(
-          (r) =>
-            r.courier_name === requestedRate.courier_name &&
-            r.service_name === requestedRate.service_name &&
-            r.rate === Number(requestedRate.rate)
-        ) || rates.find((r) => r.courier_name === requestedRate.courier_name)
-      : undefined;
-
-    const chosen = selected || rates[0];
+    const chosen = selectShippingRate(rates, requestedRate);
     const shippingAmount = chosen?.rate ?? 0;
     const shippingQuote = chosen
       ? {

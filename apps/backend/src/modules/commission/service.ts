@@ -17,7 +17,7 @@ import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import { randomUUID } from "crypto";
 import type { CommissionStatus } from "./entities/commission_request";
 import type { QuoteStatus } from "./entities/commission_quote";
-import { COMMISSION_TRANSITIONS } from "./entities/commission_request";
+import { canTransition } from "./entities/commission_request";
 import type {
   CreateCommissionRequestInput,
   UpdateCommissionRequestInput,
@@ -100,9 +100,7 @@ export class CommissionService {
       throw new Error(`Commission request ${id} not found`);
     }
 
-    const allowed =
-      COMMISSION_TRANSITIONS[req.status as CommissionStatus];
-    if (!allowed || !allowed.includes(newStatus)) {
+    if (!canTransition(req.status as CommissionStatus, newStatus)) {
       throw new Error(`Invalid transition from ${req.status} to ${newStatus}`);
     }
 

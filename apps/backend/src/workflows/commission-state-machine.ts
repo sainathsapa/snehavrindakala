@@ -6,7 +6,7 @@
  */
 
 import { CommissionRequest } from "../modules/commission/entities/commission_request";
-import { COMMISSION_TRANSITIONS } from "../modules/commission/entities/commission_request";
+import { canTransition } from "../modules/commission/entities/commission_request";
 import type { CommissionStatus } from "../modules/commission/entities/commission_request";
 
 export type CommissionTransitionInput = {
@@ -44,10 +44,9 @@ export async function commissionStateMachineWorkflow({
   const from_status = commissionRequest.status;
   const toStatus = to_status as CommissionStatus;
 
-  const allowed =
-    COMMISSION_TRANSITIONS[from_status as CommissionStatus];
-  const transition_valid = Boolean(
-    allowed && allowed.includes(toStatus)
+  const transition_valid = canTransition(
+    from_status as CommissionStatus,
+    toStatus
   );
 
   if (!transition_valid) {

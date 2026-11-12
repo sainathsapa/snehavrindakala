@@ -3,7 +3,10 @@
  * Validates all allowed and disallowed status transitions.
  */
 
-import { CommissionRequest } from "../src/modules/commission/entities/commission_request";
+import {
+  CommissionRequest,
+  canTransition,
+} from "../src/modules/commission/entities/commission_request";
 import { commissionStateMachineWorkflow } from "../src/workflows/commission-state-machine";
 import { vi } from "vitest";
 
@@ -42,7 +45,7 @@ describe("Commission state machine", () => {
       "allows transition from %s to %s",
       (from, to) => {
         expect(
-          CommissionRequest.canTransition(from as any, to as any)
+          canTransition(from as any, to as any)
         ).toBe(true);
       }
     );
@@ -51,7 +54,7 @@ describe("Commission state machine", () => {
       "rejects transition from %s to %s",
       (from, to) => {
         expect(
-          CommissionRequest.canTransition(from as any, to as any)
+          canTransition(from as any, to as any)
         ).toBe(false);
       }
     );

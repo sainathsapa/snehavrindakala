@@ -89,3 +89,18 @@ export const COMMISSION_TRANSITIONS: Record<CommissionStatus, CommissionStatus[]
   Refunded: [],
   Disputed: ["Refund pending", "Completed"],
 };
+
+/**
+ * Single source of truth for "may this status move to that status?".
+ *
+ * Both the service and the workflow used to read COMMISSION_TRANSITIONS
+ * directly, which meant the rule was duplicated and could drift. Every caller
+ * should go through here.
+ */
+export function canTransition(
+  from: CommissionStatus,
+  to: CommissionStatus
+): boolean {
+  const allowed = COMMISSION_TRANSITIONS[from];
+  return Boolean(allowed && allowed.includes(to));
+}
