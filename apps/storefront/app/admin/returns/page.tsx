@@ -22,7 +22,9 @@ const statusClasses: Record<string, string> = {
 const STATUS_OPTIONS = ["pending", "approved", "rejected", "completed"];
 
 export default function ReturnsPage() {
-  const [orderFilter, setOrderFilter] = useState("");
+  const [orderFilter, setOrderFilter] = useState(
+    new URLSearchParams(window.location.search).get("order_id") || ""
+  );
 
   const [returns, setReturns] = useState<Return[]>([]);
   const [loading, setLoading] = useState(true);
@@ -224,6 +226,17 @@ export default function ReturnsPage() {
                   setPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 rounded-md border border-sand-border bg-white text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-sans font-medium text-muted-ink mb-2 uppercase tracking-wider">
+                Order ID
+              </label>
+              <input
+                value={orderFilter}
+                onChange={(e) => setOrderFilter(e.target.value)}
+                placeholder="Filter by order ID"
+                className="w-full rounded-md border border-sand-border bg-white px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
               />
             </div>
             <div>
