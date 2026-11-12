@@ -1,6 +1,7 @@
 import { medusa } from "@/lib/medusa";
 import { listCatalogue } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
+import { PaisleyField } from "@/components/ornaments";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getArtFormByQuery } from "@/lib/slugs";
@@ -54,7 +55,8 @@ export default async function ShopPage({
   }
 
   return (
-    <main className="py-10 bg-rang-paper">
+    <main className="relative bg-rang-paper py-10">
+      <PaisleyField className="pointer-events-none absolute right-0 top-0 hidden h-72 w-72 text-terracotta/[0.05] lg:block" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
           All products

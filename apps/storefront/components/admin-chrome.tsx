@@ -19,6 +19,14 @@ type Role = "super_admin" | "manager" | "support" | "viewer";
 
 const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] = [
   { href: "/admin", label: "Dashboard", icon: "dashboard", role: "viewer" },
+  // Storefront content sits right under the dashboard: it is the most-used
+  // editing surface and drives the public homepage.
+  {
+    href: "/admin/content",
+    label: "Storefront",
+    icon: "view",
+    role: "manager",
+  },
   { href: "/admin/orders", label: "Orders", icon: "orders", role: "viewer" },
   { href: "/admin/products", label: "Products", icon: "products", role: "viewer" },
   {

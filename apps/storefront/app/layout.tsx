@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { artFormSlugs } from "@/lib/slugs";
 import { listCatalogueCollections } from "@/lib/catalogue";
+import { listArtForms, listFeaturedCategories } from "@/lib/site-content";
 import "./globals.css";
 
 const serif = Cormorant_Garamond({
@@ -59,17 +60,43 @@ export default async function RootLayout({
 
   // Nav menus are built on the server: the header is a client component, and
   // fetching catalogue collections per-open would flash an empty menu.
-  let collections: { name: string; count: number }[] = [];
+  let fallbackCollections: { label: string; href: string }[] = [];
   try {
-    collections = await listCatalogueCollections();
+    fallbackCollections = (await listCatalogueCollections()).map((entry) => ({
+      label: entry.name,
+      href: `/shop/${entry.name
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")}`,
+    }));
   } catch {
     // A nav menu must never take the page down.
   }
 
-  const navArtForms = artFormSlugs.map((form) => ({
-    label: form.name,
-    href: `/shop/${form.slug}`,
-  }));
+  // The nav is driven by the same admin-managed rows as the homepage, so
+  // renaming an art form in /admin/content updates the menu too.
+  let navArtForms: { label: string; href: string }[] = [];
+  let navCollections: { label: string; href: string }[] = [];
+  try {
+    const [forms, featured] = await Promise.all([
+      listArtForms(),
+      listFeaturedCategories(),
+    ]);
+    navArtForms = forms.map((form) => ({
+      label: form.name,
+      href: `/shop/${form.slug}`,
+    }));
+    navCollections = featured.map((category) => ({
+      label: category.label,
+      href: category.href,
+    }));
+  } catch {
+    navArtForms = artFormSlugs.map((form) => ({
+      label: form.name,
+      href: `/shop/${form.slug}`,
+    }));
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -77,7 +104,7 @@ export default async function RootLayout({
         <Header
           platformMode={getPlatformModeFromEnv()}
           artForms={navArtForms}
-          collections={collections}
+          collections={navCollections.length > 0 ? navCollections : fallbackCollections}
         />
         {children}
         <Footer />

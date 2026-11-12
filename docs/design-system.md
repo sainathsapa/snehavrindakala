@@ -263,3 +263,47 @@ Two rules that keep the storefront honest when the catalogue is thin:
 - `aria-expanded` + `aria-controls` on the trigger; the panel is a `ul` of links.
 - On mobile the sub-links are listed inline under their parent instead of behind
   a toggle — an extra tap to reveal five links is friction for no gain.
+
+## 12. Decorative motifs
+
+Four shared marks carry the hand-made language. All live in
+`components/ornaments.tsx`; use these rather than drawing new ones per page.
+
+| Motif | Component | Where |
+|---|---|---|
+| Sprig + vertical rule | `BotanicalRule` | Opens editorial sections |
+| Kalam loop border | `KalamBorder` | Hairline under the header, above the footer, bottom of artwork bands |
+| Paisley field | `PaisleyField` | Faint watermark behind listing grids (`text-terracotta/[0.05]`) |
+| Mandala rosette | `MandalaField` | Over dark bands and the burgundy panel (gold at `/15`–`/25`) |
+
+Rules: every one is `aria-hidden` and purely decorative. Backgrounds stay at or
+below 7% opacity on parchment and 25% on dark, so they never compete with text
+or artwork. None of them animate.
+
+## 13. Admin-managed content
+
+Hero slides, art forms and featured categories are **editorial, not derived**.
+They are stored in Postgres (`lib/site-content.ts`) and edited only at
+`/admin/content`.
+
+- Tables: `site_hero_slide`, `site_art_form`, `site_featured_category`. Each has
+  `position` for ordering and `published` for visibility.
+- `ensureSeeded()` creates and seeds them once. Seeding only runs on an **empty**
+  table, so a redeploy never overwrites admin edits.
+- Public reads fall back to the built-in defaults if Postgres is unreachable, so
+  the homepage always renders.
+- Writes `revalidatePath("/")`, `/art-forms` and `/admin/content`, so an edit
+  appears on the storefront immediately.
+- The nav menus are built from the same rows, so renaming an art form in the
+  admin updates the header too.
+
+## 14. No admin links in the storefront
+
+The admin panel must never be linked from the public site. `/admin` is not in
+the header, footer or any page body — operators navigate to it directly, and the
+middleware gates it. Do not add a shortcut "for convenience"; the panel is
+CRM-adjacent and exposing a door to it invites probing.
+
+Related: `Artists` and `Sell` are `platformOnly` and are hidden entirely in
+single-brand mode, where the house is the only seller and both would be dead
+ends.

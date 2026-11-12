@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { medusa } from "@/lib/medusa";
 import { artFormSlugs } from "@/lib/slugs";
-import { SectionIntro } from "@/components/ornaments";
+import { listArtForms } from "@/lib/site-content";
+import { SectionIntro, MandalaField, KalamBorder } from "@/components/ornaments";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,24 @@ export default async function ArtFormsPage() {
     console.error("Failed to load product categories from Medusa", err);
   }
 
+  // Admin-managed art forms take priority: they are the curated list the shop
+  // owner edits at /admin/content, so they define what this page shows.
+  let managed: ArtFormCard[] = [];
+  try {
+    managed = (await listArtForms()).map((form) => ({
+      key: `managed-${form.id}`,
+      name: form.name,
+      description: form.description,
+      href: `/shop/${form.slug}`,
+      image: form.image || null,
+    }));
+  } catch {
+    // Fall through to the catalogue/taxonomy paths below.
+  }
+  if (managed.length > 0) {
+    catalogue = managed;
+  }
+
   // Merge in the site-wide art-form taxonomy. The catalogue currently holds
   // only a couple of categories, and this page previously swapped wholesale
   // between "live categories" and "the full list" — so as soon as one category
@@ -99,6 +118,8 @@ export default async function ArtFormsPage() {
           className="object-cover object-right"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#2A120C]/95 via-[#2A120C]/75 to-[#2A120C]/25" />
+        <MandalaField className="pointer-events-none absolute -right-12 top-1/2 hidden h-72 w-72 -translate-y-1/2 text-haldi/20 md:block" />
+        <KalamBorder className="absolute inset-x-0 bottom-0 text-haldi/35" />
 
         <div className="relative mx-auto flex min-h-[240px] max-w-[1400px] flex-col justify-center px-5 py-12 sm:px-8 lg:min-h-[300px] lg:px-12">
           <h1 className="font-serif text-[40px] font-semibold leading-tight tracking-tight text-rang-paper sm:text-[52px]">

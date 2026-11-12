@@ -131,3 +131,70 @@ export function ArrowLink({
     </a>
   );
 }
+
+/* ---------------------------- decorative motifs ----------------------------- */
+
+/** A row of hand-drawn kalam-style loops, used as a hairline divider. */
+export function KalamBorder({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 1200 12"
+      preserveAspectRatio="none"
+      fill="none"
+      aria-hidden="true"
+      height="12"
+    >
+      <path
+        d="M0 6c40-6 80 6 120 6s80-12 120-12 80 12 120 12 80-12 120-12 80 12 120 12 80-12 120-12 80 12 120 12 80-12 120-12 80 12 120 12 80-12 120-12 80 12 120 12"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
+    </svg>
+  );
+}
+
+/** A repeating paisley field, faint enough to sit behind text. */
+export function PaisleyField({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 200 200" fill="none" aria-hidden="true">
+      {[
+        [40, 40],
+        [140, 40],
+        [40, 140],
+        [140, 140],
+      ].map(([x, y]) => (
+        <path
+          key={`${x}-${y}`}
+          d={`M${x} ${y + 26}c-14 0-26-12-26-26 0-12 8-22 20-26 10-3 20 2 24 11 3 8-1 17-9 20-6 2-12-1-14-6`}
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** A gold mandala rosette, used over dark bands. */
+export function MandalaField({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 200 200" fill="none" aria-hidden="true">
+      <circle cx="100" cy="100" r="76" stroke="currentColor" strokeWidth="1" />
+      <circle cx="100" cy="100" r="56" stroke="currentColor" strokeWidth="1" />
+      <circle cx="100" cy="100" r="20" stroke="currentColor" strokeWidth="1" />
+      {Array.from({ length: 16 }).map((_, i) => (
+        <ellipse
+          key={i}
+          cx="100"
+          cy="34"
+          rx="7"
+          ry="20"
+          stroke="currentColor"
+          strokeWidth="1"
+          transform={`rotate(${i * 22.5} 100 100)`}
+        />
+      ))}
+    </svg>
+  );
+}

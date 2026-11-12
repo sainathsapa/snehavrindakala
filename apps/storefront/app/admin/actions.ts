@@ -1,6 +1,22 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
+import {
+  listAllHeroSlides,
+  listAllArtForms,
+  listAllFeaturedCategories,
+  createHeroSlide,
+  updateHeroSlide,
+  deleteHeroSlide,
+  createArtForm,
+  updateArtForm,
+  deleteArtForm,
+  createFeaturedCategory,
+  updateFeaturedCategory,
+  deleteFeaturedCategory,
+  reorder,
+} from "@/lib/site-content";
 import { medusa } from "@/lib/medusa";
 import { AUTH_COOKIE } from "@/lib/auth";
 import {
@@ -261,4 +277,110 @@ export async function setPlatformModeAction(mode: string): Promise<void> {
   if (!ok) return;
   const validMode = mode === "platform" ? "platform" : "single-brand";
   await setPlatformMode(validMode);
+}
+/* ---------------------------- storefront content --------------------------- */
+
+export async function listStorefrontContent() {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  const [slides, artForms, categories] = await Promise.all([
+    listAllHeroSlides(),
+    listAllArtForms(),
+    listAllFeaturedCategories(),
+  ]);
+  return { slides, artForms, categories };
+}
+
+export async function saveHeroSlideAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  const id = Number(formData.get("id") || 0);
+  const input = {
+    eyebrow: String(formData.get("eyebrow") || ""),
+    title: String(formData.get("title") || "").trim(),
+    tagline: String(formData.get("tagline") || ""),
+    cta_label: String(formData.get("cta_label") || ""),
+    cta_href: String(formData.get("cta_href") || "/shop"),
+    image: String(formData.get("image") || ""),
+    published: formData.get("published") === "on",
+  };
+  if (!input.title) throw new Error("A slide needs a title.");
+
+  if (id) await updateHeroSlide(id, input);
+  else await createHeroSlide(input);
+  revalidatePath("/");
+  revalidatePath("/admin/content");
+}
+
+export async function deleteHeroSlideAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  await deleteHeroSlide(Number(formData.get("id")));
+  revalidatePath("/");
+  revalidatePath("/admin/content");
+}
+
+export async function saveArtFormAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  const id = Number(formData.get("id") || 0);
+  const input = {
+    slug: String(formData.get("slug") || "").trim().toLowerCase(),
+    name: String(formData.get("name") || "").trim(),
+    description: String(formData.get("description") || ""),
+    image: String(formData.get("image") || ""),
+    published: formData.get("published") === "on",
+  };
+  if (!input.slug || !input.name) throw new Error("An art form needs a name and slug.");
+
+  if (id) await updateArtForm(id, input);
+  else await createArtForm(input);
+  revalidatePath("/");
+  revalidatePath("/art-forms");
+  revalidatePath("/admin/content");
+}
+
+export async function deleteArtFormAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  await deleteArtForm(Number(formData.get("id")));
+  revalidatePath("/");
+  revalidatePath("/art-forms");
+  revalidatePath("/admin/content");
+}
+
+export async function saveFeaturedCategoryAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  const id = Number(formData.get("id") || 0);
+  const input = {
+    label: String(formData.get("label") || "").trim(),
+    href: String(formData.get("href") || "").trim(),
+    image: String(formData.get("image") || ""),
+    published: formData.get("published") === "on",
+  };
+  if (!input.label || !input.href) throw new Error("A category needs a label and link.");
+
+  if (id) await updateFeaturedCategory(id, input);
+  else await createFeaturedCategory(input);
+  revalidatePath("/");
+  revalidatePath("/admin/content");
+}
+
+export async function deleteFeaturedCategoryAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  await deleteFeaturedCategory(Number(formData.get("id")));
+  revalidatePath("/");
+  revalidatePath("/admin/content");
+}
+
+export async function reorderContentAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  const table = String(formData.get("table")) as
+    | "site_hero_slide"
+    | "site_art_form"
+    | "site_featured_category";
+  const id = Number(formData.get("id"));
+  const direction = String(formData.get("direction")) === "up" ? "up" : "down";
+  if (!["site_hero_slide", "site_art_form", "site_featured_category"].includes(table)) {
+    throw new Error("Unknown list.");
+  }
+  await reorder(table, id, direction);
+  revalidatePath("/");
+  revalidatePath("/art-forms");
+  revalidatePath("/admin/content");
 }

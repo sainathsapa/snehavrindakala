@@ -210,3 +210,54 @@ test.describe("accessibility basics", () => {
     }
   });
 });
+
+test.describe("storefront chrome", () => {
+  test("no admin link is exposed anywhere in the storefront", async ({ page }) => {
+    // The admin panel is reachable by direct URL only. A visible door to it
+    // invites probing, so no public page may link to /admin.
+    for (const path of ["/", "/shop", "/art-forms", "/about"]) {
+      await page.goto(path);
+      await expect(page.locator('a[href^="/admin"]')).toHaveCount(0);
+    }
+  });
+
+  test("artists and sell are hidden in single-brand mode", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name === "mobile",
+      "The desktop nav is hidden on mobile."
+    );
+    // Both are marketplace concepts; in single-brand mode the house is the only
+    // seller and the pages would be dead ends.
+    await page.goto("/");
+    const nav = page.locator("header nav");
+    // Discover and Art Forms are dropdown triggers, so they are buttons, not
+    // links. Assert on one of those to prove the nav itself rendered.
+    await expect(nav.getByRole("button", { name: "Discover" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Artists" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Sell" })).toHaveCount(0);
+  });
+
+  test("the art forms menu opens, lists art forms and closes on Escape", async ({
+    page,
+  }, testInfo) => {
+    // The desktop nav is hidden below lg, so this behaviour only exists wide.
+    test.skip(
+      testInfo.project.name === "mobile",
+      "Desktop nav is hidden on mobile; the sheet lists art forms inline."
+    );
+    await page.goto("/");
+    const trigger = page.getByRole("button", { name: /art forms/i });
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+    // Admin-managed rows drive this list, so it must contain real entries.
+    const panel = page.locator("#nav-menu-artforms");
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole("link").first()).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(panel).toHaveCount(0);
+  });
+});

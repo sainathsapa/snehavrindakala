@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { MandalaField, KalamBorder } from "./ornaments";
 
 export function Footer() {
   const pathname = usePathname();
@@ -11,8 +12,12 @@ export function Footer() {
   }
 
   return (
-    <footer className="mt-auto border-t border-sand-border bg-rang-paper">
-      <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12 py-14">
+    <footer className="relative mt-auto border-t border-sand-border bg-rang-paper">
+      {/* Woven border and a faint rosette keep the footer in the same visual
+          language as the editorial bands above it. */}
+      <KalamBorder className="w-full text-terracotta/30" />
+      <MandalaField className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 text-terracotta/[0.06]" />
+      <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12 py-14">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
           <div className="col-span-2 md:col-span-1">
             <span className="flex items-center gap-3">

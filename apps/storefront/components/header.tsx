@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@snehavrinda-kala/ui";
 import { CartCount } from "./cart-count";
+import { KalamBorder } from "./ornaments";
 
 /**
  * Navigation mirrors the brand reference: a single centred row of restrained
@@ -14,7 +15,9 @@ import { CartCount } from "./cart-count";
 const navLinks = [
   { label: "Discover", href: "/shop", menu: "shop" as const },
   { label: "Art Forms", href: "/art-forms", menu: "artforms" as const },
-  { label: "Artists", href: "/artists" },
+  // Artists only exists in marketplace mode. In single-brand mode SnehaVrinda
+  // Kala is the only seller, so the directory would be empty.
+  { label: "Artists", href: "/artists", platformOnly: true },
   { label: "Custom Art", href: "/custom-art" },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody
   // to sell on the platform, so the page would be a dead end.
@@ -36,7 +39,7 @@ export function Header({
 }: {
   platformMode?: "platform" | "single-brand";
   artForms?: { label: string; href: string }[];
-  collections?: { name: string; count: number }[];
+  collections?: { label: string; href: string }[];
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -181,13 +184,8 @@ export function Header({
                   ? artForms
                   : link.menu === "shop"
                     ? collections.map((collection) => ({
-                        label: collection.name,
-                        href: `/shop/${collection.name
-                          .toLowerCase()
-                          .replace(/&/g, "and")
-                          .replace(/[^a-z0-9]+/g, "-")
-                          .replace(/^-|-$/g, "")}`,
-                        meta: `${collection.count} piece${collection.count === 1 ? "" : "s"}`,
+                        label: collection.label,
+                        href: collection.href,
                       }))
                     : [];
 
@@ -349,14 +347,6 @@ export function Header({
             </Link>
 
             <Link
-              href="/admin"
-              aria-label="Admin panel"
-              className="hidden text-deep-ink/75 transition-colors hover:text-kumkum lg:block"
-            >
-              <Icon name="lock" size={19} />
-            </Link>
-
-            <Link
               href="/cart"
               aria-label="Cart"
               className="relative text-deep-ink/75 transition-colors hover:text-kumkum"
@@ -431,6 +421,7 @@ export function Header({
           </div>
         )}
       </div>
+      <KalamBorder className="w-full text-terracotta/25" />
     </header>
   );
 }

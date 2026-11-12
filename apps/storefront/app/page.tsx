@@ -1,94 +1,117 @@
 import Link from "next/link";
 import Image from "next/image";
-import { artFormSlugs } from "@/lib/slugs";
-import { ArrowLink, SectionIntro } from "@/components/ornaments";
+import {
+  ArrowLink,
+  SectionIntro,
+  BotanicalRule,
+  KalamBorder,
+  PaisleyField,
+  MandalaField,
+} from "@/components/ornaments";
 import { listCatalogue } from "@/lib/catalogue";
 import { formatPrice } from "@/lib/medusa";
+import {
+  listHeroSlides,
+  listArtForms,
+  listFeaturedCategories,
+} from "@/lib/site-content";
 
-const artForms = artFormSlugs.map((form) => ({
-  name: form.name,
-  description: form.description,
-  href: `/shop/${form.slug}`,
-  // Art-form SVGs are named after the short slug (painting.svg, folk.svg), not
-  // the slugified display name — slugifying "Painting & Drawing" produced
-  // "painting-and-drawing.svg", which does not exist, so every category card
-  // rendered as a broken image.
-  image: `/images/artforms/${form.slug}.jpg`,
-}));
-
-/** The five forms the reference features in its first row. */
-const featuredForms = artForms.slice(0, 5);
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  // Real pieces, not art-form swatches: this section is "Curated for You", and
-  // showing category artwork here meant the same six images appeared twice on
-  // one page.
-  let featuredProducts: { handle: string; title: string; price: number | null; image: string }[] = [];
-  try {
-    const catalogue = await listCatalogue();
-    featuredProducts = catalogue.slice(0, 4);
-  } catch {
-    // A homepage must render even if the catalogue is unreachable.
-  }
+  // Everything curated lives in Postgres and is edited at /admin/content.
+  const [slides, artForms, categories, catalogue] = await Promise.all([
+    listHeroSlides(),
+    listArtForms(),
+    listFeaturedCategories(),
+    listCatalogue().catch(() => []),
+  ]);
+
+  const hero = slides[0];
+  const featuredProducts = catalogue.slice(0, 4);
+  const featuredForms = artForms.slice(0, 5);
 
   return (
     <main className="bg-rang-paper">
       {/* ── Hero ──────────────────────────────────────────────────────────
-          Full-bleed artwork with the headline set over the pale left side, as
-          in the reference: no card, no border — the illustration is the section. */}
-      <section className="relative min-h-[520px] overflow-hidden bg-rang-paper lg:min-h-[620px]">
-        <Image
-          src="/images/hero/hero-art.jpg"
-          alt=""
-          aria-hidden="true"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-right"
-        />
-        {/* Widen the pale area behind the copy so text never fights the art. */}
+          Full-bleed artwork with the headline over a pale left gradient, as in
+          the reference: no card, no border — the illustration is the section. */}
+      <section className="relative min-h-[520px] overflow-hidden bg-rang-paper lg:min-h-[640px]">
+        {hero?.image && (
+          <Image
+            src={hero.image}
+            alt=""
+            aria-hidden="true"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-right"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-rang-paper from-30% via-rang-paper/70 via-50% to-transparent to-75% lg:via-rang-paper/45 lg:via-42% lg:to-65%" />
+        <KalamBorder className="absolute inset-x-0 top-0 text-terracotta/40" />
 
-        <div className="relative mx-auto flex max-w-[1400px] flex-col justify-center px-5 py-16 sm:px-8 lg:min-h-[620px] lg:px-12 lg:py-24">
+        <div className="relative mx-auto flex max-w-[1400px] flex-col justify-center px-5 py-16 sm:px-8 lg:min-h-[640px] lg:px-12 lg:py-24">
           <div className="max-w-xl">
+            {hero?.eyebrow && (
+              <p className="mb-4 font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
+                {hero.eyebrow}
+              </p>
+            )}
             <h1 className="font-serif text-[44px] font-semibold leading-[1.05] tracking-tight text-deep-ink sm:text-[60px] lg:text-[76px]">
-              Where
-              <br />
-              Indian Art
-              <br />
-              Comes Alive
+              {hero?.title ?? "Where Indian Art Comes Alive"}
             </h1>
-            <p className="mt-5 font-serif text-lg italic text-muted-ink sm:text-xl">
-              Explore. Experience. Own.
-            </p>
+            {hero?.tagline && (
+              <p className="mt-5 font-serif text-lg italic text-muted-ink sm:text-xl">
+                {hero.tagline}
+              </p>
+            )}
             <Link
-              href="/shop"
+              href={hero?.cta_href || "/shop"}
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-7 py-3.5 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus:ring-2 focus:ring-kumkum focus:ring-offset-2 focus:ring-offset-rang-paper"
             >
-              Begin the Journey
+              {hero?.cta_label || "Begin the Journey"}
               <span aria-hidden="true">→</span>
             </Link>
 
-            <div className="mt-12 flex items-center gap-3 font-sans text-xs text-muted-ink">
-              <span className="font-semibold text-deep-ink">01</span>
-              <span className="h-px w-8 bg-sand-border" aria-hidden="true" />
-              <span>03</span>
-              <span className="ml-2 flex items-center gap-1" aria-hidden="true">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-sand-border text-deep-ink">
-                  ←
+            {/* Slide indicator, only when there is more than one slide. */}
+            {slides.length > 1 && (
+              <div className="mt-12 flex items-center gap-3 font-sans text-xs text-muted-ink">
+                <span className="font-semibold text-deep-ink">01</span>
+                <span className="h-px w-8 bg-sand-border" aria-hidden="true" />
+                <span>{String(slides.length).padStart(2, "0")}</span>
+                <span className="ml-2 flex items-center gap-1" aria-hidden="true">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-sand-border text-deep-ink">
+                    ←
+                  </span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-sand-border text-deep-ink">
+                    →
+                  </span>
                 </span>
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-sand-border text-deep-ink">
-                  →
-                </span>
-              </span>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
+      {/* ── Statement strip ─────────────────────────────────────────────────
+          A short editorial line between the hero and the first row, with the
+          botanical mark that recurs through the references. */}
+      <section className="border-y border-sand-border/60 bg-surface/60 py-10">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-5 sm:px-8 lg:px-12">
+          <BotanicalRule className="hidden shrink-0 text-terracotta sm:flex" />
+          <p className="font-serif text-lg leading-relaxed text-deep-ink sm:text-xl">
+            Every piece here was made by a hand that learned the form from
+            someone. We work directly with makers across India so the story
+            travels with the work.
+          </p>
+        </div>
+      </section>
+
       {/* ── Indian Art Forms ─────────────────────────────────────────────── */}
-      <section className="border-b border-sand-border/60 py-14 lg:py-20">
-        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+      <section className="relative border-b border-sand-border/60 py-14 lg:py-20">
+        <PaisleyField className="pointer-events-none absolute right-0 top-10 hidden h-64 w-64 text-terracotta/[0.07] lg:block" />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid gap-10 lg:grid-cols-[300px_1fr] lg:gap-14">
             <SectionIntro
               eyebrow="Explore"
@@ -106,11 +129,11 @@ export default async function Home() {
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 {featuredForms.map((form) => (
                   <Link
-                    key={form.href}
-                    href={form.href}
+                    key={form.slug}
+                    href={`/shop/${form.slug}`}
                     className="group"
                   >
-                    <div className="relative aspect-square overflow-hidden rounded-sm bg-surface">
+                    <div className="relative aspect-square overflow-hidden rounded-sm bg-surface ring-1 ring-sand-border/50">
                       <Image
                         src={form.image}
                         alt={form.name}
@@ -153,6 +176,7 @@ export default async function Home() {
           className="object-cover opacity-40 lg:w-1/2 lg:opacity-100"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#2A120C]/80 to-[#2A120C] lg:via-[#2A120C]/70" />
+        <MandalaField className="pointer-events-none absolute -right-16 top-1/2 hidden h-80 w-80 -translate-y-1/2 text-haldi/15 md:block" />
 
         <div className="relative mx-auto grid max-w-[1400px] items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-12 lg:py-24">
           <div />
@@ -171,7 +195,7 @@ export default async function Home() {
       </section>
 
       {/* ── Curated for you ──────────────────────────────────────────────── */}
-      <section className="py-14 lg:py-20">
+      <section className="relative py-14 lg:py-20">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid gap-10 lg:grid-cols-[300px_1fr] lg:gap-14">
             <SectionIntro
@@ -188,7 +212,7 @@ export default async function Home() {
                     href={`/products/${product.handle}`}
                     className="group"
                   >
-                    <div className="overflow-hidden rounded-sm bg-surface p-3">
+                    <div className="rounded-sm bg-surface p-3 ring-1 ring-sand-border/40">
                       <div className="relative aspect-square overflow-hidden">
                         <Image
                           src={product.image}
@@ -216,34 +240,60 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Custom art panel ──────────────────────────────────────────────
-          The burgundy promotional panel that closes the reference's first
-          screen, with fine gold line art behind it. */}
-      <section className="pb-16 lg:pb-24">
+      {/* ── Featured categories ─────────────────────────────────────────────
+          Admin-curated shortcuts into the collections, shown as wide artwork
+          bands rather than plain links. */}
+      {categories.length > 0 && (
+        <section className="border-y border-sand-border/60 bg-surface/40 py-14 lg:py-20">
+          <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+            <SectionIntro
+              eyebrow="Collections"
+              title="Browse by collection"
+              align="center"
+            />
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={category.href}
+                  className="group relative block overflow-hidden rounded-sm"
+                >
+                  <div className="relative aspect-[4/5]">
+                    <Image
+                      src={category.image || "/images/artforms/painting.jpg"}
+                      alt={category.label}
+                      fill
+                      sizes="(max-width: 640px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#2A120C]/85 via-[#2A120C]/20 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <h3 className="font-serif text-lg font-semibold text-rang-paper">
+                      {category.label}
+                    </h3>
+                    <span className="mt-1 inline-flex items-center gap-1 font-sans text-xs text-rang-paper/80">
+                      Explore
+                      <span
+                        className="transition-transform duration-200 group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Custom art panel ────────────────────────────────────────────── */}
+      <section className="py-16 lg:py-24">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="relative overflow-hidden rounded-lg bg-kumkum px-6 py-12 sm:px-12 lg:px-16 lg:py-16">
-            <svg
-              className="pointer-events-none absolute -right-6 -top-8 h-56 w-56 text-haldi/20 lg:h-72 lg:w-72"
-              viewBox="0 0 200 200"
-              fill="none"
-              aria-hidden="true"
-            >
-              <circle cx="100" cy="100" r="76" stroke="currentColor" strokeWidth="1" />
-              <circle cx="100" cy="100" r="56" stroke="currentColor" strokeWidth="1" />
-              {Array.from({ length: 12 }).map((_, i) => (
-                <ellipse
-                  key={i}
-                  cx="100"
-                  cy="30"
-                  rx="9"
-                  ry="24"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  transform={`rotate(${i * 30} 100 100)`}
-                />
-              ))}
-            </svg>
-
+            <MandalaField className="pointer-events-none absolute -right-6 -top-8 h-56 w-56 text-haldi/25 lg:h-72 lg:w-72" />
             <div className="relative max-w-md">
               <h2 className="font-serif text-3xl font-semibold leading-tight text-rang-paper sm:text-4xl">
                 Custom Art Requests
@@ -264,9 +314,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── The Art of India ────���───────────────────────────────────────────
-          The illustrated panel that closes the reference's second page: full
-          artwork behind, a short statement and one pill action over it. */}
+      {/* ── The Art of India ─────────────────────────────────────────────── */}
       <section className="pb-16 lg:pb-24">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="relative overflow-hidden rounded-lg">
@@ -281,6 +329,7 @@ export default async function Home() {
               />
             </div>
             <div className="absolute inset-0 bg-gradient-to-r from-[#2A120C]/90 via-[#2A120C]/60 to-transparent" />
+            <KalamBorder className="absolute inset-x-0 bottom-0 text-haldi/40" />
             <div className="absolute inset-0 flex items-center">
               <div className="max-w-md px-6 sm:px-12">
                 <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-haldi">

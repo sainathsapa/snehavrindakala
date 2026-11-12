@@ -36,6 +36,9 @@ COPY apps/storefront ./apps/storefront
 COPY packages/ui ./packages/ui
 COPY packages/types ./packages/types
 COPY packages/config-tailwind ./packages/config-tailwind
+# Documentation ships with the app so the design system is readable from the
+# running container, not only from a developer checkout.
+COPY docs ./docs
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
@@ -63,6 +66,7 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./apps/storefront/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/public ./apps/storefront/public
+COPY --from=builder --chown=nextjs:nodejs /app/docs ./docs
 
 USER nextjs
 
