@@ -100,7 +100,10 @@ export function CheckoutClient({
         setCompleting(false);
         return;
       }
-      router.push(`/order/${body.order_id}?paid=1`);
+      // The token is what lets a guest read their own order without a session.
+      const params = new URLSearchParams({ paid: "1" });
+      if (body.order_token) params.set("t", body.order_token);
+      router.push(`/order/${body.order_id}?${params.toString()}`);
     } catch {
       setError(
         "Your payment went through but the order could not be created. Please contact us with your payment ID."

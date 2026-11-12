@@ -16,6 +16,8 @@ import crypto from "crypto";
 import { medusa } from "@/lib/medusa";
 import { getAdminOrder } from "@/lib/admin";
 import { createShipmentForOrder } from "@/lib/shipping/create-order-shipment";
+import { issueOrderToken } from "@/lib/order-token";
+import { sendOrderConfirmation } from "@/lib/email";
 
 const RAZORPAY_KEY_ID =
   process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "";
@@ -142,9 +144,11 @@ export async function POST(req: Request) {
 
     let shipment: any = null;
     let shippingError: string | null = null;
+    let fullOrder: any = order;
     try {
-      const { order: fullOrder } = await getAdminOrder(order.id);
-      shipment = await createShipmentForOrder(fullOrder);
+      const result = await getAdminOrder(order.id);
+      fullOrder = result.order;
+      shipment = await createShipmentForOrder(result.order);
     } catch (err) {
       console.error("Shipment creation failed:", err);
       shippingError =
@@ -153,12 +157,29 @@ export async function POST(req: Request) {
           : "Shipment could not be created. You can retry from the admin panel.";
     }
 
+    // Send the confirmation from here as well as from the Medusa subscriber.
+    // Guest checkout is the common path and must not depend on an event that
+    // may fire later, or not at all if the order was already marked paid.
+    let confirmationSent = false;
+    try {
+      confirmationSent = await sendOrderConfirmation(fullOrder);
+    } catch (err) {
+      console.error("Order confirmation email failed:", err);
+    }
+
+    // A guest has no session, so give them a signed link to their own order.
+    // This is what lets the confirmation page work without exposing the order
+    // to anyone who guesses an id.
+    const orderToken = issueOrderToken(order.id);
+
     return NextResponse.json({
       ok: true,
       order_id: order.id,
       display_id: order.display_id,
       status: order.status,
       payment_status: order.payment_status,
+      order_token: orderToken,
+      confirmation_email_sent: confirmationSent,
       shipment,
       shipping_error: shippingError,
     });
