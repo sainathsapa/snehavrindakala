@@ -15,14 +15,12 @@ const BACKEND_URL = (
   "http://localhost:9000"
 ).replace(/\/+$/, "");
 
+// Never fall back to hard-coded credentials: a missing value must fail noisily
+// in the admin UI instead of silently authenticating as a fixed account.
 const ADMIN_EMAIL =
-  process.env.MEDUSA_ADMIN_EMAIL ||
-  process.env.ADMIN_EMAIL ||
-  "sneha@sainath.com";
+  process.env.MEDUSA_ADMIN_EMAIL || process.env.ADMIN_EMAIL || "";
 const ADMIN_PASSWORD =
-  process.env.MEDUSA_ADMIN_PASSWORD ||
-  process.env.ADMIN_PASSWORD ||
-  "snehalovessainath143";
+  process.env.MEDUSA_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "";
 const PUBLISHABLE_KEY =
   process.env.MEDUSA_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||

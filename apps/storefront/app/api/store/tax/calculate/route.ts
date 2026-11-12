@@ -1,83 +1,41 @@
 /**
- * POST /api/store/tax/calculate - Calculate GST/tax for an order
- * Uses the tax_rate and tax_included settings managed in the admin panel.
+ * POST /api/store/tax/calculate — GST breakdown for a cart amount.
+ *
+ * Single source of truth is `lib/tax.ts`: prices are GST-inclusive and the
+ * home state comes from `SELLER_HOME_STATE`. The previous implementation
+ * hard-coded "MH" as the home state and treated the amount as both paise and
+ * rupees, which produced a wrong IGST split on every out-of-state order.
  */
 
 import { NextResponse } from "next/server";
-
-const DATABASE_URL =
-  process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
-
-async function getTaxSettings() {
-  try {
-    const { Pool } = require("pg");
-    const pool = new Pool({ connectionString: DATABASE_URL });
-    const client = await pool.connect();
-    try {
-      const res = await client.query(
-        "SELECT key, value FROM site_settings WHERE key IN ('tax_rate', 'tax_included')"
-      );
-      const values: Record<string, string> = {};
-      for (const row of res.rows) values[row.key] = row.value;
-      return {
-        rate: Math.max(0, Number(values.tax_rate ?? 0)),
-        included: values.tax_included === "true",
-      };
-    } finally {
-      client.release();
-      pool.end();
-    }
-  } catch {
-    // Settings table may not exist before the admin panel is used.
-    return { rate: 0, included: false };
-  }
-}
+import { getGstRate } from "@/lib/tax-server";
+import { calculateTax } from "@/lib/tax";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { amount, state, customer_gst } = body;
+    const amount = Number(body.amount);
 
-    if (!amount || amount <= 0) {
+    if (!Number.isFinite(amount) || amount < 0) {
       return NextResponse.json(
-        { error: "Valid amount required" },
+        { error: "A valid amount (in paise) is required" },
         { status: 400 }
       );
     }
 
-    const { rate, included } = await getTaxSettings();
-    const rateFraction = rate / 100;
-
-    const amountNum = parseFloat(String(amount));
-    const isInterState = state && state !== "MH";
-
-    // When prices include tax, back the tax out of the total.
-    const taxableBase = included
-      ? amountNum / (1 + rateFraction)
-      : amountNum;
-    const totalTax = included
-      ? amountNum - taxableBase
-      : amountNum * rateFraction;
-
-    const cgst = isInterState ? 0 : totalTax / 2;
-    const sgst = isInterState ? 0 : totalTax / 2;
-    const igst = isInterState ? totalTax : 0;
-    const total = included ? amountNum : amountNum + totalTax;
+    const breakdown = calculateTax(amount, body.state, {
+      gstRate: getGstRate(),
+      homeState: process.env.SELLER_HOME_STATE,
+    });
 
     return NextResponse.json({
-      amount: amountNum,
-      tax_rate: rate,
-      tax_included: included,
-      taxable_amount: Math.round(taxableBase * 100) / 100,
-      cgst: Math.round(cgst * 100) / 100,
-      sgst: Math.round(sgst * 100) / 100,
-      igst: Math.round(igst * 100) / 100,
-      total_tax: Math.round(totalTax * 100) / 100,
-      total: Math.round(total * 100) / 100,
-      is_inter_state: isInterState,
-      customer_gst: customer_gst || null,
+      ...breakdown,
+      tax_rate: breakdown.gst_rate,
+      tax_included: true,
+      customer_gst: body.customer_gst || null,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Tax calculation failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

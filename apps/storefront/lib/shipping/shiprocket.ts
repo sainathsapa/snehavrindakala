@@ -19,12 +19,18 @@ export const SHIPROCKET_PICKUP_LOCATION =
 
 let tokenCache: { token: string; expiresAt: number } | null = null;
 
-const SHIPROCKET_EMAIL =
-  process.env.SHIPROCKET_EMAIL || "info.djsai@gmail.com";
-const SHIPROCKET_PASSWORD =
-  process.env.SHIPROCKET_PASSWORD || "HyEf2Kna1Zg@Uusn^ErGOv#Q5Y&LlVw#";
+// Credentials are read from the environment only. A hard-coded fallback here
+// would ship a live account password inside the build artifact.
+const SHIPROCKET_EMAIL = process.env.SHIPROCKET_EMAIL || "";
+const SHIPROCKET_PASSWORD = process.env.SHIPROCKET_PASSWORD || "";
 
 async function getAuthToken(): Promise<string> {
+  if (!SHIPROCKET_EMAIL || !SHIPROCKET_PASSWORD) {
+    throw new Error(
+      "Shiprocket is not configured. Set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD."
+    );
+  }
+
   const now = Date.now();
   if (tokenCache && now < tokenCache.expiresAt) {
     return tokenCache.token;
