@@ -101,6 +101,7 @@ export default async function ShopPage({
                   "/images/product-placeholder.svg"
                 }
                 isNew={product.is_new}
+                category={product.category}
               />
             ))}
           </div>

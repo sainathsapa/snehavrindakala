@@ -10,6 +10,7 @@ interface ProductCardProps {
   stockType: string;
   image: string;
   isNew?: boolean;
+  category?: { id: string; name: string; handle?: string } | null;
 }
 
 const stockLabels: Record<string, string> = {
@@ -26,6 +27,7 @@ export function ProductCard({
   stockType,
   image,
   isNew = false,
+  category,
 }: ProductCardProps) {
   const hasImage = Boolean(image);
 
@@ -61,7 +63,7 @@ export function ProductCard({
           <h3 className="text-lg font-serif font-semibold text-deep-ink leading-tight">
             {title}
           </h3>
-          <p className="mt-1 text-xs text-muted-ink font-sans">{artist}</p>
+          <p className="mt-1 text-xs text-muted-ink font-sans">{artist}{category ? ` • ${category.name}` : ""}</p>
         </Link>
         <div className="mt-3 flex items-baseline gap-2">
           <span className="text-lg font-sans font-bold text-deep-ink">
