@@ -96,20 +96,28 @@ export default async function AccountPage() {
                         <span className="font-medium text-deep-ink">{order.display_id ?? order.id}</span>
                         <Badge variant="outline">{order.status ?? "processing"}</Badge>
                       </div>
-                      <div className="flex items-center justify-between text-sm text-muted-ink font-sans">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-ink font-sans">
                         <span>
                           {order.items?.length ?? 0} item
                           {(order.items?.length ?? 0) === 1 ? "" : "s"}
                         </span>
                         <span>{formatPrice(order.total, order.currency_code)}</span>
-                      <a
-                        href={`/account/returns?order_id=${order.id}`}
-                        className="rounded-md border border-sand-border px-3 py-1 text-xs font-medium text-sindoor hover:bg-sindoor/90 transition-colors"
-                      >
-                        Request return
-                      </a>
-                    </div>
-                  </li>
+                        <div className="flex items-center gap-3">
+                          <Link
+                            href={`/order/${order.id}`}
+                            className="text-xs font-medium text-sindoor hover:underline"
+                          >
+                            View order
+                          </Link>
+                          <Link
+                            href={`/account/returns?order_id=${order.id}`}
+                            className="rounded-md border border-sand-border px-3 py-1 text-xs font-medium text-sindoor hover:bg-sindoor/10 transition-colors"
+                          >
+                            Request return
+                          </Link>
+                        </div>
+                      </div>
+                    </li>
                   ))}
                 </ul>
               )}
