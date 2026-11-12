@@ -2,6 +2,7 @@ import { getCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/medusa";
 import { saveCheckoutDetailsAction } from "@/app/cart/actions";
 import Link from "next/link";
+import { useState } from "react";
 import { CheckoutPayment } from "@/components/checkout-payment";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,9 @@ export default async function CheckoutPage({
   const { saved, error } = await searchParams;
   const cart = await getCart();
   const items = cart?.items ?? [];
+  const [selectedShippingRate, setSelectedShippingRate] = useState<
+    number | undefined
+  >(undefined);
 
   if (items.length === 0) {
     return (
@@ -232,21 +236,36 @@ export default async function CheckoutPage({
                 </>
               )}
               {shippingRates.length > 0 && (
-                <li className="flex justify-between gap-4 border-b border-sand-border pb-3">
-                  <span className="text-sm text-muted-ink font-sans">
-                    Shipping ({shippingRates[0].courier_name})
-                  </span>
-                  <span className="text-sm text-deep-ink font-sans whitespace-nowrap">
-                    {shippingRates[0].rate === 0 ? "FREE" : `₹${shippingRates[0].rate / 100}`}
-                  </span>
-                </li>
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-ink font-sans">
+                    Available shipping options:
+                  </p>
+                  <select
+                    onChange={(e) => setSelectedShippingRate(
+                      Number(e.target.value)
+                    )}
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                  >
+                    <option value={0}>— Select shipping rate —</option>
+                    {shippingRates.map((rate, idx) => (
+                      <option
+                        key={idx}
+                        value={rate.rate}
+                      >
+                        {rate.courier_name} • {rate.service_name}
+                        {rate.rate === 0 ? "FREE" : `₹${rate.rate / 100}`}
+                        {rate.expected_delivery && ` • Est. delivery: ${rate.expected_delivery}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
               <li className="flex justify-between font-serif font-semibold text-deep-ink pt-2">
                 <span>Total</span>
                 <span>
                   {formatPrice(
                     (cart?.total ?? 0) +
-                      (shippingRates[0]?.rate ?? 0),
+                      (selectedShippingRate ?? shippingRates[0]?.rate ?? 0),
                     cart?.currency_code
                   )}
                 </span>
