@@ -36,7 +36,9 @@ import {
   PaintedRule,
   Fleuron,
   CornerPeacock,
+  ChapterOpener,
 } from "@/components/editorial";
+import { JaaliField, PaperGrain } from "@/components/grounds";
 import { listCatalogue } from "@/lib/catalogue";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { formatPrice } from "@/lib/medusa";
@@ -215,6 +217,106 @@ export default async function Home() {
           Drawn at the door before sunrise, a kolam welcomes whoever arrives.
           Consider this one drawn for you.
         </p>
+      </section>
+
+      {/* ── Choose your way in ──────────────────────────────────────────────
+          A brief asks Discover to answer "where do I begin?" with several
+          routes rather than one grid. The composition is deliberately uneven —
+          one wide panel that leads with a photograph, then a stack of narrower
+          ones that lead with type — because six identical cards would just be
+          the same grid under a different heading. Each route is a real page:
+          nothing here is a teaser that dead-ends. */}
+      <section className="relative overflow-hidden border-b border-sand-border/60 py-16 lg:py-24">
+        <JaaliField style={{ opacity: 0.4 }} />
+        <PaperGrain />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <ChapterOpener
+            chapter="I"
+            eyebrow="Where to begin"
+            title="Six ways into the house"
+            standfirst="There is no correct order. Walk in through the traditions, a region, a colour, or let the collection surprise you."
+            className="mb-12 lg:mb-16"
+          />
+
+          <div className="grid gap-5 lg:grid-cols-12 lg:gap-6">
+            {/* The lead route: wide, image-first. */}
+            <Link
+              href="/art-forms"
+              className="group relative col-span-1 flex min-h-[280px] flex-col justify-end overflow-hidden bg-[#2A120C] p-7 lg:col-span-7 lg:min-h-[380px] lg:p-9"
+            >
+              {featuredForms[0]?.image && (
+                <img
+                  src={featuredForms[0].image}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full object-cover opacity-60 transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05] group-hover:opacity-75"
+                />
+              )}
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 bg-gradient-to-t from-[#2A120C] via-[#2A120C]/55 to-transparent"
+              />
+              <div className="relative">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-haldi">
+                  By tradition
+                </p>
+                <h3 className="mt-3 font-serif text-3xl font-semibold leading-[1.1] text-rang-paper sm:text-[42px]">
+                  Explore by art form
+                </h3>
+                <p className="mt-3 max-w-md font-sans text-sm leading-relaxed text-rang-paper/75">
+                  Madhubani, Warli, Pattachitra, Gond, Kalamkari and more — each
+                  with its own language of line, colour and meaning.
+                </p>
+                <span className="mt-5 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-haldi">
+                  Begin
+                  <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </span>
+              </div>
+            </Link>
+
+            {/* The narrower routes: type-first, stacked. */}
+            <div className="col-span-1 grid gap-5 lg:col-span-5 lg:gap-6">
+              {[
+                {
+                  href: "/learn",
+                  eyebrow: "By story",
+                  title: "Read the traditions",
+                  copy: "What the words mean, what the materials are, how the forms came to exist.",
+                },
+                {
+                  href: "/shop",
+                  eyebrow: "By the work",
+                  title: "See what is available",
+                  copy: "Every piece hand-made, every listing naming its maker.",
+                },
+                {
+                  href: "/journal",
+                  eyebrow: "Unexpected",
+                  title: "Wander into the journal",
+                  copy: "Essays on pigment, process and the people behind the work.",
+                },
+              ].map((route) => (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  className="group flex flex-col justify-center border border-sand-border/70 bg-surface/70 p-6 transition-colors hover:border-terracotta/40 hover:bg-surface lg:p-7"
+                >
+                  <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-terracotta">
+                    {route.eyebrow}
+                  </p>
+                  <h3 className="mt-2 font-serif text-xl font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum sm:text-2xl">
+                    {route.title}
+                  </h3>
+                  <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-muted-ink">
+                    {route.copy}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── Indian Art Forms ─────────────────────────────────────────────── */}
@@ -670,6 +772,61 @@ export default async function Home() {
           >
             Request a piece
           </Link>
+        </div>
+      </section>
+
+      {/* ── Continue the journey ─────────────────────────────────────────────
+          A brief is firm that a page must not end at a call to action. Buying is
+          one way to leave; understanding is another, and it is the one that
+          brings people back. These three doors take the visitor sideways into
+          the rest of the house instead of out of it. */}
+      <section className="relative overflow-hidden border-t border-sand-border/60 bg-surface/50">
+        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <p className="py-10 text-center font-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-terracotta">
+            Continue the journey
+          </p>
+          <div className="grid border-t border-sand-border/60 sm:grid-cols-3">
+            {[
+              {
+                href: "/art-forms",
+                eyebrow: "The traditions",
+                title: "Every art form has a language",
+              },
+              {
+                href: "/learn",
+                eyebrow: "The reference",
+                title: "What the words and materials mean",
+              },
+              {
+                href: "/about",
+                eyebrow: "The studio",
+                title: "Who makes this, and why",
+              },
+            ].map((door, i) => (
+              <Link
+                key={door.href}
+                href={door.href}
+                className={`group flex flex-col justify-between gap-8 px-1 py-9 transition-colors hover:bg-surface sm:px-7 ${
+                  i > 0 ? "border-t border-sand-border/60 sm:border-l sm:border-t-0" : ""
+                }`}
+              >
+                <div>
+                  <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-muted-ink/70">
+                    {door.eyebrow}
+                  </p>
+                  <h3 className="mt-2 font-serif text-xl font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum">
+                    {door.title}
+                  </h3>
+                </div>
+                <span
+                  aria-hidden="true"
+                  className="text-lg text-terracotta transition-transform duration-300 group-hover:translate-x-1"
+                >
+                  →
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
     </main>
