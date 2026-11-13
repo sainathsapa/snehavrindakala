@@ -609,27 +609,61 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── Custom art panel ────────────────────────────────────────────── */}
-      <section className="py-16 lg:py-24">
-        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <div className="relative overflow-hidden rounded-lg bg-kumkum px-6 py-12 sm:px-12 lg:px-16 lg:py-16">
-            <MandalaField className="pointer-events-none absolute -right-6 -top-8 h-56 w-56 text-haldi/25 lg:h-72 lg:w-72" />
-            <div className="relative max-w-md">
-              <h2 className="font-serif text-3xl font-semibold leading-tight text-rang-paper sm:text-4xl">
-                Custom Art Requests
-              </h2>
-              <p className="mt-3 font-sans text-small text-rang-paper/80">
-                Have an idea? Let&apos;s create it together — portraits,
-                paintings, décor and event artwork made to order.
-              </p>
-              <Link
-                href="/custom-art"
-                className="mt-7 inline-flex items-center gap-2 rounded-full bg-rang-paper px-6 py-3 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-white"
-              >
-                Let&apos;s Create
-                <span aria-hidden="true">→</span>
-              </Link>
+      {/* ── Custom art panel ───────────────────────────────────────────────
+          This used to be a second full-width coloured banner, directly above
+          another full-width photographic one. Two identical slabs in a row is
+          exactly the repeated-UI pattern to avoid, so the commission is set
+          differently: a split spread with the ornament carried in a framed
+          panel rather than behind type. The commission is a conversation, so
+          it reads as an invitation with a footnote, not a billboard. */}
+      <section className="relative overflow-hidden py-16 lg:py-24">
+        <JaaliField style={{ opacity: 0.35 }} />
+        <PaperGrain />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+            <div className="relative overflow-hidden bg-kumkum px-7 py-11 sm:px-11 lg:px-14 lg:py-14">
+              <MandalaField className="pointer-events-none absolute -right-10 -top-10 h-52 w-52 text-haldi/20 lg:h-64 lg:w-64" />
+              <div className="relative">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-haldi">
+                  Commission
+                </p>
+                <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight text-rang-paper sm:text-[40px]">
+                  Custom Art Requests
+                </h2>
+                <p className="mt-3 max-w-md font-sans text-small leading-relaxed text-rang-paper/80">
+                  Have an idea? Let&apos;s create it together — portraits,
+                  paintings, décor and event artwork made to order.
+                </p>
+                <Link
+                  href="/custom-art"
+                  className="mt-7 inline-flex items-center gap-2 rounded-full bg-rang-paper px-6 py-3 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-white"
+                >
+                  Let&apos;s Create
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
             </div>
+
+            {/* The steps, as a numbered margin note rather than another card. */}
+            <ol className="space-y-5">
+              {[
+                ["Share the idea", "A sentence is enough to begin. A reference helps."],
+                ["Talk it through", "We answer with feasibility, timing and a real quote."],
+                ["Watch it made", "Proofs at each stage, and you approve before dispatch."],
+              ].map(([title, body], i) => (
+                <li key={title} className="flex gap-4 border-b border-sand-border/60 pb-5 last:border-0">
+                  <span className="font-serif text-2xl font-semibold text-terracotta/50 tabular-nums">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <h3 className="font-serif text-lg font-semibold text-deep-ink">{title}</h3>
+                    <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-ink">
+                      {body}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>
