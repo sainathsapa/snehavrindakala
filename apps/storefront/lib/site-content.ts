@@ -349,42 +349,23 @@ async function safeRows<T extends Record<string, any>>(
 /* ------------------------------- public reads ------------------------------ */
 
 export async function listHeroSlides(): Promise<HeroSlide[]> {
-  const rows = await safeRows<HeroSlide>(
+  // Database only. The former hardcoded fallback meant an empty table still
+  // rendered a homepage an editor could not see, change or delete.
+  return safeRows<HeroSlide>(
     "SELECT * FROM site_hero_slide WHERE published ORDER BY position, id"
   );
-  if (rows.length > 0) return rows;
-  return DEFAULT_HERO_SLIDES.map((slide, index) => ({
-    id: index + 1,
-    position: index,
-    published: true,
-    ...slide,
-  }));
 }
 
 export async function listArtForms(): Promise<ArtForm[]> {
-  const rows = await safeRows<ArtForm>(
+  return safeRows<ArtForm>(
     "SELECT * FROM site_art_form WHERE published ORDER BY position, id"
   );
-  if (rows.length > 0) return rows;
-  return DEFAULT_ART_FORMS.map((form, index) => ({
-    id: index + 1,
-    position: index,
-    published: true,
-    ...form,
-  }));
 }
 
 export async function listFeaturedCategories(): Promise<FeaturedCategory[]> {
-  const rows = await safeRows<FeaturedCategory>(
+  return safeRows<FeaturedCategory>(
     "SELECT * FROM site_featured_category WHERE published ORDER BY position, id"
   );
-  if (rows.length > 0) return rows;
-  return DEFAULT_FEATURED_CATEGORIES.map((category, index) => ({
-    id: index + 1,
-    position: index,
-    published: true,
-    ...category,
-  }));
 }
 
 /* ------------------------------- admin writes ------------------------------ */

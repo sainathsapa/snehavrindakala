@@ -17,6 +17,8 @@ interface Product {
   // Medusa keeps the card image in `thumbnail` and the gallery in `images`.
   thumbnail?: string | null;
   images?: { url?: string }[];
+  metadata?: Record<string, unknown> | null;
+  description?: string | null;
 }
 
 interface Category {
@@ -36,6 +38,11 @@ export default function EditProductPage() {
   const [price, setPrice] = useState("0");
   const [currency, setCurrency] = useState("inr");
   const [image, setImage] = useState("");
+  // Maker and stock terms live in product metadata; they are editable here so
+  // an existing work can be re-attributed without touching the database.
+  const [artist, setArtist] = useState("");
+  const [stockType, setStockType] = useState("ready_to_ship");
+  const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
@@ -57,6 +64,8 @@ export default function EditProductPage() {
           currency_code: data.currency_code || "inr",
           created_at: data.created_at || "",
           category_id: data.category_id?.[0]?.id || data.category_id || "",
+          metadata: data.metadata ?? null,
+          description: data.description ?? "",
         };
         setProduct(loaded);
         setTitle(loaded.title);
@@ -65,7 +74,11 @@ export default function EditProductPage() {
         setPrice((loaded.total / 100).toString());
         setCurrency(loaded.currency_code || "inr");
         setCategoryId(loaded.category_id || "");
-        setImage(loaded.thumbnail || loaded.images?.[0]?.url || "");        setLoading(false);
+        setImage(data.thumbnail || data.images?.[0]?.url || "");
+        setArtist((data.metadata?.artist as string) || "");
+        setStockType((data.metadata?.stock_type as string) || "ready_to_ship");
+        setDescription(data.description || "");
+        setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [id]);
@@ -100,6 +113,9 @@ export default function EditProductPage() {
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
           image,
+          artist,
+          stock_type: stockType,
+          description,
         }),
       });
       if (res.ok) {
@@ -157,6 +173,45 @@ export default function EditProductPage() {
                 <div className="max-w-[260px]">
                   <ImageUpload value={image} onChange={setImage} />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Artist
+                  </label>
+                  <input
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value)}
+                    className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Availability
+                  </label>
+                  <select
+                    value={stockType}
+                    onChange={(e) => setStockType(e.target.value)}
+                    className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                  >
+                    <option value="ready_to_ship">Ready to ship</option>
+                    <option value="made_to_order">Made to order</option>
+                    <option value="custom_only">Commission only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                  Description
+                </label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

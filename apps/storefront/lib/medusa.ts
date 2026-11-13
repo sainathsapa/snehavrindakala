@@ -236,7 +236,7 @@ class MedusaClient {
     if (REGION_ID) searchParams.set("region_id", REGION_ID);
     // Store API hides categories by default; request them so product cards,
     // breadcrumbs, and category filters can show real catalog data.
-    searchParams.set("fields", "*categories");
+    searchParams.set("fields", "*categories,*tags");
     if (params.category) {
       searchParams.append("category_id[]", params.category);
     }
@@ -639,6 +639,14 @@ export function getProductPrice(product?: MedusaProduct | null): number | null {
 }
 
 export function getStockType(product?: MedusaProduct | null): string {
+  // The store API does not expose `metadata`, so the admin writes availability
+  // as a `stock:` tag. Reading metadata alone meant this always returned the
+  // default, and an editor changing availability saw nothing happen.
+  const tag = ((product as any)?.tags ?? [])
+    .map((t: any) => (typeof t === "string" ? t : t?.value) ?? "")
+    .find((v: string) => v.startsWith("stock:"));
+  if (tag) return tag.slice("stock:".length);
+
   const metadataValue = product?.metadata?.stock_type;
   if (typeof metadataValue === "string" && metadataValue) {
     return metadataValue;

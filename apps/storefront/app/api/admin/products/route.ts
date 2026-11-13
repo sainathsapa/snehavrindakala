@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
-import { getSystemAdminToken, listAdminProducts } from "@/lib/admin";
+import { getSystemAdminToken, listAdminProducts, resolveProductTagIds } from "@/lib/admin";
 
 async function adminAuthHeader(): Promise<Record<string, string>> {
   const token = await getSystemAdminToken();
@@ -40,8 +40,18 @@ export async function POST(req: Request) {
   }
   try {
     const body = await req.json();
-    const { title, slug, status, total, currency_code, category_id, image } =
-      body;
+    const {
+      title,
+      slug,
+      status,
+      total,
+      currency_code,
+      category_id,
+      image,
+      artist,
+      stock_type,
+      description,
+    } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const productStatus = validStatuses.includes(status) ? status : "draft";
     const amount = Number(total) || 0;
@@ -51,6 +61,23 @@ export async function POST(req: Request) {
       handle: slug || undefined,
       status: productStatus,
     };
+
+    // The store API exposes tags but not metadata, so the maker and availability
+    // are written as tags — that is the only way the storefront can read them.
+    // Tags must exist as their own records first; Medusa rejects inline values.
+    const tagValues: string[] = [];
+    if (typeof artist === "string" && artist.trim()) {
+      tagValues.push(`artist:${artist.trim()}`);
+    }
+    if (typeof stock_type === "string" && stock_type.trim()) {
+      tagValues.push(`stock:${stock_type.trim()}`);
+    }
+    if (tagValues.length > 0) {
+      payload.tags = await resolveProductTagIds(tagValues);
+    }
+    if (typeof description === "string" && description.trim()) {
+      payload.description = description.trim();
+    }
     if (category_id) {
       // Medusa v2 links products to categories through `categories`, not
       // `category_id` (which is only a list-filter query param).

@@ -283,6 +283,45 @@ export async function getAdminProduct(productId: string): Promise<{ product: Adm
   return { ...data, product: normalizeAdminProduct(data.product) };
 }
 
+/**
+ * Resolve `prefix:value` tags to real Medusa tag ids, creating any that are
+ * missing.
+ *
+ * A product update will not accept inline tag values: sending `{value}` is
+ * rejected with "Field 'tags, 0, id' is required", and sending `{id}` for a tag
+ * that does not exist yet fails the same way. The tag has to exist as its own
+ * record first, then be referenced by id.
+ */
+export async function resolveProductTagIds(
+  values: string[]
+): Promise<{ id: string }[]> {
+  if (values.length === 0) return [];
+
+  const listRes = await adminRequest("/admin/product-tags?limit=200");
+  const existing: { id: string; value: string }[] = listRes.ok
+    ? ((await listRes.json()).product_tags ?? [])
+    : [];
+  const byValue = new Map(existing.map((t) => [t.value, t.id]));
+
+  const out: { id: string }[] = [];
+  for (const value of values) {
+    const known = byValue.get(value);
+    if (known) {
+      out.push({ id: known });
+      continue;
+    }
+    const created = await adminRequest("/admin/product-tags", {
+      method: "POST",
+      body: JSON.stringify({ value }),
+    });
+    if (created.ok) {
+      const tag = (await created.json()).product_tag;
+      if (tag?.id) out.push({ id: tag.id });
+    }
+  }
+  return out;
+}
+
 export async function createAdminProduct(data: Record<string, unknown>): Promise<{ product: AdminProduct }> {
   const res = await adminRequest("/admin/products", {
     method: "POST",

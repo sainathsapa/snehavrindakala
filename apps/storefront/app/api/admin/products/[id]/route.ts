@@ -5,7 +5,11 @@
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
-import { getSystemAdminToken, getAdminProduct } from "@/lib/admin";
+import {
+  getSystemAdminToken,
+  getAdminProduct,
+  resolveProductTagIds,
+} from "@/lib/admin";
 
 async function adminFetch(
   backendUrl: string,
@@ -72,8 +76,18 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { title, slug, status, total, currency_code, category_id, image } =
-      body;
+    const {
+      title,
+      slug,
+      status,
+      total,
+      currency_code,
+      category_id,
+      image,
+      artist,
+      stock_type,
+      description,
+    } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const amount = Number(total) || 0;
 
@@ -81,6 +95,30 @@ export async function PATCH(
     if (title !== undefined) update.title = title;
     if (slug !== undefined) update.handle = slug;
     if (validStatuses.includes(status)) update.status = status;
+    if (typeof description === "string") update.description = description;
+
+    // Tags carry the maker and availability: the store API exposes tags but not
+    // metadata, so writing metadata alone would never reach the storefront.
+    // Unrelated tags are preserved.
+    if (artist !== undefined || stock_type !== undefined) {
+      const { product: current } = await getAdminProduct(id);
+      const keptValues: string[] = (((current as any)?.tags ?? []) as any[])
+        .map((t) => (typeof t === "string" ? t : t?.value) ?? "")
+        .filter(
+          (t) =>
+            t && !t.startsWith("artist:") && !t.startsWith("stock:")
+        );
+
+      const wanted = [...keptValues];
+      if (typeof artist === "string" && artist.trim()) {
+        wanted.push(`artist:${artist.trim()}`);
+      }
+      if (typeof stock_type === "string" && stock_type.trim()) {
+        wanted.push(`stock:${stock_type.trim()}`);
+      }
+
+      update.tags = await resolveProductTagIds(wanted);
+    }
     // Image attach on an existing product. `thumbnail` drives the card and the
     // first entry of `images` drives the detail gallery, so both are set from
     // the one upload to keep them from drifting apart.

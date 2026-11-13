@@ -17,6 +17,12 @@ export default function NewProductPage() {
   const [currency, setCurrency] = useState("inr");
   const [categoryId, setCategoryId] = useState("");
   const [image, setImage] = useState("");
+  // The maker and stock terms are product metadata on the Medusa record. They
+  // were never editable here, so every product created through the admin fell
+  // back to the house name and "ready to ship".
+  const [artist, setArtist] = useState("Sneha Sainath Sapa");
+  const [stockType, setStockType] = useState("ready_to_ship");
+  const [description, setDescription] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,6 +57,9 @@ export default function NewProductPage() {
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
           ...(image ? { image } : {}),
+          artist,
+          stock_type: stockType,
+          description,
         }),
       });
       if (res.ok) {
@@ -89,6 +98,48 @@ export default function NewProductPage() {
                 <div className="max-w-[260px]">
                   <ImageUpload value={image} onChange={setImage} />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Artist
+                  </label>
+                  <input
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value)}
+                    className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                  />
+                  <p className="mt-1 font-sans text-[11px] text-muted-ink">
+                    Shown on the card, the product page and its wall label.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                    Availability
+                  </label>
+                  <select
+                    value={stockType}
+                    onChange={(e) => setStockType(e.target.value)}
+                    className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                  >
+                    <option value="ready_to_ship">Ready to ship</option>
+                    <option value="made_to_order">Made to order</option>
+                    <option value="custom_only">Commission only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                  Description
+                </label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

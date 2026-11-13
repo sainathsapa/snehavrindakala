@@ -130,10 +130,8 @@ export default async function ProductDetailPage({
     const { product: prod } = await medusa.getProduct(medusaHandle);
     product = prod;
   } catch {
-    // Not in Medusa. It may still be a seed-catalogue item — the listing pages
-    // render those, so their links must resolve rather than 404.
-    const seeded = await findCatalogueItem(handle);
-    if (seeded) return <SeedProductPage item={seeded} />;
+    // Not in Medusa. The shop no longer renders a hardcoded sample catalogue, so
+    // a miss here is a genuine 404 rather than a sample work to display.
     notFound();
   }
 
@@ -314,146 +312,6 @@ export default async function ProductDetailPage({
           title={product.title}
           collection={product.category?.name || undefined}
           stockType={stockType}
-        />
-      </div>
-    </main>
-  );
-}
-
-/**
- * Detail view for a seed-catalogue item.
- *
- * These have no Medusa variant and therefore cannot be added to a cart, so the
- * page shows the work honestly — image, price, maker, stock note — and points
- * at the ways you *can* buy: the live collection or a custom commission. It
- * never renders a dead "Add to cart" button.
- */
-function SeedProductPage({ item }: { item: CatalogueItem }) {
-  const stockLabel =
-    item.stockType === "made_to_order"
-      ? "Made to order"
-      : item.stockType === "custom_only"
-        ? "Commission only"
-        : "Ready to ship";
-
-  return (
-    <main className="py-10">
-      {/* Seed works need the same structured data as live ones. Without this,
-          the majority of the catalogue was invisible to rich results. */}
-      <script
-        id="schema-product"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Product",
-            name: item.title,
-            description: `${item.title} — a handmade work by ${item.artist}. Original Indian artwork from SnehaVrinda Kala.`,
-            image: item.image?.startsWith("http")
-              ? item.image
-              : `${SITE_ORIGIN}${item.image}`,
-            brand: { "@type": "Brand", name: "SnehaVrinda Kala" },
-            creator: { "@type": "Person", name: item.artist },
-            category: item.collection || undefined,
-            ...(item.price
-              ? {
-                  offers: {
-                    "@type": "Offer",
-                    price: (item.price / 100).toFixed(2),
-                    priceCurrency: "INR",
-                    availability:
-                      item.stockType === "ready_to_ship"
-                        ? "https://schema.org/InStock"
-                        : "https://schema.org/PreOrder",
-                    url: `${SITE_ORIGIN}/products/${item.handle}`,
-                    seller: { "@type": "Organization", name: "SnehaVrinda Kala" },
-                  },
-                }
-              : {}),
-          }),
-        }}
-      />
-      <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-8 flex items-center gap-2 font-sans text-xs text-muted-ink"
-        >
-          <Link href="/shop" className="hover:text-kumkum transition-colors">
-            Shop
-          </Link>
-          <span aria-hidden="true">›</span>
-          <span className="text-deep-ink">{item.title}</span>
-        </nav>
-
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-          <div className="relative aspect-square overflow-hidden rounded-sm border border-sand-border bg-surface">
-            <img
-              src={item.image}
-              alt={item.title}
-              className="h-full w-full object-cover"
-            />
-          </div>
-
-          <div className="flex flex-col gap-6">
-            <div>
-              {item.collection && (
-                <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-                  {item.collection}
-                </span>
-              )}
-              <h1 className="mt-2 font-serif text-4xl font-semibold tracking-tight text-deep-ink sm:text-5xl">
-                {item.title}
-              </h1>
-              {/* The wall-label line: maker, then medium. On an art site the
-                  maker comes before the price. */}
-              <p className="mt-3 font-serif text-sm italic leading-snug text-muted-ink">
-                {item.artist}
-                {item.collection ? ` · ${item.collection}` : ""} · Handmade in India
-              </p>
-            </div>
-
-            <div className="border-y border-sand-border py-4">
-              <div className="flex items-baseline gap-3">
-                <span className="font-serif text-3xl font-semibold text-deep-ink">
-                  {formatPrice(item.price)}
-                </span>
-                <span className="font-sans text-xs uppercase tracking-wider text-muted-ink">
-                  {stockLabel}
-                </span>
-              </div>
-            </div>
-
-            {item.seeded && (
-              <div className="rounded-sm border border-sand-border bg-surface p-5">
-                <p className="font-sans text-sm leading-relaxed text-muted-ink">
-                  This piece is shown from our sample catalogue and is not yet
-                  orderable online. To buy or commission something like it,
-                  browse the live collection or send us a brief.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    href="/shop"
-                    className="rounded-full bg-kumkum px-5 py-2.5 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
-                  >
-                    Browse the collection
-                  </Link>
-                  <Link
-                    href="/custom-art"
-                    className="rounded-full border border-kumkum px-5 py-2.5 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-kumkum hover:text-rang-paper"
-                  >
-                    Request custom art
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <ProductStory
-          title={item.title}
-          artist={item.artist}
-          collection={item.collection}
-          stockType={item.stockType}
         />
       </div>
     </main>

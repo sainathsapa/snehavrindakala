@@ -1,20 +1,15 @@
 import { unstable_cache } from "next/cache";
 import { medusa } from "@/lib/medusa";
-import { products as seedProducts, type Product as SeedProduct } from "@/data/products";
 import { productSlug, isOpaqueHandle } from "@/lib/slug";
 
 /**
  * The single read path for catalogue listings.
  *
- * The storefront historically read straight from Medusa. That is correct for a
- * populated catalogue, but it means an empty or barely-seeded backend renders
- * as an empty shop — `/shop/painting` answered 200 with "No products in this
- * collection yet" while six finished seed products sat unused in
- * `data/products.ts`, imported by nothing.
- *
- * So: prefer live Medusa products, and only fall back to the seed catalogue
- * when the live catalogue is genuinely empty. When the backend has real data it
- * always wins; the seeds never mask live products.
+ * Products come from Medusa and nowhere else. There used to be a hardcoded
+ * sample catalogue in `data/products.ts` that rendered whenever the backend was
+ * light: those works looked real on /shop but could not be edited, priced or
+ * deleted from the admin panel, and their links broke whenever a handle
+ * changed. Anything sellable now has to be a product created through the admin.
  */
 
 export interface CatalogueItem {
@@ -69,36 +64,24 @@ const SEED_COLLECTION_TO_SLUG: Record<string, string> = {
   "personalized-and-commissioned": "painting",
 };
 
-function seedToItem(product: SeedProduct): CatalogueItem {
-  return {
-    // Seed records are identified as `prod_001`, but that makes an opaque URL
-    // (`/products/001`). Derive a descriptive, keyword-bearing handle instead:
-    // `/products/hand-painted-terracotta-vase-home-1`.
-    handle: productSlug({
-      title: product.title,
-      artist: product.artist,
-      artForm: product.artForm,
-    }),
-    title: product.title,
-    artist: product.artist,
-    // Seed prices are written in whole rupees, but `price` is consumed as minor
-    // units everywhere (formatPrice divides by 100), so ₹2,200 rendered as
-    // "₹22". Convert once, here.
-    price: product.price == null ? null : product.price * 100,
-    stockType: STOCK_TYPES.has(product.stockType) ? product.stockType : "ready_to_ship",
-    image: product.image,
-    isNew: product.isNew ?? false,
-    artForms: [
-      SEED_COLLECTION_TO_SLUG[collectionKey(product.collection ?? "")] ??
-        collectionKey(product.collection ?? ""),
-      collectionKey(product.artForm ?? ""),
-    ],
-    collection: product.collection ?? "",
-    seeded: true,
-  };
-}
 
-const seedItems: CatalogueItem[] = seedProducts.map(seedToItem);
+/**
+ * Read `prefix:value` out of a Medusa product's tags.
+ *
+ * The store API does not expose `metadata`, so tags are the only channel the
+ * storefront can actually read back. Writing the maker to metadata alone looked
+ * correct and silently did nothing.
+ */
+function tagValue(product: any, prefix: string): string | undefined {
+  const tags: any[] = product?.tags ?? [];
+  for (const tag of tags) {
+    const value = typeof tag === "string" ? tag : tag?.value;
+    if (typeof value === "string" && value.startsWith(`${prefix}:`)) {
+      return value.slice(prefix.length + 1);
+    }
+  }
+  return undefined;
+}
 
 function liveToItem(product: any): CatalogueItem {
   const variant = product.variants?.[0];
@@ -112,6 +95,7 @@ function liveToItem(product: any): CatalogueItem {
   const categories = product.categories ?? [];
   const inventory = variant?.inventory_quantity;
   const stockType =
+    tagValue(product, "stock") ??
     (product.metadata?.stock_type as string) ??
     (inventory === 0 ? "made_to_order" : "ready_to_ship");
 
@@ -128,7 +112,10 @@ function liveToItem(product: any): CatalogueItem {
         })
       : product.handle,
     title: product.title,
-    artist: product.metadata?.artist ?? "SnehaVrinda Kala",
+    artist:
+      tagValue(product, "artist") ??
+      (product.metadata?.artist as string | undefined) ??
+      "Sneha Sainath Sapa",
     price,
     stockType: STOCK_TYPES.has(stockType) ? stockType : "ready_to_ship",
     image: product.thumbnail || product.images?.[0]?.url || "/images/products/madhubani-painting.jpg",
@@ -149,20 +136,17 @@ async function loadCatalogue(): Promise<CatalogueItem[]> {
     const { products } = await medusa.listProducts({ limit: 100 });
     live = (products ?? []).map(liveToItem);
   } catch (err) {
-    console.error("Failed to load products from Medusa; using seed catalogue", err);
+    // An empty shop is the honest result when the backend is unreachable. The
+    // old sample catalogue would have rendered instead, showing works that do
+    // not exist and cannot be managed from the admin panel.
+    console.error("Failed to load products from Medusa", err);
   }
 
-  // Seed items supplement the live catalogue rather than replacing it. Treating
-  // them as an either/or fallback meant that as soon as a single product
-  // existed in Medusa the other five collections rendered as empty — which is
-  // exactly what happened: one published product hid the entire sample set.
-  // Live handles win on collision so real data is never shadowed.
-  const liveHandles = new Set(live.map((item) => item.handle));
-  return [...live, ...seedItems.filter((item) => !liveHandles.has(item.handle))];
+  return live;
 }
 
 /**
- * Every catalogue item, live first, falling back to seed data when empty.
+ * Every catalogue item, straight from Medusa.
  *
  * Cached for a short window: the root layout builds the nav menus from this on
  * every request, and an uncached Medusa call there would make every page in the
