@@ -28,6 +28,20 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    // Seed products once shipped with opaque handles (`/products/003`) taken
+    // from their database ids. Those URLs may already be in a browser history,
+    // a share, or a search index, so redirect each to its readable slug rather
+    // than 404. Order matters: a specific id must be listed before a catch-all.
+    return [
+      { source: "/products/001", destination: "/products/hand-painted-terracotta-vase-home-1", permanent: true },
+      { source: "/products/002", destination: "/products/madhubani-folk-painting-traditional-2", permanent: true },
+      { source: "/products/003", destination: "/products/embroidered-cotton-throw-textile-3", permanent: true },
+      { source: "/products/004", destination: "/products/custom-portrait-commission", permanent: true },
+      { source: "/products/005", destination: "/products/pattachitra-on-palm-leaf", permanent: true },
+      { source: "/products/006", destination: "/products/silver-tribal-necklace-wearable-6", permanent: true },
+    ];
+  },
   async headers() {
     const headers = [
       { key: "X-Content-Type-Options", value: "nosniff" },

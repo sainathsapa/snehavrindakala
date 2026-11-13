@@ -155,7 +155,7 @@ export default async function RootLayout({
           collections={navCollections.length > 0 ? navCollections : fallbackCollections}
         />
         {children}
-        <Footer />
+        <Footer platformMode={getPlatformModeFromEnv() === "platform"} />
         <script
           id="schema-organization"
           type="application/ld+json"

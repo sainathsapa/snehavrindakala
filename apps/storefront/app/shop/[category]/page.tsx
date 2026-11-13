@@ -104,20 +104,20 @@ export function generateStaticParams() {
   }));
 }
 
-export const metadata = async ({
+export async function generateMetadata({
   params,
 }: {
-  params?: Promise<{ category: string }>;
-}) => {
+  params: Promise<{ category: string }>;
+}) {
   // Next 15 may invoke this from a client-side MetadataOutlet with no params,
   // which throws "Cannot destructure property 'category' of undefined" and
   // takes the whole route down with a client exception.
   const category = (await params)?.category ?? "";
   const resolved = category ? await resolveCategory(category) : null;
   return {
-    title: resolved
-      ? `${resolved.name} | SnehaVrinda Kala`
-      : "Collection | SnehaVrinda Kala",
+    // The root layout appends "| SnehaVrinda Kala"; including it here doubled it
+    // ("Folk Art | SnehaVrinda Kala | SnehaVrinda Kala").
+    title: resolved ? resolved.name : "Collection",
     description: resolved
       ? resolved.description
       : "Browse curated collections by art form at SnehaVrinda Kala.",
@@ -125,7 +125,7 @@ export const metadata = async ({
       canonical: resolved ? `/shop/${resolved.handle}` : `/shop/${category}`,
     },
     openGraph: {
-      title: resolved ? `${resolved.name} | SnehaVrinda Kala` : undefined,
+      title: resolved ? resolved.name : undefined,
       description: resolved ? resolved.description : undefined,
       type: "website",
     },

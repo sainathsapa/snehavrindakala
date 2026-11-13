@@ -10,7 +10,16 @@ import {
 } from "@/components/ornaments";
 import { HeroSlider } from "@/components/hero-slider";
 import { Reveal, ParallaxImage } from "@/components/motion";
+import {
+  KolamMotif,
+  WarliMotif,
+  LotusBloom,
+  DiamondBand,
+  JaliPattern,
+  KalashMotif,
+} from "@/components/indian-motifs";
 import { listCatalogue } from "@/lib/catalogue";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 import { formatPrice } from "@/lib/medusa";
 import {
   listHeroSlides,
@@ -43,6 +52,12 @@ export default async function Home() {
     listCatalogue().catch(() => []),
   ]);
 
+  // The Artists directory only exists in platform mode. In single-brand mode
+  // SnehaVrinda Kala is the only seller, the /artists listing is a dead end,
+  // and the header already hides it — so the homepage must not link to it
+  // either.
+  const platformMode = getPlatformModeFromEnv() === "platform";
+
   const featuredProducts = catalogue.slice(0, 4);
   const featuredForms = artForms.slice(0, 5);
 
@@ -52,7 +67,7 @@ export default async function Home() {
           Slides are admin-managed and genuinely cycle: auto-advance, arrows,
           dots, swipe and keyboard, pausing on hover and focus. */}
       <div className="relative">
-        <HeroSlider slides={slides} />
+        <HeroSlider slides={slides} interval={5500} />
         <KalamBorder className="pointer-events-none absolute inset-x-0 top-0 text-terracotta/40" />
       </div>
 
@@ -60,6 +75,7 @@ export default async function Home() {
           A short editorial line between the hero and the first row, with the
           botanical mark that recurs through the references. */}
       <section className="relative overflow-hidden border-y border-sand-border/60 bg-surface/60 py-10">
+        <DiamondBand className="absolute inset-x-0 top-0 h-2.5 w-full text-terracotta/25" />
         <PaisleyField className="pointer-events-none absolute -left-10 top-0 hidden h-40 w-40 text-terracotta/[0.08] md:block" />
         <div className="relative mx-auto flex max-w-[1400px] items-center gap-6 px-5 sm:px-8 lg:px-12">
           <BotanicalRule className="hidden shrink-0 text-terracotta sm:flex" />
@@ -144,6 +160,22 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── The threshold ──────────────────────────────────────────────────
+          A kolam drawn across the page the way it is drawn across a doorway in
+          Tamil Nadu each morning: rice flour, a dot grid, one continuous line.
+          It marks the passage from the introduction into the collection. */}
+      <section
+        className="relative flex flex-col items-center gap-4 border-b border-sand-border/60 py-12"
+        aria-hidden="true"
+      >
+        <KolamMotif className="h-24 w-24 text-terracotta/40" />
+        <span className="h-px w-24 bg-sand-border" aria-hidden="true" />
+        <p className="max-w-md px-6 text-center font-serif text-sm italic leading-relaxed text-muted-ink">
+          Drawn at the door before sunrise, a kolam welcomes whoever arrives.
+          Consider this one drawn for you.
+        </p>
+      </section>
+
       {/* ── Indian Art Forms ─────────────────────────────────────────────── */}
       <section className="relative border-b border-sand-border/60 py-14 lg:py-20">
         <PaisleyField className="pointer-events-none absolute right-0 top-10 hidden h-64 w-64 text-terracotta/[0.07] lg:block" />
@@ -226,8 +258,13 @@ export default async function Home() {
               title="Behind the Masterpiece"
               description="Step into the artist's world and discover the stories, skills and traditions behind each artwork."
             />
-            <ArrowLink href="/artists" tone="light" className="mt-6">
-              Explore the Journey
+            {/* Same rule as the artist band: the directory is platform-only. */}
+            <ArrowLink
+              href={platformMode ? "/artists" : "/art-forms"}
+              tone="light"
+              className="mt-6"
+            >
+              {platformMode ? "Explore the Journey" : "Explore the traditions"}
             </ArrowLink>
           </div>
         </div>
@@ -330,18 +367,30 @@ export default async function Home() {
               it on. Every work on this site names the hand that made it.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
+              {platformMode ? (
+                <Link
+                  href="/artists"
+                  className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
+                >
+                  Meet the artists
+                  <span aria-hidden="true">→</span>
+                </Link>
+              ) : (
+                // In single-brand mode there is no directory to send anyone to,
+                // so the primary action leads to the traditions instead.
+                <Link
+                  href="/art-forms"
+                  className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
+                >
+                  Explore the traditions
+                  <span aria-hidden="true">→</span>
+                </Link>
+              )}
               <Link
-                href="/artists"
-                className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
-              >
-                Meet the artists
-                <span aria-hidden="true">→</span>
-              </Link>
-              <Link
-                href="/art-forms"
+                href="/custom-art"
                 className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
               >
-                Explore the traditions
+                Commission a piece
               </Link>
             </div>
           </div>
@@ -464,45 +513,95 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── How custom art works ─────────────────────────────────────────── */}
-      <section className="border-t border-sand-border/60 py-14 lg:py-20">
-        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <SectionIntro
-            eyebrow="The Process"
-            title="How custom art works"
-            align="center"
-          />
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {[
-              {
-                n: "01",
-                title: "Share your brief",
-                body: "Tell us the idea, medium, size, budget and timeline you have in mind.",
-              },
-              {
-                n: "02",
-                title: "Receive a quote",
-                body: "An artist reviews feasibility and sends a versioned quote with milestones.",
-              },
-              {
-                n: "03",
-                title: "Create and deliver",
-                body: "Approve proofs, then receive the finished piece and track its delivery.",
-              },
-            ].map((step) => (
-              <div key={step.n} className="border-t border-terracotta/40 pt-5">
-                <span className="font-sans text-xs font-semibold tracking-[0.2em] text-terracotta">
-                  {step.n}
-                </span>
-                <h3 className="mt-2 font-serif text-xl font-semibold text-deep-ink">
-                  {step.title}
-                </h3>
-                <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
-                  {step.body}
-                </p>
-              </div>
-            ))}
+      {/* ── How a work is made ─────────────────────────────────────────────
+          The process, told with the Warli figure beside it. Warli is the right
+          register for this: it is a drawing system built from triangles and
+          circles, used by a community that paints the everyday — planting,
+          dancing, carrying water. It reads as "made by people" instantly. */}
+      <section className="relative overflow-hidden border-t border-sand-border/60 bg-surface/40 py-16 lg:py-24">
+        <JaliPattern className="pointer-events-none absolute inset-0 text-terracotta/[0.05]" />
+        <DiamondBand className="absolute inset-x-0 top-0 h-2.5 w-full text-terracotta/25" />
+
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <div className="grid gap-12 lg:grid-cols-[1fr_2fr] lg:gap-20">
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <WarliMotif className="h-32 w-32 text-terracotta/50" />
+              <p className="mt-6 font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
+                The process
+              </p>
+              <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight text-deep-ink sm:text-4xl">
+                How a work gets made
+              </h2>
+              <p className="mt-4 font-sans text-sm leading-relaxed text-muted-ink">
+                Not a checkout. A conversation, a quote, a proof, and then the
+                weeks it actually takes.
+              </p>
+            </div>
+
+            <ol className="grid gap-x-10 gap-y-12 sm:grid-cols-2">
+              {[
+                {
+                  n: "01",
+                  title: "Share your brief",
+                  body: "The idea, the medium, the size, the budget and the date you need it by. Reference images help but a sentence is enough to start.",
+                },
+                {
+                  n: "02",
+                  title: "An artist answers",
+                  body: "Someone who actually works in that tradition reads it and says honestly whether it is possible, and what it would cost.",
+                },
+                {
+                  n: "03",
+                  title: "A versioned quote",
+                  body: "Scope, deliverables, timeline, revision allowance and deposit, in writing — before anything is committed.",
+                },
+                {
+                  n: "04",
+                  title: "Proofs, then the work",
+                  body: "You see it in progress and request in-scope changes. Then it is finished, packed and tracked to your door.",
+                },
+              ].map((step) => (
+                <li key={step.n} className="border-t border-terracotta/40 pt-5">
+                  <span className="font-serif text-sm font-semibold tracking-[0.16em] text-terracotta">
+                    {step.n}
+                  </span>
+                  <h3 className="mt-2 font-serif text-xl font-semibold text-deep-ink">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
+                    {step.body}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </div>
+        </div>
+      </section>
+
+      {/* ── Closing threshold ────────────────────────────────────────────────
+          The kalash again, mirrored from the footer, to close the page the way
+          an Indian ceremony closes: with the same auspicious form it opened
+          with. */}
+      <section className="relative overflow-hidden py-16 text-center">
+        <LotusBloom className="mx-auto h-16 w-28 text-terracotta/45" />
+        <p className="mx-auto mt-6 max-w-md px-6 font-serif text-xl italic leading-relaxed text-deep-ink">
+          Every piece here was made by a hand that learned the form from
+          someone.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
+          >
+            Browse the collection
+            <span aria-hidden="true">→</span>
+          </Link>
+          <Link
+            href="/custom-art"
+            className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
+          >
+            Commission a piece
+          </Link>
         </div>
       </section>
     </main>

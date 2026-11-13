@@ -5,10 +5,21 @@ import {
   medusa,
 } from "@/lib/medusa";
 import { ProductOptions } from "@/components/product-options";
-import { findCatalogueItem, type CatalogueItem } from "@/lib/catalogue";
+import {
+  findCatalogueItem,
+  resolveMedusaHandle,
+  type CatalogueItem,
+} from "@/lib/catalogue";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
+import { getPlatformModeFromEnv } from "@/lib/settings";
+
+// Absolute origin for structured data. Schema.org requires fully-qualified
+// URLs; a relative one silently invalidates the graph.
+const SITE_ORIGIN = (
+  process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"
+).replace(/\/$/, "");
 
 export const dynamic = "force-dynamic";
 
@@ -21,23 +32,55 @@ export async function generateStaticParams() {
   }
 }
 
-export const metadata = async ({ params }: { params?: Promise<{ handle: string }> }) => {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}) {
   // Next 15 can call this from a client MetadataOutlet with no params; guard
   // rather than throwing and taking the route down.
   const handle = (await params)?.handle ?? "";
   if (!handle) return { title: "SnehaVrinda Kala" };
   let product: Awaited<ReturnType<typeof medusa.getProduct>>["product"] | null = null;
   try {
-    const { product: prod } = await medusa.getProduct(handle);
+    const { product: prod } = await medusa.getProduct(
+      await resolveMedusaHandle(handle)
+    );
     product = prod;
   } catch {
     // handled in component
   }
-  if (!product) return { title: "Product not found" };
+  if (!product) {
+    // Seed-catalogue items are not in Medusa, and their pages render from the
+    // catalogue — so their metadata must come from there too, otherwise every
+    // seeded product shipped with the title "Product not found".
+    const seeded = await findCatalogueItem(handle);
+    if (!seeded) return { title: "Product not found" };
+    return {
+      title: `${seeded.title} by ${seeded.artist}`,
+      description: `${seeded.title} — a handmade work by ${seeded.artist}${
+        seeded.collection ? `, ${seeded.collection.toLowerCase()}` : ""
+      }. ${seeded.price ? formatPrice(seeded.price) + ". " : ""}Original Indian artwork from SnehaVrinda Kala.`,
+      alternates: { canonical: `/products/${seeded.handle}` },
+      openGraph: {
+        title: `${seeded.title} by ${seeded.artist}`,
+        description: `Original handmade Indian artwork by ${seeded.artist}.`,
+        images: seeded.image ? [seeded.image] : undefined,
+        type: "article",
+      },
+    };
+  }
   const price = getProductPrice(product);
   const currency = (product.variants?.[0]?.calculated_price?.currency_code || "inr").toUpperCase();
   return {
-    title: `${product.title} | SnehaVrinda Kala`,
+    // The root layout's title template appends "| SnehaVrinda Kala", so the
+    // page title must not repeat the site name. When the product has no artist
+    // metadata the fallback would read "... by SnehaVrinda Kala", which is both
+    // wrong (the house is not the maker) and redundant — so fall back to the
+    // product title alone.
+    title: product.metadata?.artist
+      ? `${product.title} by ${product.metadata.artist}`
+      : product.title,
     description:
       product.description ||
       `${product.title} — ${formatPrice(price, currency)} by SnehaVrinda Kala.`,
@@ -47,7 +90,11 @@ export const metadata = async ({ params }: { params?: Promise<{ handle: string }
     openGraph: {
       title: product.title,
       description: product.description || undefined,
-      type: "product",
+      // Next's OpenGraph type union does not include "product". Passing it threw
+      // "Invalid OpenGraph type: product" and took the whole product route down
+      // in production. `article` is the closest supported value; the Product
+      // semantics live in the JSON-LD block below.
+      type: "article",
       url: `/products/${product.handle}`,
       images: product.images
         ? product.images.map((i) => ({ url: i.url }))
@@ -72,9 +119,14 @@ export default async function ProductDetailPage({
   params: Promise<{ handle: string }>;
 }) {
   const { handle } = await params;
+  // The card may link to a handle we generated from the title (see lib/slug.ts)
+  // rather than the one Medusa stores. Resolve it before querying, or every
+  // product with a short opaque handle 404s from its own listing.
+  const medusaHandle = await resolveMedusaHandle(handle);
+
   let product: Awaited<ReturnType<typeof medusa.getProduct>>["product"];
   try {
-    const { product: prod } = await medusa.getProduct(handle);
+    const { product: prod } = await medusa.getProduct(medusaHandle);
     product = prod;
   } catch {
     // Not in Medusa. It may still be a seed-catalogue item — the listing pages
@@ -279,6 +331,41 @@ function SeedProductPage({ item }: { item: CatalogueItem }) {
 
   return (
     <main className="py-10">
+      {/* Seed works need the same structured data as live ones. Without this,
+          the majority of the catalogue was invisible to rich results. */}
+      <script
+        id="schema-product"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: item.title,
+            description: `${item.title} — a handmade work by ${item.artist}. Original Indian artwork from SnehaVrinda Kala.`,
+            image: item.image?.startsWith("http")
+              ? item.image
+              : `${SITE_ORIGIN}${item.image}`,
+            brand: { "@type": "Brand", name: "SnehaVrinda Kala" },
+            creator: { "@type": "Person", name: item.artist },
+            category: item.collection || undefined,
+            ...(item.price
+              ? {
+                  offers: {
+                    "@type": "Offer",
+                    price: (item.price / 100).toFixed(2),
+                    priceCurrency: "INR",
+                    availability:
+                      item.stockType === "ready_to_ship"
+                        ? "https://schema.org/InStock"
+                        : "https://schema.org/PreOrder",
+                    url: `${SITE_ORIGIN}/products/${item.handle}`,
+                    seller: { "@type": "Organization", name: "SnehaVrinda Kala" },
+                  },
+                }
+              : {}),
+          }),
+        }}
+      />
       <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
         <nav
           aria-label="Breadcrumb"

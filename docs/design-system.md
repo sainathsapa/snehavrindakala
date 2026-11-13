@@ -563,3 +563,113 @@ affects, including the art-form's own `/art-forms/[slug]`.
 
 Every admin-editable thing that has a public page must link to it ("View page"),
 so the operator can see what they changed without guessing at a URL.
+
+---
+
+## 23. URLs are content
+
+`/products/003` is a database id leaking into a public URL. It tells a person
+nothing and a search engine less. Every product URL must be readable and carry
+its keywords.
+
+- `lib/slug.ts` owns this: `slugify`, `productSlug`, `isOpaqueHandle`,
+  `uniqueHandle`.
+- Seed records are stored as `prod_001`, so the handle is **derived** from the
+  title, tradition and a short maker tag:
+  `/products/embroidered-cotton-throw-embroidery-fatima-sheikh`.
+- **Live handles are never rewritten.** Changing a URL that is already indexed
+  discards whatever ranking it earned. Instead, `resolveMedusaHandle` maps a
+  generated handle back to the original when the detail page is queried — the
+  listing and the detail page agree without touching Medusa's data.
+- `isOpaqueHandle` catches the cases that matter: bare numbers (`003`), `prod_`
+  prefixes, UUIDs (including truncated ones), and short consonant-only codes.
+- Old opaque URLs are 301'd in `next.config.js`, so any existing share, bookmark
+  or indexed link still lands on the work.
+
+**Title rule.** The root layout supplies the template `%s | SnehaVrinda Kala`,
+so a page's own `title` must never include the site name — doing so produced
+`Folk Art | SnehaVrinda Kala | SnehaVrinda Kala`. Product titles prefer
+`"{title} by {artist}"` and fall back to the bare title when the artist is
+unknown, because "by SnehaVrinda Kala" is both wrong (the house is not the
+maker) and redundant.
+
+**Route metadata must be `generateMetadata`, not `export const metadata`.**
+
+```ts
+// Wrong — Next treats this as a static object holding a function, never calls
+// it, and silently ships the generic site title on every page.
+export const metadata = async ({ params }) => { ... };
+
+// Right.
+export async function generateMetadata({ params }) { ... }
+```
+
+This shipped broken on `/products/[handle]`, `/shop/[category]` and
+`/artists/[slug]` and was invisible in the UI. If a dynamic route's `<title>` is
+the site default, check this first.
+
+**Structured data on every product**, live or seeded: `Product` with `Offer`
+(price, `priceCurrency: INR`, availability), `Brand`, and `creator` as a
+`Person`. The seeded path had none, which left most of the catalogue ineligible
+for rich results.
+
+**OpenGraph types must be valid.** `type: "product"` and `type: "profile"` are
+not in Next's union; passing them throws `Invalid OpenGraph type` and takes the
+whole route down in production while dev merely warns. Use `article` and put the
+real semantics in JSON-LD.
+
+---
+
+## 24. Platform-only surfaces are gated everywhere
+
+`Artists` and `Sell` are marketplace concepts. In single-brand mode SnehaVrinda
+Kala is the only seller, so both are dead ends. Hiding them in the header alone
+is not enough — every surface must agree:
+
+| Surface | Behaviour |
+| --- | --- |
+| Header nav | hidden (`platformOnly`) |
+| Footer | filtered out; `Footer` takes `platformMode` from the layout |
+| Homepage CTAs | swap to `/art-forms` and "Commission a piece" |
+| `/artists`, `/sell` | `notFound()` — 404, not an empty page |
+| `sitemap.xml` | omitted; artist URLs only added in platform mode |
+| `robots.txt` | unchanged; the 404 is the gate |
+
+A link to a 404 is worse than a missing link, and advertising one in a sitemap is
+a crawl error.
+
+---
+
+## 25. Indian visual vocabulary
+
+The site's "Indian" quality previously lived in colour and one mandala outline.
+Real Indian visual culture is built from repeating geometric *systems*, and it
+reads as authentic only when those systems are actually drawn.
+
+`components/indian-motifs.tsx` holds faithful simplified forms:
+
+- **Kolam** — the Tamil threshold drawing: a dot grid with one continuous loop,
+  never a filled shape. Used at the page threshold with the line "Drawn at the
+  door before sunrise, a kolam welcomes whoever arrives."
+- **Warli** — triangles and circles, the body as two triangles meeting at a
+  point, with the tarpa spiral. Used beside the process section, because Warli
+  paints the everyday and therefore reads as "made by people".
+- **Paisley / ambi** — the mango motif, repeated as a frieze.
+- **Jali** — pierced-screen geometry on a 45° grid, as texture.
+- **Kalash** — the auspicious pot with mango leaves and coconut.
+- **Temple arch** — the cusped multifoil silhouette of every miniature and
+  temple doorway.
+- **Lotus bloom**, **Diamond band** — lotus in three petal registers; the
+  chevron-and-diamond textile border.
+
+All are `aria-hidden`, `currentColor`, and static.
+
+**Prefer real painted ornament over CSS geometry.** Where a *painted* strip is
+needed — the footer edges, the plinth — use the generated miniature-style image
+(`/images/ornaments/footer-band.jpg`, `kalash.jpg`) rather than an SVG outline.
+Geometric SVG reads as a wireframe; painted marks read as craft. Keep such images
+under ~100KB for the small ones and set `quality={70}` on large bands.
+
+**The footer is a torana**, the ceremonial gateway: a kalash crowning the centre,
+a four-field courtyard-plan grid, a painted paisley band at head and foot, and an
+imprint plinth carrying the credit — *Made with care by Sneha Sainath Sapa*.

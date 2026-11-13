@@ -16,7 +16,11 @@ export async function generateStaticParams() {
   }
 }
 
-export const metadata = async ({ params }: { params?: Promise<{ slug: string }> }) => {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   // Next 15 can call this from a client MetadataOutlet with no params; guard
   // rather than throwing and taking the route down.
   const slug = (await params)?.slug ?? "";
@@ -30,7 +34,7 @@ export const metadata = async ({ params }: { params?: Promise<{ slug: string }> 
   }
   if (!artist) return { title: "Artist not found" };
   return {
-    title: `${artist.display_name} | SnehaVrinda Kala`,
+    title: artist.display_name,
     description:
       artist.bio ||
       `${artist.display_name} is an artist featured on SnehaVrinda Kala.`,
@@ -40,12 +44,10 @@ export const metadata = async ({ params }: { params?: Promise<{ slug: string }> 
     openGraph: {
       title: artist.display_name,
       description: artist.bio || undefined,
-      type: "profile",
+      // "profile" is not in Next's OpenGraph type union; `article` is the closest
+      // supported value. The Person semantics live in the JSON-LD block.
+      type: "article",
       url: `/artists/${artist.slug}`,
-      profile: {
-        firstName: artist.display_name,
-        username: artist.slug,
-      },
     },
   };
 };

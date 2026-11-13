@@ -1,7 +1,9 @@
 import { medusa } from "@/lib/medusa";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,11 @@ export const metadata = {
 };
 
 export default async function ArtistsPage() {
+  // The artists directory is a marketplace feature. In single-brand mode the
+  // house is the only seller, so this route is a dead end — and a crawler must
+  // not index it. 404 rather than render an empty directory.
+  if (getPlatformModeFromEnv() !== "platform") notFound();
+
   let artists: any[] = [];
   try {
     const { artists: artistsData } = await medusa.listArtists({ limit: 100 });

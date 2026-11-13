@@ -50,14 +50,14 @@ export async function generateMetadata({ params }: PageProps) {
   const forms = await listArtForms().catch(() => []);
   const form = forms.find((f) => f.slug === slug);
 
-  if (!form) return { title: "Art form not found | SnehaVrinda Kala" };
+  if (!form) return { title: "Art form not found" };
 
   return {
     title: form.name,
     description: form.description || form.story?.slice(0, 160),
     alternates: { canonical: `/art-forms/${form.slug}` },
     openGraph: {
-      title: `${form.name} — SnehaVrinda Kala`,
+      title: form.name,
       description: form.description,
       images: form.image ? [form.image] : undefined,
     },

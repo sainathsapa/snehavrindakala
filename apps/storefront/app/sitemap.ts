@@ -3,6 +3,7 @@ import { medusa } from "@/lib/medusa";
 import { artFormSlugs } from "@/lib/slugs";
 import { listArtForms, listFeaturedCategories } from "@/lib/site-content";
 import { listCatalogue } from "@/lib/catalogue";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 
 const baseUrl = (
   process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"
@@ -22,15 +23,15 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
+  // Platform-only routes are added further down, and only when the site runs in
+  // platform mode. Advertising a URL that 404s is a sitemap error.
   const entries: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, changeFrequency: "daily", priority: 1, lastModified: now },
     { url: `${baseUrl}/shop`, changeFrequency: "daily", priority: 0.9, lastModified: now },
     { url: `${baseUrl}/art-forms`, changeFrequency: "weekly", priority: 0.8, lastModified: now },
     { url: `${baseUrl}/custom-art`, changeFrequency: "monthly", priority: 0.8, lastModified: now },
-    { url: `${baseUrl}/artists`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
     { url: `${baseUrl}/journal`, changeFrequency: "weekly", priority: 0.6, lastModified: now },
     { url: `${baseUrl}/about`, changeFrequency: "monthly", priority: 0.5, lastModified: now },
-    { url: `${baseUrl}/sell`, changeFrequency: "monthly", priority: 0.4, lastModified: now },
     { url: `${baseUrl}/policies/shipping`, changeFrequency: "yearly", priority: 0.3, lastModified: now },
     { url: `${baseUrl}/policies/returns`, changeFrequency: "yearly", priority: 0.3, lastModified: now },
     { url: `${baseUrl}/policies/privacy`, changeFrequency: "yearly", priority: 0.3, lastModified: now },
@@ -106,19 +107,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // ── Artists ──────────────────────────────────────────────────────────────
-  try {
-    const artists = await medusa.listAllArtists({ limit: 500 });
-    for (const artist of artists) {
-      entries.push({
-        url: `${baseUrl}/artists/${artist.slug}`,
-        changeFrequency: "monthly",
-        priority: 0.6,
-        lastModified: now,
-      });
+  // ── Platform-only routes ─────────────────────────────────────────────────
+  // Only in platform mode: in single-brand mode /artists and /sell 404 by
+  // design, so listing them here would be a broken sitemap.
+  if (getPlatformModeFromEnv() === "platform") {
+    entries.push(
+      { url: `${baseUrl}/artists`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
+      { url: `${baseUrl}/sell`, changeFrequency: "monthly", priority: 0.4, lastModified: now }
+    );
+
+    try {
+      const artists = await medusa.listAllArtists({ limit: 500 });
+      for (const artist of artists) {
+        entries.push({
+          url: `${baseUrl}/artists/${artist.slug}`,
+          changeFrequency: "monthly",
+          priority: 0.6,
+          lastModified: now,
+        });
+      }
+    } catch {
+      // Backend unreachable.
     }
-  } catch {
-    // Backend unreachable.
   }
 
   return entries;

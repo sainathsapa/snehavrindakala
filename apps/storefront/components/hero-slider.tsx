@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { HeroSlide } from "@/lib/site-content";
+import { KolamMotif, PaisleyBand, DiamondBand, TempleArch } from "./indian-motifs";
 
 /**
  * The homepage hero carousel.
@@ -16,7 +17,14 @@ import type { HeroSlide } from "@/lib/site-content";
  * It degrades to the plain first slide when there is only one, and to no motion
  * at all under `prefers-reduced-motion`.
  */
-export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
+export function HeroSlider({
+  slides,
+  /** Auto-advance interval in ms. 5s reads as attentive; 10s as idle. */
+  interval = 5500,
+}: {
+  slides: HeroSlide[];
+  interval?: number;
+}) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStart = useRef<number | null>(null);
@@ -41,9 +49,9 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
 
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % count);
-    }, 7000);
+    }, interval);
     return () => window.clearInterval(timer);
-  }, [paused, count]);
+  }, [paused, count, interval]);
 
   if (count === 0) return null;
 
@@ -97,6 +105,14 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
 
       {/* Pale wash behind the copy so the headline never fights the artwork. */}
       <div className="absolute inset-0 bg-gradient-to-r from-rang-paper from-30% via-rang-paper/70 via-50% to-transparent to-75% lg:via-rang-paper/45 lg:via-42% lg:to-65%" />
+
+      {/* ── Indian framing ──────────────────────────────────────────────────
+          A kolam in the lower-left margin and a temple arch opening at the
+          left edge. Together they say "Indian art house" before a single word
+          is read — which is the whole job of a hero. */}
+      <KolamMotif className="pointer-events-none absolute -left-10 bottom-6 hidden h-44 w-44 text-terracotta/[0.14] md:block" />
+      <TempleArch className="pointer-events-none absolute inset-y-0 left-0 hidden w-24 text-terracotta/[0.10] lg:block" />
+      <PaisleyBand className="pointer-events-none absolute inset-x-0 bottom-0 h-5 w-full text-terracotta/25" />
 
       <div className="relative mx-auto flex max-w-[1400px] flex-col justify-center px-5 py-16 sm:px-8 lg:min-h-[640px] lg:px-12 lg:py-24">
         <div className="max-w-xl">

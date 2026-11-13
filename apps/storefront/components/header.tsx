@@ -13,17 +13,20 @@ import { KalamBorder } from "./ornaments";
  * utility icons on the right.
  */
 const navLinks = [
-  { label: "Discover", href: "/shop", menu: "shop" as const },
-  { label: "Art Forms", href: "/art-forms", menu: "artforms" as const },
+  // Each entry carries an icon so the menu can be read at a glance rather than
+  // scanned word by word — the same reason printed menus in India pair a
+  // label with a motif.
+  { label: "Discover", href: "/shop", menu: "shop" as const, icon: "shop" as const },
   // Artists only exists in marketplace mode. In single-brand mode SnehaVrinda
   // Kala is the only seller, so the directory would be empty.
-  { label: "Artists", href: "/artists", platformOnly: true },
-  { label: "Custom Art", href: "/custom-art" },
+  { label: "Art Forms", href: "/art-forms", menu: "artforms" as const, icon: "commissions" as const },
+  { label: "Artists", href: "/artists", platformOnly: true, icon: "partners" as const },
+  { label: "Custom Art", href: "/custom-art", icon: "palette" as const },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody
   // to sell on the platform, so the page would be a dead end.
-  { label: "Sell", href: "/sell", platformOnly: true },
-  { label: "Journal", href: "/journal" },
-  { label: "About", href: "/about" },
+  { label: "Sell", href: "/sell", platformOnly: true, icon: "store" as const },
+  { label: "Journal", href: "/journal", icon: "journal" as const },
+  { label: "About", href: "/about", icon: "info" as const },
 ];
 
 const typeIcons: Record<string, string> = {
@@ -194,12 +197,19 @@ export function Header({
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                    aria-current={pathname === link.href ? "page" : undefined}
+                    className={`group flex items-center gap-1.5 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
                       pathname === link.href
                         ? "text-kumkum"
                         : "text-deep-ink/85 hover:text-kumkum"
                     }`}
                   >
+                    {link.icon && (
+                      <Icon
+                        name={link.icon}
+                        className="h-[15px] w-[15px] text-terracotta/70 transition-colors group-hover:text-kumkum"
+                      />
+                    )}
                     {link.label}
                   </Link>
                 );
@@ -213,12 +223,18 @@ export function Header({
                     aria-expanded={isOpen}
                     aria-controls={menuId}
                     aria-haspopup="true"
-                    className={`flex items-center gap-1 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                    className={`group flex items-center gap-1 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
                       isOpen || pathname.startsWith(link.href)
                         ? "text-kumkum"
                         : "text-deep-ink/85 hover:text-kumkum"
                     }`}
                   >
+                    {link.icon && (
+                      <Icon
+                        name={link.icon}
+                        className="h-[15px] w-[15px] text-terracotta/70 transition-colors group-hover:text-kumkum"
+                      />
+                    )}
                     {link.label}
                     <Icon
                       name="chevron-down"
@@ -395,8 +411,14 @@ export function Header({
                 <Link
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block rounded-md px-1 py-3 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
+                  className="flex items-center gap-3 rounded-md px-1 py-3 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
                 >
+                  {link.icon && (
+                    <Icon
+                      name={link.icon}
+                      className="h-4 w-4 shrink-0 text-terracotta/70"
+                    />
+                  )}
                   {link.label}
                 </Link>
                 {/* Sub-links are listed inline rather than behind a toggle: on a

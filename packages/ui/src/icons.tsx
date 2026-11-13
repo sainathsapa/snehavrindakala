@@ -48,6 +48,8 @@ export type IconName =
   | "phone"
   | "home"
   | "shop"
+  | "store"
+  | "palette"
   | "cart"
   | "journal"
   | "star"
@@ -324,6 +326,24 @@ const ICONS: Record<IconName, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
     <Svg {...props}>
       <path d="M3 9h18l-1.5 11a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1L3 9z" />
       <path d="M8 9V6a4 4 0 0 1 8 0v3" />
+    </Svg>
+  ),
+  // Awning over a doorway — a seller's stall. Used for "Sell".
+  store: (props) => (
+    <Svg {...props}>
+      <path d="M4 9h16l-1 3.5a2.5 2.5 0 0 1-2.4 1.8H7.4A2.5 2.5 0 0 1 5 12.5L4 9z" />
+      <path d="M5.5 14.3V20h13v-5.7" />
+      <path d="M9.5 20v-3.5h5V20" />
+      <path d="M4 9l1.2-4.5h13.6L20 9" />
+    </Svg>
+  ),
+  // An artist's palette with a thumb hole and three wells. Used for artwork.
+  palette: (props) => (
+    <Svg {...props}>
+      <path d="M12 3.2a8.8 8.8 0 0 0 0 17.6c1.2 0 2-.9 2-2 0-.7-.3-1.2-.7-1.7-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8h1.9A5.6 5.6 0 0 0 22 8.4C21.4 5.3 17.2 3.2 12 3.2z" />
+      <circle cx="8" cy="9" r="1" />
+      <circle cx="12.4" cy="7.4" r="1" />
+      <circle cx="16.2" cy="9.6" r="1" />
     </Svg>
   ),
   // Shopping bag with a handle — the header's bag affordance.

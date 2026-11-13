@@ -261,3 +261,101 @@ test.describe("storefront chrome", () => {
     await expect(panel).toHaveCount(0);
   });
 });
+
+test.describe("product URLs and mode gating", () => {
+  test("product URLs are readable slugs, never opaque ids", async ({ page }) => {
+    await page.goto("/shop");
+    const hrefs = await page
+      .locator('a[href^="/products/"]')
+      .evaluateAll((links) => links.map((a) => a.getAttribute("href") || ""));
+
+    expect(hrefs.length).toBeGreaterThan(0);
+    for (const href of hrefs) {
+      const slug = href.replace("/products/", "");
+      // The bug this guards: /products/003 was shipped from the database id.
+      expect(slug).not.toMatch(/^\d+$/);
+      expect(slug).not.toMatch(/^prod_/);
+      // Readable slugs are hyphenated words, not codes.
+      expect(slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)+$/);
+    }
+  });
+
+  test("every product linked from the shop actually resolves", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/shop");
+    const hrefs = await page
+      .locator('a[href^="/products/"]')
+      .evaluateAll((links) => [
+        ...new Set(links.map((a) => a.getAttribute("href") || "")),
+      ]);
+
+    // A listing that links to a 404 is worse than an empty listing.
+    for (const href of hrefs) {
+      const res = await request.get(href);
+      expect(res.status(), `${href} should resolve`).toBe(200);
+    }
+  });
+
+  test("a product page carries its own title and Product schema", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "One viewport is enough.");
+    await page.goto("/shop");
+    const href = await page
+      .locator('a[href^="/products/"]')
+      .first()
+      .getAttribute("href");
+    expect(href).toBeTruthy();
+
+    // Navigate directly rather than clicking: a client-side transition can
+    // resolve after waitForLoadState, so the assertions would read the listing
+    // page instead of the product. Navigating makes the target unambiguous.
+    await page.goto(href!);
+
+    // Regression: the metadata was exported as a plain `const`, so Next never
+    // called it and every product shipped the generic site title.
+    const title = await page.title();
+    expect(title).toMatch(/SnehaVrinda Kala/);
+    expect(title).not.toBe("SnehaVrinda Kala | SnehaVrinda Kala");
+
+    const schema = await page
+      .locator('script[type="application/ld+json"]')
+      .evaluateAll((nodes) =>
+        nodes.map((n) => {
+          try {
+            return JSON.parse(n.textContent || "{}");
+          } catch {
+            return {};
+          }
+        })
+      );
+    // Each block parses to a single object here, so read @type directly rather
+    // than assuming an array or a @graph wrapper.
+    const types = schema.map((s: any) => s["@type"]);
+    expect(types).toContain("Product");
+  });
+
+  test("platform-only pages are not advertised in single-brand mode", async ({
+    page,
+  }) => {
+    // /artists and /sell 404 by design here, so nothing may link to them.
+    await page.goto("/");
+    const artistLinks = await page.locator('a[href="/artists"]').count();
+    const sellLinks = await page.locator('a[href="/sell"]').count();
+    expect(artistLinks).toBe(0);
+    expect(sellLinks).toBe(0);
+    expect(await page.locator('a[href="/art-forms"]').count()).toBeGreaterThan(0);
+  });
+
+  test("the footer credits the maker and carries painted ornament", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const footer = page.locator("footer");
+    await expect(footer).toContainText("Sneha Sainath Sapa");
+    // The ornaments are real painted images, not CSS shapes.
+    expect(await footer.locator("img").count()).toBeGreaterThan(0);
+  });
+});

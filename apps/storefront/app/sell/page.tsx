@@ -1,8 +1,13 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { SectionHeading, Card, CardContent } from "@snehavrinda-kala/ui";
 import { Badge } from "@snehavrinda-kala/ui";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 
 export default function SellPage() {
+  // Only meaningful in marketplace mode: in single-brand mode there is nobody
+  // to onboard, so the page is a dead end and must not be indexed.
+  if (getPlatformModeFromEnv() !== "platform") notFound();
   return (
     <main className="py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

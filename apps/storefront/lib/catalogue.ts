@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { medusa } from "@/lib/medusa";
 import { products as seedProducts, type Product as SeedProduct } from "@/data/products";
+import { productSlug, isOpaqueHandle } from "@/lib/slug";
 
 /**
  * The single read path for catalogue listings.
@@ -70,7 +71,14 @@ const SEED_COLLECTION_TO_SLUG: Record<string, string> = {
 
 function seedToItem(product: SeedProduct): CatalogueItem {
   return {
-    handle: product.id.replace(/^prod_/, ""),
+    // Seed records are identified as `prod_001`, but that makes an opaque URL
+    // (`/products/001`). Derive a descriptive, keyword-bearing handle instead:
+    // `/products/hand-painted-terracotta-vase-home-1`.
+    handle: productSlug({
+      title: product.title,
+      artist: product.artist,
+      artForm: product.artForm,
+    }),
     title: product.title,
     artist: product.artist,
     // Seed prices are written in whole rupees, but `price` is consumed as minor
@@ -108,7 +116,17 @@ function liveToItem(product: any): CatalogueItem {
     (inventory === 0 ? "made_to_order" : "ready_to_ship");
 
   return {
-    handle: product.handle,
+    // Prefer the handle Medusa assigned. If it is opaque (`003`, a UUID) the
+    // product URL would be unreadable and keyword-less, so derive one from the
+    // title. Existing handles are never rewritten — that would break links and
+    // any ranking already earned.
+    handle: isOpaqueHandle(product.handle)
+      ? productSlug({
+          title: product.title ?? "artwork",
+          artist: product.metadata?.artist as string | undefined,
+          artForm: categories[0]?.name,
+        })
+      : product.handle,
     title: product.title,
     artist: product.metadata?.artist ?? "SnehaVrinda Kala",
     price,
@@ -204,6 +222,35 @@ export async function findCatalogueItem(
 ): Promise<CatalogueItem | null> {
   const items = await listCatalogue();
   return items.find((item) => item.handle === handle) ?? null;
+}
+
+/**
+ * Resolve a readable handle back to the live Medusa product it came from.
+ *
+ * Listing cards link to the *catalogue* handle, which for a product whose Medusa
+ * handle is short and opaque (`cotton-throw`) is regenerated from the title. But
+ * `medusa.getProduct` only knows the original handle, so the detail page 404s on
+ * every such product while the listing happily shows it. Rather than change how
+ * Medusa stores its data — which would break existing links and any ranking —
+ * map the generated handle back to the original here.
+ */
+export async function resolveMedusaHandle(readable: string): Promise<string> {
+  try {
+    const { products } = await medusa.listProducts({ limit: 100 });
+    for (const product of products ?? []) {
+      const derived = isOpaqueHandle(product.handle)
+        ? productSlug({
+            title: product.title ?? "artwork",
+            artist: product.metadata?.artist as string | undefined,
+            artForm: product.categories?.[0]?.name,
+          })
+        : product.handle;
+      if (derived === readable) return product.handle;
+    }
+  } catch {
+    // Backend unreachable; fall through and let the caller try the handle raw.
+  }
+  return readable;
 }
 
 /** Seed prices are authored in rupees; expose a helper for non-card displays. */
