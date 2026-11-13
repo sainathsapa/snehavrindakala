@@ -33,7 +33,7 @@ export function ImageUpload({
         await uploadFile(files[0]);
       }
     },
-    []
+    [disabled, accept, maxSize]
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -119,80 +119,72 @@ export function ImageUpload({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Drop zone */}
-      <div
-        className={`aspect-square rounded-2xl border-2 border-dashed p-4 flex flex-col items-center justify-center transition-all duration-200 ${
+      {/* The file input is always mounted. It used to render only when there
+          was no image yet, which meant a slide with an image could never have
+          that image replaced — the click target had nothing behind it. */}
+      <label
+        className={`relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-md border-2 border-dashed transition-all duration-200 ${
           disabled
-            ? "border-sand-border bg-surface/50 text-muted-ink cursor-not-allowed"
+            ? "cursor-not-allowed border-sand-border bg-surface/50 text-muted-ink"
             : isDragOver
-              ? "border-sindoor bg-sindoor/5 text-sindoor"
-              : "border-sand-border bg-rang-paper/50 hover:border-sindoor/50 hover:bg-sindoor/5"
+              ? "border-kumkum bg-kumkum/5"
+              : "border-sand-border bg-rang-paper/50 hover:border-kumkum/50 hover:bg-kumkum/5"
         }`}
       >
-        {value && (
-          <div className="absolute inset-0 flex items-center justify-center">
+        <input
+          type="file"
+          accept={accept}
+          onChange={handleFileSelect}
+          disabled={disabled || isUploading}
+          className="sr-only"
+          aria-label={value ? "Replace image" : "Upload image"}
+        />
+
+        {value ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={value}
-              alt="Preview"
-              className="w-full h-full object-cover rounded-xl"
+              alt="Selected image preview"
+              className="h-full w-full object-cover"
             />
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onChange("");
-              }}
-              className="absolute top-2 right-2 p-1 bg-sindoor text-rang-paper rounded-full hover:bg-sindoor/90 transition-colors"
-              title="Remove image"
-            >
-              ×
-            </button>
-          </div>
-        )}
-        {!value && (
-          <>
-            {isDragOver ? (
-              <div className="space-y-2">
-                <div className="text-xl">📁</div>
-                <p className="text-sm font-medium text-sindoor font-sans">
-                  Drop image here to upload
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="text-2xl">📷</div>
-                <p className="text-sm font-medium text-muted-ink font-sans">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-xs text-muted-ink font-sans">
-                  Max {maxSize}MB • JPG, PNG, WebP, GIF
-                </p>
-              </div>
-            )}
+            <span className="absolute inset-x-0 bottom-0 bg-deep-ink/70 px-2 py-1.5 text-center font-sans text-[10px] font-medium uppercase tracking-wider text-rang-paper opacity-0 transition-opacity hover:opacity-100">
+              Click to replace
+            </span>
           </>
+        ) : (
+          <span className="flex h-full flex-col items-center justify-center gap-1.5 px-3 text-center">
+            <span aria-hidden="true" className="text-xl text-terracotta">
+              ✦
+            </span>
+            <span className="font-sans text-xs font-medium text-deep-ink">
+              {isDragOver ? "Drop to upload" : "Click or drag an image"}
+            </span>
+            <span className="font-sans text-[10px] text-muted-ink">
+              JPG, PNG, WebP, GIF · max {maxSize}MB
+            </span>
+          </span>
         )}
-        {!value && !disabled && (
-          <input
-            type="file"
-            accept={accept}
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-        )}
-      </div>
 
-      {/* Upload progress */}
-      {isUploading && (
-        <div className="mt-2 w-full bg-sand-border rounded-full h-2">
-          <div
-            className="bg-sindoor h-full rounded-full transition-all duration-300"
-            style={{ width: `${uploadProgress}%` }}
-          ></div>
-        </div>
+        {isUploading && (
+          <span className="absolute inset-0 flex items-center justify-center bg-deep-ink/50 font-sans text-xs font-medium text-rang-paper">
+            Uploading…
+          </span>
+        )}
+      </label>
+
+      {value && !disabled && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="mt-1.5 font-sans text-[10px] font-medium uppercase tracking-wider text-kumkum hover:text-sindoor"
+        >
+          Remove image
+        </button>
       )}
 
-      {/* Error message */}
       {error && (
-        <p className="mt-2 text-xs text-sindoor font-sans">{error}</p>
+        <p className="mt-1.5 font-sans text-[11px] text-kumkum">{error}</p>
       )}
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ImageUpload } from "@/components/image-upload";
 import { useParams } from "next/navigation";
 
 interface Product {
@@ -13,6 +14,9 @@ interface Product {
   currency_code: string;
   created_at: string;
   category_id?: string;
+  // Medusa keeps the card image in `thumbnail` and the gallery in `images`.
+  thumbnail?: string | null;
+  images?: { url?: string }[];
 }
 
 interface Category {
@@ -31,6 +35,7 @@ export default function EditProductPage() {
   const [productStatus, setProductStatus] = useState("draft");
   const [price, setPrice] = useState("0");
   const [currency, setCurrency] = useState("inr");
+  const [image, setImage] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
@@ -60,7 +65,7 @@ export default function EditProductPage() {
         setPrice((loaded.total / 100).toString());
         setCurrency(loaded.currency_code || "inr");
         setCategoryId(loaded.category_id || "");
-        setLoading(false);
+        setImage(loaded.thumbnail || loaded.images?.[0]?.url || "");        setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [id]);
@@ -94,6 +99,7 @@ export default function EditProductPage() {
           total: price ? parseInt(price) * 100 : 0,
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
+          image,
         }),
       });
       if (res.ok) {
@@ -143,6 +149,16 @@ export default function EditProductPage() {
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Replace or clear the product photograph. */}
+              <div>
+                <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                  Product image
+                </label>
+                <div className="max-w-[260px]">
+                  <ImageUpload value={image} onChange={setImage} />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-sans font-medium text-deep-ink mb-2">

@@ -76,7 +76,17 @@ export async function middleware(req: NextRequest) {
 
   // The login page must be reachable while signed out — otherwise there is no
   // way in. It sits under /admin, so this exemption has to come first.
-  if (pathname === "/admin/login") {
+  //
+  // The login *endpoint* needs the same exemption. It lives at
+  // /api/admin/login, which the matcher guards, so without this the handler was
+  // 401'd before it ever ran and nobody could sign in — the panel was
+  // unreachable even with the correct credentials.
+  if (pathname === "/admin/login" || pathname === "/api/admin/login") {
+    return NextResponse.next();
+  }
+
+  // A Medusa OAuth callback is likewise a signed-out entry point.
+  if (pathname === "/api/admin/auth/callback") {
     return NextResponse.next();
   }
 

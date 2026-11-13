@@ -172,6 +172,24 @@ test.describe("admin gate", () => {
     await expect(page.locator('input[type="password"]')).toBeVisible();
   });
 
+  test("the login endpoint itself is reachable while signed out", async ({
+    request,
+  }) => {
+    // A correct password is refused with 401, so status alone cannot show that
+    // the request reached the handler. The middleware answers with a bare
+    // {error:"Unauthorized"} and no content-type negotiation; the handler
+    // validates the body first and says which field is missing. Asking with an
+    // empty body therefore proves routing: 400 means the handler ran, 401 means
+    // the middleware blocked it.
+    const res = await request.post("/api/admin/login", {
+      data: {},
+      failOnStatusCode: false,
+    });
+
+    expect(res.status()).toBe(400);
+    expect(await res.text()).toContain("Email and password are required");
+  });
+
   test("a wrong password is refused without revealing why", async ({ page }) => {
     await page.goto("/admin/login");
 

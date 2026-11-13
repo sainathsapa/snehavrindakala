@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { ImageUpload } from "@/components/image-upload";
 
 interface Post {
   id: string;
@@ -17,6 +18,7 @@ const emptyForm = {
   author: "",
   excerpt: "",
   content: "",
+  cover_image: "",
   status: "draft",
 };
 
@@ -273,6 +275,20 @@ export default function JournalPage() {
                   <option value="published">Published</option>
                 </select>
               </label>
+              {/* Cover image. The API accepted `cover_image` and the storefront
+                  rendered it, but this form never sent one, so every essay an
+                  editor created arrived imageless. */}
+              <div className="block sm:col-span-2">
+                <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
+                  Cover image
+                </span>
+                <div className="max-w-xs">
+                  <ImageUpload
+                    value={form.cover_image}
+                    onChange={(url) => setForm({ ...form, cover_image: url })}
+                  />
+                </div>
+              </div>
               <label className="block sm:col-span-2">
                 <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">
                   Excerpt

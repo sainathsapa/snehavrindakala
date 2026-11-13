@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ImageUpload } from "@/components/image-upload";
 
 interface Category {
   id: string;
@@ -15,6 +16,7 @@ export default function NewProductPage() {
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("inr");
   const [categoryId, setCategoryId] = useState("");
+  const [image, setImage] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,6 +50,7 @@ export default function NewProductPage() {
           total: price ? parseInt(price) * 100 : 0,
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
+          ...(image ? { image } : {}),
         }),
       });
       if (res.ok) {
@@ -76,6 +79,18 @@ export default function NewProductPage() {
         <div className="rounded-xl border border-sand-border bg-surface overflow-hidden">
           <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Product image. A work without a photograph cannot be sold, and
+                  Medusa renders nothing on the card or the detail page until
+                  `thumbnail` is set. */}
+              <div>
+                <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                  Product image
+                </label>
+                <div className="max-w-[260px]">
+                  <ImageUpload value={image} onChange={setImage} />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-sans font-medium text-deep-ink mb-2">

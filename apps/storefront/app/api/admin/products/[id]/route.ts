@@ -72,7 +72,8 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { title, slug, status, total, currency_code, category_id } = body;
+    const { title, slug, status, total, currency_code, category_id, image } =
+      body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const amount = Number(total) || 0;
 
@@ -80,6 +81,13 @@ export async function PATCH(
     if (title !== undefined) update.title = title;
     if (slug !== undefined) update.handle = slug;
     if (validStatuses.includes(status)) update.status = status;
+    // Image attach on an existing product. `thumbnail` drives the card and the
+    // first entry of `images` drives the detail gallery, so both are set from
+    // the one upload to keep them from drifting apart.
+    if (typeof image === "string") {
+      update.thumbnail = image.trim();
+      update.images = image.trim() ? [{ url: image.trim() }] : [];
+    }
     if (category_id !== undefined) {
       // Medusa v2 uses `categories` for product↔category links. An empty
       // value clears the link instead of sending an invalid category id.

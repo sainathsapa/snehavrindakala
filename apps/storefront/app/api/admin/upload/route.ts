@@ -8,11 +8,14 @@
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
-import fs from "fs";
+import { MEDIA_ROOT, MEDIA_URL_PREFIX } from "@/lib/media";
+import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "products");
+// Media directory, not `public/` — see lib/media.ts. A file written into
+// `public/` after the standalone build is on disk but still 404s.
+const UPLOAD_DIR = path.join(MEDIA_ROOT, "products");
 
 export async function POST(req: Request) {
   if (!(await requireAdmin())) {
@@ -45,22 +48,32 @@ export async function POST(req: Request) {
     }
 
     // Ensure upload directory exists
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    }
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
-    // Generate unique filename
-    const ext = file.name.split(".").pop();
-    const filename = `${uuidv4()}.${ext}`;
+    // Generate unique filename. The extension is taken from the validated MIME
+    // type rather than from the client's filename, so an odd name cannot smuggle
+    // an executable extension onto the server.
+    const extByType: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
+    const filename = `${uuidv4()}.${extByType[file.type]}`;
     const filePath = path.join(UPLOAD_DIR, filename);
 
     // Save file
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    await fs.writeFile(filePath, buffer);
 
-    const url = `/uploads/products/${filename}`;
+    const url = `${MEDIA_URL_PREFIX}/products/${filename}`;
     return NextResponse.json({ url, filename }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    // Surface a cause an operator can act on: a read-only or unmounted media
+    // volume is the likeliest failure and looks identical to a generic 500.
+    return NextResponse.json(
+      { error: `Upload failed: ${err?.message ?? "unknown error"}` },
+      { status: 500 }
+    );
   }
 }

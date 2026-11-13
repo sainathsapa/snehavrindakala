@@ -10,6 +10,7 @@ import {
   reorderContentAction,
 } from "@/app/admin/actions";
 import { Icon } from "@snehavrinda-kala/ui";
+import { ImageFieldInput } from "./image-field-input";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ export default async function AdminContentPage() {
                 <Field label="Button label" name="cta_label" value={slide.cta_label} />
                 <Field label="Button link" name="cta_href" value={slide.cta_href} />
               </div>
-              <Field label="Image path" name="image" value={slide.image} />
+              <ImageField label="Image" name="image" value={slide.image} />
               <div className="flex flex-wrap items-center gap-4">
                 <Toggle name="published" checked={slide.published} />
                 <SaveButton />
@@ -92,7 +93,7 @@ export default async function AdminContentPage() {
             <Field label="Button label" name="cta_label" value="" />
             <Field label="Button link" name="cta_href" value="/shop" />
           </div>
-          <Field label="Image path" name="image" value="/images/hero/hero-art.jpg" />
+          <ImageField label="Image" name="image" value="/images/hero/hero-art.jpg" />
           <div className="flex flex-wrap items-center gap-4">
             <Toggle name="published" checked />
             <SaveButton label="Add slide" />
@@ -122,7 +123,7 @@ export default async function AdminContentPage() {
                 <Field label="Slug" name="slug" value={form.slug} required />
               </div>
               <Field label="Description" name="description" value={form.description} />
-              <Field label="Image path" name="image" value={form.image} />
+              <ImageField label="Image" name="image" value={form.image} />
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Origin" name="origin" value={form.origin ?? ""} />
                 <Field label="Materials" name="materials" value={form.materials ?? ""} />
@@ -160,7 +161,7 @@ export default async function AdminContentPage() {
             <Field label="Slug" name="slug" value="" required />
           </div>
           <Field label="Description" name="description" value="" />
-          <Field label="Image path" name="image" value="/images/artforms/painting.jpg" />
+          <ImageField label="Image" name="image" value="/images/artforms/painting.jpg" />
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Origin" name="origin" value="" />
             <Field label="Materials" name="materials" value="" />
@@ -201,7 +202,7 @@ export default async function AdminContentPage() {
                 <Field label="Label" name="label" value={category.label} required />
                 <Field label="Link" name="href" value={category.href} required />
               </div>
-              <Field label="Image path" name="image" value={category.image} />
+              <ImageField label="Image" name="image" value={category.image} />
               <div className="flex flex-wrap items-center gap-4">
                 <Toggle name="published" checked={category.published} />
                 <SaveButton />
@@ -218,7 +219,7 @@ export default async function AdminContentPage() {
             <Field label="Label" name="label" value="" required />
             <Field label="Link" name="href" value="/shop" required />
           </div>
-          <Field label="Image path" name="image" value="" />
+          <ImageField label="Image" name="image" value="" />
           <div className="flex flex-wrap items-center gap-4">
             <Toggle name="published" checked />
             <SaveButton label="Add category" />
@@ -328,6 +329,35 @@ function OrderButton({
         {direction === "up" ? "↑" : "↓"}
       </button>
     </form>
+  );
+}
+
+/**
+ * An image field: upload or drag an image, with the URL kept in a hidden input
+ * so the surrounding server action still receives it as `name`.
+ *
+ * These fields were plain text boxes reading "Image path" — an editor had to
+ * know that /images/artforms/painting.jpg existed and spell it correctly. The
+ * upload endpoint had been in the codebase the whole time, unused.
+ */
+function ImageField({
+  label,
+  name,
+  value,
+  required,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <span className="mb-1 block font-sans text-[11px] font-medium uppercase tracking-wider text-muted-ink">
+        {label}
+      </span>
+      <ImageFieldInput name={name} value={value} required={required} />
+    </div>
   );
 }
 

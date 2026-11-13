@@ -121,8 +121,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:-}
       DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa
       PLATFORM_MODE: ${PLATFORM_MODE:-single-brand}
+      # Admin-uploaded media. Written outside `public/` because the standalone
+      # build snapshots that folder at compile time, so anything added later
+      # would 404. Served by app/uploads/[...path]/route.ts.
+      MEDIA_ROOT: /data/uploads
     ports:
       - "3000:3000"
+    volumes:
+      - storefront_media:/data/uploads
     depends_on:
       backend:
         condition: service_healthy
@@ -133,6 +139,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  storefront_media:
 
 networks:
   snehavrinda:

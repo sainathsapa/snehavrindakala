@@ -40,7 +40,8 @@ export async function POST(req: Request) {
   }
   try {
     const body = await req.json();
-    const { title, slug, status, total, currency_code, category_id } = body;
+    const { title, slug, status, total, currency_code, category_id, image } =
+      body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const productStatus = validStatuses.includes(status) ? status : "draft";
     const amount = Number(total) || 0;
@@ -54,6 +55,14 @@ export async function POST(req: Request) {
       // Medusa v2 links products to categories through `categories`, not
       // `category_id` (which is only a list-filter query param).
       payload.categories = [{ id: category_id }];
+    }
+
+    // The product image. Medusa keeps `thumbnail` for the card and `images` for
+    // the gallery; setting only one leaves either the listing or the detail
+    // page blank. The URL is whatever the admin uploader returned.
+    if (typeof image === "string" && image.trim()) {
+      payload.thumbnail = image.trim();
+      payload.images = [{ url: image.trim() }];
     }
     if (amount > 0) {
       payload.options = [{ title: "Default", values: ["Default"] }];

@@ -75,7 +75,9 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
+  && adduser --system --uid 1001 nextjs \
+  && mkdir -p /data/uploads \
+  && chown -R nextjs:nodejs /data
 
 # Copy the complete standalone tree. In a pnpm monorepo the server lives at
 # apps/storefront/server.js and its node_modules symlinks point at the
