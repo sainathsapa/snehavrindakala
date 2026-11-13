@@ -10,7 +10,7 @@ import {
   PeacockEye,
 } from "@/components/indian-motifs";
 import { GLOSSARY, MATERIALS, TIMELINE } from "@/lib/art-reference";
-import { JaaliField, PaperGrain } from "@/components/grounds";
+import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import { listArtForms } from "@/lib/site-content";
 
 export const metadata = {
@@ -153,6 +153,32 @@ export default async function LearnPage() {
             </p>
           </div>
 
+          {/* A reference page that never shows the work is a dictionary. This
+              plate breaks the text before the list, and pairs the one thing a
+              reader most needs to see — actual pigment on an actual surface —
+              with the prose that describes it. */}
+          <figure className="mt-12 overflow-hidden">
+            <div className="relative aspect-[21/9] w-full overflow-hidden bg-surface">
+              <Image
+                src="/images/artforms/painting.jpg"
+                alt="Detail of a hand-painted work, showing pigment on the surface"
+                fill
+                sizes="100vw"
+                className="object-cover"
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-deep-ink/10"
+              />
+            </div>
+            <figcaption className="mt-3 flex flex-wrap items-baseline gap-x-3">
+              <span className="font-serif text-[13px] italic text-muted-ink">
+                Pigment, ground and brushwork: the three decisions every
+                tradition makes differently.
+              </span>
+            </figcaption>
+          </figure>
+
           <ul className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2">
             {MATERIALS.map((material) => (
               <li key={material.material} className="border-t border-sand-border/70 pt-5">
@@ -182,8 +208,13 @@ export default async function LearnPage() {
       </section>
 
       {/* ── III. The timeline ───────────────────────────────────────────── */}
-      <section id="timeline" className="relative scroll-mt-24 py-16 lg:py-24">
-        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+      <section
+        id="timeline"
+        className="relative scroll-mt-24 overflow-hidden py-16 lg:py-24"
+      >
+        <ButiField style={{ opacity: 0.35 }} />
+        <PaperGrain />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <PlateNumber number={3} label="The history" className="mb-8" />
 
           <div className="grid gap-10 lg:grid-cols-[280px_1fr] lg:gap-16">
