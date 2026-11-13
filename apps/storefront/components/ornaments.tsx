@@ -179,7 +179,15 @@ export function PaisleyField({ className = "" }: { className?: string }) {
 /** A gold mandala rosette, used over dark bands. */
 export function MandalaField({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 200 200" fill="none" aria-hidden="true">
+    <svg
+      className={className}
+      viewBox="0 0 200 200"
+      fill="none"
+      aria-hidden="true"
+      // Motifs are placed with negative offsets, which would otherwise widen the
+      // document and cause horizontal scroll on every page.
+      style={{ maxWidth: "none", overflow: "hidden" }}
+    >
       <circle cx="100" cy="100" r="76" stroke="currentColor" strokeWidth="1" />
       <circle cx="100" cy="100" r="56" stroke="currentColor" strokeWidth="1" />
       <circle cx="100" cy="100" r="20" stroke="currentColor" strokeWidth="1" />

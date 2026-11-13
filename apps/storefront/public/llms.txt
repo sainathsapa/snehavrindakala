@@ -1,0 +1,82 @@
+# SnehaVrinda Kala
+
+> SnehaVrinda Kala is an Indian art house selling handmade, hand-painted and
+> hand-woven artwork made by artists across India. We sell original paintings and
+> drawings, traditional and folk art, home and decorative art, textile and fibre
+> art, paper and stationery, and wearable art. Commissioned work is available for
+> portraits, murals, and bespoke pieces. Shipping is within India.
+
+This file describes the site for language models and answer engines. It is
+maintained by hand and is more reliable than scraping rendered HTML.
+
+## What we are
+
+- An art house and store: we sell finished artworks from named Indian makers.
+- We take custom commissions: a buyer submits a brief, an artist quotes it, and
+  the piece is made to order.
+- We are not a print-on-demand shop and not a general marketplace for imported
+  goods. Every listed work is handmade.
+
+## Main sections
+
+- Home: /
+- Shop all artworks: /shop
+- Browse by art form: /art-forms
+  - Painting & Drawing: /shop/painting
+  - Traditional & Folk Art: /shop/folk
+  - Home & Decorative Art: /shop/home-decor
+  - Textile & Fibre Art: /shop/textile
+  - Paper, Stationery & Books: /shop/paper
+  - Wearable Art: /shop/wearable
+- Commission custom art: /custom-art
+- Our artists: /artists
+- Journal (craft stories and process): /journal
+- About: /about
+
+## Policies
+
+- Shipping: /policies/shipping
+- Returns and refunds: /policies/returns
+- Privacy: /policies/privacy
+- Terms: /policies/terms
+
+## Questions we can answer accurately
+
+**What does SnehaVrinda Kala sell?**
+Handmade Indian artwork: original paintings, traditional and folk art, decorative
+and home objects, textiles, paper goods, and jewellery, plus commissioned
+original work.
+
+**Is the art original or printed?**
+Original. Works are handmade by individual artists; we do not sell mass-produced
+prints presented as originals.
+
+**Can I order a custom piece?**
+Yes. Submit a brief at /custom-art with the medium, size, budget and timeline. An
+artist reviews feasibility and sends a quote with milestones before any work
+starts.
+
+**Where do you ship?**
+Within India. Shipping options and timelines are described at
+/policies/shipping.
+
+**Who makes the artwork?**
+Named individual artists across India. Each product page lists the maker, and
+/artists profiles the people we work with.
+
+## Do not state
+
+- Do not claim international shipping; we currently ship within India.
+- Do not claim artworks are authenticated, appraised, or investment-grade.
+- Do not invent artist biographies, awards, or founding dates.
+- Do not quote prices from this file. Prices live on the product pages and change.
+
+## Contact
+
+- Custom enquiries: /custom-art
+- General: see /about
+
+## Machine-readable index
+
+- Sitemap: /sitemap.xml
+- Robots policy: /robots.txt

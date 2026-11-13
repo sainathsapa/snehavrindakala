@@ -8,6 +8,7 @@ import {
   PaisleyField,
   MandalaField,
 } from "@/components/ornaments";
+import { HeroSlider } from "@/components/hero-slider";
 import { listCatalogue } from "@/lib/catalogue";
 import { formatPrice } from "@/lib/medusa";
 import {
@@ -18,6 +19,20 @@ import {
 
 export const dynamic = "force-dynamic";
 
+/** Real Indian art traditions, used for the decorative frieze band. */
+const TRADITIONS = [
+  "Madhubani",
+  "Warli",
+  "Pattachitra",
+  "Gond",
+  "Kalamkari",
+  "Phad",
+  "Miniature",
+  "Bhil",
+  "Kerala Mural",
+  "Pichwai",
+];
+
 export default async function Home() {
   // Everything curated lives in Postgres and is edited at /admin/content.
   const [slides, artForms, categories, catalogue] = await Promise.all([
@@ -27,78 +42,25 @@ export default async function Home() {
     listCatalogue().catch(() => []),
   ]);
 
-  const hero = slides[0];
   const featuredProducts = catalogue.slice(0, 4);
   const featuredForms = artForms.slice(0, 5);
 
   return (
     <main className="bg-rang-paper">
-      {/* ── Hero ──────────────────────────────────────────────────────────
-          Full-bleed artwork with the headline over a pale left gradient, as in
-          the reference: no card, no border — the illustration is the section. */}
-      <section className="relative min-h-[520px] overflow-hidden bg-rang-paper lg:min-h-[640px]">
-        {hero?.image && (
-          <Image
-            src={hero.image}
-            alt=""
-            aria-hidden="true"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-right"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-rang-paper from-30% via-rang-paper/70 via-50% to-transparent to-75% lg:via-rang-paper/45 lg:via-42% lg:to-65%" />
-        <KalamBorder className="absolute inset-x-0 top-0 text-terracotta/40" />
-
-        <div className="relative mx-auto flex max-w-[1400px] flex-col justify-center px-5 py-16 sm:px-8 lg:min-h-[640px] lg:px-12 lg:py-24">
-          <div className="max-w-xl">
-            {hero?.eyebrow && (
-              <p className="mb-4 font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
-                {hero.eyebrow}
-              </p>
-            )}
-            <h1 className="font-serif text-[44px] font-semibold leading-[1.05] tracking-tight text-deep-ink sm:text-[60px] lg:text-[76px]">
-              {hero?.title ?? "Where Indian Art Comes Alive"}
-            </h1>
-            {hero?.tagline && (
-              <p className="mt-5 font-serif text-lg italic text-muted-ink sm:text-xl">
-                {hero.tagline}
-              </p>
-            )}
-            <Link
-              href={hero?.cta_href || "/shop"}
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-7 py-3.5 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus:ring-2 focus:ring-kumkum focus:ring-offset-2 focus:ring-offset-rang-paper"
-            >
-              {hero?.cta_label || "Begin the Journey"}
-              <span aria-hidden="true">→</span>
-            </Link>
-
-            {/* Slide indicator, only when there is more than one slide. */}
-            {slides.length > 1 && (
-              <div className="mt-12 flex items-center gap-3 font-sans text-xs text-muted-ink">
-                <span className="font-semibold text-deep-ink">01</span>
-                <span className="h-px w-8 bg-sand-border" aria-hidden="true" />
-                <span>{String(slides.length).padStart(2, "0")}</span>
-                <span className="ml-2 flex items-center gap-1" aria-hidden="true">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-sand-border text-deep-ink">
-                    ←
-                  </span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-sand-border text-deep-ink">
-                    →
-                  </span>
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      {/* ── Hero carousel ─────────────────────────────────────────────────
+          Slides are admin-managed and genuinely cycle: auto-advance, arrows,
+          dots, swipe and keyboard, pausing on hover and focus. */}
+      <div className="relative">
+        <HeroSlider slides={slides} />
+        <KalamBorder className="pointer-events-none absolute inset-x-0 top-0 text-terracotta/40" />
+      </div>
 
       {/* ── Statement strip ─────────────────────────────────────────────────
           A short editorial line between the hero and the first row, with the
           botanical mark that recurs through the references. */}
-      <section className="border-y border-sand-border/60 bg-surface/60 py-10">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-5 sm:px-8 lg:px-12">
+      <section className="relative overflow-hidden border-y border-sand-border/60 bg-surface/60 py-10">
+        <PaisleyField className="pointer-events-none absolute -left-10 top-0 hidden h-40 w-40 text-terracotta/[0.08] md:block" />
+        <div className="relative mx-auto flex max-w-[1400px] items-center gap-6 px-5 sm:px-8 lg:px-12">
           <BotanicalRule className="hidden shrink-0 text-terracotta sm:flex" />
           <p className="font-serif text-lg leading-relaxed text-deep-ink sm:text-xl">
             Every piece here was made by a hand that learned the form from
@@ -107,6 +69,26 @@ export default async function Home() {
           </p>
         </div>
       </section>
+
+      {/* ── Art-form marquee ────────────────────────────────────────────────
+          A slow band of tradition names, like a painted frieze running across
+          the page. Purely decorative; it pauses entirely for reduced-motion
+          users and is hidden from assistive tech. */}
+      <div
+        className="overflow-hidden border-b border-sand-border/60 bg-rang-paper py-4"
+        aria-hidden="true"
+      >
+        <div className="marquee-track flex w-max items-center gap-8 whitespace-nowrap">
+          {[...TRADITIONS, ...TRADITIONS].map((name, i) => (
+            <span key={`${name}-${i}`} className="flex items-center gap-8">
+              <span className="font-serif text-sm uppercase tracking-[0.3em] text-muted-ink/70">
+                {name}
+              </span>
+              <span className="text-terracotta/50">✦</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* ── Indian Art Forms ─────────────────────────────────────────────── */}
       <section className="relative border-b border-sand-border/60 py-14 lg:py-20">
@@ -194,47 +176,116 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Curated for you ──────────────────────────────────────────────── */}
-      <section className="relative py-14 lg:py-20">
+      {/* ── Selected works ─────────────────────────────────────────────────
+          Presented as a gallery wall rather than a product row: one work leads,
+          the rest sit beside it as plates, and the captions read like labels. */}
+      <section className="relative overflow-hidden py-16 lg:py-24">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <div className="grid gap-10 lg:grid-cols-[300px_1fr] lg:gap-14">
-            <SectionIntro
-              eyebrow="Featured Artworks"
-              title="Curated for You"
-              description="Bring home a piece of India's soul."
-            />
-
+          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-sand-border/60 pb-6">
             <div>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {featuredProducts.map((product) => (
-                  <Link
-                    key={product.handle}
-                    href={`/products/${product.handle}`}
-                    className="group"
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
+                Selected works
+              </p>
+              <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-deep-ink sm:text-[42px]">
+                From the studio
+              </h2>
+            </div>
+            <ArrowLink href="/shop">See the full collection</ArrowLink>
+          </div>
+
+          <div className="mt-12 grid gap-x-8 gap-y-12 lg:grid-cols-[1.4fr_1fr_1fr]">
+            {featuredProducts.map((product, index) => (
+              <Link
+                key={product.handle}
+                href={`/products/${product.handle}`}
+                className={`group ${index === 0 ? "lg:row-span-2" : ""}`}
+              >
+                <div
+                  className={`relative overflow-hidden bg-surface ring-1 ring-sand-border/50 ${
+                    index === 0 ? "aspect-[4/5]" : "aspect-[4/3]"
+                  }`}
+                >
+                  <Image
+                    src={product.image}
+                    alt={`${product.title} by ${product.artist}`}
+                    fill
+                    sizes={
+                      index === 0
+                        ? "(max-width: 1024px) 100vw, 45vw"
+                        : "(max-width: 1024px) 50vw, 27vw"
+                    }
+                    className="object-cover transition-opacity duration-500 group-hover:opacity-90"
+                  />
+                </div>
+                <div className="mt-4 border-t border-sand-border/60 pt-3">
+                  <h3
+                    className={`font-serif font-semibold leading-tight text-deep-ink transition-colors group-hover:text-kumkum ${
+                      index === 0 ? "text-2xl" : "text-lg"
+                    }`}
                   >
-                    <div className="rounded-sm bg-surface p-3 ring-1 ring-sand-border/40">
-                      <div className="relative aspect-square overflow-hidden">
-                        <Image
-                          src={product.image}
-                          alt={product.title}
-                          fill
-                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 240px"
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
-                    </div>
-                    <h3 className="mt-3 font-serif text-sm font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum">
-                      {product.title}
-                    </h3>
-                    <p className="mt-0.5 font-sans text-xs text-muted-ink">
-                      {formatPrice(product.price)}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-              <ArrowLink href="/shop" className="mt-8">
-                Shop the Collection
-              </ArrowLink>
+                    {product.title}
+                  </h3>
+                  <p className="mt-1 font-sans text-xs italic text-muted-ink">
+                    {product.artist}
+                  </p>
+                  <p className="mt-2 font-sans text-xs text-deep-ink">
+                    {formatPrice(product.price)}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Artist in focus ────────────────────────────────────────────────
+          An artist site introduces the person before it sells the object. This
+          band gives one maker a portrait, a quote and a way into their work. */}
+      <section className="relative overflow-hidden border-y border-sand-border/60 bg-surface/50 py-16 lg:py-24">
+        <MandalaField className="pointer-events-none absolute -left-20 top-1/2 hidden h-80 w-80 -translate-y-1/2 text-terracotta/[0.06] lg:block" />
+        <div className="relative mx-auto grid max-w-[1400px] items-center gap-12 px-5 sm:px-8 lg:grid-cols-2 lg:gap-20 lg:px-12">
+          <div className="relative aspect-[4/5] w-full overflow-hidden bg-rang-paper ring-1 ring-sand-border/60 lg:aspect-square">
+            <Image
+              src="/images/artforms/folk.jpg"
+              alt="Madhubani work in progress"
+              fill
+              sizes="(max-width: 1024px) 100vw, 45vw"
+              className="object-cover"
+            />
+          </div>
+
+          <div className="max-w-xl">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
+              Artist in focus
+            </p>
+            <h2 className="mt-3 font-serif text-2xl font-semibold leading-snug text-deep-ink sm:text-3xl">
+              &ldquo;My grandmother never signed her work. I sign mine, and I
+              write down what she taught me.&rdquo;
+            </h2>
+            <p className="mt-5 font-sans text-small leading-relaxed text-muted-ink">
+              Madhubani is painted with a nib, a twig and a fingertip. A single
+              panel can take a fortnight, and the border you think is decoration
+              is often a genealogy — the fish for fertility, the bamboo for
+              endurance, the parrot for the messenger.
+            </p>
+            <p className="mt-4 font-sans text-small leading-relaxed text-muted-ink">
+              We work with makers who have inherited their form and are teaching
+              it on. Every work on this site names the hand that made it.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/artists"
+                className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
+              >
+                Meet the artists
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link
+                href="/art-forms"
+                className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
+              >
+                Explore the traditions
+              </Link>
             </div>
           </div>
         </div>

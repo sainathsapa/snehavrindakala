@@ -12,7 +12,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="relative mt-auto border-t border-sand-border bg-rang-paper">
+    <footer className="relative mt-auto overflow-hidden border-t border-sand-border bg-rang-paper">
       {/* Woven border and a faint rosette keep the footer in the same visual
           language as the editorial bands above it. */}
       <KalamBorder className="w-full text-terracotta/30" />

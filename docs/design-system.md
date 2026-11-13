@@ -10,6 +10,11 @@ burgundy accents, and real artwork doing most of the visual work. Chrome stays
 quiet so the art carries the page. This is deliberately *not* generic SaaS: no
 bluish-grey neutrals, no neon, no drop-shadow-heavy cards.
 
+More precisely — and this is the test to apply to any new screen — it should
+read like **an artist's own site that happens to sell**, not a storefront that
+happens to have art in it. Section §15 is the operative rule; everything else
+serves it.
+
 ---
 
 ## 1. Colour
@@ -185,9 +190,12 @@ All icons come from `packages/ui/src/icons.tsx`:
 
 ## 6. Motion
 
-- Transitions are 200ms for colour, 500ms for image scale.
-- Hover on artwork tiles: `scale-105` inside an `overflow-hidden` frame.
+- Transitions are 200ms for colour, 500ms for image opacity.
+- Hover on artwork: `opacity-90` on the image and the title shifting to
+  `kumkum`. **No `scale-105`** — a painting does not zoom when you look at it.
 - No entrance animations, no parallax. The page should feel printed.
+
+See §18 for the full motion rules and the reduced-motion contract.
 
 ---
 
@@ -211,10 +219,15 @@ All icons come from `packages/ui/src/icons.tsx`:
 4. Does the section open with an eyebrow + rule when it is a top-level section?
 5. Are hairlines `sand-border` at reduced opacity, not grey?
 6. Does artwork sit on its own surface without being cropped past recognition?
-7. Does it hold up at 390px, 834px and 1440px?
+7. Does it hold up at 390px, 834px and 1440px, with **no horizontal overflow**
+   (`scrollWidth <= clientWidth`)? §17.
 8. Do focus states exist and is every heading level correct?
-9. Did you add a colour that is not in this document? Add it to all three
-   token files, or don't add it.
+9. Does every work name its artist? §15.
+10. Would this element be at home on a gallery wall — or does it look like a
+    D2C product tile (box, shadow, badge, zoom-on-hover)? §15.
+11. Is any control visible that does not work? (The slider once was. §16.)
+12. Did you add a colour that is not in this document? Add it to all three
+    token files, or don't add it.
 
 ---
 
@@ -307,3 +320,156 @@ CRM-adjacent and exposing a door to it invites probing.
 Related: `Artists` and `Sell` are `platformOnly` and are hidden entirely in
 single-brand mode, where the house is the only seller and both would be dead
 ends.
+
+## 15. It is an artist's site, not a shop
+
+This is the rule that overrides the others. SnehaVrinda Kala is an art house
+with a store attached, not a store with art in it. When a layout decision is
+ambiguous, resolve it the way a gallery or an artist's own site would, not the
+way a D2C ecommerce template would.
+
+What that changes in practice:
+
+**Works are plates, not cards.** `ProductCard` has no border, no shadow, no
+rounded container, no hover scale, and no badge overlay. The image sits on
+parchment inside a hairline `ring-sand-border/50` frame at `aspect-[4/5]`, and
+the caption below is separated by a thin rule — the visual grammar of a wall
+label: title, artist (italic), then availability and price on one quiet line.
+Interaction is an opacity step (`group-hover:opacity-90`) and the title
+shifting to `kumkum`. That is all.
+
+**The maker comes before the price.** Every listing names its artist. A caption
+that says only a title and a number is incomplete.
+
+**Pages open as mastheads.** `components/page-header.tsx` (`PageHeader`) is the
+shared interior header: breadcrumb, eyebrow, large serif title, one line of
+intent, optionally with artwork bleeding behind a dark gradient. Shop, Art
+Forms, Commission, About, Artists and the Journal all use it, so no page
+invents its own heading block. Pass `image` for a full masthead; omit it for a
+quiet parchment one.
+
+**Editorial bands outrank merchandising bands.** The homepage runs hero →
+statement → frieze → art forms → craft journey → selected works → artist in
+focus → feature strip → commission → closing. Only one band is a product grid,
+and even that is a gallery wall (one large plate, smaller plates beside it),
+not four identical tiles.
+
+**The artist is a section.** The "Artist in focus" band pairs a portrait with a
+short first-person quote and an entry to `/artists`. This is the single
+strongest signal that the site belongs to makers rather than to a warehouse.
+
+**Copy is written, not labelled.** "From the studio", "The hands behind the
+work", "Notes from the studio", "Five stages, nothing hidden". Never "Shop
+now", "Best sellers", "Add to bag" outside the cart flow itself.
+
+### What to avoid
+
+- Sale banners, countdowns, urgency badges, star ratings, "X people viewing".
+- Best-seller rows, related-product carousels, recently-viewed strips.
+- Card shadows (`shadow-lifted`, `hover:shadow-md`) on anything that is not an
+  overlay or a menu.
+- Gradient buttons, icon-only primary actions, stacked tag pills.
+- Empty-state copy about the *system* ("Connect the Medusa backend"). Empty
+  states speak about the *collection*: "Nothing in this collection just yet."
+
+---
+
+## 16. The hero slider
+
+`components/hero-slider.tsx` renders the admin-managed `site_hero_slide` rows
+as a real carousel.
+
+- Every slide is mounted and cross-faded with `transition-opacity duration-700`
+  rather than swapped, so the artwork never flashes and the layout never jumps.
+  Inactive slides carry `pointer-events-none` and `aria-hidden`.
+- Auto-advance is 7s. It pauses on `mouseenter`, on focus capture, and is
+  disabled entirely under `prefers-reduced-motion`.
+- Controls: previous/next buttons, one dot per slide, a swipe threshold of 40px
+  on touch, and an `aria-live="polite"` counter reading `01 / 03`.
+- With a single slide the whole control row is not rendered.
+- The headline, tagline, eyebrow and CTA are per-slide and come from the admin
+  content editor, not from a hard-coded array.
+
+A previous version rendered the arrows and the counter as static decoration —
+nothing advanced. Do not reintroduce decorative controls; if a control is
+visible it must work.
+
+---
+
+## 17. Horizontal overflow
+
+Decorative motifs are placed with deliberate negative offsets (`-right-10`,
+`-right-16`, `-left-20`) so they bleed off their section. Without clipping that
+widens the document and *every* page gains a horizontal scrollbar — this was a
+real 40px regression, most visible on mobile.
+
+Three layers of defence, all of which must stay:
+
+1. `html, body { overflow-x: hidden; max-width: 100% }` in `globals.css`. The
+   global guard.
+2. Any section that hosts a motif sets `overflow-hidden`. The real fix.
+3. `MandalaField` sets `overflow: hidden` on its own `<svg>`.
+
+Verify after touching a motif or a full-bleed section:
+
+```js
+document.documentElement.scrollWidth <= document.documentElement.clientWidth
+```
+
+Check at 390, 834 and 1440. There must be no page where this is false.
+
+---
+
+## 18. Motion
+
+- Transitions: 200ms for colour, 500ms for image opacity.
+- `marquee-track` (the art-tradition frieze) drifts over 48s, linear, and pauses
+  on hover. The list is rendered twice and translated `-50%` for a seamless
+  loop.
+- Under `prefers-reduced-motion: reduce`, all animation and transitions collapse
+  to `0.01ms` globally and the frieze stops entirely.
+- No entrance animations, no parallax, no scroll-jacking. The page should feel
+  printed.
+
+---
+
+## 19. SEO surface
+
+An art site lives on discovery, so the machine-readable layer is part of the
+design system, not an afterthought.
+
+**Metadata** — `layout.tsx` sets `metadataBase`, canonical, `keywords` for the
+traditions we actually sell, `formatDetection` off, and Google's
+`max-image-preview: large` (art listings are judged by the image).
+
+**Structured data** — two `ld+json` blocks in the root layout:
+
+- `ArtGallery` with `@id`, `knowsAbout` (the traditions), `areaServed`, image
+  and `priceRange`. `ArtGallery` rather than `Organization` or `Store`: it tells
+  search engines this is a place showing original art.
+- `WebSite` with a `potentialAction` `SearchAction` pointing at
+  `/search?q={search_term_string}`, so engines can offer a search box.
+
+All URLs in the graph are absolute via `SITE_URL`. A relative URL silently
+invalidates the whole graph.
+
+**`/robots.txt`** — permissive for `*`; private and transactional routes
+(`/admin`, `/api`, `/account`, `/cart`, `/checkout`, `/order/`,
+`/commission-status/`, `/search`, `/_next/`) are disallowed. Named AI crawlers
+(GPTBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot) are allowed but
+pointed at `/llms.txt`. Aggressive scrapers get the catalogue closed.
+
+**`/sitemap.xml`** — built from every source the site actually renders from:
+static routes, the static taxonomy, admin-managed art forms, the catalogue and
+Medusa. Paths are deduped by a `Set`, because duplicate `<loc>` entries are a
+sitemap error. `force-dynamic` with a 1h revalidate.
+
+**`public/llms.txt`** — a hand-maintained factual summary for answer engines:
+what the house is, the sections, the policies, the questions it can answer
+accurately, and a short **"Do not state"** list (no international shipping, no
+authentication or investment-grade claims, no invented biographies, no prices)
+so a model does not confabulate from markup. Update it when the facts change.
+
+**Open Graph** — `og:image` and `summary_large_image` Twitter card. Without an
+OG image a share renders as a bare text link, which for an art site is a real
+loss.

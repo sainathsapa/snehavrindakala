@@ -16,9 +16,18 @@ interface ProductCardProps {
 const stockLabels: Record<string, string> = {
   ready_to_ship: "Ready to ship",
   made_to_order: "Made to order",
-  custom_only: "Custom only",
+  custom_only: "Commission only",
 };
 
+/**
+ * A work, presented as a gallery plate.
+ *
+ * The old card was a bordered product tile with a shadow and a stock badge —
+ * unmistakably a shop. Here the artwork sits on parchment with a thin rule
+ * beneath it, and the caption carries the title, the artist and the medium the
+ * way a wall label does. There is no box, no shadow, no scale-on-hover: the
+ * image may brighten very slightly, and that is the whole interaction.
+ */
 export function ProductCard({
   handle,
   title,
@@ -30,47 +39,51 @@ export function ProductCard({
   category,
 }: ProductCardProps) {
   const hasImage = Boolean(image);
+  const availability = stockLabels[stockType] ?? stockType.replace(/_/g, " ");
 
   return (
-    <article className="group relative rounded-xl border border-sand-border bg-surface overflow-hidden transition-all hover:shadow-lifted">
-      {isNew && (
-        <span className="absolute top-3 left-3 z-10 px-2 py-1 text-[10px] font-semibold text-sindoor uppercase tracking-wider bg-rang-paper/80 backdrop-blur rounded">
-          New
-        </span>
-      )}
-      <div className="relative aspect-square overflow-hidden bg-rang-paper">
-        {hasImage ? (
-          <Image
-            src={image}
-            alt={title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            priority={false}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center border border-dashed border-sand-border">
-            <span className="text-xs text-muted-ink font-sans">Image pending</span>
-          </div>
-        )}
-        <span className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-deep-ink/90 text-[11px] text-white font-sans font-medium">
-          {stockLabels[stockType] ?? stockType.replace(/_/g, " ")}
-        </span>
-      </div>
-      <div className="p-4">
-        <Link href={`/products/${handle}`} className="block">
-          <h3 className="text-lg font-serif font-semibold text-deep-ink leading-tight">
+    <article className="group">
+      <Link href={`/products/${handle}`} className="block focus:outline-none">
+        <div className="relative aspect-[4/5] overflow-hidden bg-surface ring-1 ring-sand-border/50">
+          {hasImage ? (
+            <Image
+              src={image}
+              alt={`${title} by ${artist}`}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              className="object-cover transition-opacity duration-500 group-hover:opacity-90"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="font-serif text-sm italic text-muted-ink/60">
+                Image to follow
+              </span>
+            </div>
+          )}
+
+          {isNew && (
+            <span className="absolute left-0 top-4 bg-kumkum px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper">
+              New
+            </span>
+          )}
+        </div>
+
+        {/* Wall-label caption. */}
+        <div className="mt-4 border-t border-sand-border/60 pt-3">
+          <h3 className="font-serif text-lg font-semibold leading-tight text-deep-ink transition-colors group-hover:text-kumkum">
             {title}
           </h3>
-          <p className="mt-1 text-xs text-muted-ink font-sans">{artist}{category ? ` • ${category.name}` : ""}</p>
-        </Link>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-lg font-sans font-bold text-deep-ink">
-            {formatPrice(price)}
-          </span>
+          <p className="mt-1 font-sans text-xs italic text-muted-ink">
+            {artist}
+            {category ? ` · ${category.name}` : ""}
+          </p>
+          <p className="mt-2 flex items-baseline justify-between gap-3 font-sans text-xs">
+            <span className="text-muted-ink">{availability}</span>
+            <span className="font-medium text-deep-ink">{formatPrice(price)}</span>
+          </p>
         </div>
-      </div>
+      </Link>
     </article>
   );
 }

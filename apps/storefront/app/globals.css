@@ -68,6 +68,17 @@
 }
 
 @layer base {
+  /* Decorative motifs are deliberately placed with negative offsets so they can
+     bleed off the edge of their section. Without this, any element that extends
+     past the viewport widens the document and every page gains a horizontal
+     scrollbar — the classic 40px mobile overflow. Sections that host motifs set
+     `overflow-hidden`; this is the belt-and-braces guard. */
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   h1,
   h2,
   h3,
@@ -135,5 +146,42 @@
       rgba(159, 41, 71, 0.10) 0%,
       transparent 70%
     );
+  }
+}
+
+/* A slow frieze band of tradition names. Movement is deliberately long and
+   linear so it reads as a painted border rather than a ticker. */
+@keyframes marquee-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    /* The list is rendered twice, so shifting by half is a seamless loop. */
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-track {
+  animation: marquee-drift 48s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Anyone who asks for less motion gets a static rule instead of a scrolling
+   one — no exceptions, and nothing else on the page animates either. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

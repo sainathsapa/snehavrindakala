@@ -1,4 +1,13 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/page-header";
+import { BotanicalRule } from "@/components/ornaments";
+
+export const metadata = {
+  title: "Journal",
+  description:
+    "Artist stories, art-form explainers, technique notes and collection edits from SnehaVrinda Kala.",
+  alternates: { canonical: "/journal" },
+};
 
 export const dynamic = "force-dynamic";
 
@@ -31,74 +40,78 @@ export default async function JournalPage() {
   }
 
   return (
-    <main className="py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
-          Journal
-        </h1>
-        <p className="mb-10 text-lg text-muted-ink font-sans leading-relaxed">
-          Artist stories, art-form explainers, technique tutorials, and
-          collection edits from SnehaVrinda Kala.
-        </p>
+    <main className="bg-rang-paper">
+      <PageHeader
+        eyebrow="Notes from the studio"
+        title="Journal"
+        intro="Artist stories, art-form explainers and technique notes — written to make the work legible, not to sell it."
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "Journal" }]}
+      />
 
-        {posts.length === 0 ? (
-          <div className="rounded-xl border border-sand-border bg-surface p-12 text-center">
-            <p className="text-lg text-muted-ink font-sans mb-6">
-              No stories yet.
-            </p>
-            <p className="text-sm text-muted-ink font-sans">
-              Editorial content coming soon.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map((post: Post) => (
-              <article
-                key={post.id}
-                className="group rounded-xl border border-sand-border bg-surface overflow-hidden hover:border-terracotta/50 transition-colors"
-              >
-                {post.cover_image && (
-                  <div className="aspect-video bg-rang-paper/50">
-                    <img
-                      src={post.cover_image}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <time className="text-xs font-sans text-muted-ink">
-                      {post.published_at
-                        ? new Date(post.published_at).toLocaleDateString()
-                        : new Date(post.created_at).toLocaleDateString()}
-                    </time>
-                    {post.author && (
-                      <span className="text-xs font-sans text-muted-ink">
-                        • {post.author}
-                      </span>
+      <section className="pb-20">
+        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          {posts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <BotanicalRule className="mb-6 text-terracotta" />
+              <p className="max-w-sm font-serif text-xl leading-relaxed text-deep-ink">
+                The first pieces are being written.
+              </p>
+              <p className="mt-2 font-sans text-sm text-muted-ink">
+                Stories about the traditions, the materials and the people
+                behind the work will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post: Post) => (
+                <article key={post.id} className="group">
+                  {post.cover_image && (
+                    <Link href={`/journal/${post.slug}`} className="block">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-surface ring-1 ring-sand-border/50">
+                        <img
+                          src={post.cover_image}
+                          alt={post.title}
+                          className="h-full w-full object-cover transition-opacity duration-500 group-hover:opacity-90"
+                          loading="lazy"
+                        />
+                      </div>
+                    </Link>
+                  )}
+                  <div className="mt-4 border-t border-sand-border/60 pt-3">
+                    <div className="flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.16em] text-muted-ink/80">
+                      <time>
+                        {post.published_at
+                          ? new Date(post.published_at).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : new Date(post.created_at).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })}
+                      </time>
+                      {post.author && <span aria-hidden="true">·</span>}
+                      {post.author && <span>{post.author}</span>}
+                    </div>
+                    <Link href={`/journal/${post.slug}`} className="block">
+                      <h2 className="mt-2 font-serif text-xl font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum">
+                        {post.title}
+                      </h2>
+                    </Link>
+                    {post.excerpt && (
+                      <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink line-clamp-3">
+                        {post.excerpt}
+                      </p>
                     )}
                   </div>
-                  <Link
-                    href={`/journal/${post.slug}`}
-                    className="block"
-                  >
-                    <h2 className="text-xl font-serif font-semibold text-deep-ink mb-2 group-hover:text-terracotta transition-colors">
-                      {post.title}
-                    </h2>
-                  </Link>
-                  {post.excerpt && (
-                    <p className="text-sm text-muted-ink font-sans mb-4 line-clamp-3">
-                      {post.excerpt}
-                    </p>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
     </main>
   );
 }

@@ -6,6 +6,12 @@ import { getPlatformModeFromEnv } from "@/lib/settings";
 import { artFormSlugs } from "@/lib/slugs";
 import { listCatalogueCollections } from "@/lib/catalogue";
 import { listArtForms, listFeaturedCategories } from "@/lib/site-content";
+
+// Absolute origin for structured data. Schema.org requires fully-qualified
+// URLs, and a relative one silently invalidates the whole graph.
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"
+).replace(/\/$/, "");
 import "./globals.css";
 
 const serif = Cormorant_Garamond({
@@ -38,16 +44,58 @@ export const metadata: Metadata = {
     title: "SnehaVrinda Kala — Art made, curated, personalized, and shared",
     description:
       "Ready-to-ship artwork, made-to-order pieces, custom commissions, artist profiles, and creative kits from Indian makers.",
+    // Absolute path via metadataBase; without an og:image, shares render as a
+    // bare text link with no artwork, which for an art site is a real loss.
+    images: [
+      {
+        url: "/images/hero/hero-art.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Handmade Indian artwork from SnehaVrinda Kala",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "SnehaVrinda Kala",
     description:
       "Ready-to-ship artwork, made-to-order pieces, custom commissions, artist profiles, and creative kits.",
+    images: ["/images/hero/hero-art.jpg"],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  keywords: [
+    "Indian art",
+    "handmade Indian artwork",
+    "Madhubani painting",
+    "Warli art",
+    "Pattachitra",
+    "Gond art",
+    "Kalamkari",
+    "folk art India",
+    "original paintings",
+    "custom art commission India",
+    "handloom textiles",
+    "Indian artisans",
+  ],
+  category: "art",
+  authors: [{ name: "SnehaVrinda Kala" }],
+  creator: "SnehaVrinda Kala",
+  publisher: "SnehaVrinda Kala",
+  formatDetection: { telephone: false, email: false, address: false },
+  other: {
+    // Points answer engines at the curated summary rather than making them
+    // infer facts from rendered markup.
+    "llms-txt": "/llms.txt",
   },
 };
 
@@ -114,10 +162,34 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Organization",
+              // ArtGallery is the closest schema.org type to an art house: it
+              // tells search engines this is a place selling original art, not
+              // a generic store.
+              "@type": "ArtGallery",
+              "@id": `${SITE_URL}/#organization`,
               name: "SnehaVrinda Kala",
-              url: process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000",
-              logo: "/images/brand-mark.svg",
+              alternateName: "SnehaVrinda Kala — Indian Art House",
+              url: SITE_URL,
+              description:
+                "An Indian art house selling handmade and hand-painted artwork from artists across India, with commissioned work available.",
+              slogan: "Art · Culture · Conscious Living",
+              logo: {
+                "@type": "ImageObject",
+                url: `${SITE_URL}/images/brand-mark.svg`,
+              },
+              image: `${SITE_URL}/images/hero/hero-art.jpg`,
+              priceRange: "₹₹",
+              currenciesAccepted: "INR",
+              knowsAbout: [
+                "Madhubani painting",
+                "Warli art",
+                "Pattachitra",
+                "Gond art",
+                "Kalamkari",
+                "handloom textiles",
+                "custom art commissions",
+              ],
+              areaServed: { "@type": "Country", name: "India" },
               sameAs: [],
             }),
           }}
@@ -129,8 +201,20 @@ export default async function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              url: process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000",
+              "@id": `${SITE_URL}/#website`,
+              url: SITE_URL,
               name: "SnehaVrinda Kala",
+              publisher: { "@id": `${SITE_URL}/#organization` },
+              inLanguage: "en-IN",
+              // Lets search engines expose a search box for the site.
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+                },
+                "query-input": "required name=search_term_string",
+              },
             }),
           }}
         />

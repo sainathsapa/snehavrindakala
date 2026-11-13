@@ -1,7 +1,16 @@
 import { medusa } from "@/lib/medusa";
 import Link from "next/link";
+import { PageHeader } from "@/components/page-header";
+import { BotanicalRule } from "@/components/ornaments";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Artists & Makers",
+  description:
+    "Meet the Indian artists and craft partners behind SnehaVrinda Kala — their traditions, techniques, and whether they are currently taking commissions.",
+  alternates: { canonical: "/artists" },
+};
 
 export default async function ArtistsPage() {
   let artists: any[] = [];
@@ -13,71 +22,80 @@ export default async function ArtistsPage() {
   }
 
   return (
-    <main className="py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
-          Artists &amp; makers
-        </h1>
-        <p className="mb-8 text-lg text-muted-ink font-sans leading-relaxed">
-          Meet the artists and craft partners behind SnehaVrinda Kala. Each
-          artist profile shows their work, techniques, and commission
-          availability.
-        </p>
+    <main className="bg-rang-paper">
+      <PageHeader
+        eyebrow="The hands behind the work"
+        title="Artists & makers"
+        intro="Every work on this site has a name attached to it. These are the people who make them — their traditions, their techniques, and whether they are currently taking on commissions."
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "Artists" }]}
+      />
 
-        {artists.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {artists.map((artist) => (
+      <section className="pb-20">
+        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          {artists.length > 0 ? (
+            <div className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+              {artists.map((artist) => (
+                <Link
+                  key={artist.id}
+                  href={`/artists/${artist.slug}`}
+                  className="group block focus:outline-none"
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden bg-surface ring-1 ring-sand-border/50">
+                    {artist.portrait_media_id ? (
+                      <img
+                        src={`/images/artists/${artist.portrait_media_id}.jpg`}
+                        alt={artist.display_name}
+                        className="h-full w-full object-cover transition-opacity duration-500 group-hover:opacity-90"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <span className="font-serif text-sm italic text-muted-ink/60">
+                          Portrait to follow
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Label under the plate, as on a gallery wall. */}
+                  <div className="mt-4 border-t border-sand-border/60 pt-3">
+                    <h3 className="font-serif text-xl font-semibold leading-tight text-deep-ink transition-colors group-hover:text-kumkum">
+                      {artist.display_name}
+                    </h3>
+                    <p className="mt-1 font-sans text-xs italic text-muted-ink">
+                      {(artist.disciplines || []).slice(0, 3).join(" · ")}
+                    </p>
+                    <p className="mt-2 font-sans text-[11px] uppercase tracking-[0.16em]">
+                      {artist.commission_available ? (
+                        <span className="text-kumkum">Commissions open</span>
+                      ) : (
+                        <span className="text-muted-ink/70">Not accepting</span>
+                      )}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <BotanicalRule className="mb-6 text-terracotta" />
+              <p className="max-w-sm font-serif text-xl leading-relaxed text-deep-ink">
+                Artist profiles are being prepared.
+              </p>
+              <p className="mt-2 font-sans text-sm text-muted-ink">
+                In the meantime, the collection names every maker on the work
+                itself.
+              </p>
               <Link
-                key={artist.id}
-                href={`/artists/${artist.slug}`}
-                className="block rounded-xl border border-sand-border bg-surface p-6 hover:shadow-md transition-shadow"
+                href="/shop"
+                className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
               >
-                <div className="mb-4">
-                  {artist.portrait_media_id ? (
-                    <img
-                      src={`/images/artists/${artist.portrait_media_id}.jpg`}
-                      alt={artist.display_name}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-48 bg-rang-paper rounded-lg flex items-center justify-center">
-                      <span className="text-muted-ink">Portrait</span>
-                    </div>
-                  )}
-                </div>
-                <h3 className="text-xl font-serif font-semibold text-deep-ink mb-2">
-                  {artist.display_name}
-                </h3>
-                <p className="text-sm text-muted-ink font-sans mb-4">
-                  {(artist.disciplines || []).slice(0, 3).join(", ")}
-                </p>
-                <div className="flex items-center gap-2 text-xs font-medium">
-                  {artist.commission_available ? (
-                    <span className="px-2 py-0.5 rounded bg-sindoor/10 text-sindoor">
-                      Commissions open
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded bg-rang-paper text-muted-ink">
-                      Not accepting
-                    </span>
-                  )}
-                  {artist.is_verified && (
-                    <span className="px-2 py-0.5 rounded bg-peacock/10 text-peacock">
-                      Verified
-                    </span>
-                  )}
-                </div>
+                Browse the collection
+                <span aria-hidden="true">→</span>
               </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-lg text-muted-ink font-sans mb-6">
-              No artists found. Connect the Medusa backend to load artist data.
-            </p>
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      </section>
     </main>
   );
 }

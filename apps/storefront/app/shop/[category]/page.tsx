@@ -4,6 +4,8 @@ import { listCatalogueFor } from "@/lib/catalogue";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getArtFormBySlug, artFormSlugs, slugify } from "@/lib/slugs";
+import { PageHeader } from "@/components/page-header";
+import { BotanicalRule } from "@/components/ornaments";
 
 export const dynamic = "force-dynamic";
 
@@ -183,62 +185,81 @@ export default async function ShopCategoryPage({
   };
 
   return (
-    <main className="py-10 bg-rang-paper">
+    <main className="bg-rang-paper">
       <script
         id="schema-breadcrumb"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <nav className="mb-6 text-sm text-muted-ink font-sans">
-          <Link
-            href="/shop"
-            className="hover:text-sindoor transition-colors"
-          >
-            ← All products
-          </Link>
-          <span className="mx-2 text-muted-ink">/</span>
-          <span className="text-sindoor font-medium">
-            {resolved.name}
-          </span>
-        </nav>
 
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-4">
-          {resolved.name}
-        </h1>
-        <p className="mb-8 text-lg text-muted-ink font-sans leading-relaxed">
-          {resolved.description}
-        </p>
+      <PageHeader
+        eyebrow="Collection"
+        title={resolved.name}
+        intro={resolved.description}
+        breadcrumb={[
+          { label: "Home", href: "/" },
+          { label: "The Collection", href: "/shop" },
+          { label: resolved.name },
+        ]}
+      />
 
-        {items.length > 0 ? (
-          <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
-            {items.map((item) => (
-              <ProductCard
-                key={item.handle}
-                handle={item.handle}
-                title={item.title}
-                artist={item.artist}
-                price={item.price}
-                stockType={item.stockType}
-                image={item.image}
-                isNew={item.isNew}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="mb-6 font-sans text-lg text-muted-ink">
-              No artworks in this collection yet. Check back soon.
+      <section className="pb-20 pt-10">
+        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-sand-border/60 pb-5">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
+              {items.length} {items.length === 1 ? "work" : "works"}
             </p>
-            <Link
-              href="/shop"
-              className="rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
-            >
-              Browse all artworks
-            </Link>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link
+                href="/shop"
+                className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
+              >
+                all works
+              </Link>
+              <Link
+                href="/art-forms"
+                className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
+              >
+                all art forms
+              </Link>
+            </div>
           </div>
-        )}
-      </div>
+
+          {items.length > 0 ? (
+            <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
+              {items.map((item) => (
+                <ProductCard
+                  key={item.handle}
+                  handle={item.handle}
+                  title={item.title}
+                  artist={item.artist}
+                  price={item.price}
+                  stockType={item.stockType}
+                  image={item.image}
+                  isNew={item.isNew}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <BotanicalRule className="mb-6 text-terracotta" />
+              <p className="max-w-sm font-serif text-xl leading-relaxed text-deep-ink">
+                Nothing in this collection just yet.
+              </p>
+              <p className="mt-2 font-sans text-sm text-muted-ink">
+                New work is added as it is finished, not on a schedule.
+              </p>
+              <Link
+                href="/shop"
+                className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
+              >
+                Browse all works
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
     </main>
   );
 }
