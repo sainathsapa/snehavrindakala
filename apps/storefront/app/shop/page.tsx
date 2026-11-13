@@ -3,7 +3,7 @@ import { listCatalogue } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
 import { PaisleyField, BotanicalRule } from "@/components/ornaments";
-import { JaaliField, PaperGrain } from "@/components/grounds";
+import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getArtFormByQuery } from "@/lib/slugs";
@@ -128,6 +128,63 @@ export default async function ShopPage({
               </Link>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── Continue the journey ───────────────────────────────────────────
+          A shop page that ends at a grid asks the visitor to judge the work with
+          no context for it. These three doors offer the context — what the
+          tradition is, what the materials are, and what it would take to have
+          something made — which is also what turns a browser into a collector. */}
+      <section className="relative overflow-hidden border-t border-sand-border/60 bg-surface/50">
+        <ButiField style={{ opacity: 0.3 }} />
+        <PaperGrain />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <p className="py-10 text-center font-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-terracotta">
+            Before you choose
+          </p>
+          <div className="grid border-t border-sand-border/60 sm:grid-cols-3">
+            {[
+              {
+                href: "/art-forms",
+                eyebrow: "The tradition",
+                title: "Where each form comes from",
+              },
+              {
+                href: "/learn",
+                eyebrow: "The materials",
+                title: "What the work is made of",
+              },
+              {
+                href: "/custom-art",
+                eyebrow: "Made for you",
+                title: "Have something made to order",
+              },
+            ].map((door, i) => (
+              <Link
+                key={door.href}
+                href={door.href}
+                className={`group flex flex-col justify-between gap-8 px-1 py-9 transition-colors hover:bg-surface sm:px-7 ${
+                  i > 0 ? "border-t border-sand-border/60 sm:border-l sm:border-t-0" : ""
+                }`}
+              >
+                <div>
+                  <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-muted-ink/70">
+                    {door.eyebrow}
+                  </p>
+                  <h3 className="mt-2 font-serif text-lg font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum">
+                    {door.title}
+                  </h3>
+                </div>
+                <span
+                  aria-hidden="true"
+                  className="text-lg text-terracotta transition-transform duration-300 group-hover:translate-x-1"
+                >
+                  →
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
     </main>

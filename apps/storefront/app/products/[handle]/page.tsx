@@ -5,6 +5,7 @@ import {
   medusa,
 } from "@/lib/medusa";
 import { ProductOptions } from "@/components/product-options";
+import { ProductStory } from "@/components/product-story";
 import {
   findCatalogueItem,
   resolveMedusaHandle,
@@ -308,6 +309,12 @@ export default async function ProductDetailPage({
             </div>
           </div>
         </div>
+
+        <ProductStory
+          title={product.title}
+          collection={product.category?.name || undefined}
+          stockType={stockType}
+        />
       </div>
     </main>
   );
@@ -441,6 +448,13 @@ function SeedProductPage({ item }: { item: CatalogueItem }) {
             )}
           </div>
         </div>
+
+        <ProductStory
+          title={item.title}
+          artist={item.artist}
+          collection={item.collection}
+          stockType={item.stockType}
+        />
       </div>
     </main>
   );
