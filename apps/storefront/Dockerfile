@@ -44,9 +44,26 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV NEXT_STANDALONE=true
 
+# Point the build at a database that does not exist.
+#
+# Several pages are force-dynamic but Next still evaluates module-level data
+# helpers while collecting build traces, so the build container tries to open a
+# Postgres connection. The helpers already fall back to their defaults (the
+# storefront renders fine without content rows), but each attempt logs a full
+# ECONNREFUSED stack, which buries real build errors and made a clean build
+# look broken.
+#
+# Setting the URL to the loopback port 1 makes the failure immediate and
+# identical on every machine, so the noise is predictable rather than
+# depending on whether a stray local database happens to be listening. This is
+# a build-time default only; the runner stage gets the real URL from compose.
+ENV BUILD_TIME_DATABASE_URL=postgresql://build:build@127.0.0.1:1/build
+
 WORKDIR /app/apps/storefront
 
-RUN pnpm run build
+RUN DATABASE_URL="$BUILD_TIME_DATABASE_URL" \
+    SITE_CONTENT_QUIET=1 \
+    pnpm run build
 
 FROM node:24-alpine AS runner
 

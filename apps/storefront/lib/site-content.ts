@@ -331,7 +331,17 @@ async function safeRows<T extends Record<string, any>>(
   } catch (err) {
     // The storefront must render even if Postgres is unreachable; the homepage
     // falls back to the defaults in that case.
-    console.error("site content query failed", err);
+    //
+    // During `next build` there is no database to reach, and Next still
+    // evaluates these helpers while collecting traces. Printing a full
+    // ECONNREFUSED stack for every one of them buries the errors that matter,
+    // so the build sets SITE_CONTENT_QUIET and gets one line instead. At
+    // runtime the full error stays, because then it is a real incident.
+    if (process.env.SITE_CONTENT_QUIET === "1") {
+      console.warn("site content unavailable (building without a database)");
+    } else {
+      console.error("site content query failed", err);
+    }
     return [];
   }
 }
