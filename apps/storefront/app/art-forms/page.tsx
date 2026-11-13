@@ -4,6 +4,9 @@ import { medusa } from "@/lib/medusa";
 import { artFormSlugs } from "@/lib/slugs";
 import { listArtForms } from "@/lib/site-content";
 import { SectionIntro, MandalaField, KalamBorder } from "@/components/ornaments";
+import { ChapterOpener } from "@/components/editorial";
+import { Reveal } from "@/components/motion";
+import { JaaliField, PaperGrain } from "@/components/grounds";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +110,12 @@ export default async function ArtFormsPage() {
     });
   }
 
+  // The sequence needs one tradition to open the exhibition and the rest to
+  // follow it. A catalogue with no headings is just a list; the first card
+  // gets the full spread, everything else alternates beneath it.
+  const featured = catalogue[0];
+  const rest = catalogue.slice(1);
+
   return (
     <main className="bg-rang-paper">
       {/* ── Hero band ──────────────────────────────────────────────────────
@@ -150,63 +159,139 @@ export default async function ArtFormsPage() {
         </nav>
       </div>
 
-      {/* ── Grid ──────────────────────────────────────────────────────────── */}
-      <section className="py-12 lg:py-16">
-        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <div className="grid gap-10 lg:grid-cols-[300px_1fr] lg:gap-14">
-            <SectionIntro
-              eyebrow="Explore"
-              title="Traditions, by region"
-              description="Browse curated collections organized by medium and technique. Each collection shows the maker, materials, and care details."
-            />
+      {/* ── The traditions, as an exhibition ───────────────────────────────
+          This was a sidebar plus a three-across card grid — the exact pattern
+          to avoid, and the reason the page read as a category listing rather
+          than a collection of living traditions.
 
-            <div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3">
-              {catalogue.map((form) => (
-                <Link key={form.key} href={form.storyHref} className="group">
-                  <div className="relative aspect-[4/5] overflow-hidden bg-surface ring-1 ring-sand-border/50">
-                    {form.image ? (
+          It is now a sequence with a rhythm: one featured tradition given a
+          full spread, then the rest as alternating image/type compositions,
+          and a close that leads somewhere. The data is the same list the shop
+          sells from; only the composition changed. */}
+      <section className="relative overflow-hidden py-14 lg:py-20">
+        <JaaliField style={{ opacity: 0.35 }} />
+        <PaperGrain />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <ChapterOpener
+            chapter="I"
+            eyebrow="The traditions"
+            title="The many languages of Indian art"
+            standfirst="India does not have one art. It has hundreds, each with its own grammar of line, colour and meaning — and most are still being painted today, by people who learned them from someone."
+            className="mb-14 lg:mb-20"
+          />
+
+          {/* The featured tradition, given the full width it deserves. */}
+          {featured && (
+            <Link
+              href={featured.storyHref}
+              className="group grid items-stretch overflow-hidden border border-sand-border/70 bg-surface/60 lg:grid-cols-2"
+            >
+              <div className="relative aspect-[4/3] overflow-hidden lg:aspect-auto lg:min-h-[440px]">
+                {featured.image && (
+                  <Image
+                    src={featured.image}
+                    alt={featured.name}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+                  />
+                )}
+              </div>
+              <div className="flex flex-col justify-center px-7 py-10 sm:px-12 lg:px-14 lg:py-14">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-terracotta">
+                  Featured tradition
+                </p>
+                <h2 className="mt-3 font-serif text-[34px] font-semibold leading-[1.05] tracking-tight text-deep-ink transition-colors group-hover:text-kumkum sm:text-[46px]">
+                  {featured.name}
+                </h2>
+                <p className="mt-4 max-w-lg font-serif text-lg italic leading-relaxed text-muted-ink">
+                  {featured.description}
+                </p>
+                <span className="mt-7 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-terracotta">
+                  Enter the exhibition
+                  <span
+                    aria-hidden="true"
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                </span>
+              </div>
+            </Link>
+          )}
+
+          {/* The rest, alternating: a catalogue does not put every work in the
+              same frame. */}
+          <div className="mt-16 space-y-16 lg:mt-24 lg:space-y-24">
+            {rest.map((form, index) => (
+              <Reveal key={form.key} as="article" delay={60}>
+                <Link
+                  href={form.storyHref}
+                  className={`group grid items-center gap-8 lg:grid-cols-12 lg:gap-12 ${
+                    index % 2 === 1 ? "lg:[&>figure]:order-2" : ""
+                  }`}
+                >
+                  <figure
+                    className={`relative overflow-hidden bg-surface lg:col-span-7 ${
+                      index % 3 === 0 ? "aspect-[16/10]" : "aspect-[4/3]"
+                    }`}
+                  >
+                    {form.image && (
                       <Image
                         src={form.image}
                         alt={form.name}
                         fill
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 280px"
-                        className="object-cover transition-opacity duration-500 group-hover:opacity-90"
+                        sizes="(max-width: 1024px) 100vw, 58vw"
+                        className="object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
                       />
-                    ) : (
-                      <span
-                        className="flex h-full w-full items-center justify-center text-terracotta/30"
-                        aria-hidden="true"
-                      >
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M4 20c0-6 3-10 8-16 1.5 4 4 8 4 11a4 4 0 0 1-8 0c0-1.5.5-3 1-4"
-                            stroke="currentColor"
-                            strokeWidth="1.2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </span>
                     )}
-                  </div>
-                  <div className="mt-3 border-t border-sand-border/60 pt-3">
-                    <h2 className="font-serif text-lg font-semibold text-deep-ink transition-colors group-hover:text-kumkum">
+                  </figure>
+
+                  <div className="lg:col-span-5">
+                    <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-terracotta/80 tabular-nums">
+                      Plate {String(index + 2).padStart(2, "0")}
+                    </p>
+                    <h2 className="mt-2 font-serif text-[26px] font-semibold leading-tight tracking-tight text-deep-ink transition-colors group-hover:text-kumkum sm:text-[32px]">
                       {form.name}
                     </h2>
-                    <p className="mt-1 line-clamp-3 font-sans text-xs leading-relaxed text-muted-ink">
+                    <p className="mt-3 font-sans text-sm leading-relaxed text-muted-ink">
                       {form.description}
                     </p>
-                    <span className="mt-2 inline-flex items-center gap-1 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-terracotta">
-                      The story
+                    <span className="mt-5 inline-flex items-center gap-2 border-b border-terracotta/40 pb-1 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta transition-colors group-hover:border-kumkum group-hover:text-kumkum">
+                      Read the story
                       <span
-                        className="transition-transform duration-200 group-hover:translate-x-0.5"
                         aria-hidden="true"
+                        className="transition-transform duration-300 group-hover:translate-x-1"
                       >
                         →
                       </span>
                     </span>
                   </div>
                 </Link>
-              ))}
+              </Reveal>
+            ))}
+          </div>
+
+          {/* A close that leads on, rather than stopping. */}
+          <div className="mt-16 border-t border-sand-border/60 pt-10 text-center lg:mt-24">
+            <p className="mx-auto max-w-xl font-serif text-xl italic leading-relaxed text-deep-ink">
+              A tradition survives by being made, not by being preserved. Every
+              work on this site is a way of keeping one alive.
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
+              >
+                See the work
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link
+                href="/learn"
+                className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
+              >
+                Understand the craft
+              </Link>
             </div>
           </div>
         </div>
