@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@snehavrinda-kala/ui";
@@ -13,23 +14,27 @@ import { KalamBorder } from "./ornaments";
  * utility icons on the right.
  */
 const navLinks = [
-  // Five entries, not seven. A visitor should be able to hold the whole site
-  // in their head: look at the work, learn about the traditions, ask for a
-  // commission, read, understand who we are. Artists and Sell are marketplace
-  // concepts and only appear in platform mode.
+  // Four entries. A visitor should be able to hold the whole site in their
+  // head: browse the work, read about the traditions, ask for a commission,
+  // understand who we are. Artists and Sell are marketplace concepts and only
+  // appear in platform mode.
   //
-  // Each entry carries an icon so the menu can be read at a glance rather than
-  // scanned word by word — the same reason printed menus in India pair a label
-  // with a motif.
-  { label: "Discover", href: "/shop", menu: "shop" as const, icon: "shop" as const },
-  { label: "Art Forms", href: "/art-forms", menu: "artforms" as const, icon: "commissions" as const },
-  { label: "Commission", href: "/custom-art", icon: "palette" as const },
-  { label: "Journal", href: "/journal", icon: "journal" as const },
-  { label: "Studio", href: "/about", menu: "studio" as const, icon: "info" as const },
-  { label: "Artists", href: "/artists", platformOnly: true, icon: "partners" as const },
+  // "Discover" carries the only browse menu — a small gallery of the six
+  // traditions, each linking to its shelf in the shop. "Art Forms" is a plain
+  // link to the traditions index, which is where you read about them instead.
+  // They were once two dropdowns over the same taxonomy, showing the same
+  // pictures under different names, which is just a decision a visitor has to
+  // make for no reason.
+  { label: "Discover", href: "/shop", menu: "discover" as const },
+  { label: "Art Forms", href: "/art-forms" },
+  { label: "Learn", href: "/learn" },
+  { label: "Request", href: "/custom-art" },
+  { label: "Journal", href: "/journal" },
+  { label: "Studio", href: "/about", menu: "studio" as const },
+  { label: "Artists", href: "/artists", platformOnly: true },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody
   // to sell on the platform, so the page would be a dead end.
-  { label: "Sell", href: "/sell", platformOnly: true, icon: "store" as const },
+  { label: "Sell", href: "/sell", platformOnly: true },
 ];
 
 const typeIcons: Record<string, string> = {
@@ -41,18 +46,23 @@ const typeIcons: Record<string, string> = {
 export function Header({
   platformMode = "single-brand",
   artForms = [],
-  collections = [],
 }: {
   platformMode?: "platform" | "single-brand";
-  artForms?: { label: string; href: string }[];
-  collections?: { label: string; href: string }[];
+  /** Art traditions, rendered as a small gallery inside the Discover menu. */
+  artForms?: {
+    label: string;
+    href: string;
+    image?: string;
+    meta?: string;
+    description?: string;
+  }[];
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Which dropdown is open. CSS-only hover menus cannot be reached by keyboard
   // or touch, so the menu is explicitly state-driven with click and Escape.
-  const [openMenu, setOpenMenu] = useState<null | "shop" | "artforms" | "studio">(null);
+  const [openMenu, setOpenMenu] = useState<null | "discover" | "studio">(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -186,21 +196,16 @@ export function Header({
               const menuId = link.menu ? `nav-menu-${link.menu}` : undefined;
               const isOpen = Boolean(link.menu && openMenu === link.menu);
               const entries =
-                link.menu === "artforms"
+                link.menu === "discover"
                   ? artForms
-                  : link.menu === "shop"
-                    ? collections.map((collection) => ({
-                        label: collection.label,
-                        href: collection.href,
-                      }))
-                    : link.menu === "studio"
-                      ? [
-                          { label: "Our story", href: "/about" },
-                          { label: "Journal", href: "/journal" },
-                          { label: "Commission a piece", href: "/custom-art" },
-                          { label: "Contact", href: "mailto:hello@snehavrindakala.example" },
-                        ]
-                      : [];
+                  : link.menu === "studio"
+                    ? [
+                        { label: "Our story", href: "/about" },
+                        { label: "The journal", href: "/journal" },
+                        { label: "Request a piece", href: "/custom-art" },
+                        { label: "Contact", href: "mailto:hello@snehavrindakala.example" },
+                      ]
+                    : [];
 
               if (!link.menu) {
                 return (
@@ -214,12 +219,6 @@ export function Header({
                         : "text-deep-ink/85 hover:text-kumkum"
                     }`}
                   >
-                    {link.icon && (
-                      <Icon
-                        name={link.icon}
-                        className="h-[15px] w-[15px] text-terracotta/70 transition-colors group-hover:text-kumkum"
-                      />
-                    )}
                     {link.label}
                   </Link>
                 );
@@ -239,12 +238,6 @@ export function Header({
                         : "text-deep-ink/85 hover:text-kumkum"
                     }`}
                   >
-                    {link.icon && (
-                      <Icon
-                        name={link.icon}
-                        className="h-[15px] w-[15px] text-terracotta/70 transition-colors group-hover:text-kumkum"
-                      />
-                    )}
                     {link.label}
                     <Icon
                       name="chevron-down"
@@ -258,42 +251,100 @@ export function Header({
                   {isOpen && (
                     <div
                       id={menuId}
-                      className="absolute left-1/2 top-full z-50 mt-3 w-72 -translate-x-1/2 overflow-hidden rounded-lg border border-sand-border bg-surface shadow-lifted"
+                      className={`absolute left-1/2 top-full z-50 mt-3 -translate-x-1/2 overflow-hidden border border-sand-border bg-surface shadow-lifted ${
+                        link.menu === "discover"
+                          ? "w-[440px] rounded-sm sm:w-[560px]"
+                          : "w-72 rounded-lg"
+                      }`}
                     >
-                      <ul className="py-2">
-                        {entries.length === 0 && (
-                          <li className="px-4 py-3 font-sans text-xs text-muted-ink">
-                            Nothing listed yet.
-                          </li>
-                        )}
-                        {entries.map((entry: any) => (
-                          <li key={entry.href}>
-                            <Link
-                              href={entry.href}
-                              onClick={() => setOpenMenu(null)}
-                              className="flex items-baseline justify-between gap-3 px-4 py-2 font-sans text-[13.5px] text-deep-ink/85 transition-colors hover:bg-rang-paper/70 hover:text-kumkum"
-                            >
-                              <span className="truncate">{entry.label}</span>
-                              {entry.meta && (
-                                <span className="shrink-0 font-sans text-[11px] text-muted-ink">
-                                  {entry.meta}
-                                </span>
-                              )}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                      {/* The art-forms menu is a small gallery: each tradition
+                          shows its own painting, its region, and the form's
+                          name set as a plate caption. A dropdown of bare words
+                          gives a visitor nothing to recognise — but an image
+                          of a Madhubani border is instantly a Madhubani border. */}
+                      {link.menu === "discover" ? (
+                        <>
+                          <div className="flex items-center justify-between border-b border-sand-border/70 px-4 py-2.5">
+                            <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-terracotta">
+                              The traditions
+                            </span>
+                            <span className="font-serif text-[10px] italic text-muted-ink">
+                              six living forms
+                            </span>
+                          </div>
+                          <ul className="grid grid-cols-2 gap-1 p-2 sm:grid-cols-3">
+                            {entries.map((entry: any) => (
+                              <li key={entry.href}>
+                                <Link
+                                  href={entry.href}
+                                  onClick={() => setOpenMenu(null)}
+                                  className="group/form block rounded-sm p-1.5 transition-colors hover:bg-rang-paper/80"
+                                >
+                                  <span className="relative block aspect-[4/3] overflow-hidden bg-rang-paper ring-1 ring-sand-border/50">
+                                    {entry.image ? (
+                                      <Image
+                                        src={entry.image}
+                                        alt=""
+                                        fill
+                                        sizes="130px"
+                                        className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/form:scale-[1.07]"
+                                      />
+                                    ) : (
+                                      <span className="block h-full w-full" />
+                                    )}
+                                  </span>
+                                  {/* Title over region, stacked. Side by side,
+                                      the region text collided with the next
+                                      card's title in a 130px cell. */}
+                                  <span className="mt-1.5 block border-t border-sand-border/50 pt-1">
+                                    <span className="block truncate font-serif text-[13px] font-semibold leading-tight text-deep-ink transition-colors group-hover/form:text-kumkum">
+                                      {entry.label}
+                                    </span>
+                                    {entry.meta && (
+                                      <span className="mt-0.5 block truncate font-sans text-[8.5px] uppercase tracking-[0.08em] text-muted-ink/60">
+                                        {entry.meta}
+                                      </span>
+                                    )}
+                                  </span>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : (
+                        <ul className="py-2">
+                          {entries.length === 0 && (
+                            <li className="px-4 py-3 font-sans text-xs text-muted-ink">
+                              Nothing listed yet.
+                            </li>
+                          )}
+                          {entries.map((entry: any) => (
+                            <li key={entry.href}>
+                              <Link
+                                href={entry.href}
+                                onClick={() => setOpenMenu(null)}
+                                className="flex items-baseline justify-between gap-3 px-4 py-2 font-sans text-[13.5px] text-deep-ink/85 transition-colors hover:bg-rang-paper/70 hover:text-kumkum"
+                              >
+                                <span className="truncate">{entry.label}</span>
+                                {entry.meta && (
+                                  <span className="shrink-0 font-sans text-[11px] text-muted-ink">
+                                    {entry.meta}
+                                  </span>
+                                )}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       <div className="border-t border-sand-border/70 bg-rang-paper/50 px-4 py-2.5">
                         <Link
                           href={link.href}
                           onClick={() => setOpenMenu(null)}
                           className="font-sans text-xs font-medium text-terracotta hover:text-kumkum"
                         >
-                          {link.menu === "shop"
-                            ? "All artworks"
-                            : link.menu === "studio"
-                              ? "About the studio"
-                              : "All art forms"}{" "}
+                          {link.menu === "discover"
+                            ? "Browse every work"
+                            : "About the studio"}{" "}
                           →
                         </Link>
                       </div>
@@ -428,18 +479,12 @@ export function Header({
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 rounded-md px-1 py-3 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
                 >
-                  {link.icon && (
-                    <Icon
-                      name={link.icon}
-                      className="h-4 w-4 shrink-0 text-terracotta/70"
-                    />
-                  )}
                   {link.label}
                 </Link>
                 {/* Sub-links are listed inline rather than behind a toggle: on a
                     phone there is room, and an extra tap to reveal five links is
                     friction for no gain. */}
-                {link.menu === "artforms" && artForms.length > 0 && (
+                {link.menu === "discover" && artForms.length > 0 && (
                   <div className="mb-1 border-l border-sand-border pl-3">
                     {artForms.map((form) => (
                       <Link

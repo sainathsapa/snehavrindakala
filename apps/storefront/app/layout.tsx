@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { SiteInteractions } from "@/components/site-interactions";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { artFormSlugs } from "@/lib/slugs";
-import { listCatalogueCollections } from "@/lib/catalogue";
-import { listArtForms, listFeaturedCategories } from "@/lib/site-content";
+import { listArtForms } from "@/lib/site-content";
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
 // URLs, and a relative one silently invalidates the whole graph.
@@ -15,17 +13,10 @@ const SITE_URL = (
 ).replace(/\/$/, "");
 import "./globals.css";
 
-const serif = Cormorant_Garamond({
-  subsets: ["latin"],
-  variable: "--font-serif",
-  weight: ["400", "500", "600", "700"],
-});
-
-const sans = Manrope({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
-});
+// The typefaces are self-hosted (see the @font-face block at the top of
+// globals.css). They used to be loaded here with next/font/google, which turns
+// a third-party network call into a build-time dependency: when Google's CSS
+// endpoint hiccuped the build failed outright and wrote no BUILD_ID.
 
 export const metadata: Metadata = {
   title: {
@@ -107,38 +98,42 @@ export default async function RootLayout({
 }) {
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
-  // Nav menus are built on the server: the header is a client component, and
-  // fetching catalogue collections per-open would flash an empty menu.
-  let fallbackCollections: { label: string; href: string }[] = [];
-  try {
-    fallbackCollections = (await listCatalogueCollections()).map((entry) => ({
-      label: entry.name,
-      href: `/shop/${entry.name
-        .toLowerCase()
-        .replace(/&/g, "and")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")}`,
-    }));
-  } catch {
-    // A nav menu must never take the page down.
-  }
-
+  // The nav menu is built on the server: the header is a client component, and
+  // fetching traditions per-open would flash an empty menu.
+  //
   // The nav is driven by the same admin-managed rows as the homepage, so
   // renaming an art form in /admin/content updates the menu too.
-  let navArtForms: { label: string; href: string }[] = [];
-  let navCollections: { label: string; href: string }[] = [];
+  let navArtForms: {
+    label: string;
+    href: string;
+    image?: string;
+    meta?: string;
+    description?: string;
+  }[] = [];
+  // The footer closes on a strip of the traditions, so it needs the same rows.
+  let navTraditions: { name: string; slug: string; image: string }[] = [];
   try {
-    const [forms, featured] = await Promise.all([
-      listArtForms(),
-      listFeaturedCategories(),
-    ]);
+    const forms = await listArtForms();
+    // The nav menu shows each tradition with its image and one line of origin,
+    // so the menu is a small gallery rather than a list of words.
+    //
+    // This is the ONLY browse menu. "Discover" and "Art Forms" used to be two
+    // dropdowns over the same six-part taxonomy — one linking to /shop/<cat>,
+    // one to /art-forms/<slug> — which gave a visitor two near-identical menus
+    // of the same pictures. They are merged here: Discover is the gallery (and
+    // links to the shop, because the point of browsing is the work), and Art
+    // Forms is a plain link to the traditions index, where you read instead.
     navArtForms = forms.map((form) => ({
       label: form.name,
       href: `/shop/${form.slug}`,
+      image: form.image,
+      meta: form.origin?.split("·")[0]?.trim() || undefined,
+      description: form.description,
     }));
-    navCollections = featured.map((category) => ({
-      label: category.label,
-      href: category.href,
+    navTraditions = forms.map((form) => ({
+      name: form.name,
+      slug: form.slug,
+      image: form.image,
     }));
   } catch {
     navArtForms = artFormSlugs.map((form) => ({
@@ -149,15 +144,17 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${serif.variable} ${sans.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <SiteInteractions />
         <Header
           platformMode={getPlatformModeFromEnv()}
           artForms={navArtForms}
-          collections={navCollections.length > 0 ? navCollections : fallbackCollections}
         />
         {children}
-        <Footer platformMode={getPlatformModeFromEnv() === "platform"} />
+        <Footer
+          platformMode={getPlatformModeFromEnv() === "platform"}
+          traditions={navTraditions}
+        />
         <script
           id="schema-organization"
           type="application/ld+json"

@@ -451,7 +451,7 @@ export default async function Home() {
                 href="/custom-art"
                 className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
               >
-                Commission a piece
+                Request a piece
               </Link>
             </div>
           </div>
@@ -668,7 +668,7 @@ export default async function Home() {
             href="/custom-art"
             className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
           >
-            Commission a piece
+            Request a piece
           </Link>
         </div>
       </section>

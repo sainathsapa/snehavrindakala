@@ -61,3 +61,12 @@ coverage/
 
 # Local design references
 ref*.png
+
+# Design exploration output and review captures (not shipped)
+images/
+assets/logo/
+scripts/logo/
+apps/storefront/.review/
+.*.png
+*.pyc
+__pycache__/

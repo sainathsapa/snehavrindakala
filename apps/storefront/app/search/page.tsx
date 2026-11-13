@@ -24,7 +24,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   if (query) {
     try {
-      const data = await universalSearch(query);
+      // A hard ceiling on the whole search. Each Medusa call has its own
+      // timeout, but this page is force-dynamic and renders on every request:
+      // if the store API is unreachable, the visitor must still get the page
+      // and its "nothing found" state rather than a hanging tab.
+      const data = await Promise.race([
+        universalSearch(query),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("search timed out")), 6000)
+        ),
+      ]);
       results = data.results;
       count = data.count;
     } catch (error) {
@@ -122,7 +131,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 href="/custom-art"
                 className="rounded-md border border-sindoor px-5 py-2.5 text-sm font-medium text-sindoor hover:bg-sindoor hover:text-rang-paper transition-colors"
               >
-                Commission a piece
+                Request a piece
               </Link>
             </div>
           </div>

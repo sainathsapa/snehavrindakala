@@ -5,9 +5,9 @@ import { BotanicalRule } from "@/components/ornaments";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Commission a Piece",
+  title: "Request a Piece",
   description:
-    "Commission original artwork from an Indian artist. Send a brief and receive a quote with milestones, proofs and a delivery date before any work begins.",
+    "Request an original piece from an Indian artist. Send a brief and receive a quote with milestones, proofs and a delivery date before any work begins.",
   alternates: { canonical: "/custom-art" },
 };
 
@@ -44,9 +44,9 @@ export default function CustomArtPage() {
     <main className="bg-rang-paper">
       <PageHeader
         eyebrow="Made to order"
-        title="Commission a piece"
+        title="Request a piece"
         intro="Not everything should be bought off a wall. Tell an artist what you have in mind — a portrait, a mural, a textile for a particular room — and they will tell you honestly what is possible."
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Commission" }]}
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "Request" }]}
         image="/images/artforms/home-decor.jpg"
       />
 

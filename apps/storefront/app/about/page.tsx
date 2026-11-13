@@ -139,7 +139,7 @@ export default function AboutPage() {
                 href="/custom-art"
                 className="inline-flex items-center gap-2 rounded-full border border-rang-paper/40 px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:border-haldi hover:text-haldi"
               >
-                Commission a piece
+                Request a piece
               </Link>
             </div>
           </div>
