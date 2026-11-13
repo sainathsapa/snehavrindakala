@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>
             For access, correction, or deletion requests, contact us at
-            hello@snehavrindakala.example.
+            hello@snehavrinda.in.
           </p>
         </div>
       </div>

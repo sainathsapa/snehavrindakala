@@ -203,7 +203,7 @@ export function Header({
                         { label: "Our story", href: "/about" },
                         { label: "The journal", href: "/journal" },
                         { label: "Request a piece", href: "/custom-art" },
-                        { label: "Contact", href: "mailto:hello@snehavrindakala.example" },
+                        { label: "Contact", href: "mailto:hello@snehavrinda.in" },
                       ]
                     : [];
 
