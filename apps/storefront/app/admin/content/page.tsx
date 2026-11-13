@@ -123,9 +123,29 @@ export default async function AdminContentPage() {
               </div>
               <Field label="Description" name="description" value={form.description} />
               <Field label="Image path" name="image" value={form.image} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Origin" name="origin" value={form.origin ?? ""} />
+                <Field label="Materials" name="materials" value={form.materials ?? ""} />
+              </div>
+              <Field label="Pull quote" name="quote" value={form.quote ?? ""} />
+              <TextArea
+                label="The story"
+                name="story"
+                value={form.story ?? ""}
+                rows={10}
+                hint="Shown on /art-forms/{slug}. Blank line separates paragraphs; **double asterisks** make bold. Plain text only."
+              />
               <div className="flex flex-wrap items-center gap-4">
                 <Toggle name="published" checked={form.published} />
                 <SaveButton />
+                <a
+                  href={`/art-forms/${form.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-sans text-[11px] uppercase tracking-wider text-terracotta underline-offset-2 hover:underline"
+                >
+                  View page
+                </a>
               </div>
             </form>
           </Row>
@@ -141,6 +161,18 @@ export default async function AdminContentPage() {
           </div>
           <Field label="Description" name="description" value="" />
           <Field label="Image path" name="image" value="/images/artforms/painting.jpg" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Origin" name="origin" value="" />
+            <Field label="Materials" name="materials" value="" />
+          </div>
+          <Field label="Pull quote" name="quote" value="" />
+          <TextArea
+            label="The story"
+            name="story"
+            value=""
+            rows={10}
+            hint="Blank line separates paragraphs; **double asterisks** make bold."
+          />
           <div className="flex flex-wrap items-center gap-4">
             <Toggle name="published" checked />
             <SaveButton label="Add art form" />
@@ -321,6 +353,41 @@ function Field({
         required={required}
         className="w-full rounded-md border border-sand-border bg-rang-paper/40 px-3 py-2 font-sans text-sm text-deep-ink focus:outline-none focus:ring-1 focus:ring-kumkum/40"
       />
+    </label>
+  );
+}
+
+/**
+ * Long-form text. Art-form stories run to paragraphs, so they get a real
+ * textarea rather than a one-line input.
+ */
+function TextArea({
+  label,
+  name,
+  value,
+  rows = 4,
+  hint,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  rows?: number;
+  hint?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block font-sans text-[11px] font-medium uppercase tracking-wider text-muted-ink">
+        {label}
+      </span>
+      <textarea
+        name={name}
+        defaultValue={value}
+        rows={rows}
+        className="w-full resize-y rounded-md border border-sand-border bg-rang-paper/40 px-3 py-2 font-sans text-sm leading-relaxed text-deep-ink focus:outline-none focus:ring-1 focus:ring-kumkum/40"
+      />
+      {hint && (
+        <span className="mt-1 block font-sans text-[11px] text-muted-ink/70">{hint}</span>
+      )}
     </label>
   );
 }

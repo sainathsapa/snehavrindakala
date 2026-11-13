@@ -32,6 +32,14 @@ export interface ArtForm {
   description: string;
   image: string;
   published: boolean;
+  /** Long-form editorial explaining the tradition. Rendered on /art-forms/[slug]. */
+  story?: string;
+  /** One line of origin, e.g. "Mithila, Bihar · 14th century onward". */
+  origin?: string;
+  /** Materials or techniques, as a comma-separated list. */
+  materials?: string;
+  /** Pull quote shown beside the story. */
+  quote?: string;
 }
 
 export interface FeaturedCategory {
@@ -75,8 +83,21 @@ export const DEFAULT_ART_FORMS = [
     slug: "painting",
     name: "Painting & Drawing",
     description:
-      "Original paintings, sketches, portraits, prints, and illustration across mediums.",
+      "Original paintings, sketches, portraits, and illustration across mediums.",
     image: "/images/artforms/painting.jpg",
+    origin: "Pan-Indian · every region, every century",
+    materials: "Watercolour, gouache, acrylic, oil, ink on paper and canvas",
+    quote:
+      "A painting is not a picture of a thing. It is the time someone spent looking at it.",
+    story: `Painting in India has never been one tradition. It is at least four, running in parallel for centuries and still running now.
+
+There is the **miniature** lineage — Mughal, Rajput, Pahari — where a single page was built in layers over weeks, burnished from behind with a stone, and painted with a brush made from a squirrel's tail hair. There is the **mural** lineage of Ajanta, Lepakshi and Kerala, where pigment went onto wet lime and the wall became the painting. There is the **folk** lineage, which is where most of what we sell begins: Mithila, Warli, Gond, Pattachitra, Phad — pictures made by people whose names rarely reached a museum wall. And there is the **modern** lineage, Indian artists working in oil and acrylic on their own terms.
+
+What holds them together is drawing. In almost every one of these traditions the line comes first and carries the meaning; colour arrives afterwards. That is why an Indian painting can read clearly at the size of a postcard and still hold a wall at three metres.
+
+**What to look for.** Ask what the line is doing. In a good piece the outline is confident and slightly irregular, because a hand made it. Perfect mechanical edges usually mean a print. Then look at the ground: handmade paper has visible fibre and a slight smell of size; canvas has a weave you can see raking the light across it.
+
+**Care.** Keep out of direct sun — Indian pigment on paper fades faster than oil on canvas. Frame behind glass with a mat so the paper is not touching the glazing, and never let a watercolour sit against a damp wall.`,
   },
   {
     slug: "folk",
@@ -84,6 +105,21 @@ export const DEFAULT_ART_FORMS = [
     description:
       "Handmade works rooted in regional traditions and passed-down technique.",
     image: "/images/artforms/folk.jpg",
+    origin: "Mithila, Warli, Gond, Pattachitra, Kalamkari, Phad",
+    materials: "Natural pigment, rice paste, charcoal, cotton, tussar silk, palm leaf",
+    quote:
+      "These were never made to be looked at. They were made to be lived with, and that is why they still work.",
+    story: `Folk art is the wrong name for it, but it has stuck. What it actually describes is **domestic painting** — pictures made inside a house, on its walls, for a wedding, a harvest, a birth, a god who needed a place to stay. It is the oldest continuous painting tradition on the subcontinent, and much of it is women's work passed from mother to daughter.
+
+**Madhubani** (Mithila, Bihar) began on mud walls for weddings. After the 1966 drought, women were encouraged to move it onto paper for income, and the form survived by changing its surface. You can still see the original logic: no empty space, a double outline, and a border that is not decoration but a genealogy — fish for fertility, bamboo for endurance, parrots as messengers.
+
+**Warli** (Palghar, Maharashtra) is drawn in white rice paste on a cow-dung ground, in a geometry of triangles and circles. A Warli *chowk* is a diagram of the cosmos, and the tarpa dance at its centre spirals around a musician the way the year spirals around the seasons.
+
+**Gond** (Madhya Pradesh) fills its animals with a pattern of dots and dashes said to come from the tattoo tradition — the *digna*. Jangarh Singh Shyam brought it to paper in the 1980s and it has since become one of India's most visible contemporary idioms.
+
+**Pattachitra** (Odisha) is painted on cloth stiffened with tamarind seed paste, or on palm leaf, using a fine brush and only natural colour. **Phad** (Rajasthan) is a long cloth scroll meant to be sung, not hung — the *Bhopa* priest unrolls it and narrates.
+
+**Care.** Folk works on cloth should be framed and kept away from moisture; the natural grounds are more sensitive than modern gesso. Never dry-clean a painted textile — it lifts the pigment.`,
   },
   {
     slug: "home-decor",
@@ -91,6 +127,19 @@ export const DEFAULT_ART_FORMS = [
     description:
       "Sculptural and functional pieces that bring craft into daily living.",
     image: "/images/artforms/home-decor.jpg",
+    origin: "Kutch, Rajasthan, Channapatna, Bastar",
+    materials: "Terracotta, brass, sheesham, lac, bell metal, cane",
+    quote:
+      "A thing you use every day is looked at more often than anything on a wall.",
+    story: `The most-looked-at art in a house is never on the wall. It is the bowl you eat from, the lamp you switch on, the box you keep keys in.
+
+Indian decorative craft treats the useful object as a finished artwork. **Dhokra** bell-metal figures from Bastar and Bankura are made by the lost-wax method, which means every single piece is destroyed in the making and cannot be repeated — the mould is broken to release it. **Channapatna** lacquerware from Karnataka turns soft ivory-wood on a hand lathe and works in colour with a stick of heated lac, a technique that arrived from Persia and has been in that town since the 18th century. **Kutch** bell-metal and copper work is beaten rather than cast, and the sound it makes is used as a test of thickness.
+
+**Blue pottery** (Jaipur) is not clay — it is a quartz frit, ground and mixed with Multani mitti, and it is fired once. That is why it rings when you tap it and why it is genuinely fragile.
+
+**What to look for.** Hand-thrown ceramics are slightly asymmetric and have a thumbprint somewhere. Cast metal has a seam; beaten metal has hammer marks that nobody bothered to hide, and those marks are the signature.
+
+**Care.** Wash terracotta by hand, never in a dishwasher, and let it dry fully before stacking. Brass will patina — that is not damage; a paste of lemon and salt brings it back, and repeated polishing eventually removes the engraving, so polish rarely.`,
   },
   {
     slug: "textile",
@@ -98,6 +147,21 @@ export const DEFAULT_ART_FORMS = [
     description:
       "Woven, printed, and embroidered textiles made on handlooms and by hand.",
     image: "/images/artforms/textile.jpg",
+    origin: "Varanasi, Kanchipuram, Kutch, Sambalpuri, Chanderi",
+    materials: "Mulberry and tussar silk, cotton, wool, natural indigo, madder",
+    quote:
+      "A handloom can only run as fast as a person. That is the whole difference, and it is the whole point.",
+    story: `Cloth is the most democratic Indian art and the least documented. Every region has a weave, and almost every weave carries a story about who was allowed to wear it.
+
+**Banarasi** brocade is woven with extra weft — the gold or silver motif is not printed on, it is structurally part of the cloth, which is why it cannot wear off. **Kanchipuram** silk uses a three-shuttle technique for its contrasting border and *korvai* join, so the border is attached to the body by hand-knotting rather than cut and stitched. **Kutch** embroidery is a language: different communities use different stitches, and a stitch can identify a woman's village and marital status from across a room.
+
+**Bandhani** is tie-dye done by pinching the cloth into thousands of tiny points and binding each one with thread before dyeing — the pattern is resistance, not application. **Kalamkari** is drawn, not printed: a *kalam* is a bamboo pen wrapped with cloth, and the mordant is applied by hand with fermented myrobalan and iron from rusted horseshoes.
+
+**Ikat and Sambalpuri** tie the yarn *before* weaving, so the pattern is set in the thread and the weaver has to align it exactly on the loom. A slight blur at the motif's edge is the honest signature of hand-tied ikat.
+
+**What to look for.** Hold it to the light. Handloom has small slubs and an irregular beat. A printed "handloom-look" fabric has perfect repeat and a photogravure dot pattern under a loupe.
+
+**Care.** Cold wash, separately, for the first three washes — natural indigo and madder bleed and that is expected. Dry in shade; Indian sun will grey a red in a single season. Never wring silk.`,
   },
   {
     slug: "paper",
@@ -105,12 +169,34 @@ export const DEFAULT_ART_FORMS = [
     description:
       "Journals, prints, and paper goods made from handmade and recycled stock.",
     image: "/images/artforms/paper.jpg",
+    origin: "Sanganer, Puducherry, Kutch, Kalighat",
+    materials: "Handmade cotton rag, recycled fibre, natural dye, block-printed ink",
+    quote:
+      "Paper made by hand has a direction. You can feel which way it wants to fold.",
+    story: `Handmade paper is made from rags, not pulp. Cotton waste is beaten to a slurry in water, lifted on a screen one sheet at a time, and dried — which is why the fibres are long, the sheet is strong, and the deckle edge is ragged. Machine paper is made in a continuous web; handmade paper is made one at a time, and you can tell by holding it up.
+
+**Sanganer** (Rajasthan) block-printing is a seven-stage process per colour: washing, harda treatment, printing, drying in sun, washing again. The dye is fixed by steam or by leaving the cloth on the riverbank. **Kalighat** *pata* paintings of 19th-century Calcutta were made on cheap mill paper with cheap watercolour, sold to pilgrims for a few paise — the first genuinely popular Indian art form, and the ancestor of the Indian comic.
+
+**What to look for.** Look at a block print for registration: if two colours overlap precisely with no gap and no bleed, ask. The honest print has a sliver of misalignment somewhere. On handmade paper, hold it to a lamp — the fibre distribution is uneven and there will be a visible watermark from the screen.
+
+**Care.** Keep flat and dry. Handmade paper cockles if it gets damp and will not flatten evenly again. Store prints interleaved with acid-free tissue, never newsprint.`,
   },
   {
     slug: "wearable",
     name: "Wearable Art",
     description: "Jewellery and adornment crafted as small, personal artworks.",
     image: "/images/artforms/wearable.jpg",
+    origin: "Rajasthan, Odisha, Gujarat, Andhra Pradesh",
+    materials: "Silver, gold, lac, brass, semi-precious stone, bead, thread",
+    quote:
+      "Jewellery is the only art form that gets carried out of the house and shown to strangers.",
+    story: `Indian jewellery was never simply ornament. It was a woman's movable wealth, a record of her community, and in many regions the only property she owned outright. That is why the forms are so specific and so conservative — a **maang tikka** or a **nath** reads a woman's region and marital status before she speaks.
+
+**Meenakari** (Jaipur) enamels the reverse of a gold piece so that the part against the skin is as finished as the part facing out, a standard almost no other jewellery tradition holds. **Thewa** (Pratapgarh, Rajasthan) fuses a sheet of engraved gold into glass at high heat, a technique held by a handful of families for two centuries. **Silver tribal work** from Odisha and Gujarat uses lost-wax casting and *dhokra* methods, and the pieces are heavy because the weight was the point — it could be sold in a bad year.
+
+**What to look for.** Turn it over. Handmade silver is slightly irregular at the solder joins and has hallmarks that are struck by hand, not laser-etched. Test weight in the palm rather than trusting a stamp.
+
+**Care.** Silver tarnishes — store it in a sealed bag, not open on a dresser. Keep lac away from water and heat, which will soften the colour. Never use a silver dip on stone-set or enamelled pieces; it attacks the setting.`,
   },
 ];
 
@@ -150,6 +236,14 @@ async function createSchema(): Promise<void> {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+
+  // Editorial columns added after the first release. `ADD COLUMN IF NOT EXISTS`
+  // keeps this idempotent, so a redeploy over an existing database is a no-op
+  // rather than an error.
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS story TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote TEXT NOT NULL DEFAULT ''`);
   await query(`
     CREATE TABLE IF NOT EXISTS site_featured_category (
       id SERIAL PRIMARY KEY,
@@ -355,11 +449,22 @@ export async function createArtForm(input: Writable<ArtForm>): Promise<void> {
   await ensureSeeded();
   await query(
     `INSERT INTO site_art_form
-       (position, slug, name, description, image, published)
+       (position, slug, name, description, image, published,
+        story, origin, materials, quote)
      VALUES
        (COALESCE((SELECT MAX(position) + 1 FROM site_art_form), 0),
-        $1,$2,$3,$4,$5)`,
-    [input.slug, input.name, input.description, input.image, input.published]
+        $1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [
+      input.slug,
+      input.name,
+      input.description,
+      input.image,
+      input.published,
+      input.story ?? "",
+      input.origin ?? "",
+      input.materials ?? "",
+      input.quote ?? "",
+    ]
   );
 }
 
@@ -371,9 +476,21 @@ export async function updateArtForm(
   await query(
     `UPDATE site_art_form SET
        slug=$2, name=$3, description=$4, image=$5, published=$6,
+       story=$7, origin=$8, materials=$9, quote=$10,
        updated_at=NOW()
      WHERE id=$1`,
-    [id, input.slug, input.name, input.description, input.image, input.published]
+    [
+      id,
+      input.slug,
+      input.name,
+      input.description,
+      input.image,
+      input.published,
+      input.story ?? "",
+      input.origin ?? "",
+      input.materials ?? "",
+      input.quote ?? "",
+    ]
   );
 }
 

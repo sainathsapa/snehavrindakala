@@ -9,6 +9,7 @@ import {
   MandalaField,
 } from "@/components/ornaments";
 import { HeroSlider } from "@/components/hero-slider";
+import { Reveal, ParallaxImage } from "@/components/motion";
 import { listCatalogue } from "@/lib/catalogue";
 import { formatPrice } from "@/lib/medusa";
 import {
@@ -90,6 +91,59 @@ export default async function Home() {
         </div>
       </div>
 
+      {/* ── Manifesto ──────────────────────────────────────────────────────
+          The single most "alive" band on the page: a full-bleed work, a large
+          serif declaration set against it, and a slow parallax drift so the
+          image behaves like a window rather than a picture. This is the section
+          that makes the site read as an artist's site and not a catalogue. */}
+      <section className="relative overflow-hidden bg-[#2A120C]">
+        <div className="absolute inset-0">
+          <ParallaxImage
+            src="/images/products/madhubani-painting.jpg"
+            alt=""
+            className="h-full w-full opacity-45"
+            strength={30}
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#2A120C] via-[#2A120C]/70 to-[#2A120C]/40" />
+        <KalamBorder className="absolute inset-x-0 top-0 text-haldi/25" />
+
+        <div className="relative mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:px-12 lg:py-36">
+          <Reveal className="max-w-3xl">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.3em] text-haldi">
+              Why we do this
+            </p>
+            <p className="mt-6 font-serif text-[28px] font-medium leading-[1.35] text-rang-paper sm:text-[40px] lg:text-[48px]">
+              A machine can repeat a shape a million times.
+              <span className="text-rang-paper/55">
+                {" "}What it cannot do is decide, on a Tuesday afternoon, that the
+                border needs one more fish — and then paint it.
+              </span>
+            </p>
+            <p className="mt-8 max-w-xl font-sans text-base leading-[1.8] text-rang-paper/70">
+              Every work here was made by one person, in one place, over time
+              that no one was billing for. We keep the maker visible because
+              that is the entire difference between an artwork and a product.
+            </p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Link
+                href="/art-forms"
+                className="inline-flex items-center gap-2 rounded-full bg-rang-paper px-6 py-3 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-white"
+              >
+                Learn the traditions
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-2 rounded-full border border-rang-paper/40 px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:border-haldi hover:text-haldi"
+              >
+                Read our story
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ── Indian Art Forms ─────────────────────────────────────────────── */}
       <section className="relative border-b border-sand-border/60 py-14 lg:py-20">
         <PaisleyField className="pointer-events-none absolute right-0 top-10 hidden h-64 w-64 text-terracotta/[0.07] lg:block" />
@@ -109,34 +163,37 @@ export default async function Home() {
 
             <div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                {featuredForms.map((form) => (
+                {featuredForms.map((form, index) => (
+                  <Reveal key={form.slug} as="div" delay={index * 70}>
                   <Link
-                    key={form.slug}
-                    href={`/shop/${form.slug}`}
-                    className="group"
+                    href={`/art-forms/${form.slug}`}
+                    className="group block"
                   >
-                    <div className="relative aspect-square overflow-hidden rounded-sm bg-surface ring-1 ring-sand-border/50">
+                    <div className="relative aspect-[4/5] overflow-hidden bg-surface ring-1 ring-sand-border/50">
                       <Image
                         src={form.image}
                         alt={form.name}
                         fill
                         sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 200px"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover transition-opacity duration-500 group-hover:opacity-90"
                       />
                     </div>
-                    <h3 className="mt-3 font-serif text-base font-semibold text-deep-ink transition-colors group-hover:text-kumkum">
-                      {form.name}
-                    </h3>
-                    <span className="mt-0.5 inline-flex items-center gap-1 font-sans text-xs text-terracotta">
-                      View Collection
-                      <span
-                        className="transition-transform duration-200 group-hover:translate-x-0.5"
-                        aria-hidden="true"
-                      >
-                        →
+                    <div className="mt-2.5 border-t border-sand-border/50 pt-2">
+                      <h3 className="font-serif text-base font-semibold leading-tight text-deep-ink transition-colors group-hover:text-kumkum">
+                        {form.name}
+                      </h3>
+                      <span className="mt-0.5 inline-flex items-center gap-1 font-sans text-[10px] uppercase tracking-[0.14em] text-terracotta">
+                        The story
+                        <span
+                          className="transition-transform duration-200 group-hover:translate-x-0.5"
+                          aria-hidden="true"
+                        >
+                          →
+                        </span>
                       </span>
-                    </span>
+                    </div>
                   </Link>
+                  </Reveal>
                 ))}
               </div>
               <ArrowLink href="/art-forms" className="mt-8">

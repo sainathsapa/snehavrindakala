@@ -43,10 +43,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const collectionPaths = new Set<string>();
   for (const form of artFormSlugs) collectionPaths.add(`/shop/${form.slug}`);
 
+  // Each tradition also has an editorial page explaining it, which is the more
+  // valuable landing page for search. 
+  const storyPaths = new Set<string>();
+  for (const form of artFormSlugs) storyPaths.add(`/art-forms/${form.slug}`);
+
   try {
-    for (const form of await listArtForms()) collectionPaths.add(`/shop/${form.slug}`);
+    for (const form of await listArtForms()) {
+      collectionPaths.add(`/shop/${form.slug}`);
+      storyPaths.add(`/art-forms/${form.slug}`);
+    }
   } catch {
     // Admin content unreachable; the static taxonomy above still covers it.
+  }
+
+  for (const path of storyPaths) {
+    entries.push({
+      url: `${baseUrl}${path}`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+      lastModified: now,
+    });
   }
 
   try {

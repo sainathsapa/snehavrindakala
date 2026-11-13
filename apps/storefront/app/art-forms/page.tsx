@@ -12,6 +12,8 @@ interface ArtFormCard {
   name: string;
   description: string;
   href: string;
+  /** The editorial page explaining the tradition. */ 
+  storyHref: string;
   image: string | null;
 }
 
@@ -47,6 +49,7 @@ export default async function ArtFormsPage() {
         category.description ||
         "Browse handmade works from Indian makers in this collection.",
       href: `/shop/${category.handle}`,
+      storyHref: `/art-forms/${IMAGE_ALIASES[category.handle] ?? category.handle}`,
       image: imageFor(category.handle),
     }));
   } catch (err) {
@@ -62,6 +65,7 @@ export default async function ArtFormsPage() {
       name: form.name,
       description: form.description,
       href: `/shop/${form.slug}`,
+      storyHref: `/art-forms/${form.slug}`,
       image: form.image || null,
     }));
   } catch {
@@ -98,6 +102,7 @@ export default async function ArtFormsPage() {
       name: form.name,
       description: form.description,
       href: `/shop/${form.slug}`,
+      storyHref: `/art-forms/${form.slug}`,
       image: imageFor(form.slug),
     });
   }
@@ -157,15 +162,15 @@ export default async function ArtFormsPage() {
 
             <div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3">
               {catalogue.map((form) => (
-                <Link key={form.key} href={form.href} className="group">
-                  <div className="relative aspect-square overflow-hidden rounded-sm bg-surface">
+                <Link key={form.key} href={form.storyHref} className="group">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-surface ring-1 ring-sand-border/50">
                     {form.image ? (
                       <Image
                         src={form.image}
                         alt={form.name}
                         fill
                         sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 280px"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover transition-opacity duration-500 group-hover:opacity-90"
                       />
                     ) : (
                       <span
@@ -183,21 +188,23 @@ export default async function ArtFormsPage() {
                       </span>
                     )}
                   </div>
-                  <h2 className="mt-3 font-serif text-lg font-semibold text-deep-ink transition-colors group-hover:text-kumkum">
-                    {form.name}
-                  </h2>
-                  <p className="mt-1 line-clamp-2 font-sans text-xs leading-relaxed text-muted-ink">
-                    {form.description}
-                  </p>
-                  <span className="mt-1.5 inline-flex items-center gap-1 font-sans text-xs font-medium text-terracotta">
-                    Explore
-                    <span
-                      className="transition-transform duration-200 group-hover:translate-x-0.5"
-                      aria-hidden="true"
-                    >
-                      →
+                  <div className="mt-3 border-t border-sand-border/60 pt-3">
+                    <h2 className="font-serif text-lg font-semibold text-deep-ink transition-colors group-hover:text-kumkum">
+                      {form.name}
+                    </h2>
+                    <p className="mt-1 line-clamp-3 font-sans text-xs leading-relaxed text-muted-ink">
+                      {form.description}
+                    </p>
+                    <span className="mt-2 inline-flex items-center gap-1 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-terracotta">
+                      The story
+                      <span
+                        className="transition-transform duration-200 group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
                     </span>
-                  </span>
+                  </div>
                 </Link>
               ))}
             </div>

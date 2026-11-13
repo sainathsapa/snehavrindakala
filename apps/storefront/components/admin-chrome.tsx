@@ -27,6 +27,14 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
     icon: "view",
     role: "manager",
   },
+  // The Journal is editorial content the shop owner writes: posts, covers and
+  // publication state. It belongs beside Storefront, not buried under Products.
+  {
+    href: "/admin/journal",
+    label: "Journal",
+    icon: "journal",
+    role: "manager",
+  },
   { href: "/admin/orders", label: "Orders", icon: "orders", role: "viewer" },
   { href: "/admin/products", label: "Products", icon: "products", role: "viewer" },
   {

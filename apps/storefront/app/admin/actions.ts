@@ -326,6 +326,12 @@ export async function saveArtFormAction(formData: FormData) {
     description: String(formData.get("description") || ""),
     image: String(formData.get("image") || ""),
     published: formData.get("published") === "on",
+    // Editorial fields for /art-forms/[slug]. Plain text with `**bold**` spans;
+    // deliberately not HTML so an admin cannot inject markup into a public page.
+    story: String(formData.get("story") || ""),
+    origin: String(formData.get("origin") || ""),
+    materials: String(formData.get("materials") || ""),
+    quote: String(formData.get("quote") || ""),
   };
   if (!input.slug || !input.name) throw new Error("An art form needs a name and slug.");
 
@@ -333,6 +339,7 @@ export async function saveArtFormAction(formData: FormData) {
   else await createArtForm(input);
   revalidatePath("/");
   revalidatePath("/art-forms");
+  revalidatePath(`/art-forms/${input.slug}`);
   revalidatePath("/admin/content");
 }
 

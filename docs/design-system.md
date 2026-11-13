@@ -473,3 +473,93 @@ so a model does not confabulate from markup. Update it when the facts change.
 **Open Graph** — `og:image` and `summary_large_image` Twitter card. Without an
 OG image a share renders as a bare text link, which for an art site is a real
 loss.
+
+## 20. The site must feel alive
+
+A static page of plates is a catalogue, however good the plates. "Alive" here
+means the page has *pacing* — content arrives as you move through it, and one
+section visibly costs something to look at. It does not mean noise.
+
+Three devices, and no more:
+
+**`Reveal`** (`components/motion.tsx`) — a section fades up 14px as it enters
+the viewport, once, never replayed. Lists stagger at `index * 70ms`. That is the
+entire scroll-animation vocabulary.
+
+**`ParallaxImage`** — a single full-bleed work drifts up to ~30px against the
+scroll, which makes a still photograph behave like a window. Used in exactly one
+place (the manifesto band). More than ~30px reads as a gimmick; on more than one
+image it reads as a template.
+
+**The manifesto band** — the loudest moment on the site: a full-bleed artwork,
+and a large serif declaration set against it that makes an argument rather than
+an offer ("A machine can repeat a shape a million times…"). Every editorial site
+needs one place where it says what it believes. This is ours.
+
+### The rule that beats all three
+
+**Content must never depend on JavaScript to be visible.** `Reveal` renders its
+children visible by default; the observer only ever improves them, and a
+2500ms fail-safe reveals the section unconditionally. A reveal that fails hides
+real content, which is a broken page, not a missed animation. Reduced-motion
+users get no motion at all.
+
+If a page renders as blank or half-blank, check for a **stale `.next` build**
+before anything else. A chunk served as `text/html` means React never hydrates,
+so *every* client component silently dies — slider, reveals, parallax — while the
+server HTML still looks fine. `rm -rf .next && next build` fixes it. This cost an
+hour once; check it first.
+
+---
+
+## 21. Every tradition has a page, and every maker has one too
+
+Art forms are not just filter slugs. Each one carries a real essay at
+`/art-forms/[slug]`, authored in the admin:
+
+- `story` — long-form body. Plain text, blank line between paragraphs,
+  `**double asterisks**` for bold. Deliberately *not* HTML: an admin must not be
+  able to inject markup into a public page.
+- `origin` — one line, e.g. "Mithila, Bihar · 14th century onward". Doubles as
+  the page eyebrow and the museum-label "Origin" field.
+- `materials` — comma-separated; rendered as a label entry.
+- `quote` — pull quote set beside the story.
+
+The page layout is a **museum label**: a sticky marginalia column (origin,
+materials, works available, CTA) beside a measure-limited story column, opening
+with the pull quote. It is deliberately not a landing page with a hero and three
+cards.
+
+Artist pages (`/artists/[slug]`) follow the same logic: portrait, name as the
+headline (not "Artist Profile"), disciplines, bio, an index-numbered practice
+list, and *their works* pulled from the catalogue by artist name. A `Person`
+schema block plus `BreadcrumbList` on art forms.
+
+**Copy standard for these pages.** Write as someone who knows the material, and
+say the specific thing: Madhubani moved from mud walls to paper after the 1966
+drought; Dhokra is destroyed in the making; Kanchipuram borders are hand-knotted
+rather than stitched; a sliver of misregistration is the honest signature of a
+block print. Vague reverence ("timeless traditions, enduring beauty") is the
+house style of every drop-shipper — it is banned.
+
+---
+
+## 22. Admin covers everything the site shows
+
+If a page renders editorial content, an admin can create, edit and delete it
+without a deploy.
+
+| Surface | Where | Notes |
+| --- | --- | --- |
+| Hero slides | `/admin/content` | eyebrow, title, tagline, CTA, image, order, publish |
+| Art forms | `/admin/content` | + `story`, `origin`, `materials`, `quote`, "View page" link |
+| Featured categories | `/admin/content` | label, href, image, order, publish |
+| Journal posts | `/admin/journal` | full CRUD incl. draft/published; `GET/POST /api/admin/journal`, `PATCH/DELETE /api/admin/journal/[id]` |
+| Artists | `/admin/partners` | via the Medusa admin API |
+
+All admin writes are behind `requireAdmin()` — checked in the action, not only
+in the route — and every content write calls `revalidatePath` for the pages it
+affects, including the art-form's own `/art-forms/[slug]`.
+
+Every admin-editable thing that has a public page must link to it ("View page"),
+so the operator can see what they changed without guessing at a URL.
