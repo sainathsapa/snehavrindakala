@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, KalamBorder } from "@/components/ornaments";
-import { ButiField, PaperGrain } from "@/components/grounds";
+import { ButiField, PaperGrain, JaaliField } from "@/components/grounds";
 
 export const metadata = {
   title: "About",
@@ -109,6 +109,72 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ── Behind the scenes ─────────────────────────────────────────────
+          A brief asks Studio to carry the creative process and the world behind
+          the work, not just a mission statement. This is the room with the
+          lights on: what actually happens between a brief and a finished piece,
+          told as a sequence with a picture rather than four more paragraphs. */}
+      <section className="relative overflow-hidden border-y border-sand-border/60 bg-surface/40 py-16 lg:py-24">
+        <JaaliField style={{ opacity: 0.35 }} />
+        <PaperGrain />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+            <figure className="relative aspect-[4/5] overflow-hidden bg-surface ring-1 ring-sand-border/60">
+              <Image
+                src="/images/artforms/folk.jpg"
+                alt="A work in progress in the studio"
+                fill
+                sizes="(max-width: 1024px) 100vw, 45vw"
+                className="object-cover"
+              />
+            </figure>
+
+            <div>
+              <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-terracotta">
+                Behind the scenes
+              </p>
+              <h2 className="mt-3 font-serif text-[32px] font-semibold leading-[1.08] tracking-[-0.01em] text-deep-ink sm:text-[40px]">
+                What happens before you see it
+              </h2>
+
+              <ol className="mt-8 space-y-6">
+                {[
+                  {
+                    t: "The ground is prepared",
+                    d: "Cloth is stiffened with tamarind seed and chalk, or paper is sized, or the panel is primed. Nothing is painted on an unprepared surface.",
+                  },
+                  {
+                    t: "The line goes down first",
+                    d: "In most of these traditions the drawing is a single unbroken discipline. The border is often drawn last but planned first.",
+                  },
+                  {
+                    t: "Colour is laid in flat",
+                    d: "Natural pigment, often made in the studio. Shading is rare; a form is read by its outline and its fill.",
+                  },
+                  {
+                    t: "It is signed, and it is explained",
+                    d: "The maker's name, and usually a note of what the symbols mean. That note is what travels with the work.",
+                  },
+                ].map((step, i) => (
+                  <li key={step.t} className="flex gap-5">
+                    <span className="mt-0.5 font-serif text-lg font-semibold text-terracotta/60 tabular-nums">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div className="border-l border-sand-border/70 pl-5">
+                      <h3 className="font-serif text-lg font-semibold text-deep-ink">
+                        {step.t}
+                      </h3>
+                      <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-muted-ink">
+                        {step.d}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* ── Closing invitation ─────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-[#2A120C]">
         <Image
