@@ -248,17 +248,29 @@ test.describe("storefront chrome", () => {
       "Desktop nav is hidden on mobile; the sheet lists art forms inline."
     );
     await page.goto("/");
-    const trigger = page.getByRole("button", { name: /art forms/i });
+
+    // The browse menu moved to "Discover" when the nav was simplified; "Art
+    // Forms" is now a plain link to the overview page. This test kept asserting
+    // the old shape and had been red ever since, so it is pinned to what the
+    // header actually renders.
+    const trigger = page.getByRole("button", { name: /discover/i });
     await trigger.click();
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
 
     // Admin-managed rows drive this list, so it must contain real entries.
-    const panel = page.locator("#nav-menu-artforms");
+    const panel = page.locator("#nav-menu-discover");
     await expect(panel).toBeVisible();
     await expect(panel.getByRole("link").first()).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(panel).toHaveCount(0);
+
+    // Art Forms reaches its own page directly, without a menu in the way.
+    const nav = page.locator("header nav");
+    await expect(nav.getByRole("link", { name: "Art Forms" })).toHaveAttribute(
+      "href",
+      "/art-forms"
+    );
   });
 });
 
