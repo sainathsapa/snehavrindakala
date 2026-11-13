@@ -9,7 +9,7 @@
  * existing links and search rankings.
  */
 
-const MAX_SLUG_LENGTH = 72;
+const MAX_SLUG_LENGTH = 90;
 
 /**
  * Turn a title into a URL-safe handle.
@@ -36,10 +36,11 @@ export function slugify(input: string): string {
  * Build a descriptive product handle from title, artist and art form.
  *
  * Mirrors how the large art platforms do it: the subject leads, then the
- * tradition, then a short maker tag. `/products/madhubani-ritual-painting-arjun-mehta`
- * is harder to guess than `/products/madhubani-ritual-painting`, and the maker
- * is a genuine search term ("Arjun Mehta Madhubani"), so it earns its place —
- * but only as a short form so the URL stays readable.
+ * tradition, then a short maker tag.
+ * `/products/madhubani-ritual-painting-sneha-sainath-sapa` is harder to guess
+ * than `/products/madhubani-ritual-painting`, and the maker is a genuine search
+ * term ("Sneha Sainath Sapa Madhubani"), so it earns its place — but only as a
+ * short form so the URL stays readable.
  */
 export function productSlug({
   title,
@@ -64,7 +65,11 @@ export function productSlug({
     // Skip placeholders like "Commission only" and anything already present.
     const isPlaceholder = /^(commission|studio|snehavrinda|various|unknown)/.test(maker);
     if (maker && !isPlaceholder && !parts.join("-").includes(maker)) {
-      parts.push(maker.split("-").slice(0, 2).join("-"));
+      // The maker tag used to be capped at two words, which was fine while the
+      // house carried several makers with short names. There is now one maker,
+      // and "sneha-sainath" is not her name — the full tag is kept so the URL
+      // and the credit agree. MAX_SLUG_LENGTH still bounds the total.
+      parts.push(maker);
     }
   }
 

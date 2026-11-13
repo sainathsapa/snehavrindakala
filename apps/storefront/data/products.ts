@@ -18,7 +18,7 @@ export const products: Product[] = [
   {
     id: "prod_001",
     title: "Hand-painted Terracotta Vase",
-    artist: "Lakshmi Rajan",
+    artist: "Sneha Sainath Sapa",
     price: 2200,
     stockType: "ready_to_ship",
     image: "/images/products/terracotta-vase.jpg",
@@ -29,7 +29,7 @@ export const products: Product[] = [
   {
     id: "prod_002",
     title: "Madhubani Folk Painting",
-    artist: "Arjun Mehta",
+    artist: "Sneha Sainath Sapa",
     price: 8500,
     stockType: "ready_to_ship",
     image: "/images/products/madhubani-painting.jpg",
@@ -39,7 +39,7 @@ export const products: Product[] = [
   {
     id: "prod_003",
     title: "Embroidered Cotton Throw",
-    artist: "Fatima Sheikh",
+    artist: "Sneha Sainath Sapa",
     price: 4200,
     stockType: "made_to_order",
     image: "/images/products/cotton-throw.jpg",
@@ -49,7 +49,7 @@ export const products: Product[] = [
   {
     id: "prod_004",
     title: "Custom Portrait Commission",
-    artist: "Commission only",
+    artist: "Sneha Sainath Sapa",
     price: 15000,
     stockType: "custom_only",
     image: "/images/products/commission-portrait.jpg",
@@ -59,7 +59,7 @@ export const products: Product[] = [
   {
     id: "prod_005",
     title: "Block-Printed Journal Set",
-    artist: "Rohan Das",
+    artist: "Sneha Sainath Sapa",
     price: 1100,
     stockType: "ready_to_ship",
     image: "/images/products/journal-set.jpg",
@@ -70,7 +70,7 @@ export const products: Product[] = [
   {
     id: "prod_006",
     title: "Wearable Art Pendant",
-    artist: "Sita Nair",
+    artist: "Sneha Sainath Sapa",
     price: 3400,
     stockType: "ready_to_ship",
     image: "/images/products/art-pendant.jpg",

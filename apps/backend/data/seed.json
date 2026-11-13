@@ -45,7 +45,7 @@
         "subtitle": "Ceramic vase with hand-painted folk motifs",
         "description": "A hand-thrown terracotta vase painted with traditional motifs. Ready to ship.",
         "category": "Home & Decorative Art",
-        "artist": "Lakshmi Rajan",
+        "artist": "Sneha Sainath Sapa",
         "type": "ready_to_ship",
         "price": 2200,
         "stock": 5,
@@ -61,7 +61,7 @@
         "subtitle": "Original Madhubani artwork on handmade paper",
         "description": "Original Madhubani folk painting depicting nature and mythology. One-of-a-kind piece.",
         "category": "Traditional & Folk Art",
-        "artist": "Arjun Mehta",
+        "artist": "Sneha Sainath Sapa",
         "type": "ready_to_ship",
         "price": 8500,
         "stock": 1,
@@ -76,7 +76,7 @@
         "subtitle": "Hand-embroidered cotton throw, made to order",
         "description": "Hand-embroidered cotton throw in natural fibres. Production lead time 2-3 weeks.",
         "category": "Textile & Fibre Art",
-        "artist": "Fatima Sheikh",
+        "artist": "Sneha Sainath Sapa",
         "type": "made_to_order",
         "price": 4200,
         "stock": 0,
@@ -92,7 +92,7 @@
         "subtitle": "Bespoke portrait commissioned from an artist",
         "description": "Custom commission: submit a brief, receive a quote, approve proofs, and receive the finished portrait.",
         "category": "Personalized & Commissioned",
-        "artist": "Commission only",
+        "artist": "Sneha Sainath Sapa",
         "type": "custom_only",
         "price": 15000,
         "stock": 0,
@@ -106,7 +106,7 @@
         "subtitle": "Hand block-printed journals and notecards",
         "description": "Set of three hand block-printed journals with matching notecards. Ready to ship.",
         "category": "Paper, Stationery & Books",
-        "artist": "Rohan Das",
+        "artist": "Sneha Sainath Sapa",
         "type": "ready_to_ship",
         "price": 1100,
         "stock": 20,
@@ -122,7 +122,7 @@
         "subtitle": "Hand-painted ceramic pendant on cotton cord",
         "description": "One-of-a-kind wearable art pendant. Ready to ship.",
         "category": "Wearable Art",
-        "artist": "Sita Nair",
+        "artist": "Sneha Sainath Sapa",
         "type": "ready_to_ship",
         "price": 3400,
         "stock": 8,
@@ -135,49 +135,27 @@
     ],
     "artists": [
       {
-        "display_name": "Lakshmi Rajan",
-        "slug": "lakshmi-rajan",
-        "bio": "Ceramic artist working with terracotta and natural pigments.",
-        "disciplines": ["ceramics", "pottery"],
-        "techniques": ["hand-throwing", "hand-painting"],
-        "status": "approved",
-        "commission_available": false
-      },
-      {
-        "display_name": "Arjun Mehta",
-        "slug": "arjun-mehta",
-        "bio": "Madhubani folk painter from Bihar, working with natural dyes on handmade paper.",
-        "disciplines": ["painting", "folk art"],
-        "techniques": ["Madhubani", "natural dye"],
-        "status": "approved",
-        "commission_available": true
-      },
-      {
-        "display_name": "Fatima Sheikh",
-        "slug": "fatima-sheikh",
-        "bio": "Textile artist specializing in hand embroidery on natural fibres.",
-        "disciplines": ["textile", "embroidery"],
-        "techniques": ["hand embroidery"],
+        "display_name": "Sneha Sainath Sapa",
+        "slug": "sneha-sainath-sapa",
+        "bio": "Painter and maker working across folk painting, natural pigment, terracotta, block printing and hand embroidery.",
+        "disciplines": [
+          "painting",
+          "folk art",
+          "ceramics",
+          "textile",
+          "paper art",
+          "jewellery"
+        ],
+        "techniques": [
+          "Madhubani",
+          "natural dye",
+          "hand-throwing",
+          "hand-painting",
+          "hand embroidery",
+          "block printing"
+        ],
         "status": "approved",
         "commission_available": true
-      },
-      {
-        "display_name": "Rohan Das",
-        "slug": "rohan-das",
-        "bio": "Paper artist and block-printer creating stationery and books.",
-        "disciplines": ["paper art", "printmaking"],
-        "techniques": ["block printing"],
-        "status": "approved",
-        "commission_available": false
-      },
-      {
-        "display_name": "Sita Nair",
-        "slug": "sita-nair",
-        "bio": "Jewellery artist making hand-painted ceramic wearables.",
-        "disciplines": ["jewellery", "ceramics"],
-        "techniques": ["hand-painting", "ceramic"],
-        "status": "approved",
-        "commission_available": false
       }
     ]
   }

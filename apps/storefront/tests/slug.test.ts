@@ -27,7 +27,9 @@ describe("slugify", () => {
   it("never returns a trailing hyphen after truncation", () => {
     const long = slugify("a".repeat(60) + " " + "b".repeat(60));
     expect(long.endsWith("-")).toBe(false);
-    expect(long.length).toBeLessThanOrEqual(72);
+    // Bounded by whatever the cap is, not by a copy of the number — the cap had
+    // to grow when the house settled on one maker with a three-word name.
+    expect(long.length).toBeLessThanOrEqual(90);
   });
 });
 
@@ -42,17 +44,17 @@ describe("productSlug", () => {
     expect(
       productSlug({
         title: "Embroidered Cotton Throw",
-        artist: "Fatima Sheikh",
+        artist: "Sneha Sainath Sapa",
         artForm: "Embroidery",
       })
-    ).toBe("embroidered-cotton-throw-embroidery-fatima-sheikh");
+    ).toBe("embroidered-cotton-throw-embroidery-sneha-sainath-sapa");
   });
 
   it("does not repeat a tradition the title already names", () => {
     // Without the guard this becomes "madhubani-folk-painting-madhubani".
     const slug = productSlug({
       title: "Madhubani Folk Painting",
-      artist: "Arjun Mehta",
+      artist: "Sneha Sainath Sapa",
       artForm: "Madhubani",
     });
     expect(slug.match(/madhubani/g)).toHaveLength(1);
