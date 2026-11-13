@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, KalamBorder } from "@/components/ornaments";
+import { ButiField, PaperGrain } from "@/components/grounds";
 
 export const metadata = {
   title: "About",
@@ -23,7 +24,9 @@ export default function AboutPage() {
 
       {/* ── Opening statement ──────────────────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-sand-border/60 py-14 lg:py-20">
-        <div className="mx-auto grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-[300px_1fr] lg:gap-16 lg:px-12">
+        <ButiField style={{ opacity: 0.5 }} />
+        <PaperGrain />
+        <div className="relative mx-auto grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-[300px_1fr] lg:gap-16 lg:px-12">
           <div className="flex flex-col gap-6">
             <BotanicalRule className="text-terracotta" />
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">

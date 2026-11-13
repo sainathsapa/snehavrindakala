@@ -10,6 +10,7 @@ import {
   PeacockEye,
 } from "@/components/indian-motifs";
 import { GLOSSARY, MATERIALS, TIMELINE } from "@/lib/art-reference";
+import { JaaliField, PaperGrain } from "@/components/grounds";
 import { listArtForms } from "@/lib/site-content";
 
 export const metadata = {
@@ -81,7 +82,9 @@ export default async function LearnPage() {
       </section>
 
       {/* ── I. The glossary ─────────────────────────────────────────────── */}
-      <section id="glossary" className="relative scroll-mt-24 py-16 lg:py-24">
+      <section id="glossary" className="relative scroll-mt-24 overflow-hidden py-16 lg:py-24">
+        <JaaliField style={{ opacity: 0.5 }} />
+        <PaperGrain />
         <HamsaMotif className="pointer-events-none absolute right-4 top-10 hidden h-24 w-32 text-terracotta/[0.10] lg:block" />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <PlateNumber number={1} label="The words" className="mb-8" />

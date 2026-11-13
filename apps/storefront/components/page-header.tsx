@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { KalamBorder, MandalaField } from "./ornaments";
+import { JaaliField, PaperGrain, ButiField } from "./grounds";
+import { LotusRosette, PaisleyBand } from "./indian-motifs";
 
 /**
  * The header every interior page shares.
@@ -9,6 +11,14 @@ import { KalamBorder, MandalaField } from "./ornaments";
  * artwork itself bleeding behind. Having a single component means Shop, Art
  * Forms, Custom Art, About and the Journal all open the same way instead of
  * each inventing its own heading block.
+ *
+ * THE PLAIN CASE WAS THE BUG.
+ * Pages without a hero image — the Journal, About, Custom Art, the policies —
+ * fell through to a bare parchment block with no ornament at all, which is why
+ * those pages read as unfinished next to the homepage. The no-image masthead
+ * now gets its own treatment: a jaali screen behind the title, parchment grain,
+ * a paisley frieze at the foot and a rosette at the corner. Same quiet
+ * masthead, but it is standing in a carved room instead of a white box.
  */
 export function PageHeader({
   eyebrow,
@@ -32,7 +42,7 @@ export function PageHeader({
 
   return (
     <header className="relative overflow-hidden">
-      {hasImage && (
+      {hasImage ? (
         <>
           <img
             src={image}
@@ -43,6 +53,18 @@ export function PageHeader({
           <div className="absolute inset-0 bg-gradient-to-r from-[#2A120C]/95 via-[#2A120C]/78 to-[#2A120C]/35" />
           <MandalaField className="pointer-events-none absolute -right-14 top-1/2 hidden h-72 w-72 -translate-y-1/2 text-haldi/20 md:block" />
           <KalamBorder className="absolute inset-x-0 bottom-0 text-haldi/35" />
+        </>
+      ) : (
+        <>
+          {/* The room the title stands in, when there is no photograph to
+              stand in front of. */}
+          <JaaliField style={{ opacity: 0.9 }} />
+          <ButiField style={{ opacity: 0.7 }} />
+          <PaperGrain />
+          {/* A rosette tucked into the top-right, half off the page, the way a
+              carved boss sits at the corner of a ceiling. */}
+          <LotusRosette className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 text-terracotta/[0.10] sm:h-64 sm:w-64" />
+          <PaisleyBand className="absolute inset-x-0 bottom-0 h-10 w-full text-terracotta/20" />
         </>
       )}
 

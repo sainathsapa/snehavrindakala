@@ -258,3 +258,194 @@ export function CornerPeacock({ className = "" }: { className?: string }) {
     />
   );
 }
+
+/* ── Chapter opener ──────────────────────────────────────────────────────
+   The device that turns a page of sections into a journey with chapters.
+
+   A brief sets the expectation: every page is a progression — arrive, feel,
+   become curious, discover. Without a marker the eye reads a long scroll as
+   one undifferentiated thing, no matter how well each block is composed. The
+   chapter opener is that marker: a number set large and faint, a title in the
+   display face, and one line that says where you are going next.
+
+   It is deliberately quiet. A loud chapter card becomes another UI component;
+   this one is closer to a printed folio head — mostly space, one number, one
+   rule. */
+export function ChapterOpener({
+  chapter,
+  eyebrow,
+  title,
+  standfirst,
+  align = "left",
+  tone = "ink",
+  className = "",
+}: {
+  /** Chapter number, or a roman numeral, or a word like "I". */
+  chapter: string | number;
+  eyebrow?: string;
+  title: ReactNode;
+  standfirst?: ReactNode;
+  align?: "left" | "center";
+  tone?: "ink" | "paper";
+  className?: string;
+}) {
+  const eyebrowTone = tone === "paper" ? "text-haldi/80" : "text-terracotta";
+  const titleTone = tone === "paper" ? "text-rang-paper" : "text-deep-ink";
+  const bodyTone = tone === "paper" ? "text-rang-paper/70" : "text-muted-ink";
+  const numeralTone =
+    tone === "paper" ? "text-haldi/[0.16]" : "text-terracotta/[0.13]";
+  const ruleTone = tone === "paper" ? "bg-haldi/30" : "bg-sand-border";
+
+  return (
+    <div
+      className={`${align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-3xl"} ${className}`}
+    >
+      {/* The numeral sits behind the title as a printed watermark, the way a
+          folio number sits large and pale at the head of a chapter. */}
+      <div className="relative">
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute -top-8 select-none font-serif text-[92px] font-semibold leading-none sm:-top-10 sm:text-[128px] ${numeralTone} ${
+            align === "center" ? "left-1/2 -translate-x-1/2" : "-left-2"
+          }`}
+        >
+          {chapter}
+        </span>
+        <div className="relative">
+          {eyebrow && (
+            <p
+              className={`font-sans text-[10px] font-semibold uppercase tracking-[0.3em] ${eyebrowTone}`}
+            >
+              {eyebrow}
+            </p>
+          )}
+          <h2
+            className={`mt-3 font-serif text-[clamp(1.9rem,4.2vw,3.1rem)] font-semibold leading-[1.06] tracking-[-0.02em] ${titleTone}`}
+          >
+            {title}
+          </h2>
+          {standfirst && (
+            <p
+              className={`mt-4 font-sans text-base leading-relaxed ${bodyTone} ${
+                align === "center" ? "mx-auto" : "max-w-xl"
+              }`}
+            >
+              {standfirst}
+            </p>
+          )}
+          <span
+            aria-hidden="true"
+            className={`mt-7 block h-px w-16 ${ruleTone} ${
+              align === "center" ? "mx-auto" : ""
+            }`}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Pull quote ──────────────────────────────────────────────────────────
+   A line lifted out of the prose and set large. In an art book this is how a
+   page breathes: one sentence given the whole width instead of being buried
+   in a paragraph. Always italic, always with a drawn mark at the head. */
+export function PullQuote({
+  children,
+  attribution,
+  tone = "ink",
+  className = "",
+}: {
+  children: ReactNode;
+  attribution?: string;
+  tone?: "ink" | "paper";
+  className?: string;
+}) {
+  const text = tone === "paper" ? "text-rang-paper" : "text-deep-ink";
+  const mark = tone === "paper" ? "text-haldi/60" : "text-terracotta/70";
+  const attr = tone === "paper" ? "text-rang-paper/50" : "text-muted-ink/80";
+
+  return (
+    <figure className={`relative mx-auto max-w-3xl px-2 ${className}`}>
+      <span
+        aria-hidden="true"
+        className={`block font-serif text-[54px] leading-none ${mark}`}
+      >
+        &ldquo;
+      </span>
+      <blockquote
+        className={`-mt-6 font-serif text-[clamp(1.35rem,2.8vw,2.05rem)] italic leading-[1.35] ${text}`}
+      >
+        {children}
+      </blockquote>
+      {attribution && (
+        <figcaption
+          className={`mt-5 font-sans text-[10px] font-semibold uppercase tracking-[0.26em] ${attr}`}
+        >
+          {attribution}
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/* ── Full-bleed plate ────────────────────────────────────────────────────
+   One image, edge to edge, with a caption. The single most effective way to
+   break the rhythm of stacked sections: nothing else on the row, so the work
+   is unambiguously the subject.
+
+   Rendered as a plain img rather than next/image because the caller usually
+   supplies its own picture element or a remote URL; callers that want the
+   optimiser pass a next/image child instead. */
+export function FullBleedPlate({
+  src,
+  alt,
+  caption,
+  credit,
+  ratio = "cinema",
+  className = "",
+}: {
+  src: string;
+  alt: string;
+  caption?: string;
+  credit?: string;
+  ratio?: "cinema" | "wide" | "square" | "portrait";
+  className?: string;
+}) {
+  const ratios: Record<string, string> = {
+    cinema: "aspect-[21/9]",
+    wide: "aspect-[16/9]",
+    square: "aspect-square",
+    portrait: "aspect-[3/4]",
+  };
+
+  return (
+    <figure className={className}>
+      <div className={`relative w-full overflow-hidden ${ratios[ratio]}`}>
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-deep-ink/10"
+        />
+      </div>
+      {(caption || credit) && (
+        <figcaption className="mx-auto mt-3 flex max-w-[1400px] flex-wrap items-baseline gap-x-3 px-5 sm:px-8 lg:px-12">
+          {caption && (
+            <span className="font-serif text-[13px] italic text-muted-ink">
+              {caption}
+            </span>
+          )}
+          {credit && (
+            <span className="font-sans text-[9px] uppercase tracking-[0.2em] text-muted-ink/60">
+              {credit}
+            </span>
+          )}
+        </figcaption>
+      )}
+    </figure>
+  );
+}

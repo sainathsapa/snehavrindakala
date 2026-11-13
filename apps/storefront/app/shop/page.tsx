@@ -3,6 +3,7 @@ import { listCatalogue } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
 import { PaisleyField, BotanicalRule } from "@/components/ornaments";
+import { JaaliField, PaperGrain } from "@/components/grounds";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getArtFormByQuery } from "@/lib/slugs";
@@ -63,6 +64,8 @@ export default async function ShopPage({
       />
 
       <section className="relative overflow-hidden pb-16 pt-10 lg:pb-24">
+        <JaaliField style={{ opacity: 0.55 }} />
+        <PaperGrain />
         <PaisleyField className="pointer-events-none absolute right-0 top-8 hidden h-72 w-72 text-terracotta/[0.05] lg:block" />
 
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">

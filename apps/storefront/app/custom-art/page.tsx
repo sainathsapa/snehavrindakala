@@ -1,6 +1,7 @@
 import { CommissionForm } from "@/components/commission-form";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
+import { JaaliField, PaperGrain } from "@/components/grounds";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,9 @@ export default function CustomArtPage() {
       />
 
       <section className="relative overflow-hidden pb-20 pt-14 lg:pt-20">
-        <div className="mx-auto grid max-w-[1400px] gap-14 px-5 sm:px-8 lg:grid-cols-[1fr_1.1fr] lg:gap-20 lg:px-12">
+        <JaaliField style={{ opacity: 0.45 }} />
+        <PaperGrain />
+        <div className="relative mx-auto grid max-w-[1400px] gap-14 px-5 sm:px-8 lg:grid-cols-[1fr_1.1fr] lg:gap-20 lg:px-12">
           {/* ── Process ───────────────────────────────────────────────────── */}
           <div>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">

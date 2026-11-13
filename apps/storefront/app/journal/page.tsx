@@ -3,6 +3,7 @@ import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { BelButi, MithilaBorder, LotusRosette } from "@/components/indian-motifs";
 import { PlateNumber } from "@/components/editorial";
+import { ButiField, PaperGrain } from "@/components/grounds";
 import { listJournalPosts, type JournalListItem } from "@/lib/journal";
 
 export const metadata = {
@@ -109,8 +110,13 @@ export default async function JournalPage() {
 
           {/* ── The index ─────────────────────────────────────────────────── */}
           {rest.length > 0 && (
-            <section className="border-t border-sand-border/60 py-16 lg:py-24">
-              <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+            <section className="relative overflow-hidden border-t border-sand-border/60 py-16 lg:py-24">
+              {/* A block-print ground behind the archive. A long list of titles
+                  on a flat field reads as a database; on printed cloth it reads
+                  as a catalogue. */}
+              <ButiField style={{ opacity: 0.6 }} />
+              <PaperGrain />
+              <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
                 <PlateNumber number={2} label="Earlier entries" className="mb-10" />
 
                 <ul className="divide-y divide-sand-border/60">
