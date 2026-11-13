@@ -126,11 +126,33 @@ export default async function JournalPage() {
                       <li key={post.id}>
                         <Link
                           href={`/journal/${post.slug}`}
-                          className="group grid gap-4 py-7 sm:grid-cols-[auto_1fr_auto] sm:items-baseline sm:gap-8"
+                          className="group grid gap-4 py-7 sm:grid-cols-[auto_auto_1fr_auto] sm:items-center sm:gap-6"
                         >
                           <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-terracotta/70 tabular-nums">
                             {String(index + 2).padStart(2, "0")}
                           </span>
+
+                          {/* A small plate per entry. Text-only rows made the
+                              archive read as a database; one image per story
+                              restores the catalogue feeling without turning
+                              the list into a card grid. */}
+                          {post.cover_image ? (
+                            <span className="relative hidden h-16 w-24 shrink-0 overflow-hidden bg-surface ring-1 ring-sand-border/50 sm:block">
+                              <Image
+                                src={post.cover_image}
+                                alt=""
+                                aria-hidden="true"
+                                fill
+                                sizes="96px"
+                                className="object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+                              />
+                            </span>
+                          ) : (
+                            <span
+                              aria-hidden="true"
+                              className="hidden h-16 w-24 shrink-0 border border-sand-border/50 sm:block"
+                            />
+                          )}
 
                           <span className="min-w-0">
                             <span className="block font-serif text-xl font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum sm:text-2xl">

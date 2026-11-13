@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { BelButi, MithilaBorder } from "@/components/indian-motifs";
 import { PaintedRule } from "@/components/editorial";
+import { ButiField, PaperGrain } from "@/components/grounds";
 import {
   getJournalPost,
   listJournalPosts,
@@ -194,6 +195,41 @@ export default async function JournalPostPage({
 
             <PaintedRule className="mt-14" />
 
+            {/* A brief is specific that an article should connect back into the
+                ecosystem rather than just expiring. This is the thread: the
+                essay ends, and the reading continues into the tradition that
+                made the subject possible. */}
+            <div className="mt-10 border border-sand-border/70 bg-surface/60 p-6">
+              <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.3em] text-terracotta">
+                Go deeper
+              </p>
+              <p className="mt-2 font-serif text-lg leading-snug text-deep-ink">
+                The traditions behind this story have their own pages — where
+                they came from, what they are made of, and how they are still
+                being made.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+                <Link
+                  href="/art-forms"
+                  className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-terracotta transition-colors hover:text-kumkum"
+                >
+                  All traditions →
+                </Link>
+                <Link
+                  href="/learn"
+                  className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-terracotta transition-colors hover:text-kumkum"
+                >
+                  The glossary →
+                </Link>
+                <Link
+                  href="/shop"
+                  className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-terracotta transition-colors hover:text-kumkum"
+                >
+                  Works for sale →
+                </Link>
+              </div>
+            </div>
+
             <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
               <Link
                 href="/journal"
@@ -213,8 +249,10 @@ export default async function JournalPostPage({
       </article>
 
       {related.length > 0 && (
-        <section className="border-t border-sand-border/60 py-16 lg:py-20">
-          <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+        <section className="relative overflow-hidden border-t border-sand-border/60 py-16 lg:py-20">
+          <ButiField style={{ opacity: 0.4 }} />
+          <PaperGrain />
+          <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <h2 className="font-serif text-2xl font-semibold text-deep-ink sm:text-3xl">
               More from the journal
             </h2>
