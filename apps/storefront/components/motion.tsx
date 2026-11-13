@@ -153,3 +153,167 @@ export function ParallaxImage({
     </div>
   );
 }
+
+/* ── Word rise ───────────────────────────────────────────────────────────
+   A headline whose words rise into place one after another as it enters view,
+   the way a line of type is set. Words, not letters: letters read as a loader,
+   words read as language. */
+export function WordRise({
+  text,
+  className = "",
+  as: Tag = "p",
+  stagger = 55,
+}: {
+  text: string;
+  className?: string;
+  as?: "p" | "h2" | "h3" | "span";
+  stagger?: number;
+}) {
+  const ref = useRef<HTMLElement | null>(null);
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(true);
+      return;
+    }
+    const failSafe = window.setTimeout(() => setShown(true), 2400);
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    io.observe(el);
+    return () => {
+      window.clearTimeout(failSafe);
+      io.disconnect();
+    };
+  }, []);
+
+  const words = text.split(" ");
+
+  return (
+    <Tag
+      ref={ref as never}
+      className={className}
+    >
+      {words.map((word, i) => (
+        <span key={i} className="inline-block overflow-hidden align-bottom">
+          <span
+            className="inline-block transition-[transform,opacity] duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+            style={{
+              transform: shown ? "translateY(0)" : "translateY(105%)",
+              opacity: shown ? 1 : 0,
+              transitionDelay: `${i * stagger}ms`,
+            }}
+          >
+            {word}
+          </span>
+          {i < words.length - 1 && "\u00A0"}
+        </span>
+      ))}
+    </Tag>
+  );
+}
+
+/* ── Curtain plate ───────────────────────────────────────────────────────
+   An image revealed by a blind lifting off it, rather than a fade. The frame
+   is on parchment, the blind is the parchment itself, so an artwork appears to
+   be uncovered on the wall. */
+export function CurtainPlate({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(true);
+      return;
+    }
+    const failSafe = window.setTimeout(() => setShown(true), 2600);
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    io.observe(el);
+    return () => {
+      window.clearTimeout(failSafe);
+      io.disconnect();
+    };
+  }, []);
+
+  return (
+    <div ref={ref} className={`relative overflow-hidden ${className}`}>
+      {children}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 origin-top bg-rang-paper transition-transform duration-[900ms] ease-[cubic-bezier(0.65,0,0.35,1)]"
+        style={{
+          transform: shown ? "scaleY(0)" : "scaleY(1)",
+          transitionDelay: `${delay}ms`,
+        }}
+      />
+    </div>
+  );
+}
+
+/* ── Scroll drift ────────────────────────────────────────────────────────
+   Slow horizontal drift tied to vertical scroll — the artwork column slides a
+   little as the page moves, which is what makes a gallery page feel deep rather
+   than flat. Capped so it never travels far enough to misalign. */
+export function ScrollDrift({
+  children,
+  className = "",
+  distance = 40,
+}: {
+  children: ReactNode;
+  className?: string;
+  distance?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let raf = 0;
+    const tick = () => {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // -1 when the element is just below the fold, +1 when just above it.
+      const progress = (vh - r.top) / (vh + r.height);
+      const clamped = Math.max(0, Math.min(1, progress));
+      el.style.transform = `translate3d(${(clamped - 0.5) * distance}px, 0, 0)`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [distance]);
+
+  return (
+    <div ref={ref} className={`will-change-transform ${className}`}>
+      {children}
+    </div>
+  );
+}

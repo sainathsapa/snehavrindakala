@@ -4,26 +4,13 @@
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-
-
+import { ensureJournalSeeded } from "@/lib/site-content";
 
 export async function GET() {
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS journal_posts (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        title TEXT NOT NULL,
-        slug TEXT UNIQUE NOT NULL,
-        content TEXT,
-        excerpt TEXT,
-        cover_image TEXT,
-        author TEXT,
-        status TEXT NOT NULL DEFAULT 'draft',
-        published_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
+    // Creates the table and seeds the sample essays on a fresh database, so the
+    // journal is never an empty page on first run.
+    await ensureJournalSeeded();
 
     const rows = await query(
       "SELECT id, title, slug, excerpt, cover_image, author, status, published_at, created_at FROM journal_posts WHERE status = 'published' ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 50"

@@ -673,3 +673,79 @@ under ~100KB for the small ones and set `quality={70}` on large bands.
 **The footer is a torana**, the ceremonial gateway: a kalash crowning the centre,
 a four-field courtyard-plan grid, a painted paisley band at head and foot, and an
 imprint plinth carrying the credit — *Made with care by Sneha Sainath Sapa*.
+
+---
+
+## 26. Motion is a material, not a decoration
+
+An art site should feel *handled*. The rule is that every motion must borrow its
+behaviour from something physical in the gallery, and nothing may ever hide
+content.
+
+| Effect | Copies | Where |
+| --- | --- | --- |
+| `TiltPlate` | a glazed canvas catching light as you walk past | product plates |
+| `WordRise` | a line of type being set, word by word | manifesto |
+| `CurtainPlate` | a blind lifting off a framed work | artist portraits |
+| `ScrollDrift` | depth — the column slides as the page moves | gallery sections |
+| `PaintReveal` | a wash sweeping across paper | long sections |
+| Kolam stroke-draw | one continuous line being drawn | threshold motif |
+| Hero ken-burns | a camera drifting over a canvas | hero |
+| Hero progress dot | a gauge, so a slide never changes unannounced | hero dots |
+| Paint sweep | one gallery room giving way to the next | route change |
+
+**Hard rules.**
+
+- Content is visible by default. Every observer-driven reveal sets a `2200ms`
+  fail-safe timer, because a reveal bug once hid real content behind a class that
+  never resolved. If JS fails, the page must still read.
+- Everything is skipped under `prefers-reduced-motion`. The kolam keeps its
+  finished drawing rather than disappearing.
+- Nothing scales a photograph on hover as a whole-card effect; the plate tilts
+  and the *image inside* brightens, which is what a glazed surface does.
+- **No custom cursor.** It was tried — first a trailing pigment glow, then a
+  swelling ink dot — and both were wrong. The system cursor is a tool. Replacing
+  it with decoration makes you fight the interface while trying to look at art.
+  Hover states belong on the objects, not on the pointer.
+
+---
+
+## 27. The navigation holds the whole site in five words
+
+```
+Discover · Art Forms ▾ · Commission · Journal · Studio ▾
+```
+
+`Discover` (the collection), `Art Forms` (all six traditions, with a dropdown),
+`Commission` (the brief), `Journal` (the essays), `Studio` (story, contact,
+journal, commission). Artists and Sell appear only in platform mode. Every
+label is a verb or a place a visitor already has in their head — never an
+internal name like "Collections" or "Content".
+
+If a new page does not fit one of those five, it goes *under* one of them rather
+than becoming a sixth top-level item.
+
+---
+
+## 28. The journal is the teaching surface
+
+Six essays are seeded so a fresh database is never an empty page, then owned by
+the admin at `/admin/journal`. They answer real questions — *why are Madhubani
+lines doubled, what is a kolam for, why does Warli have no gods* — because a
+journal that does not teach is a blog.
+
+Two bugs worth remembering, both of which shipped:
+
+**The detail page read the wrong endpoint.** The listing endpoint omits
+`content` (six full essays on an index page is waste), so a detail page that
+reused it rendered "This piece is still being written" while the body sat unused
+in the database. Server components should call `lib/journal.ts` and read
+Postgres directly — never `fetch()` their own public API. That round trip goes
+out through the hostname and fails silently whenever the configured URL is not
+the host serving the request.
+
+**A base `p { font-family: var(--font-sans) }` rule de-serifed the entire site.**
+A rule targeting the element directly always beats an inherited value, so every
+`font-serif` on a parent did nothing. `body` carries the sans default now, where
+inheritance can override it. If long-form copy looks wrong, check the base layer
+first.

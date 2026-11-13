@@ -13,20 +13,23 @@ import { KalamBorder } from "./ornaments";
  * utility icons on the right.
  */
 const navLinks = [
+  // Five entries, not seven. A visitor should be able to hold the whole site
+  // in their head: look at the work, learn about the traditions, ask for a
+  // commission, read, understand who we are. Artists and Sell are marketplace
+  // concepts and only appear in platform mode.
+  //
   // Each entry carries an icon so the menu can be read at a glance rather than
-  // scanned word by word — the same reason printed menus in India pair a
-  // label with a motif.
+  // scanned word by word — the same reason printed menus in India pair a label
+  // with a motif.
   { label: "Discover", href: "/shop", menu: "shop" as const, icon: "shop" as const },
-  // Artists only exists in marketplace mode. In single-brand mode SnehaVrinda
-  // Kala is the only seller, so the directory would be empty.
   { label: "Art Forms", href: "/art-forms", menu: "artforms" as const, icon: "commissions" as const },
+  { label: "Commission", href: "/custom-art", icon: "palette" as const },
+  { label: "Journal", href: "/journal", icon: "journal" as const },
+  { label: "Studio", href: "/about", menu: "studio" as const, icon: "info" as const },
   { label: "Artists", href: "/artists", platformOnly: true, icon: "partners" as const },
-  { label: "Custom Art", href: "/custom-art", icon: "palette" as const },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody
   // to sell on the platform, so the page would be a dead end.
   { label: "Sell", href: "/sell", platformOnly: true, icon: "store" as const },
-  { label: "Journal", href: "/journal", icon: "journal" as const },
-  { label: "About", href: "/about", icon: "info" as const },
 ];
 
 const typeIcons: Record<string, string> = {
@@ -49,7 +52,7 @@ export function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Which dropdown is open. CSS-only hover menus cannot be reached by keyboard
   // or touch, so the menu is explicitly state-driven with click and Escape.
-  const [openMenu, setOpenMenu] = useState<null | "shop" | "artforms">(null);
+  const [openMenu, setOpenMenu] = useState<null | "shop" | "artforms" | "studio">(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -190,7 +193,14 @@ export function Header({
                         label: collection.label,
                         href: collection.href,
                       }))
-                    : [];
+                    : link.menu === "studio"
+                      ? [
+                          { label: "Our story", href: "/about" },
+                          { label: "Journal", href: "/journal" },
+                          { label: "Commission a piece", href: "/custom-art" },
+                          { label: "Contact", href: "mailto:hello@snehavrindakala.example" },
+                        ]
+                      : [];
 
               if (!link.menu) {
                 return (
@@ -279,7 +289,12 @@ export function Header({
                           onClick={() => setOpenMenu(null)}
                           className="font-sans text-xs font-medium text-terracotta hover:text-kumkum"
                         >
-                          {link.menu === "shop" ? "All artworks" : "All art forms"} →
+                          {link.menu === "shop"
+                            ? "All artworks"
+                            : link.menu === "studio"
+                              ? "About the studio"
+                              : "All art forms"}{" "}
+                          →
                         </Link>
                       </div>
                     </div>

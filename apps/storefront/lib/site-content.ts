@@ -552,3 +552,50 @@ export async function reorder(
   await query(`UPDATE ${table} SET position=$2 WHERE id=$1`, [a.id, b.position]);
   await query(`UPDATE ${table} SET position=$2 WHERE id=$1`, [b.id, a.position]);
 }
+
+/* ── Journal ───────────────────────────────────────────────────────────────
+   The journal is the part of the site that teaches. Sample essays are seeded
+   once so a fresh database is not an empty page, then owned by the admin at
+   /admin/journal — editing or deleting a seeded piece is permanent, because the
+   seed only runs when the table has no rows at all. */
+export async function ensureJournalSeeded(): Promise<void> {
+  await query(`
+    CREATE TABLE IF NOT EXISTS journal_posts (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+      title TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      content TEXT,
+      excerpt TEXT,
+      cover_image TEXT,
+      author TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      published_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT now(),
+      updated_at TIMESTAMP NOT NULL DEFAULT now()
+    )
+  `);
+
+  const count = await queryResult<{ count: string }>(
+    "SELECT COUNT(*)::text AS count FROM journal_posts"
+  );
+  if (count.rows[0]?.count !== "0") return;
+
+  const { DEFAULT_JOURNAL_POSTS } = await import("@/lib/journal-seed");
+  for (const post of DEFAULT_JOURNAL_POSTS) {
+    await query(
+      `INSERT INTO journal_posts
+         (title, slug, content, excerpt, cover_image, author, status, published_at)
+       VALUES ($1,$2,$3,$4,$5,$6,'published', NOW() - ($7 || ' days')::interval)
+       ON CONFLICT (slug) DO NOTHING`,
+      [
+        post.title,
+        post.slug,
+        post.content,
+        post.excerpt,
+        post.cover_image,
+        post.author,
+        String(post.daysAgo),
+      ]
+    );
+  }
+}

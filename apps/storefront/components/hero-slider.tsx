@@ -20,7 +20,7 @@ import { KolamMotif, PaisleyBand, DiamondBand, TempleArch } from "./indian-motif
 export function HeroSlider({
   slides,
   /** Auto-advance interval in ms. 5s reads as attentive; 10s as idle. */
-  interval = 5500,
+  interval = 2000,
 }: {
   slides: HeroSlide[];
   interval?: number;
@@ -84,7 +84,7 @@ export function HeroSlider({
           key={slide.id}
           // All slides are mounted and cross-faded rather than swapped, so the
           // artwork does not flash and the layout never jumps.
-          className={`absolute inset-0 transition-opacity duration-700 ${
+          className={`absolute inset-0 transition-opacity duration-1000 ${
             i === index ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
           aria-hidden={i !== index}
@@ -97,7 +97,12 @@ export function HeroSlider({
               fill
               priority={i === 0}
               sizes="100vw"
-              className="object-cover object-right"
+              // A slow drift on the active slide, the way a camera drifts over
+              // a canvas in a gallery film. Paused when the carousel is paused
+              // so it does not keep moving under a reader's cursor.
+              className={`object-cover object-right transition-transform duration-[9000ms] ease-out ${
+                i === index ? "scale-105" : "scale-100"
+              } ${paused ? "[animation-play-state:paused]" : ""}`}
             />
           )}
         </div>
@@ -131,10 +136,23 @@ export function HeroSlider({
           )}
           <Link
             href={active.cta_href || "/shop"}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-7 py-3.5 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus:ring-2 focus:ring-kumkum focus:ring-offset-2 focus:ring-offset-rang-paper"
+            className="group/hero relative mt-8 inline-flex overflow-hidden rounded-full bg-kumkum px-7 py-3.5 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus:ring-2 focus:ring-kumkum focus:ring-offset-2 focus:ring-offset-rang-paper"
           >
-            {active.cta_label || "Begin the Journey"}
-            <span aria-hidden="true">→</span>
+            {/* A gold wash sweeps across the button from the left on hover —
+                the same gesture as a brush loading with colour. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 origin-left scale-x-0 bg-gradient-to-r from-haldi/0 via-haldi/25 to-haldi/0 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/hero:scale-x-100"
+            />
+            <span className="relative flex items-center gap-2">
+              {active.cta_label || "Begin the Journey"}
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-300 group-hover/hero:translate-x-1"
+              >
+                →
+              </span>
+            </span>
           </Link>
 
           {count > 1 && (
@@ -172,12 +190,26 @@ export function HeroSlider({
                     onClick={() => go(i)}
                     aria-label={`Go to slide ${i + 1}`}
                     aria-current={i === index ? "true" : undefined}
-                    className={`h-1.5 rounded-full transition-all ${
+                    className={`relative h-1.5 overflow-hidden rounded-full transition-all ${
                       i === index
-                        ? "w-6 bg-kumkum"
+                        ? "w-8 bg-kumkum/25"
                         : "w-1.5 bg-sand-border hover:bg-terracotta/60"
                     }`}
-                  />
+                  >
+                    {/* The active dot fills as a progress gauge over the
+                        interval, so the slide never changes unannounced. */}
+                    {i === index && (
+                      <span
+                        key={`${index}-${paused}`}
+                        aria-hidden="true"
+                        className="absolute inset-y-0 left-0 rounded-full bg-kumkum"
+                        style={{
+                          animation: `hero-progress ${interval}ms linear forwards`,
+                          animationPlayState: paused ? "paused" : "running",
+                        }}
+                      />
+                    )}
+                  </button>
                 ))}
               </span>
             </div>

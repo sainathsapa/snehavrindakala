@@ -397,8 +397,11 @@ function SeedProductPage({ item }: { item: CatalogueItem }) {
               <h1 className="mt-2 font-serif text-4xl font-semibold tracking-tight text-deep-ink sm:text-5xl">
                 {item.title}
               </h1>
-              <p className="mt-2 font-sans text-sm text-muted-ink">
-                by {item.artist}
+              {/* The wall-label line: maker, then medium. On an art site the
+                  maker comes before the price. */}
+              <p className="mt-3 font-serif text-sm italic leading-snug text-muted-ink">
+                {item.artist}
+                {item.collection ? ` · ${item.collection}` : ""} · Handmade in India
               </p>
             </div>
 

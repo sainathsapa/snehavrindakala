@@ -349,13 +349,59 @@ test.describe("product URLs and mode gating", () => {
     expect(await page.locator('a[href="/art-forms"]').count()).toBeGreaterThan(0);
   });
 
-  test("the footer credits the maker and carries painted ornament", async ({
+  test("the footer credits the maker and carries drawn ornament", async ({
     page,
   }) => {
     await page.goto("/");
     const footer = page.locator("footer");
     await expect(footer).toContainText("Sneha Sainath Sapa");
-    // The ornaments are real painted images, not CSS shapes.
-    expect(await footer.locator("img").count()).toBeGreaterThan(0);
+
+    // The colophon ornament is hand-drawn SVG (lotus rosette, bel-buti vine,
+    // paisley band, diya) rather than photographs. Assert the drawings are
+    // present and hidden from assistive tech.
+    const ornaments = footer.locator("svg[aria-hidden='true']");
+    expect(await ornaments.count()).toBeGreaterThan(2);
+
+    // Nothing decorative may be announced to a screen reader.
+    await expect(footer.locator("svg[aria-hidden='true']").first()).toBeAttached();
+  });
+});
+
+test.describe("journal", () => {
+  test("essays are seeded and readable, not placeholders", async ({ page }) => {
+    await page.goto("/journal");
+    const entries = page.locator('a[href^="/journal/"]');
+    // The journal must never ship as an empty page; sample essays are seeded so
+    // a fresh database still has something to teach a first visitor.
+    expect(await entries.count()).toBeGreaterThan(0);
+
+    // Regression: the detail page reused the listing response, which omits
+    // `content`, so every essay rendered "still being written" while the body
+    // sat in the database unused.
+    await page.goto("/journal/warli-has-no-gods-in-it");
+    await expect(page.locator("body")).not.toContainText("still being written");
+    const text = await page.locator("article").innerText();
+    expect(text.length).toBeGreaterThan(800);
+    expect(text).toContain("tarpa");
+  });
+
+  test("long-form body copy is set in the serif face", async ({ page }) => {
+    await page.goto("/journal/warli-has-no-gods-in-it");
+    // Regression: a base `p { font-family: sans }` rule beat `font-serif` set on
+    // the parent, silently de-serifing every essay on the site.
+    const family = await page
+      .locator("article p")
+      .first()
+      .evaluate((el) => getComputedStyle(el).fontFamily);
+    expect(family.toLowerCase()).toMatch(/cormorant|georgia|serif/);
+  });
+
+  test("an essay carries its own title, not the site default", async ({
+    page,
+  }) => {
+    await page.goto("/journal/warli-has-no-gods-in-it");
+    const title = await page.title();
+    expect(title).toContain("Warli");
+    expect(title).toContain("SnehaVrinda Kala");
   });
 });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { SiteInteractions } from "@/components/site-interactions";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { artFormSlugs } from "@/lib/slugs";
 import { listCatalogueCollections } from "@/lib/catalogue";
@@ -149,6 +150,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${serif.variable} ${sans.variable} font-sans antialiased`}>
+        <SiteInteractions />
         <Header
           platformMode={getPlatformModeFromEnv()}
           artForms={navArtForms}

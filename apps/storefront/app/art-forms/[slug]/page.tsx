@@ -25,10 +25,25 @@ function StoryBody({ text }: { text: string }) {
   const paragraphs = text.split(/\n{2,}/).filter(Boolean);
 
   return (
-    <div className="space-y-6 font-sans text-base leading-[1.85] text-muted-ink">
+    <div className="space-y-6 font-serif text-lg leading-[1.8] text-muted-ink">
       {paragraphs.map((paragraph, index) => (
         <p key={index}>
-          {paragraph.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) =>
+          {/* The opening paragraph takes a drop cap, the way a printed essay
+              in a catalogue does. Everything after it is set plain. */}
+          {index === 0 && (
+            <span
+              className="float-left mr-2 mt-1 font-serif text-[3.2rem] font-semibold leading-[0.78] text-kumkum"
+              aria-hidden="true"
+            >
+              {paragraph.replace(/\*\*/g, "").charAt(0)}
+            </span>
+          )}
+          {index === 0 && (
+            <span className="sr-only">{paragraph.replace(/\*\*/g, "").charAt(0)}</span>
+          )}
+          {(index === 0 ? paragraph.replace(/\*\*/g, "").slice(1) : paragraph)
+            .split(/(\*\*[^*]+\*\*)/g)
+            .map((chunk, i) =>
             chunk.startsWith("**") && chunk.endsWith("**") ? (
               <strong key={i} className="font-semibold text-deep-ink">
                 {chunk.slice(2, -2)}

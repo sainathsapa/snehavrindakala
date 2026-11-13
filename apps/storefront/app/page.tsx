@@ -9,7 +9,13 @@ import {
   MandalaField,
 } from "@/components/ornaments";
 import { HeroSlider } from "@/components/hero-slider";
-import { Reveal, ParallaxImage } from "@/components/motion";
+import {
+  Reveal,
+  ParallaxImage,
+  WordRise,
+  CurtainPlate,
+  ScrollDrift,
+} from "@/components/motion";
 import {
   KolamMotif,
   WarliMotif,
@@ -17,7 +23,20 @@ import {
   DiamondBand,
   JaliPattern,
   KalashMotif,
+  BelButi,
+  MadhubaniFish,
+  HamsaMotif,
+  DiyaMotif,
+  MithilaBorder,
+  LotusRosette,
+  PeacockEye,
 } from "@/components/indian-motifs";
+import {
+  PlateNumber,
+  PaintedRule,
+  Fleuron,
+  CornerPeacock,
+} from "@/components/editorial";
 import { listCatalogue } from "@/lib/catalogue";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { formatPrice } from "@/lib/medusa";
@@ -67,7 +86,7 @@ export default async function Home() {
           Slides are admin-managed and genuinely cycle: auto-advance, arrows,
           dots, swipe and keyboard, pausing on hover and focus. */}
       <div className="relative">
-        <HeroSlider slides={slides} interval={5500} />
+        <HeroSlider slides={slides} interval={2000} />
         <KalamBorder className="pointer-events-none absolute inset-x-0 top-0 text-terracotta/40" />
       </div>
 
@@ -123,18 +142,32 @@ export default async function Home() {
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#2A120C] via-[#2A120C]/70 to-[#2A120C]/40" />
         <KalamBorder className="absolute inset-x-0 top-0 text-haldi/25" />
+        {/* A hamsa at the head of the declaration, as a manuscript page opens
+            with a swan. Set low so it reads as a watermark, not an icon. */}
+        <HamsaMotif className="pointer-events-none absolute right-6 top-16 hidden h-28 w-40 text-haldi/[0.13] lg:block" />
+        <PeacockEye className="pointer-events-none absolute -left-2 bottom-0 hidden h-44 w-32 text-haldi/[0.09] lg:block" />
 
         <div className="relative mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:px-12 lg:py-36">
           <Reveal className="max-w-3xl">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.3em] text-haldi">
-              Why we do this
-            </p>
-            <p className="mt-6 font-serif text-[28px] font-medium leading-[1.35] text-rang-paper sm:text-[40px] lg:text-[48px]">
-              A machine can repeat a shape a million times.
-              <span className="text-rang-paper/55">
-                {" "}What it cannot do is decide, on a Tuesday afternoon, that the
-                border needs one more fish — and then paint it.
+            <div className="flex items-center gap-4">
+              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-haldi/70">
+                Plate 01
               </span>
+              <span className="h-px w-8 bg-haldi/30" aria-hidden="true" />
+              <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-rang-paper/40">
+                On the hand
+              </span>
+            </div>
+            {/* The words rise into place one at a time, the way a line of
+                type is set — language arriving rather than a block fading in. */}
+            <WordRise
+              as="p"
+              className="mt-6 font-serif text-[28px] font-medium leading-[1.35] text-rang-paper sm:text-[40px] lg:text-[48px]"
+              text="A machine can repeat a shape a million times."
+            />
+            <p className="mt-3 font-serif text-[28px] font-medium leading-[1.35] text-rang-paper/55 sm:text-[40px] lg:text-[48px]">
+              What it cannot do is decide, on a Tuesday afternoon, that the
+              border needs one more fish — and then paint it.
             </p>
             <p className="mt-8 max-w-xl font-sans text-base leading-[1.8] text-rang-paper/70">
               Every work here was made by one person, in one place, over time
@@ -168,7 +201,15 @@ export default async function Home() {
         className="relative flex flex-col items-center gap-4 border-b border-sand-border/60 py-12"
         aria-hidden="true"
       >
-        <KolamMotif className="h-24 w-24 text-terracotta/40" />
+        {/* A pair of Mithila fish either side of the kolam — the threshold mark
+            from Mithila, paired with the one from Tamil Nadu. */}
+        <div className="group flex items-center gap-8 sm:gap-14">
+          <MadhubaniFish className="h-10 w-20 -scale-x-100 text-terracotta/30 transition-all duration-700 group-hover:-translate-x-1 group-hover:text-terracotta/60" />
+          {/* The kolam is drawn on as it scrolls into view — one continuous
+              line, the way it is actually drawn. */}
+          <KolamMotif className="kolam-draw h-24 w-24 text-terracotta/40 transition-colors duration-700 group-hover:text-terracotta/70" />
+          <MadhubaniFish className="h-10 w-20 text-terracotta/30 transition-all duration-700 group-hover:translate-x-1 group-hover:text-terracotta/60" />
+        </div>
         <span className="h-px w-24 bg-sand-border" aria-hidden="true" />
         <p className="max-w-md px-6 text-center font-serif text-sm italic leading-relaxed text-muted-ink">
           Drawn at the door before sunrise, a kolam welcomes whoever arrives.
@@ -207,8 +248,21 @@ export default async function Home() {
                         alt={form.name}
                         fill
                         sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 200px"
-                        className="object-cover transition-opacity duration-500 group-hover:opacity-90"
+                        className="object-cover transition-[transform,filter] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06] group-hover:brightness-105"
                       />
+                      {/* A wash of ink rises from the foot of the plate, and
+                          the tradition's name is repeated over it — the way a
+                          museum label sits on the mount, not beside it. */}
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 translate-y-full bg-gradient-to-t from-[#2A120C]/85 via-[#2A120C]/35 to-transparent transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-3 bottom-3 translate-y-3 font-serif text-lg font-semibold leading-tight text-rang-paper opacity-0 transition-all duration-500 delay-100 group-hover:translate-y-0 group-hover:opacity-100"
+                      >
+                        {form.name}
+                      </span>
                     </div>
                     <div className="mt-2.5 border-t border-sand-border/50 pt-2">
                       <h3 className="font-serif text-base font-semibold leading-tight text-deep-ink transition-colors group-hover:text-kumkum">
@@ -217,7 +271,7 @@ export default async function Home() {
                       <span className="mt-0.5 inline-flex items-center gap-1 font-sans text-[10px] uppercase tracking-[0.14em] text-terracotta">
                         The story
                         <span
-                          className="transition-transform duration-200 group-hover:translate-x-0.5"
+                          className="transition-transform duration-300 group-hover:translate-x-1"
                           aria-hidden="true"
                         >
                           →
@@ -312,6 +366,11 @@ export default async function Home() {
                   />
                 </div>
                 <div className="mt-4 border-t border-sand-border/60 pt-3">
+                  {/* Plate number turns the row into a catalogue page rather
+                      than a product grid. */}
+                  <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-terracotta/70 tabular-nums">
+                    Plate {String(index + 1).padStart(2, "0")}
+                  </span>
                   <h3
                     className={`font-serif font-semibold leading-tight text-deep-ink transition-colors group-hover:text-kumkum ${
                       index === 0 ? "text-2xl" : "text-lg"
@@ -338,7 +397,9 @@ export default async function Home() {
       <section className="relative overflow-hidden border-y border-sand-border/60 bg-surface/50 py-16 lg:py-24">
         <MandalaField className="pointer-events-none absolute -left-20 top-1/2 hidden h-80 w-80 -translate-y-1/2 text-terracotta/[0.06] lg:block" />
         <div className="relative mx-auto grid max-w-[1400px] items-center gap-12 px-5 sm:px-8 lg:grid-cols-2 lg:gap-20 lg:px-12">
-          <div className="relative aspect-[4/5] w-full overflow-hidden bg-rang-paper ring-1 ring-sand-border/60 lg:aspect-square">
+          {/* The portrait is uncovered by a blind lifting off it, so the work
+              arrives on the wall rather than simply fading in. */}
+          <CurtainPlate className="aspect-[4/5] w-full bg-rang-paper ring-1 ring-sand-border/60 lg:aspect-square">
             <Image
               src="/images/artforms/folk.jpg"
               alt="Madhubani work in progress"
@@ -346,7 +407,7 @@ export default async function Home() {
               sizes="(max-width: 1024px) 100vw, 45vw"
               className="object-cover"
             />
-          </div>
+          </CurtainPlate>
 
           <div className="max-w-xl">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
@@ -583,11 +644,18 @@ export default async function Home() {
           an Indian ceremony closes: with the same auspicious form it opened
           with. */}
       <section className="relative overflow-hidden py-16 text-center">
-        <LotusBloom className="mx-auto h-16 w-28 text-terracotta/45" />
+        {/* A lotus floating on water, with diyas either side — the closing
+            gesture of a rangoli being finished. */}
+        <div className="flex items-center justify-center gap-6">
+          <DiyaMotif className="h-7 w-7 text-terracotta/40" />
+          <LotusBloom className="h-16 w-28 text-terracotta/45" />
+          <DiyaMotif className="h-7 w-7 text-terracotta/40" />
+        </div>
         <p className="mx-auto mt-6 max-w-md px-6 font-serif text-xl italic leading-relaxed text-deep-ink">
           Every piece here was made by a hand that learned the form from
           someone.
         </p>
+        <Fleuron className="mt-8" />
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/shop"
