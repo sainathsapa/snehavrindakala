@@ -33,10 +33,21 @@ export interface JournalPost extends JournalListItem {
 }
 
 /** Published posts, newest first. Omits `content` — the index does not need it. */
-export async function listJournalPosts(limit = 50): Promise<JournalListItem[]> {
+export async function listJournalPosts(
+  limit = 50,
+  locale = "en"
+): Promise<JournalListItem[]> {
   await ensureJournalSeeded();
+  // The Hindi columns sit beside the English ones, so a locale read is a
+  // projection rather than a join. An empty translation keeps the English
+  // title, which is better than an untitled card on a live listing.
+  const hindi = locale === "hi";
   const result = await queryResult<JournalListItem>(
-    `SELECT id, title, slug, excerpt, cover_image, author, published_at, created_at
+    `SELECT id,
+            ${hindi ? "COALESCE(NULLIF(title_hi, ''), title)" : "title"} AS title,
+            slug,
+            ${hindi ? "COALESCE(NULLIF(excerpt_hi, ''), excerpt)" : "excerpt"} AS excerpt,
+            cover_image, author, published_at, created_at
        FROM journal_posts
       WHERE status = 'published'
       ORDER BY published_at DESC NULLS LAST, created_at DESC

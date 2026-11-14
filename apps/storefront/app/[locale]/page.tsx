@@ -39,7 +39,7 @@ import {
   ChapterOpener,
 } from "@/components/editorial";
 import { JaaliField, JaaliScreen, PaperGrain, GoldVineBand } from "@/components/grounds";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { listCatalogue } from "@/lib/catalogue";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { formatPrice } from "@/lib/medusa";
@@ -68,12 +68,13 @@ const TRADITIONS = [
 
 export default async function Home() {
   const t = await getTranslations("home");
+  const locale = await getLocale();
   // Everything curated lives in Postgres and is edited at /admin/content.
   const [slides, artForms, categories, catalogue, testimonials] =
     await Promise.all([
-      listHeroSlides(),
-      listArtForms(),
-      listFeaturedCategories(),
+      listHeroSlides(locale),
+      listArtForms(locale),
+      listFeaturedCategories(locale),
       listCatalogue().catch(() => []),
       listTestimonials(),
     ]);

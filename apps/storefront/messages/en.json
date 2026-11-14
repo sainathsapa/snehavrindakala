@@ -491,7 +491,14 @@
     },
     "formTitle": "Tell us about your vision",
     "formNote": "No payment is taken here. You will receive a quote before anything begins.",
-    "whileEyebrow": "While you decide"
+    "whileEyebrow": "While you decide",
+    "commissionDef": "A commission is not a product with a longer lead time. It is a brief, a maker, and a month or two of work.",
+    "forMemory": "For a memory",
+    "forMemoryBody": "A house you grew up in, a person who taught you something, a moment you want on a wall.",
+    "forOccasion": "For an occasion",
+    "forOccasionBody": "A wedding, a birth, a milestone — artwork made around the event rather than before it.",
+    "forSpace": "For a space",
+    "forSpaceBody": "A room with a particular wall, a particular light, and nothing that quite belongs on it yet."
   },
   "journal": {
     "crumb": "Journal",
@@ -587,6 +594,37 @@
         "title": "Read the journal",
         "copy": "Notes on pigment, process and the story behind each piece."
       }
+    }
+  },
+  "commission": {
+    "artFormLabel": "What kind of art?",
+    "artFormPlaceholder": "Select an art form",
+    "briefLabel": "What do you have in mind?",
+    "briefPlaceholder": "Subject, mood, colours, who it is for, any reference you have in mind…",
+    "briefHint": "The more concrete the brief, the more accurate the quote.",
+    "budget": "Budget (₹)",
+    "budgetPlaceholder": "e.g. 5,000 – 15,000",
+    "neededBy": "Needed by",
+    "size": "Size",
+    "sizeOptional": "(optional)",
+    "sizePlaceholder": "e.g. 60 × 90 cm",
+    "pin": "Delivery PIN",
+    "pinPlaceholder": "560001",
+    "email": "Email for your quote",
+    "emailHint": "Leave this blank if you are signed in — we will use your account address.",
+    "consent": "I am happy for SnehaVrinda Kala to use anything I send for this commission. References stay private and are not shown publicly.",
+    "privacy": "Privacy notice",
+    "sending": "Sending your brief…",
+    "submit": "Submit request",
+    "noPayment": "No payment now. You will get a quote with milestones to approve first.",
+    "artForms": {
+      "painting": "Painting & drawing",
+      "folk": "Traditional & folk art",
+      "home": "Home & décor",
+      "textile": "Textile & fibre",
+      "paper": "Paper & stationery",
+      "wearable": "Wearable art",
+      "other": "Other"
     }
   }
 }

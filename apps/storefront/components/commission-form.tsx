@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useTranslations } from "next-intl";
 import {
   createCommissionAction,
   type CommissionFormState,
@@ -9,15 +10,20 @@ import {
 
 const initialState: CommissionFormState = {};
 
-const ART_FORMS = [
-  "Painting & drawing",
-  "Traditional & folk art",
-  "Home & décor",
-  "Textile & fibre",
-  "Paper & stationery",
-  "Wearable art",
-  "Other",
-];
+/**
+ * The art-form choices are a stable list, so they are keyed rather than spelled
+ * out here: the label comes from the message catalogue and the submitted value
+ * stays the English one Medusa already stores.
+ */
+const ART_FORM_KEYS = [
+  "painting",
+  "folk",
+  "home",
+  "textile",
+  "paper",
+  "wearable",
+  "other",
+] as const;
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
@@ -30,13 +36,14 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = useTranslations("commission");
   return (
     <button
       type="submit"
       disabled={pending}
       className="w-full py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-60"
     >
-      {pending ? "Sending your brief…" : "Submit request"}
+      {pending ? t("sending") : t("submit")}
     </button>
   );
 }
@@ -45,6 +52,7 @@ const inputClass =
   "w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor";
 
 export function CommissionForm() {
+  const t = useTranslations("commission");
   const [state, formAction] = useActionState(
     createCommissionAction,
     initialState
@@ -67,7 +75,7 @@ export function CommissionForm() {
           htmlFor="art_form"
           className="block text-sm font-medium text-deep-ink mb-1"
         >
-          What kind of art? <span aria-hidden="true">*</span>
+          {t("artFormLabel")} <span aria-hidden="true">*</span>
         </label>
         <select
           id="art_form"
@@ -78,10 +86,10 @@ export function CommissionForm() {
           className={inputClass}
           defaultValue=""
         >
-          <option value="">Select an art form</option>
-          {ART_FORMS.map((form) => (
-            <option key={form} value={form}>
-              {form}
+          <option value="">{t("artFormPlaceholder")}</option>
+          {ART_FORM_KEYS.map((key) => (
+            <option key={key} value={t(`artForms.${key}`)}>
+              {t(`artForms.${key}`)}
             </option>
           ))}
         </select>
@@ -93,7 +101,7 @@ export function CommissionForm() {
           htmlFor="brief"
           className="block text-sm font-medium text-deep-ink mb-1"
         >
-          What do you have in mind? <span aria-hidden="true">*</span>
+          {t("briefLabel")} <span aria-hidden="true">*</span>
         </label>
         <textarea
           id="brief"
@@ -103,13 +111,13 @@ export function CommissionForm() {
           aria-invalid={Boolean(errors.brief)}
           aria-describedby={errors.brief ? "brief-error" : "brief-hint"}
           className={inputClass}
-          placeholder="Subject, mood, colours, who it is for, any reference you have in mind…"
+          placeholder={t("briefPlaceholder")}
         />
         {errors.brief ? (
           <FieldError id="brief" message={errors.brief} />
         ) : (
           <p id="brief-hint" className="mt-1 text-xs text-muted-ink font-sans">
-            The more concrete the brief, the more accurate the quote.
+            {t("briefHint")}
           </p>
         )}
       </div>
@@ -120,14 +128,14 @@ export function CommissionForm() {
             htmlFor="budget_range"
             className="block text-sm font-medium text-deep-ink mb-1"
           >
-            Budget (₹)
+            {t("budget")}
           </label>
           <input
             id="budget_range"
             name="budget_range"
             type="text"
             className={inputClass}
-            placeholder="e.g. 5,000 – 15,000"
+            placeholder={t("budgetPlaceholder")}
           />
         </div>
         <div>
@@ -135,7 +143,7 @@ export function CommissionForm() {
             htmlFor="target_date"
             className="block text-sm font-medium text-deep-ink mb-1"
           >
-            Needed by
+            {t("neededBy")}
           </label>
           <input
             id="target_date"
@@ -157,14 +165,14 @@ export function CommissionForm() {
             htmlFor="dimensions"
             className="block text-sm font-medium text-deep-ink mb-1"
           >
-            Size <span className="text-muted-ink font-normal">(optional)</span>
+            {t("size")} <span className="text-muted-ink font-normal">{t("sizeOptional")}</span>
           </label>
           <input
             id="dimensions"
             name="dimensions"
             type="text"
             className={inputClass}
-            placeholder="e.g. 60 × 90 cm"
+            placeholder={t("sizePlaceholder")}
           />
         </div>
         <div>
@@ -172,7 +180,7 @@ export function CommissionForm() {
             htmlFor="delivery_pin"
             className="block text-sm font-medium text-deep-ink mb-1"
           >
-            Delivery PIN <span className="text-muted-ink font-normal">(optional)</span>
+            {t("pin")} <span className="text-muted-ink font-normal">{t("sizeOptional")}</span>
           </label>
           <input
             id="delivery_pin"
@@ -186,7 +194,7 @@ export function CommissionForm() {
               errors.delivery_pin ? "delivery_pin-error" : undefined
             }
             className={inputClass}
-            placeholder="560001"
+            placeholder={t("pinPlaceholder")}
           />
           <FieldError id="delivery_pin" message={errors.delivery_pin} />
         </div>
@@ -197,7 +205,7 @@ export function CommissionForm() {
           htmlFor="email"
           className="block text-sm font-medium text-deep-ink mb-1"
         >
-          Email for your quote
+          {t("email")}
         </label>
         <input
           id="email"
@@ -208,8 +216,7 @@ export function CommissionForm() {
           placeholder="you@example.com"
         />
         <p className="mt-1 text-xs text-muted-ink font-sans">
-          Leave this blank if you are signed in — we will use your account
-          address.
+          {t("emailHint")}
         </p>
       </div>
 
@@ -224,10 +231,9 @@ export function CommissionForm() {
             required
           />
           <span>
-            I am happy for SnehaVrinda Kala to use anything I send for this
-            commission. References stay private and are not shown publicly.{" "}
+            {t("consent")}{" "}
             <a href="/policies/privacy" className="text-sindoor underline">
-              Privacy notice
+              {t("privacy")}
             </a>
           </span>
         </label>
@@ -237,7 +243,7 @@ export function CommissionForm() {
       <SubmitButton />
 
       <p className="text-xs text-muted-ink font-sans text-center">
-        No payment now. You will get a quote with milestones to approve first.
+        {t("noPayment")}
       </p>
     </form>
   );

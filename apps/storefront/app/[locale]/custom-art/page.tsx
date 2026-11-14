@@ -50,32 +50,22 @@ export default async function CustomArtPage() {
                 {t("whatTitle")}
               </h2>
               <p className="mt-4 max-w-md font-serif text-lg italic leading-relaxed text-muted-ink">
-                A commission is not a product with a longer lead time. It is a
-                brief, a maker, and a set of decisions taken together.
+                {t("commissionDef")}
               </p>
             </div>
 
             <dl className="grid gap-6 sm:grid-cols-3">
-              {[
-                {
-                  t: "For a memory",
-                  d: "A house you grew up in, a person who taught you something, a moment you want on a wall.",
-                },
-                {
-                  t: "For an occasion",
-                  d: "A wedding, a birth, a milestone — artwork made around the event rather than before it.",
-                },
-                {
-                  t: "For a space",
-                  d: "A room with a particular wall, a particular light, and nothing that quite belongs on it yet.",
-                },
-              ].map((item) => (
-                <div key={item.t} className="border-t border-sand-border/70 pt-4">
+              {([
+                { k: "forMemory" },
+                { k: "forOccasion" },
+                { k: "forSpace" },
+              ] as const).map(({ k }) => (
+                <div key={k} className="border-t border-sand-border/70 pt-4">
                   <dt className="font-serif text-lg font-semibold text-deep-ink">
-                    {item.t}
+                    {t(k)}
                   </dt>
                   <dd className="mt-1.5 font-sans text-[13px] leading-relaxed text-muted-ink">
-                    {item.d}
+                    {t(`${k}Body`)}
                   </dd>
                 </div>
               ))}

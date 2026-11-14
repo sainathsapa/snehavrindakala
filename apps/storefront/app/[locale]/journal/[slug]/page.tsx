@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -99,6 +100,7 @@ export default async function JournalPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const locale = await getLocale();
 
   let post: JournalPost | null = null;
   let related: JournalListItem[] = [];
@@ -108,7 +110,7 @@ export default async function JournalPostPage({
     // database, so `fetch()`ing the public API would only add a slow, fragile
     // round trip through the hostname.
     post = await getJournalPost(slug);
-    related = (await listJournalPosts())
+    related = (await listJournalPosts(50, locale))
       .filter((item) => item.slug !== slug)
       .slice(0, 3);
   } catch (error) {

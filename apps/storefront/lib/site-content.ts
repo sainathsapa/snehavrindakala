@@ -271,6 +271,28 @@ async function createTables(): Promise<void> {
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote TEXT NOT NULL DEFAULT ''`);
 
+  // Hindi columns for admin-edited content.
+  //
+  // Shipping one page of static copy in two languages is a message file; but
+  // hero slides, categories, art forms and journal posts are edited by hand in
+  // /admin, so a translation has to live beside the English in the same row.
+  // Separate per-language tables would need a join and a fallback for every
+  // read, and would let a row exist in Hindi with no English — so the columns
+  // sit here instead, prefixed and nullable-by-default ('' means "not
+  // translated yet", and every reader falls back to the English column).
+  for (const column of ["eyebrow_hi", "title_hi", "tagline_hi", "cta_label_hi"]) {
+    await query(`ALTER TABLE site_hero_slide ADD COLUMN IF NOT EXISTS ${column} TEXT NOT NULL DEFAULT ''`);
+  }
+  await query(`ALTER TABLE site_featured_category ADD COLUMN IF NOT EXISTS label_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS name_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS description_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS story_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS origin_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS title_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS excerpt_hi TEXT NOT NULL DEFAULT ''`);
+
   // Buyer words. Kept separate from journal posts because a testimonial is an
   // attribution (who, where, which work) rather than an essay.
   await query(`
@@ -412,24 +434,61 @@ async function safeRows<T extends Record<string, any>>(
 
 /* ------------------------------- public reads ------------------------------ */
 
-export async function listHeroSlides(): Promise<HeroSlide[]> {
+/**
+ * Overlay the `_hi` columns onto English rows when the locale is Hindi.
+ *
+ * Admin-edited content keeps both languages in one row, so the read path is a
+ * projection rather than a join. An empty Hindi value falls back to the English
+ * one: a half-translated slide shows some English rather than a blank, which is
+ * the lesser failure on a live shop.
+ */
+function withHindi<T extends object>(
+  rows: T[],
+  locale: string,
+  fields: readonly string[]
+): T[] {
+  if (locale !== "hi") return rows;
+
+  return rows.map((row) => {
+    const merged: Record<string, unknown> = { ...(row as Record<string, unknown>) };
+    for (const field of fields) {
+      const hindi = merged[`${field}_hi`];
+      if (typeof hindi === "string" && hindi.trim()) merged[field] = hindi;
+    }
+    return merged as T;
+  });
+}
+
+export async function listHeroSlides(locale = "en"): Promise<HeroSlide[]> {
   // Database only. The former hardcoded fallback meant an empty table still
   // rendered a homepage an editor could not see, change or delete.
-  return safeRows<HeroSlide>(
+  const rows = await safeRows<HeroSlide>(
     "SELECT * FROM site_hero_slide WHERE published ORDER BY position, id"
   );
+  return withHindi(rows, locale, ["eyebrow", "title", "tagline", "cta_label"]);
 }
 
-export async function listArtForms(): Promise<ArtForm[]> {
-  return safeRows<ArtForm>(
+export async function listArtForms(locale = "en"): Promise<ArtForm[]> {
+  const rows = await safeRows<ArtForm>(
     "SELECT * FROM site_art_form WHERE published ORDER BY position, id"
   );
+  return withHindi(rows, locale, [
+    "name",
+    "description",
+    "story",
+    "origin",
+    "materials",
+    "quote",
+  ]);
 }
 
-export async function listFeaturedCategories(): Promise<FeaturedCategory[]> {
-  return safeRows<FeaturedCategory>(
+export async function listFeaturedCategories(
+  locale = "en"
+): Promise<FeaturedCategory[]> {
+  const rows = await safeRows<FeaturedCategory>(
     "SELECT * FROM site_featured_category WHERE published ORDER BY position, id"
   );
+  return withHindi(rows, locale, ["label"]);
 }
 
 export async function listTestimonials(): Promise<Testimonial[]> {

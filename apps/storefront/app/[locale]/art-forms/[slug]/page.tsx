@@ -3,7 +3,7 @@ import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { listArtForms, translateArtForms } from "@/lib/site-content";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { listCatalogueFor } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
@@ -64,9 +64,10 @@ function StoryBody({ text }: { text: string }) {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = (await params) ?? {};
   if (!slug) return { title: "SnehaVrinda Kala" };
+  const locale = await getLocale();
 
   const t = await getTranslations("artForm");
-  const forms = await listArtForms().catch(() => []);
+  const forms = await listArtForms(locale).catch(() => []);
   const found = forms.find((f) => f.slug === slug);
 
   if (!found) return { title: "Art form not found" };
@@ -89,12 +90,13 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function ArtFormPage({ params }: PageProps) {
   const { slug } = (await params) ?? {};
   if (!slug) notFound();
+  const locale = await getLocale();
 
   const t = await getTranslations("artForm");
   const tr = (key: string) => t(key as never);
   const has = (key: string) => t.has(key as never);
 
-  const forms = await listArtForms().catch(() => []);
+  const forms = await listArtForms(locale).catch(() => []);
   const raw = forms.find((f) => f.slug === slug);
   if (!raw) notFound();
   // Translate before anything reads the name, including the catalogue lookup

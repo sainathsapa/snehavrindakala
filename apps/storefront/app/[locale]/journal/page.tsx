@@ -6,7 +6,7 @@ import { BelButi, MithilaBorder, LotusRosette } from "@/components/indian-motifs
 import { PlateNumber } from "@/components/editorial";
 import { ButiField, PaperGrain } from "@/components/grounds";
 import { listJournalPosts, type JournalListItem } from "@/lib/journal";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 
 export async function generateMetadata() {
   const t = await getTranslations("journal");
@@ -26,10 +26,11 @@ export const dynamic = "force-dynamic";
  */
 export default async function JournalPage() {
   const t = await getTranslations("journal");
+  const locale = await getLocale();
   let posts: JournalListItem[] = [];
 
   try {
-    posts = await listJournalPosts();
+    posts = await listJournalPosts(50, locale);
   } catch (error) {
     console.error("Failed to load journal posts", error);
   }

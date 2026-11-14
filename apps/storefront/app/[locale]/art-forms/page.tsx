@@ -3,7 +3,7 @@ import Image from "next/image";
 import { medusa } from "@/lib/medusa";
 import { artFormSlugs } from "@/lib/slugs";
 import { listArtForms, translateArtForms } from "@/lib/site-content";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { SectionIntro, MandalaField, KalamBorder } from "@/components/ornaments";
 import { ChapterOpener } from "@/components/editorial";
 import { Reveal } from "@/components/motion";
@@ -40,6 +40,7 @@ function imageFor(slug: string): string | null {
 }
 
 export default async function ArtFormsPage() {
+  const locale = await getLocale();
   // Art-form names and descriptions live in Postgres, so they need translating
   // at read time; otherwise a Hindi visitor reads a Hindi grid under English
   // section headings.
@@ -71,7 +72,7 @@ export default async function ArtFormsPage() {
   let managed: ArtFormCard[] = [];
   try {
     managed = translateArtForms(
-      await listArtForms(),
+      await listArtForms(locale),
       tr,
       has
     ).map((form) => ({
