@@ -231,9 +231,9 @@ export default async function Home() {
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <ChapterOpener
-            eyebrow="Browse"
-            title="Find something you love"
-            standfirst="Shop paintings and handmade pieces, learn what you are looking at, or ask for something made only for you."
+            eyebrow={t("browse")}
+            title={t("findSomething")}
+            standfirst={t("findBody")}
             className="mb-12 lg:mb-16"
           />
 
@@ -323,15 +323,9 @@ export default async function Home() {
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid gap-10 lg:grid-cols-[300px_1fr] lg:gap-14">
             <SectionIntro
-              eyebrow="Art forms"
-              title={
-                <>
-                  Indian art
-                  <br />
-                  forms
-                </>
-              }
-              description="Painting, folk traditions, textiles and craft from across India."
+              eyebrow={t("artForms")}
+              title={t("artFormsTitle")}
+              description={t("indianArtBody")}
             />
 
             <div>

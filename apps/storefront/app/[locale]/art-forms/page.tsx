@@ -151,10 +151,10 @@ export default async function ArtFormsPage() {
 
         <div className="relative mx-auto flex min-h-[240px] max-w-[1400px] flex-col justify-center px-5 py-12 sm:px-8 lg:min-h-[300px] lg:px-12">
           <h1 className="font-serif text-[40px] font-semibold leading-tight tracking-tight text-rang-paper sm:text-[52px]">
-            Indian Art Forms
+            {t("pageTitle")}
           </h1>
           <p className="mt-2 font-sans text-small text-rang-paper/75">
-            Timeless traditions. Enduring beauty.
+            {t("pageTagline")}
           </p>
         </div>
       </section>
@@ -213,7 +213,7 @@ export default async function ArtFormsPage() {
               </div>
               <div className="flex flex-col justify-center px-7 py-10 sm:px-12 lg:px-14 lg:py-14">
                 <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-terracotta">
-                  Featured tradition
+                  {t("featured")}
                 </p>
                 <h2 className="mt-3 font-serif text-[34px] font-semibold leading-[1.05] tracking-tight text-deep-ink transition-colors group-hover:text-kumkum sm:text-[46px]">
                   {featured.name}
@@ -222,7 +222,7 @@ export default async function ArtFormsPage() {
                   {featured.description}
                 </p>
                 <span className="mt-7 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-terracotta">
-                  Enter the exhibition
+                  {t("enterExhibition")}
                   <span
                     aria-hidden="true"
                     className="transition-transform duration-300 group-hover:translate-x-1"
@@ -272,7 +272,7 @@ export default async function ArtFormsPage() {
                       {form.description}
                     </p>
                     <span className="mt-5 inline-flex items-center gap-2 border-b border-terracotta/40 pb-1 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta transition-colors group-hover:border-kumkum group-hover:text-kumkum">
-                      Read the story
+                      {t("readStory")}
                       <span
                         aria-hidden="true"
                         className="transition-transform duration-300 group-hover:translate-x-1"
@@ -289,22 +289,21 @@ export default async function ArtFormsPage() {
           {/* A close that leads on, rather than stopping. */}
           <div className="mt-16 border-t border-sand-border/60 pt-10 text-center lg:mt-24">
             <p className="mx-auto max-w-xl font-serif text-xl italic leading-relaxed text-deep-ink">
-              A tradition survives by being made, not by being preserved. Every
-              work on this site is a way of keeping one alive.
+              {t("traditionLede")}
             </p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Link
                 href="/shop"
                 className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
               >
-                See the work
+                {t("seeWork")}
                 <span aria-hidden="true">→</span>
               </Link>
               <Link
                 href="/learn"
                 className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
               >
-                Understand the craft
+                {t("understandCraft")}
               </Link>
             </div>
           </div>

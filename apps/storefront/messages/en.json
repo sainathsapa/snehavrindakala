@@ -145,7 +145,7 @@
     "payNow": "Pay now"
   },
   "artForm": {
-    "pageTitle": "Art Forms",
+    "pageTitle": "Indian Art Forms",
     "pageEyebrow": "The traditions",
     "pageIntro": "Each tradition below has its own vocabulary, its own materials and its own logic. What they share is that a person made the work by hand, and that the method was taught from one person to the next.",
     "home": "Home",
@@ -179,7 +179,14 @@
       "textile": "Woven, printed and embroidered textiles made on handlooms and by hand.",
       "paper": "Journals, prints and paper goods made from handmade and recycled stock.",
       "wearable": "Jewellery and adornment crafted as small, personal artworks."
-    }
+    },
+    "pageTagline": "Timeless traditions. Enduring beauty.",
+    "featured": "Featured tradition",
+    "enterExhibition": "Enter the exhibition",
+    "readStory": "Read the story",
+    "traditionLede": "A tradition survives by being made, not by being preserved. Every work on this site is a way of keeping one alive.",
+    "seeWork": "See the work",
+    "understandCraft": "Understand the craft"
   },
   "account": {
     "title": "Your account",
@@ -551,7 +558,7 @@
     "machineCannot": "What it cannot do is decide, on a Tuesday afternoon, that the border needs one more fish — and then paint it.",
     "craftNote": "Every work here was made by one person, in one place, over time that no one was billing for. We keep the maker visible because that is the entire difference between an artwork and a product.",
     "learnTraditions": "Learn the traditions",
-    "readStory": "Read our story",
+    "readStory": "Read the story",
     "kolam": "Drawn at the door before sunrise, a kolam welcomes whoever arrives. Consider this one drawn for you.",
     "waysEyebrow": "Ways in",
     "artForms": "Art forms",
@@ -602,7 +609,18 @@
         "copy": "Notes on pigment, process and the story behind each piece."
       }
     },
-    "closingLede": "Every piece here was made by a hand that learned the form from someone."
+    "closingLede": "Every piece here was made by a hand that learned the form from someone.",
+    "findSomething": "Find something you love",
+    "findBody": "Shop paintings and handmade pieces, learn what you are looking at, or ask for something made for you.",
+    "indianArtBody": "Painting, folk traditions, textiles and craft from across India.",
+    "artFormsTitle": "Indian Art Forms",
+    "artFormsTagline": "Timeless traditions. Enduring beauty.",
+    "artFormsEyebrow": "Art Forms",
+    "featured": "Featured tradition",
+    "enterExhibition": "Enter the exhibition",
+    "seeWork": "See the work",
+    "understandCraft": "Understand the craft",
+    "traditionLede": "A tradition survives by being made, not by being preserved. Every piece here is the work of a hand that is still learning."
   },
   "commission": {
     "artFormLabel": "What kind of art?",
