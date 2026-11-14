@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@snehavrinda-kala/ui";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export default async function ForgotPasswordPage({
   searchParams: Promise<{ sent?: string; error?: string }>;
 }) {
   const { sent, error } = await searchParams;
+  const t = await getTranslations("authPage");
 
   if (sent) {
     return (
@@ -41,9 +43,9 @@ export default async function ForgotPasswordPage({
       <div className="mx-auto max-w-md px-4 sm:px-6">
         <Card elevated>
           <CardHeader>
-            <CardTitle>Forgot password</CardTitle>
+            <CardTitle>{t("forgotTitle")}</CardTitle>
             <p className="mt-2 text-sm text-muted font-sans">
-              Enter your email and we’ll send a link to reset your password.
+              {t("forgotIntro")}
             </p>
           </CardHeader>
           <CardContent>
@@ -62,7 +64,7 @@ export default async function ForgotPasswordPage({
                   htmlFor="email"
                   className="block text-sm font-medium text-deep-ink mb-1"
                 >
-                  Email
+                  {t("email")}
                 </label>
                 <input
                   id="email"
@@ -77,13 +79,13 @@ export default async function ForgotPasswordPage({
                 type="submit"
                 className="w-full py-3 bg-sindoor text-rang-paper rounded-md font-medium hover:bg-sindoor/90 transition-colors"
               >
-                Send reset link
+                {t("sendReset")}
               </button>
             </form>
             <p className="mt-6 text-sm text-muted font-sans">
-              Remember your password?{" "}
+              {t("remembered")}{" "}
               <Link href="/account/login" className="text-sindoor underline">
-                Sign in
+                {t("signInLink")}
               </Link>
             </p>
           </CardContent>

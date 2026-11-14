@@ -1,34 +1,28 @@
-export default function ShippingPolicyPage() {
+import { getTranslations } from "next-intl/server";
+
+export default async function ShippingPolicyPage() {
+  const t = await getTranslations("policies");
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-serif font-semibold text-ink mb-6">
-          Shipping &amp; delivery
+          {t("shippingTitle")}
         </h1>
         <div className="space-y-6 text-muted font-sans leading-relaxed">
-          <p>
-            We ship across India through our fulfilment partner. Dispatch
-            timelines depend on the product type:
-          </p>
+          <p>{t("shippingIntro")}</p>
           <ul className="list-disc list-inside space-y-2">
             <li>
-              <strong>Ready to ship:</strong> dispatched within 2–3 business
-              days of order confirmation.
+              <strong>{t("shippingReady")}</strong> {t("shippingReadyBody")}
             </li>
             <li>
-              <strong>Made to order:</strong> production lead time is shown on
-              each product page before you order.
+              <strong>{t("shippingMade")}</strong> {t("shippingMadeBody")}
             </li>
             <li>
-              <strong>Custom commissions:</strong> timeline is agreed in the
-              quote and tracked through milestones.
+              <strong>{t("shippingCustom")}</strong> {t("shippingCustomBody")}
             </li>
           </ul>
-          <p>
-            Tracking details are shared once the shipment is created. Fragile
-            and oversized items use material-specific packaging and may require
-            special handling.
-          </p>
+          <p>{t("shippingOutro")}</p>
         </div>
       </div>
     </main>
