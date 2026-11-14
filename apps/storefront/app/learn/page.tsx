@@ -10,6 +10,7 @@ import {
   PeacockEye,
 } from "@/components/indian-motifs";
 import { GLOSSARY, MATERIALS, TIMELINE } from "@/lib/art-reference";
+import { GlossaryExplorer } from "@/components/glossary-explorer";
 import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import { listArtForms } from "@/lib/site-content";
 
@@ -104,31 +105,7 @@ export default async function LearnPage() {
               <MithilaBorder className="mt-7 h-3 w-32 text-terracotta/30" />
             </div>
 
-            <dl className="divide-y divide-sand-border/60 border-y border-sand-border/60">
-              {GLOSSARY.map((entry) => (
-                <div
-                  key={entry.term}
-                  className="group grid gap-2 py-5 transition-colors hover:bg-surface/40 sm:grid-cols-[190px_1fr] sm:gap-8"
-                >
-                  <div>
-                    <dt className="font-serif text-lg font-semibold leading-tight text-deep-ink">
-                      {entry.term}
-                    </dt>
-                    <span className="mt-1 block font-sans text-[9px] uppercase tracking-[0.2em] text-terracotta/75">
-                      {entry.language}
-                    </span>
-                  </div>
-                  <dd>
-                    <p className="font-serif text-[15px] leading-snug text-deep-ink/90">
-                      {entry.meaning}
-                    </p>
-                    <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-muted-ink">
-                      {entry.note}
-                    </p>
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <GlossaryExplorer entries={GLOSSARY} />
           </div>
         </div>
       </section>

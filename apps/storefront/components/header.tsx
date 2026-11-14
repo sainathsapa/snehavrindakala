@@ -208,18 +208,33 @@ export function Header({
                     : [];
 
               if (!link.menu) {
+                // A nav item stays active on its own sub-pages: /shop should
+                // still read as current on /shop/painting. An exact match left
+                // every interior page with an inactive header, so the site
+                // always looked like you had not gone anywhere.
+                const active =
+                  pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(`${link.href}/`));
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    aria-current={pathname === link.href ? "page" : undefined}
-                    className={`group flex items-center gap-1.5 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
-                      pathname === link.href
+                    aria-current={active ? "page" : undefined}
+                    className={`group relative flex items-center gap-1.5 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                      active
                         ? "text-kumkum"
                         : "text-deep-ink/85 hover:text-kumkum"
                     }`}
                   >
                     {link.label}
+                    <span
+                      aria-hidden="true"
+                      className={`absolute -bottom-1.5 left-0 h-[1.5px] bg-kumkum transition-all duration-300 ${
+                        active
+                          ? "w-full opacity-100"
+                          : "w-0 opacity-0 group-hover:w-full group-hover:opacity-60"
+                      }`}
+                    />
                   </Link>
                 );
               }

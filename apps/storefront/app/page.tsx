@@ -234,10 +234,9 @@ export default async function Home() {
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <ChapterOpener
-            chapter="I"
-            eyebrow="Where to begin"
-            title="Six ways into the house"
-            standfirst="There is no correct order. Walk in through the traditions, a region, a colour, or let the collection surprise you."
+            eyebrow="Browse"
+            title="Find something you love"
+            standfirst="Shop paintings and handmade pieces, learn what you are looking at, or ask for something made only for you."
             className="mb-12 lg:mb-16"
           />
 
@@ -261,17 +260,17 @@ export default async function Home() {
               />
               <div className="relative">
                 <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-haldi">
-                  By tradition
+                  Art forms
                 </p>
                 <h3 className="mt-3 font-serif text-3xl font-semibold leading-[1.1] text-rang-paper sm:text-[42px]">
-                  Explore by art form
+                  Shop by art form
                 </h3>
                 <p className="mt-3 max-w-md font-sans text-sm leading-relaxed text-rang-paper/75">
-                  Madhubani, Warli, Pattachitra, Gond, Kalamkari and more — each
-                  with its own language of line, colour and meaning.
+                  Madhubani, Warli, Pattachitra, Gond and Kalamkari — original
+                  paintings and handmade pieces from across India.
                 </p>
                 <span className="mt-5 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-haldi">
-                  Begin
+                  Browse
                   <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
                     →
                   </span>
@@ -284,21 +283,21 @@ export default async function Home() {
               {[
                 {
                   href: "/learn",
-                  eyebrow: "By story",
-                  title: "Read the traditions",
-                  copy: "What the words mean, what the materials are, how the forms came to exist.",
+                  eyebrow: "Learn",
+                  title: "Understand what you are buying",
+                  copy: "What the techniques are, which materials are used, and how each tradition began.",
                 },
                 {
                   href: "/shop",
-                  eyebrow: "By the work",
-                  title: "See what is available",
-                  copy: "Every piece hand-made, every listing naming its maker.",
+                  eyebrow: "Shop",
+                  title: "See what is available now",
+                  copy: "Original paintings and handmade pieces, with the maker named on every listing.",
                 },
                 {
                   href: "/journal",
-                  eyebrow: "Unexpected",
-                  title: "Wander into the journal",
-                  copy: "Essays on pigment, process and the people behind the work.",
+                  eyebrow: "Journal",
+                  title: "Read the journal",
+                  copy: "Notes on pigment, process and the story behind each piece.",
                 },
               ].map((route) => (
                 <Link
@@ -328,15 +327,15 @@ export default async function Home() {
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid gap-10 lg:grid-cols-[300px_1fr] lg:gap-14">
             <SectionIntro
-              eyebrow="Explore"
+              eyebrow="Art forms"
               title={
                 <>
-                  Indian Art
+                  Indian art
                   <br />
-                  Forms
+                  forms
                 </>
               }
-              description="Discover the timeless beauty of India's rich artistic traditions."
+              description="Painting, folk traditions, textiles and craft from across India."
             />
 
             <div>

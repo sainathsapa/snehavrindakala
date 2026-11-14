@@ -280,8 +280,12 @@ export function ChapterOpener({
   tone = "ink",
   className = "",
 }: {
-  /** Chapter number, or a roman numeral, or a word like "I". */
-  chapter: string | number;
+  /**
+   * Chapter number, roman numeral or word. Optional: the large pale numeral
+   * reads like a printed exhibition catalogue, which is wrong for a shopping
+   * page. Editorial spreads can pass it; public pages leave it out.
+   */
+  chapter?: string | number;
   eyebrow?: string;
   title: ReactNode;
   standfirst?: ReactNode;
@@ -303,14 +307,16 @@ export function ChapterOpener({
       {/* The numeral sits behind the title as a printed watermark, the way a
           folio number sits large and pale at the head of a chapter. */}
       <div className="relative">
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute -top-8 select-none font-serif text-[92px] font-semibold leading-none sm:-top-10 sm:text-[128px] ${numeralTone} ${
-            align === "center" ? "left-1/2 -translate-x-1/2" : "-left-2"
-          }`}
-        >
-          {chapter}
-        </span>
+        {chapter !== undefined && (
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute -top-8 select-none font-serif text-[92px] font-semibold leading-none sm:-top-10 sm:text-[128px] ${numeralTone} ${
+              align === "center" ? "left-1/2 -translate-x-1/2" : "-left-2"
+            }`}
+          >
+            {chapter}
+          </span>
+        )}
         <div className="relative">
           {eyebrow && (
             <p
