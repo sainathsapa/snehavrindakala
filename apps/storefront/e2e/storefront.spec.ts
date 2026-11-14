@@ -503,6 +503,22 @@ test.describe("Hindi", () => {
     expect(await page.locator("html").getAttribute("lang")).toBe("hi");
   });
 
+  test("no page renders raw message keys", async ({ page }) => {
+    // A message namespace that is nested one level too deep renders the key
+    // itself ("learn.crumb") instead of falling back to English, and next-intl
+    // only warns. It is invisible in a percentage-of-Devanagari check, because
+    // the leaked text is Latin. This asserts on the rendered HTML directly.
+    const namespaces =
+      "learn|nav|footer|shop|cart|account|product|faq|home|artForm|commission|customArt|authenticity|journal|productDetail";
+    const leaked = new RegExp(`\\b(?:${namespaces})\\.[a-zA-Z][a-zA-Z0-9]*`, "g");
+
+    for (const path of ["/hi", "/hi/learn", "/hi/shop", "/hi/faq"]) {
+      await page.goto(path);
+      const html = await page.locator("main").innerHTML();
+      expect((html.match(leaked) ?? []).slice(0, 5)).toEqual([]);
+    }
+  });
+
   test("a product title matches the language of its URL", async ({ page }) => {
     // A fresh context so no NEXT_LOCALE cookie is carried in from another test.
     // With a `hi` cookie next-intl redirects `/products/...` to `/hi/...`,
