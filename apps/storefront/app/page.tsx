@@ -46,6 +46,7 @@ import {
   listHeroSlides,
   listArtForms,
   listFeaturedCategories,
+  listTestimonials,
 } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
@@ -66,12 +67,14 @@ const TRADITIONS = [
 
 export default async function Home() {
   // Everything curated lives in Postgres and is edited at /admin/content.
-  const [slides, artForms, categories, catalogue] = await Promise.all([
-    listHeroSlides(),
-    listArtForms(),
-    listFeaturedCategories(),
-    listCatalogue().catch(() => []),
-  ]);
+  const [slides, artForms, categories, catalogue, testimonials] =
+    await Promise.all([
+      listHeroSlides(),
+      listArtForms(),
+      listFeaturedCategories(),
+      listCatalogue().catch(() => []),
+      listTestimonials(),
+    ]);
 
   // The Artists directory only exists in platform mode. In single-brand mode
   // SnehaVrinda Kala is the only seller, the /artists listing is a dead end,
@@ -863,6 +866,46 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Buyer words ────────────────────────────────────────────────────
+          Placed after the browse sections and before the closing doors: by
+          this point someone has seen the work and is deciding whether to trust
+          it. Two or three real quotes do more than a badge row. Renders only
+          when the admin has published something, so an empty table leaves no
+          hollow band. */}
+      {testimonials.length > 0 && (
+        <section className="relative overflow-hidden border-t border-sand-border/60 py-14 lg:py-20">
+          <PaperGrain />
+          <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+            <SectionIntro
+              eyebrow="In their words"
+              title="The work, once it is home"
+              align="center"
+            />
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {testimonials.slice(0, 3).map((t) => (
+                <figure
+                  key={t.id}
+                  className="border-t border-sand-border/70 pt-5"
+                >
+                  <blockquote className="font-serif text-lg leading-relaxed text-deep-ink">
+                    “{t.quote}”
+                  </blockquote>
+                  <figcaption className="mt-3 font-sans text-[10px] uppercase tracking-[0.18em] text-muted-ink">
+                    {t.author}
+                    {t.location ? ` · ${t.location}` : ""}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+            <div className="mt-10 flex justify-center">
+              <ArrowLink href="/authenticity">
+                How we stand behind a piece
+              </ArrowLink>
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

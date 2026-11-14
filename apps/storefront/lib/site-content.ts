@@ -51,6 +51,18 @@ export interface FeaturedCategory {
   published: boolean;
 }
 
+/** A buyer's own words, shown on the homepage and the authenticity page. */
+export interface Testimonial {
+  id: number;
+  position: number;
+  quote: string;
+  author: string;
+  location: string;
+  /** Which work it refers to. Optional — some orders are commissions. */
+  work: string;
+  published: boolean;
+}
+
 export const DEFAULT_HERO_SLIDES = [
   {
     eyebrow: "New arrivals & curated collections",
@@ -210,6 +222,20 @@ export const DEFAULT_FEATURED_CATEGORIES = [
 let schemaReady: Promise<void> | null = null;
 
 async function createSchema(): Promise<void> {
+  // Next evaluates pages in separate worker processes during a build, so the
+  // in-process `schemaReady` promise does not serialise them: several workers
+  // ran CREATE TABLE IF NOT EXISTS at once and collided in the system catalogue
+  // ("duplicate key value violates unique constraint pg_type_typname_nsp_index").
+  // A Postgres advisory lock makes the whole migration safe across processes.
+  await query("SELECT pg_advisory_lock(918273645)");
+  try {
+    await createTables();
+  } finally {
+    await query("SELECT pg_advisory_unlock(918273645)");
+  }
+}
+
+async function createTables(): Promise<void> {
   await query(`
     CREATE TABLE IF NOT EXISTS site_hero_slide (
       id SERIAL PRIMARY KEY,
@@ -244,6 +270,21 @@ async function createSchema(): Promise<void> {
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote TEXT NOT NULL DEFAULT ''`);
+
+  // Buyer words. Kept separate from journal posts because a testimonial is an
+  // attribution (who, where, which work) rather than an essay.
+  await query(`
+    CREATE TABLE IF NOT EXISTS site_testimonial (
+      id SERIAL PRIMARY KEY,
+      position INTEGER NOT NULL DEFAULT 0,
+      quote TEXT NOT NULL,
+      author TEXT NOT NULL,
+      location TEXT NOT NULL DEFAULT '',
+      work TEXT NOT NULL DEFAULT '',
+      published BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
   await query(`
     CREATE TABLE IF NOT EXISTS site_featured_category (
       id SERIAL PRIMARY KEY,
@@ -368,6 +409,16 @@ export async function listFeaturedCategories(): Promise<FeaturedCategory[]> {
   );
 }
 
+export async function listTestimonials(): Promise<Testimonial[]> {
+  return safeRows<Testimonial>(
+    "SELECT * FROM site_testimonial WHERE published ORDER BY position, id"
+  );
+}
+
+export async function listAllTestimonials(): Promise<Testimonial[]> {
+  return safeRows<Testimonial>("SELECT * FROM site_testimonial ORDER BY position, id");
+}
+
 /* ------------------------------- admin writes ------------------------------ */
 
 export async function listAllHeroSlides(): Promise<HeroSlide[]> {
@@ -490,6 +541,38 @@ export async function deleteArtForm(id: number): Promise<void> {
   await query("DELETE FROM site_art_form WHERE id=$1", [id]);
 }
 
+export async function createTestimonial(
+  input: Writable<Testimonial>
+): Promise<void> {
+  await ensureSeeded();
+  await query(
+    `INSERT INTO site_testimonial (position, quote, author, location, work, published)
+     VALUES
+       (COALESCE((SELECT MAX(position) + 1 FROM site_testimonial), 0),
+        $1,$2,$3,$4,$5)`,
+    [input.quote, input.author, input.location, input.work, input.published]
+  );
+}
+
+export async function updateTestimonial(
+  id: number,
+  input: Writable<Testimonial>
+): Promise<void> {
+  await ensureSeeded();
+  await query(
+    `UPDATE site_testimonial
+        SET quote = $1, author = $2, location = $3, work = $4,
+            published = $5, updated_at = NOW()
+      WHERE id = $6`,
+    [input.quote, input.author, input.location, input.work, input.published, id]
+  );
+}
+
+export async function deleteTestimonial(id: number): Promise<void> {
+  await ensureSeeded();
+  await query("DELETE FROM site_testimonial WHERE id = $1", [id]);
+}
+
 export async function createFeaturedCategory(
   input: Writable<FeaturedCategory>
 ): Promise<void> {
@@ -523,7 +606,11 @@ export async function deleteFeaturedCategory(id: number): Promise<void> {
 
 /** Move a row up or down within its table by swapping positions. */
 export async function reorder(
-  table: "site_hero_slide" | "site_art_form" | "site_featured_category",
+  table:
+    | "site_hero_slide"
+    | "site_art_form"
+    | "site_featured_category"
+    | "site_testimonial",
   id: number,
   direction: "up" | "down"
 ): Promise<void> {

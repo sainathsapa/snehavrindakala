@@ -66,6 +66,7 @@ const LINK_GROUPS = [
     heading: "Care",
     sub: "The house",
     links: [
+      { label: "Authenticity", href: "/authenticity" },
       { label: "Shipping", href: "/policies/shipping" },
       { label: "Returns", href: "/policies/returns" },
       { label: "Privacy", href: "/policies/privacy" },

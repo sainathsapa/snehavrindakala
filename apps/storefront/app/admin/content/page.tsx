@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/app/admin/actions";
-import { listAllHeroSlides, listAllArtForms, listAllFeaturedCategories } from "@/lib/site-content";
+import { listAllHeroSlides, listAllArtForms, listAllFeaturedCategories, listAllTestimonials } from "@/lib/site-content";
 import {
   saveHeroSlideAction,
   deleteHeroSlideAction,
@@ -7,6 +7,8 @@ import {
   deleteArtFormAction,
   saveFeaturedCategoryAction,
   deleteFeaturedCategoryAction,
+  saveTestimonialAction,
+  deleteTestimonialAction,
   reorderContentAction,
 } from "@/app/admin/actions";
 import { Icon } from "@snehavrinda-kala/ui";
@@ -30,10 +32,11 @@ export default async function AdminContentPage() {
     );
   }
 
-  const [slides, artForms, categories] = await Promise.all([
+  const [slides, artForms, categories, testimonials] = await Promise.all([
     listAllHeroSlides(),
     listAllArtForms(),
     listAllFeaturedCategories(),
+    listAllTestimonials(),
   ]);
 
   return (
@@ -223,6 +226,71 @@ export default async function AdminContentPage() {
           <div className="flex flex-wrap items-center gap-4">
             <Toggle name="published" checked />
             <SaveButton label="Add category" />
+          </div>
+        </form>
+      </Section>
+
+      {/* ── Testimonials ─────────────────────────────────────────────────── */}
+      <Section
+        title="Testimonials"
+        hint="Buyers in their own words. Shown on the homepage and the authenticity page. Only publish quotes you actually have permission to use."
+        count={testimonials.length}
+      >
+        {testimonials.map((t, index) => (
+          <Row
+            key={t.id}
+            table="site_testimonial"
+            id={t.id}
+            index={index}
+            total={testimonials.length}
+            published={t.published}
+          >
+            <form action={saveTestimonialAction} className="grid gap-3">
+              <input type="hidden" name="id" value={t.id} />
+              <label className="grid gap-1">
+                <span className="font-sans text-xs font-medium text-muted-ink">Quote</span>
+                <textarea
+                  name="quote"
+                  defaultValue={t.quote}
+                  rows={3}
+                  required
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                />
+              </label>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Author" name="author" value={t.author} required />
+                <Field label="Location" name="location" value={t.location} />
+                <Field label="Work" name="work" value={t.work} />
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <Toggle name="published" checked={t.published} />
+                <SaveButton />
+              </div>
+            </form>
+          </Row>
+        ))}
+
+        <form action={saveTestimonialAction} className="grid gap-3 rounded-lg border border-dashed border-sand-border p-4">
+          <p className="font-sans text-xs font-semibold uppercase tracking-wider text-terracotta">
+            Add a testimonial
+          </p>
+          <label className="grid gap-1">
+            <span className="font-sans text-xs font-medium text-muted-ink">Quote</span>
+            <textarea
+              name="quote"
+              rows={3}
+              required
+              className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+            />
+          </label>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Author" name="author" value="" required />
+            <Field label="Location" name="location" value="" />
+            <Field label="Work" name="work" value="" />
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <Toggle name="published" checked />
+            <SaveButton label="Add testimonial" />
           </div>
         </form>
       </Section>

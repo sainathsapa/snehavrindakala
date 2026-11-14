@@ -15,6 +15,9 @@ import {
   createFeaturedCategory,
   updateFeaturedCategory,
   deleteFeaturedCategory,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
   reorder,
 } from "@/lib/site-content";
 import { medusa } from "@/lib/medusa";
@@ -375,19 +378,57 @@ export async function deleteFeaturedCategoryAction(formData: FormData) {
   revalidatePath("/admin/content");
 }
 
+export async function saveTestimonialAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  const id = Number(formData.get("id") || 0);
+  const input = {
+    quote: String(formData.get("quote") || "").trim(),
+    author: String(formData.get("author") || "").trim(),
+    location: String(formData.get("location") || "").trim(),
+    work: String(formData.get("work") || "").trim(),
+    published: formData.get("published") === "on",
+  };
+  if (!input.quote || !input.author) {
+    throw new Error("A testimonial needs the words and who said them.");
+  }
+
+  if (id) await updateTestimonial(id, input);
+  else await createTestimonial(input);
+  revalidatePath("/");
+  revalidatePath("/authenticity");
+  revalidatePath("/admin/content");
+}
+
+export async function deleteTestimonialAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  await deleteTestimonial(Number(formData.get("id")));
+  revalidatePath("/");
+  revalidatePath("/authenticity");
+  revalidatePath("/admin/content");
+}
+
 export async function reorderContentAction(formData: FormData) {
   if (!(await requireAdmin())) throw new Error("Not authorised.");
   const table = String(formData.get("table")) as
     | "site_hero_slide"
     | "site_art_form"
-    | "site_featured_category";
+    | "site_featured_category"
+    | "site_testimonial";
   const id = Number(formData.get("id"));
   const direction = String(formData.get("direction")) === "up" ? "up" : "down";
-  if (!["site_hero_slide", "site_art_form", "site_featured_category"].includes(table)) {
+  if (
+    ![
+      "site_hero_slide",
+      "site_art_form",
+      "site_featured_category",
+      "site_testimonial",
+    ].includes(table)
+  ) {
     throw new Error("Unknown list.");
   }
   await reorder(table, id, direction);
   revalidatePath("/");
   revalidatePath("/art-forms");
+  revalidatePath("/authenticity");
   revalidatePath("/admin/content");
 }
