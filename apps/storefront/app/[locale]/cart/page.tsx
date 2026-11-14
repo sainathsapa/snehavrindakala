@@ -1,6 +1,7 @@
 import { getCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/medusa";
 import { removeCartItemAction, updateCartItemAction } from "./actions";
+import { PromoCode } from "@/components/promo-code";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -127,6 +128,33 @@ export default async function CartPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <PromoCode
+              applied={(cart?.promotions ?? [])
+                .map((promotion) => promotion.code)
+                .filter((code): code is string => Boolean(code))}
+            />
+
+            <div className="mt-6 space-y-2 border-t border-sand-border pt-4 font-sans text-sm">
+              <div className="flex justify-between gap-4 text-muted-ink">
+                <span>Subtotal</span>
+                <span className="whitespace-nowrap text-deep-ink">
+                  {formatPrice(
+                    (cart?.original_total ?? cart?.subtotal ?? 0) +
+                      (cart?.discount_total ?? 0),
+                    cart?.currency_code
+                  )}
+                </span>
+              </div>
+              {(cart?.discount_total ?? 0) > 0 && (
+                <div className="flex justify-between gap-4 text-leaf">
+                  <span>Discount</span>
+                  <span className="whitespace-nowrap font-medium">
+                    −{formatPrice(cart?.discount_total ?? 0, cart?.currency_code)}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-4">

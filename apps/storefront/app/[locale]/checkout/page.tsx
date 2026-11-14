@@ -1,6 +1,7 @@
 import { getCart } from "@/lib/cart";
 import { saveCheckoutDetailsAction } from "@/app/[locale]/cart/actions";
-import { getCurrentCustomer } from "@/lib/auth";
+import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
+import { medusa } from "@/lib/medusa";
 import { CheckoutClient } from "@/components/checkout-client";
 import { taxForAmount } from "@/lib/tax-server";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
@@ -86,6 +87,29 @@ export default async function CheckoutPage({
     .filter(Boolean)
     .join(" ");
 
+  // Prefill from the saved address book when the cart has no address yet.
+  // This is the whole point of saving an address: a returning buyer should not
+  // retype it, and the default shipping address is the one they chose as
+  // "default" precisely so it would be offered here.
+  let savedAddress: any = null;
+  if (!address) {
+    const authToken = await getAuthToken();
+    if (authToken) {
+      try {
+        const list = await medusa.listCustomerAddresses(authToken);
+        savedAddress =
+          list.find((entry: any) => entry.is_default_shipping) ?? list[0] ?? null;
+      } catch {
+        // No session or no addresses: the form is simply empty, as before.
+      }
+    }
+  }
+
+  const prefill = address ?? savedAddress;
+  const prefillName = [prefill?.first_name, prefill?.last_name]
+    .filter(Boolean)
+    .join(" ");
+
   const deliveryForm = (
     <>
       {saved && (
@@ -122,7 +146,7 @@ export default async function CheckoutPage({
             type="text"
             autoComplete="name"
             required
-            defaultValue={fullName || undefined}
+            defaultValue={prefillName || undefined}
             className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
           />
         </div>
@@ -157,7 +181,7 @@ export default async function CheckoutPage({
               type="tel"
               autoComplete="tel"
               required
-              defaultValue={address?.phone || customer?.phone || undefined}
+              defaultValue={prefill?.phone || customer?.phone || undefined}
               className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
             />
           </div>
@@ -175,7 +199,7 @@ export default async function CheckoutPage({
             rows={3}
             autoComplete="street-address"
             required
-            defaultValue={address?.address_1 || undefined}
+            defaultValue={prefill?.address_1 || undefined}
             className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
           />
         </div>
@@ -193,7 +217,7 @@ export default async function CheckoutPage({
               type="text"
               autoComplete="address-level2"
               required
-              defaultValue={address?.city || undefined}
+              defaultValue={prefill?.city || undefined}
               className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
             />
           </div>
@@ -210,7 +234,7 @@ export default async function CheckoutPage({
               type="text"
               autoComplete="address-level1"
               required
-              defaultValue={address?.province || undefined}
+              defaultValue={prefill?.province || undefined}
               className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
             />
           </div>
@@ -260,7 +284,7 @@ export default async function CheckoutPage({
               inputMode="text"
               autoComplete="postal-code"
               required
-              defaultValue={address?.postal_code || undefined}
+              defaultValue={prefill?.postal_code || undefined}
               className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
             />
           </div>
@@ -422,6 +446,11 @@ export default async function CheckoutPage({
           }))}
           shippingRates={shippingRates}
           tax={tax}
+          discount={Number(cart?.discount_total ?? 0)}
+          promoCode={(cart?.promotions ?? [])
+            .map((promotion) => promotion.code)
+            .filter((code): code is string => Boolean(code))
+            .join(", ")}
           saved={Boolean(saved)}
           deliverySaved={deliverySaved}
           deliveryForm={deliveryForm}

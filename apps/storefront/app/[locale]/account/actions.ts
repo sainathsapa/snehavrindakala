@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { medusa } from "@/lib/medusa";
 import { AUTH_COOKIE } from "@/lib/auth";
+import { claimCartForCustomer } from "@/lib/cart";
 
 export async function loginAction(formData: FormData): Promise<void> {
   const email = String(formData.get("email") || "").trim();
@@ -30,6 +31,9 @@ export async function loginAction(formData: FormData): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
+
+  // Give the basket to the account so it follows them to another device.
+  await claimCartForCustomer(token);
 
   redirect("/account");
 }
@@ -66,6 +70,9 @@ export async function registerAction(formData: FormData): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
+
+  // A new account should keep whatever they had in the basket while signing up.
+  await claimCartForCustomer(token);
 
   redirect("/account");
 }

@@ -40,3 +40,43 @@ export async function ensureCart(): Promise<MedusaCart> {
   });
   return cart;
 }
+
+/**
+ * Hand the current basket to the signed-in customer.
+ *
+ * This is what makes a cart follow someone between devices. The basket lives in
+ * a cookie, so it is per-browser by nature: a buyer who adds a work on a phone
+ * and opens the site on a laptop would otherwise start from an empty cart.
+ * After a successful login the cookie cart is claimed by the account, and
+ * Medusa returns the customer's existing cart when there is one.
+ *
+ * Called on login and registration only. It must never run on a guest visit:
+ * claiming a cart for no customer would strip it from the browser it belongs to.
+ *
+ * Returns the cart id the browser should now use, or null when the visitor has
+ * no cart and nothing to claim.
+ */
+export async function claimCartForCustomer(
+  token: string
+): Promise<string | null> {
+  const cartId = (await cookies()).get(CART_COOKIE)?.value;
+  if (!cartId) return null;
+
+  try {
+    const { cart } = await medusa.transferCart(token, cartId);
+    const claimedId = cart?.id ?? cartId;
+    (await cookies()).set(CART_COOKIE, claimedId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: CART_COOKIE_MAX_AGE,
+    });
+    return claimedId;
+  } catch (error) {
+    // A transfer failure must not block sign-in. The buyer keeps the basket in
+    // this browser, which is the state they were already in.
+    console.error("Claiming cart for customer failed", error);
+    return cartId;
+  }
+}

@@ -40,6 +40,15 @@ interface CheckoutClientProps {
   tax: TaxBreakdown | null;
   saved: boolean;
   deliverySaved: boolean;
+  /**
+   * Amount already taken off by promotion codes, in major units.
+   *
+   * Comes from Medusa's `discount_total` rather than being recomputed here, so
+   * the figure shown is the one that will actually be charged.
+   */
+  discount?: number;
+  /** Codes currently in effect, for the "applied" note. */
+  promoCode?: string;
   /** Server-rendered delivery form; keeps the Server Action on the server. */
   deliveryForm: ReactNode;
 }
@@ -56,6 +65,8 @@ export function CheckoutClient({
   tax,
   saved,
   deliverySaved,
+  discount = 0,
+  promoCode,
   deliveryForm,
 }: CheckoutClientProps) {
   const router = useRouter();
@@ -71,6 +82,8 @@ export function CheckoutClient({
   );
 
   const shippingAmount = selectedRate?.rate ?? 0;
+  // `subtotal` already has the discount taken off, so it is not subtracted
+  // again here — doing that would charge the buyer once too often.
   const grandTotal = subtotal + shippingAmount;
 
   const handlePaid = async (payment: {
@@ -170,9 +183,25 @@ export function CheckoutClient({
           <li className="flex justify-between gap-4 pt-1">
             <span className="text-muted-ink">Subtotal</span>
             <span className="text-deep-ink whitespace-nowrap">
-              {formatPrice(subtotal, currency)}
+              {formatPrice(subtotal + discount, currency)}
             </span>
           </li>
+
+          {discount > 0 && (
+            <li className="flex justify-between gap-4 text-leaf">
+              <span>
+                Discount
+                {promoCode ? (
+                  <span className="ml-1 font-sans text-xs text-muted-ink">
+                    ({promoCode})
+                  </span>
+                ) : null}
+              </span>
+              <span className="whitespace-nowrap font-medium">
+                −{formatPrice(discount, currency)}
+              </span>
+            </li>
+          )}
 
           {shippingRates.length > 0 && (
             <li className="flex justify-between gap-4">

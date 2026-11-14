@@ -110,6 +110,12 @@ export interface MedusaCart {
   updated_at: string;
   shipping_address?: any;
   billing_address?: any;
+  /** Amount saved by promotion codes and automatic promotions, in major units. */
+  discount_total?: number;
+  /** Amount before any discount, in major units. */
+  original_total?: number;
+  /** Codes currently applied. Medusa returns these once they take effect. */
+  promotions?: Array<{ id?: string; code?: string }> | null;
 }
 
 export interface MedusaOrder {
@@ -396,11 +402,32 @@ class MedusaClient {
     ).then((r) => r.cart);
   }
 
+  /**
+   * Apply one or more promotion codes to a cart.
+   *
+   * Medusa validates the code server-side and returns the updated cart with
+   * `discount_total` populated. The caller should read the discount from that
+   * response rather than subtracting locally, so the number shown always comes
+   * from the same calculation that will be charged.
+   *
+   * A bad code throws with Medusa's own message — surface that text rather than
+   * inventing "invalid code", because "minimum order not met" and "expired"
+   * are different problems and the buyer can act on the difference.
+   */
+  async applyPromoCodes(cartId: string, codes: string[]): Promise<MedusaCart> {
+    return this.request<{ cart: MedusaCart }>(
+      `/store/carts/${encodeURIComponent(cartId)}/promotions`,
+      {
+        method: "POST",
+        body: JSON.stringify({ promo_codes: codes }),
+      }
+    ).then((r) => r.cart);
+  }
+
   async addToCart(
     cartId: string,
     item: { variant_id: string; quantity: number }
-  ): Promise<MedusaCart> {
-    return this.request<{ cart: MedusaCart }>(
+  ): Promise<MedusaCart> {    return this.request<{ cart: MedusaCart }>(
       `/store/carts/${encodeURIComponent(cartId)}/line-items`,
       {
         method: "POST",
@@ -604,6 +631,40 @@ class MedusaClient {
     });
   }
 
+  /**
+   * Set a new password using a reset token.
+   *
+   * IMPORTANT: the `token` here is a *reset* token from
+   * `/auth/customer/emailpass/reset-password`, not a session token. A live
+   * session cannot change the password directly through this endpoint; Medusa
+   * requires the emailed token so that possession of the account's mailbox is
+   * proven. Passing a session token returns "Invalid token".
+   *
+   * `email` is required in the body as well as the header.
+   */
+  async updateCustomerPassword(
+    resetToken: string,
+    email: string,
+    password: string
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      "/auth/customer/emailpass/update",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resetToken}` },
+        body: JSON.stringify({ email, password }),
+      }
+    );
+  }
+
+  /** Step one of a password reset: ask Medusa to send the token. */
+  async requestPasswordReset(email: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      "/auth/customer/emailpass/reset-password",
+      { method: "POST", body: JSON.stringify({ identifier: email }) }
+    );
+  }
+
   async createCustomer(
     token: string,
     data: { email: string; first_name?: string; last_name?: string; phone?: string }
@@ -630,6 +691,74 @@ class MedusaClient {
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(data),
     });
+  }
+
+  /* ----------------------------- addresses ------------------------------ */
+
+  /**
+   * Saved addresses for the signed-in customer.
+   *
+   * Returns Medusa's `addresses` array. A buyer who has to retype a full
+   * address on every order is the most avoidable reason to abandon a basket,
+   * so this is the source for the address book and for checkout prefill.
+   */
+  async listCustomerAddresses(token: string): Promise<any[]> {
+    const { customer } = await this.getCurrentCustomer(token);
+    return customer?.addresses ?? [];
+  }
+
+  async createCustomerAddress(
+    token: string,
+    address: Record<string, unknown>
+  ): Promise<{ customer: any }> {
+    return this.request<{ customer: any }>("/store/customers/me/addresses", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(address),
+    });
+  }
+
+  async updateCustomerAddress(
+    token: string,
+    addressId: string,
+    address: Record<string, unknown>
+  ): Promise<{ customer: any }> {
+    return this.request<{ customer: any }>(
+      `/store/customers/me/addresses/${encodeURIComponent(addressId)}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(address),
+      }
+    );
+  }
+
+  async deleteCustomerAddress(
+    token: string,
+    addressId: string
+  ): Promise<{ customer?: any; id?: string }> {
+    return this.request(
+      `/store/customers/me/addresses/${encodeURIComponent(addressId)}`,
+      { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
+
+  /**
+   * Attach an anonymous cart to a customer.
+   *
+   * This is what makes a basket follow someone between devices: the cookie
+   * cart exists per browser, so signing in has to hand it (and any basket
+   * already saved against the account) to the customer.
+   */
+  async transferCart(token: string, cartId: string): Promise<{ cart?: any }> {
+    return this.request<{ cart?: any }>(
+      `/store/carts/${encodeURIComponent(cartId)}/customer`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
+      }
+    );
   }
 
   async listCustomerOrders(

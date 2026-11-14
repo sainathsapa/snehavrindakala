@@ -61,12 +61,20 @@ const nextConfig = {
         key: "Content-Security-Policy",
         value:
           "default-src 'self'; " +
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://checkout.razorpay.com; " +
+          // Razorpay's checkout is not one host. `checkout.razorpay.com` serves the
+          // document and assets, `api.razorpay.com` is framed for the payment
+          // methods, and `lumberjack.razorpay.com` collects telemetry the SDK
+          // treats as required. Allowing only the first blocked the iframe with
+          // "This content is blocked. Contact the site owner to fix the issue."
+          // and left the buyer unable to pay — a total checkout failure caused
+          // by our own header, with no server error to point at it.
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com; " +
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-          "font-src 'self' https://fonts.gstatic.com; " +
-          "img-src 'self' data: https:; " +
-          "connect-src 'self' https://api.razorpay.com https://apiv2.shiprocket.in https://www.google-analytics.com https://www.googletagmanager.com; " +
-          "frame-src https://checkout.razorpay.com; " +
+          "font-src 'self' data: https://fonts.gstatic.com https://cdn.razorpay.com; " +
+          "img-src 'self' data: https://*.razorpay.com https:; " +
+          "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com https://cdn.razorpay.com https://apiv2.shiprocket.in https://www.google-analytics.com https://www.googletagmanager.com; " +
+          "frame-src https://checkout.razorpay.com https://api.razorpay.com; " +
+          "worker-src 'self' blob:; " +
           "object-src 'none'; " +
           "base-uri 'self';",
       },

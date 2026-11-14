@@ -169,3 +169,41 @@ export async function saveCheckoutDetailsAction(
 
   redirect("/checkout?saved=1");
 }
+
+/**
+ * Apply a promotion code to the basket.
+ *
+ * Returns Medusa's own error text when the code is rejected. The reasons differ
+ * meaningfully — expired, minimum spend not reached, already used — and a
+ * generic "invalid code" would leave the buyer guessing which one applies.
+ */
+export async function applyPromoCodeAction(
+  _previous: CartActionResult | null,
+  formData: FormData
+): Promise<CartActionResult> {
+  const code = String(formData.get("code") ?? "").trim().toUpperCase();
+  if (!code) {
+    return { ok: false, message: "Enter a code first." };
+  }
+
+  const cart = await getCart();
+  if (!cart) {
+    return { ok: false, message: "Your cart is empty." };
+  }
+
+  try {
+    await medusa.applyPromoCodes(cart.id, [code]);
+  } catch (error) {
+    // Medusa's message is the useful part; fall back to ours only when it is
+    // not an Error (a network fault says nothing about the code itself).
+    const message =
+      error instanceof Error && error.message
+        ? error.message.replace(/^The promotion code /, "Code ").replace(/ is invalid$/, " is not valid.")
+        : "We could not apply that code. Please try again.";
+    return { ok: false, message };
+  }
+
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+  return { ok: true, message: `Code ${code} applied.` };
+}

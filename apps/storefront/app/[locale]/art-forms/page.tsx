@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { medusa } from "@/lib/medusa";
 import { artFormSlugs } from "@/lib/slugs";
-import { listArtForms } from "@/lib/site-content";
+import { listArtForms, translateArtForms } from "@/lib/site-content";
+import { getTranslations } from "next-intl/server";
 import { SectionIntro, MandalaField, KalamBorder } from "@/components/ornaments";
 import { ChapterOpener } from "@/components/editorial";
 import { Reveal } from "@/components/motion";
@@ -39,6 +40,12 @@ function imageFor(slug: string): string | null {
 }
 
 export default async function ArtFormsPage() {
+  // Art-form names and descriptions live in Postgres, so they need translating
+  // at read time; otherwise a Hindi visitor reads a Hindi grid under English
+  // section headings.
+  const t = await getTranslations("artForm");
+  const tr = (key: string) => t(key as never);
+  const has = (key: string) => t.has(key as never);
   let catalogue: ArtFormCard[] = [];
 
   try {
@@ -63,7 +70,11 @@ export default async function ArtFormsPage() {
   // owner edits at /admin/content, so they define what this page shows.
   let managed: ArtFormCard[] = [];
   try {
-    managed = (await listArtForms()).map((form) => ({
+    managed = translateArtForms(
+      await listArtForms(),
+      tr,
+      has
+    ).map((form) => ({
       key: `managed-${form.id}`,
       name: form.name,
       description: form.description,
@@ -102,8 +113,10 @@ export default async function ArtFormsPage() {
     if (shown.has(keyFor(form.slug)) || shown.has(keyFor(form.name))) continue;
     catalogue.push({
       key: form.slug,
-      name: form.name,
-      description: form.description,
+      name: has(`names.${form.slug}`) ? tr(`names.${form.slug}`) : form.name,
+      description: has(`descriptions.${form.slug}`)
+        ? tr(`descriptions.${form.slug}`)
+        : form.description,
       href: `/shop/${form.slug}`,
       storyHref: `/art-forms/${form.slug}`,
       image: imageFor(form.slug),
@@ -174,9 +187,9 @@ export default async function ArtFormsPage() {
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <ChapterOpener
             chapter="I"
-            eyebrow="The traditions"
-            title="The many languages of Indian art"
-            standfirst="India does not have one art. It has hundreds, each with its own grammar of line, colour and meaning — and most are still being painted today, by people who learned them from someone."
+            eyebrow={t("pageEyebrow")}
+            title={t("pageTitle")}
+            standfirst={t("pageIntro")}
             className="mb-14 lg:mb-20"
           />
 

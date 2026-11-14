@@ -479,6 +479,33 @@ export async function listProductTranslations(): Promise<ProductTranslation[]> {
 }
 
 /**
+ * Swap in translated art-form names and descriptions.
+ *
+ * Art forms live in Postgres, so a Hindi visitor would otherwise read a Hindi
+ * product grid under an English section heading — the one place the two
+ * languages visibly collide. Keyed on the taxonomy slug, which is stable across
+ * the admin renaming a form.
+ *
+ * Falls back to the stored value for any form without a translation, so a form
+ * added in the admin panel shows its own name rather than nothing.
+ */
+export function translateArtForms<T extends { slug: string; name: string; description?: string }>(
+  forms: T[],
+  translate: (key: string) => string,
+  has: (key: string) => boolean
+): T[] {
+  return forms.map((form) => {
+    const nameKey = `names.${form.slug}`;
+    const descKey = `descriptions.${form.slug}`;
+    return {
+      ...form,
+      name: has(nameKey) ? translate(nameKey) : form.name,
+      description: has(descKey) ? translate(descKey) : form.description,
+    };
+  });
+}
+
+/**
  * Write one translation. An empty title deletes the row rather than storing a
  * blank, so "clear this field" returns the product to its English name instead
  * of leaving an invisible empty string behind.

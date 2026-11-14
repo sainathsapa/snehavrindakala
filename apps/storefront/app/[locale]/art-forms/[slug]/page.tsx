@@ -2,7 +2,8 @@ import Link from "next/link";
 import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { listArtForms } from "@/lib/site-content";
+import { listArtForms, translateArtForms } from "@/lib/site-content";
+import { getTranslations } from "next-intl/server";
 import { listCatalogueFor } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
@@ -64,10 +65,14 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = (await params) ?? {};
   if (!slug) return { title: "SnehaVrinda Kala" };
 
+  const t = await getTranslations("artForm");
   const forms = await listArtForms().catch(() => []);
-  const form = forms.find((f) => f.slug === slug);
+  const found = forms.find((f) => f.slug === slug);
 
-  if (!form) return { title: "Art form not found" };
+  if (!found) return { title: "Art form not found" };
+  const form = translateArtForms([found], (k) => t(k as never), (k) =>
+    t.has(k as never)
+  )[0];
 
   return {
     title: form.name,
@@ -85,15 +90,23 @@ export default async function ArtFormPage({ params }: PageProps) {
   const { slug } = (await params) ?? {};
   if (!slug) notFound();
 
+  const t = await getTranslations("artForm");
+  const tr = (key: string) => t(key as never);
+  const has = (key: string) => t.has(key as never);
+
   const forms = await listArtForms().catch(() => []);
-  const form = forms.find((f) => f.slug === slug);
-  if (!form) notFound();
+  const raw = forms.find((f) => f.slug === slug);
+  if (!raw) notFound();
+  // Translate before anything reads the name, including the catalogue lookup
+  // below: matching happens on the stored name, so the English value has to be
+  // kept for that even when the page renders the Hindi one.
+  const [form] = translateArtForms([raw], tr, has);
 
   // The works in this tradition. The catalogue resolves aliases internally, but
   // it matches on any of the keys given, so pass the slug *and* the display name
   // (a seeded "Home & Decorative Art" category and the "home-decor" taxonomy
   // entry are the same collection under two spellings).
-  const items = await listCatalogueFor([slug, form.name, form.slug]).catch(
+  const items = await listCatalogueFor([slug, raw.name, raw.slug]).catch(
     () => []
   );
 
@@ -107,8 +120,8 @@ export default async function ArtFormPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: baseUrl },
-      { "@type": "ListItem", position: 2, name: "Art Forms", item: `${baseUrl}/art-forms` },
+      { "@type": "ListItem", position: 1, name: t("home"), item: baseUrl },
+      { "@type": "ListItem", position: 2, name: t("pageTitle"), item: `${baseUrl}/art-forms` },
       { "@type": "ListItem", position: 3, name: form.name, item: `${baseUrl}/art-forms/${form.slug}` },
     ],
   };
@@ -125,8 +138,8 @@ export default async function ArtFormPage({ params }: PageProps) {
         title={form.name}
         intro={form.description}
         breadcrumb={[
-          { label: "Home", href: "/" },
-          { label: "Art Forms", href: "/art-forms" },
+          { label: t("home"), href: "/" },
+          { label: t("pageTitle"), href: "/art-forms" },
           { label: form.name },
         ]}
         image={form.image || undefined}
@@ -146,7 +159,7 @@ export default async function ArtFormPage({ params }: PageProps) {
                   {form.origin && (
                     <div>
                       <dt className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-                        Origin
+                        {t("origin")}
                       </dt>
                       <dd className="mt-1.5 font-serif text-sm leading-relaxed text-deep-ink">
                         {form.origin}
@@ -156,19 +169,20 @@ export default async function ArtFormPage({ params }: PageProps) {
                   {form.materials && (
                     <div>
                       <dt className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-                        Materials
+                        {t("materials")}
                       </dt>
                       <dd className="mt-1.5 font-serif text-sm leading-relaxed text-deep-ink">
-                        {form.materials}
-                      </dd>
+                        {form.materials}                      </dd>
                     </div>
                   )}
                   <div>
                     <dt className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-                      Works available
+                      {t("worksAvailable")}
                     </dt>
                     <dd className="mt-1.5 font-serif text-sm leading-relaxed text-deep-ink">
-                      {items.length > 0 ? `${items.length} in the collection` : "None just now"}
+                      {items.length > 0
+                        ? t("goodsCount", { count: items.length })
+                        : t("noneJustNow")}
                     </dd>
                   </div>
                 </dl>
@@ -178,7 +192,7 @@ export default async function ArtFormPage({ params }: PageProps) {
                     href={`/shop/${form.slug}`}
                     className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-5 py-2.5 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
                   >
-                    See the works
+                    {t("seeWorks")}
                     <span aria-hidden="true">→</span>
                   </Link>
                 )}
@@ -277,24 +291,24 @@ export default async function ArtFormPage({ params }: PageProps) {
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <p className="py-10 text-center font-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-terracotta">
-            Continue exploring
+            {t("continueExploring")}
           </p>
           <div className="grid border-t border-sand-border/60 sm:grid-cols-3">
             {[
               {
                 href: "/art-forms",
-                eyebrow: "All traditions",
-                title: "The rest of the languages",
+                eyebrow: t("allTraditions"),
+                title: t("allTraditionsTitle"),
               },
               {
                 href: "/learn",
-                eyebrow: "The reference",
-                title: "Words, materials, meaning",
+                eyebrow: t("reference"),
+                title: t("referenceTitle"),
               },
               {
                 href: `/shop/${form.slug}`,
-                eyebrow: "The work",
-                title: `See ${form.name} for sale`,
+                eyebrow: t("theWork"),
+                title: t("seeForSale", { name: form.name }),
               },
             ].map((door, i) => (
               <Link
