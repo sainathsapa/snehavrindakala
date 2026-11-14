@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { localeAlternates } from "@/lib/seo";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { PlateNumber, RunningHead, Fleuron, PaintedRule } from "@/components/editorial";
@@ -11,7 +11,14 @@ import {
   HamsaMotif,
   PeacockEye,
 } from "@/components/indian-motifs";
-import { GLOSSARY, MATERIALS, TIMELINE } from "@/lib/art-reference";
+import {
+  GLOSSARY,
+  MATERIALS,
+  TIMELINE,
+  localiseGlossary,
+  localiseMaterials,
+  localiseTimeline,
+} from "@/lib/art-reference";
 import { GlossaryExplorer } from "@/components/glossary-explorer";
 import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import { listArtForms } from "@/lib/site-content";
@@ -39,6 +46,7 @@ export const dynamic = "force-dynamic";
  * reference page starts selling, it stops being a reference.
  */
 export default async function LearnPage() {
+  const locale = await getLocale();
   const t = await getTranslations("learn");
   let forms: { name: string; slug: string; image: string }[] = [];
   try {
@@ -106,7 +114,7 @@ export default async function LearnPage() {
               <MithilaBorder className="mt-7 h-3 w-32 text-terracotta/30" />
             </div>
 
-            <GlossaryExplorer entries={GLOSSARY} />
+            <GlossaryExplorer entries={localiseGlossary(GLOSSARY, locale)} />
           </div>
         </div>
       </section>
@@ -156,7 +164,7 @@ export default async function LearnPage() {
           </figure>
 
           <ul className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2">
-            {MATERIALS.map((material) => (
+            {localiseMaterials(MATERIALS, locale).map((material) => (
               <li key={material.material} className="border-t border-sand-border/70 pt-5">
                 <h3 className="font-serif text-xl font-semibold leading-tight text-deep-ink">
                   {material.material}
@@ -207,7 +215,7 @@ export default async function LearnPage() {
             </div>
 
             <ol className="relative border-l border-terracotta/25 pl-6 sm:pl-8">
-              {TIMELINE.map((entry, index) => (
+              {localiseTimeline(TIMELINE, locale).map((entry, index) => (
                 <li key={entry.title} className="relative pb-10 last:pb-0">
                   {/* A dot on the rule, like a marker in a printed timeline. */}
                   <span
