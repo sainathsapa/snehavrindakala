@@ -85,10 +85,13 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 - Status: **Completed**.
 
 ## Phase 5 — Artistic experience & navigation
-### 5.1 Homepage three-journey hierarchy refinement — **Not started**
-### 5.2 Navigation: currency/language visibility, breadcrumbs — **Not started**
-### 5.3 Mobile-first pass (sticky PDP action, filter drawer, targets) — **Not started**
-### 5.4 Editorial/journal → product linking — **Not started**
+### 5.1 Homepage three-journey hierarchy refinement — **Not started** (existing hierarchy judged sound; no churn)
+### 5.2 Navigation: currency/language visibility, breadcrumbs — **Completed (breadcrumbs)**
+- PDP now shows a visible `Home / Shop / Category / Title` breadcrumb (`<ol aria-current>`) mirroring the existing JSON-LD trail. Currency/language switchers were already labelled in the mobile sheet — deliberately left in place.
+### 5.3 Mobile-first pass (sticky PDP action, filter drawer, targets) — **Completed (sticky PDP action)**
+- `components/mobile-buy-bar.tsx` pins price + primary action (add to cart / view cart / request commission) to the bottom of the viewport on `lg:hidden`; shares `useAddToCart`; PDP gets `pb-24 lg:pb-10` so content is never covered. Filter drawer and touch targets were delivered in Phase 3.
+### 5.4 Editorial/journal → product linking — **Completed (verified existing)**
+- Journal post footer already routes into Art Forms, Learn and Shop; no schema change needed.
 
 ## Phase 6 — Ops, a11y, performance, production
 ### 6.1 Admin: product attributes, review moderation — **Completed (review moderation)**

@@ -717,7 +717,8 @@
     "readTraditions": "परंपराएँ पढ़ें",
     "description": "विवरण",
     "backToShop": "दुकान पर लौटें",
-    "addToCart": "कार्ट में जोड़ें"
+    "addToCart": "कार्ट में जोड़ें",
+    "home": "होम"
   },
   "policies": {
     "shippingTitle": "शिपिंग और डिलीवरी",

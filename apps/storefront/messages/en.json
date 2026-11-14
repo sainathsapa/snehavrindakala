@@ -717,7 +717,8 @@
     "readTraditions": "Read the traditions",
     "description": "Description",
     "backToShop": "Back to shop",
-    "addToCart": "Add to Cart"
+    "addToCart": "Add to Cart",
+    "home": "Home"
   },
   "policies": {
     "shippingTitle": "Shipping & delivery",

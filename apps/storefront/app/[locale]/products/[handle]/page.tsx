@@ -15,6 +15,7 @@ import { TrustStrip } from "@/components/trust-strip";
 import { RelativeArtworks } from "@/components/relative-artworks";
 import { WishlistButton } from "@/components/wishlist-button";
 import { ProductReviews } from "@/components/product-reviews";
+import { MobileBuyBar } from "@/components/mobile-buy-bar";
 import { getCurrentCustomer } from "@/lib/auth";
 import { RecentlyViewed, RecordRecentlyViewed } from "@/components/recently-viewed";
 import {
@@ -197,7 +198,7 @@ export default async function ProductDetailPage({
   const customer = await getCurrentCustomer().catch(() => null);
 
   return (
-    <main className="relative overflow-hidden py-10">
+    <main className="relative overflow-hidden py-10 pb-24 lg:pb-10">
       <CornerFlourish className="absolute -left-8 -top-8 hidden h-72 w-72 lg:block" />
       <script
         id="schema-product"
@@ -277,10 +278,40 @@ export default async function ProductDetailPage({
         }}
       />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <nav className="mb-8 text-sm text-muted-ink font-sans">
-          <Link href="/shop" className="hover:text-sindoor transition-colors">
-            ← {t("backToShop")}
-          </Link>
+        {/* Visible breadcrumb — the JSON-LD below mirrors this trail for
+            search engines, but a visitor also needs to *see* where they are and
+            how to step back up. */}
+        <nav aria-label="Breadcrumb" className="mb-8 font-sans text-sm text-muted-ink">
+          <ol className="flex flex-wrap items-center gap-1.5">
+            <li>
+              <Link href="/" className="transition-colors hover:text-sindoor">
+                {t("home")}
+              </Link>
+            </li>
+            <li aria-hidden="true" className="text-sand-border">/</li>
+            <li>
+              <Link href="/shop" className="transition-colors hover:text-sindoor">
+                {t("backToShop")}
+              </Link>
+            </li>
+            {product.category?.name && (
+              <>
+                <li aria-hidden="true" className="text-sand-border">/</li>
+                <li>
+                  <Link
+                    href={`/shop/${product.category.handle || slugify(product.category.name)}`}
+                    className="transition-colors hover:text-sindoor"
+                  >
+                    {product.category.name}
+                  </Link>
+                </li>
+              </>
+            )}
+            <li aria-hidden="true" className="text-sand-border">/</li>
+            <li aria-current="page" className="truncate text-deep-ink">
+              {catalogueTitle}
+            </li>
+          </ol>
         </nav>
 
         <div className="grid lg:grid-cols-2 gap-12">
@@ -414,6 +445,17 @@ export default async function ProductDetailPage({
         image={images[0]?.url}
         price={price}
         currency={currency}
+      />
+
+      <MobileBuyBar
+        variantId={variantId}
+        price={price}
+        currency={currency}
+        isCustomOnly={isCustomOnly}
+        inStock={
+          variants[0]?.inventory_quantity == null ||
+          (variants[0]?.inventory_quantity ?? 0) > 0
+        }
       />
     </main>
   );
