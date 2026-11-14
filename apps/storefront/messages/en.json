@@ -129,13 +129,110 @@
     "intro": "Everything buyers ask before ordering — shipping, customs, returns, commissions and how payment works. If your question is not here, write to us and a person will answer.",
     "stillNeed": "Still need a person",
     "stillNeedBody": "There is no support bot here. Write to the address below and the reply comes from the studio in Bikaner.",
-    "paymentProtected": "How payment is protected"
+    "paymentProtected": "How payment is protected",
+    "sections": {
+      "buying": {
+        "heading": "Buying",
+        "q1": "Is every piece an original?",
+        "a1": "Yes. Each work is painted, woven or shaped by hand, and is a single piece. What you see photographed is the work you receive. Because of that, no two pieces are identical even within the same art form.",
+        "q2": "Why is a piece I saw earlier no longer listed?",
+        "a2": "Originals sell once. When a work is sold it comes off the shop, and we do not offer reproductions of it. If you were looking at something specific, write to us and we will tell you whether something similar is in progress.",
+        "q3": "Can you make something to my size or palette?",
+        "a3": "Often, yes. Commissions start from size, subject and the tradition you have in mind. Begin with the commission request form and you will get a quote with a timeline before any payment.",
+        "q4": "Which currencies can I pay in?",
+        "a4": "Prices are shown in INR, USD, GBP, EUR and AED. Switching the currency in the header converts the catalogue at a rate we keep current; the amount charged is the one shown at checkout."
+      },
+      "shipping": {
+        "heading": "Shipping & customs",
+        "q1": "Where do you ship?",
+        "a1": "Across India, and to the United States, Canada, the United Kingdom, the European Union and the Gulf. Choose your country at checkout and we quote the courier for that destination.",
+        "q2": "How long does delivery take?",
+        "a2": "Ready-to-ship works leave Bikaner within 2–3 working days. Made-to-order pieces show their production time on the product page. International orders usually add 5–12 days in transit depending on the destination.",
+        "q3": "Will I pay customs duty?",
+        "a3": "Orders leaving India may attract import duty or local tax charged by your customs authority on delivery. That is not included in the price you pay us, and we cannot estimate it reliably for every country. If you need certainty before ordering, write to us and we will tell you what we know for your destination.",
+        "q4": "How is a painting packed?",
+        "a4": "Works are packed in material-specific housing — rigid board and corner protection for canvases, padded rolls for textiles, foam cradles for ceramics and metalwork. Fragile pieces are insured in transit."
+      },
+      "returns": {
+        "heading": "Returns & care",
+        "q1": "Can I return a piece?",
+        "a1": "If a work arrives damaged or is not what you ordered, tell us within 48 hours of delivery with photographs and we will arrange a replacement or refund. Change-of-mind returns are accepted within 7 days for ready-to-ship pieces, provided the work is returned in its original packing. Commissions are made for you and cannot be returned.",
+        "q2": "What if a delivery arrives damaged?",
+        "a2": "Photograph the packaging and the work before moving it, then write to us the same day. Keep the packaging until the claim is settled — the courier will usually need to inspect it.",
+        "q3": "How do I care for the work?",
+        "a3": "Keep paintings and textiles out of direct sunlight and away from damp walls. Do not wipe painted surfaces; dust with a dry, soft brush. Metalwork such as bidriware should not be scrubbed — a dry cloth is enough. Each order ships with a care note for its material."
+      },
+      "payments": {
+        "heading": "Payments & security",
+        "q1": "Which payment methods do you accept?",
+        "a1": "Cards (Visa, Mastercard, RuPay), UPI including Google Pay and Paytm, and net banking. Payments are processed by Razorpay; card details are entered on their secure page and never touch our servers.",
+        "q2": "Do you store my card details?",
+        "a2": "No. We never see or store card numbers. The payment processor handles the transaction and returns only a confirmation to us.",
+        "q3": "What appears on my statement?",
+        "a3": "The charge appears under our registered business name alongside the payment processor. If you do not recognise a charge, write to us with the date and amount and we will trace it."
+      }
+    },
+    "contact": {
+      "write": "Write to us",
+      "writeDetail": "hello@snehavrinda.in — replies within one working day",
+      "commission": "Commission a piece",
+      "commissionDetail": "Start with size, subject and tradition",
+      "track": "Track an order",
+      "trackDetail": "Check the status of a placed order",
+      "shipping": "Shipping policy",
+      "shippingDetail": "Full dispatch and delivery terms",
+      "returns": "Returns policy",
+      "returnsDetail": "What is returnable and how"
+    }
   },
   "disclaimer": {
     "eyebrow": "The fine print",
     "title": "Disclaimer",
     "intro": "What we claim about the work, and what we do not. Written to be read before you order rather than discovered afterwards.",
-    "updated": "Last updated"
+    "updated": "Last updated · November 2026",
+    "clauses": {
+      "variation": {
+        "heading": "Handmade means variation",
+        "p1": "Every work here is made by hand, one at a time. Brushwork, weave density, glaze pooling, metal patina and the depth of a pigment all vary between pieces, and often within a single piece. That variation is the point of the craft, not a fault in it.",
+        "p2": "Photographs are taken under studio light and colour-corrected to represent the work as accurately as we can. Screens differ, though: the same madder red can read warm on one display and cool on another. If an exact shade matters to you, ask before ordering and we will send additional photographs in daylight."
+      },
+      "aging": {
+        "heading": "Natural materials age",
+        "p1": "Natural pigments, cotton and silk cloth, wood, brass and silver change over time. Indigo may soften, brass will darken, silver will tarnish. This is expected and is described in the care note sent with each order.",
+        "p2": "We describe materials as accurately as we can from what the maker used. Where a work incorporates a material we cannot verify — reclaimed wood, for instance, or a pigment a family has mixed for generations — we say so rather than assert a provenance we cannot prove."
+      },
+      "authenticity": {
+        "heading": "Authenticity we can stand behind",
+        "p1": "Each work is accompanied by a signed certificate naming the artist and the tradition. That is a statement about who made the piece and under which practice, and it is one we can substantiate.",
+        "p2": "It is not an appraisal. Nothing on this site is a valuation, an investment opinion, or a promise that a piece will hold or gain value. Art is bought because it is worth living with, not because a shop forecast its price."
+      },
+      "pricing": {
+        "heading": "Prices, currency and duties",
+        "p1": "Prices are set in Indian rupees. Amounts shown in other currencies are converted from INR at a rate we keep current and rounded for clarity; the amount charged is the one displayed at checkout.",
+        "p2": "Orders leaving India may attract import duty, VAT or a handling fee levied by the destination country's customs authority. Those charges are the buyer's responsibility and are not included in the price paid to us. We cannot calculate them reliably for every destination and will not pretend otherwise."
+      },
+      "payment": {
+        "heading": "Payment processing",
+        "p1": "Card, UPI and net-banking payments are processed by a third party. We do not receive or store your card number, CVV or UPI PIN. The processor confirms only that a payment succeeded.",
+        "p2": "For that reason, disputes about a charge are resolved with the processor and your bank as well as with us. If you do not recognise a charge from us, write to hello@snehavrinda.in with the date and amount and we will trace it."
+      },
+      "culture": {
+        "heading": "Cultural reference and language",
+        "p1": "The glossary and journal describe traditions, terms and histories as part of a living practice. Regional names vary — the same motif can carry different words in different states — and we name the variant we mean where it matters.",
+        "p2": "Where we describe a tradition's history, we rely on published sources and on the makers themselves. If you believe something here misstates a practice, tell us. Corrections from practitioners take precedence over our wording."
+      },
+      "links": {
+        "heading": "Links and third parties",
+        "p1": "Some pages link to external sites, such as a courier's tracking page or an artisan collective. We do not control those sites and are not responsible for their content or their handling of your data.",
+        "p2": "Social profiles linked from this site are official accounts of the studio. We do not run, endorse or moderate other accounts using our name."
+      },
+      "limitation": {
+        "heading": "Limitation",
+        "p1": "Nothing here excludes liability that cannot lawfully be excluded, including for death or personal injury caused by negligence, or for fraud. Beyond that, our liability for any order is limited to the amount you paid for that order.",
+        "p2": "This page is written in plain language for clarity. It is not legal advice, and the terms of sale at checkout govern where the two differ."
+      }
+    },
+    "footnote": "Questions about any of this, or something here that reads differently from what you expected?"
   },
   "auth": {
     "signIn": "Sign in",
