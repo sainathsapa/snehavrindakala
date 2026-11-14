@@ -542,7 +542,12 @@ test.describe("Hindi", () => {
   });
 });
 
-test.describe("promo codes", () => {
+// These suites drive the same cart cookie and the same Medusa cart, so running
+// them in parallel has them add to, apply codes on and empty each other's carts
+// mid-assertion. Fully parallel is right for read-only page tests; it is wrong
+// for anything that mutates a shared session, hence serial within each suite.
+test.describe("cart, promo and checkout", () => {
+  test.describe.configure({ mode: "serial" });
   test("a valid code discounts the cart", async ({ page }) => {
     // Assumes the WELCOME10 promotion exists (10% off order, INR). Only proves
     // the reject path was insufficient: a code that is accepted but applies no
@@ -580,9 +585,7 @@ test.describe("promo codes", () => {
     expect(body).not.toContain("/store/carts/");
     expect(body).not.toMatch(/Medusa API request failed/);
   });
-});
 
-test.describe("checkout handshake", () => {
   const FIELDS: Array<[string, string]> = [
     ["full_name", "Test Buyer"],
     ["email", "test.buyer@example.com"],

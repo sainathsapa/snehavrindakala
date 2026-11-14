@@ -36,6 +36,9 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
     role: "manager",
   },
   { href: "/admin/orders", label: "Orders", icon: "orders", role: "viewer" },
+  // Reached only through a link on an order detail page before this, so the
+  // returns queue had no entry point of its own.
+  { href: "/admin/returns", label: "Returns", icon: "orders", role: "viewer" },
   { href: "/admin/products", label: "Products", icon: "products", role: "viewer" },
   {
     href: "/admin/categories",

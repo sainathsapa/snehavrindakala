@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { getAuthToken } from "@/lib/auth";
 import { medusa, formatPrice } from "@/lib/medusa";
 import { getOrderShipment } from "@/lib/shipping/store";
@@ -42,6 +43,16 @@ export default async function OrderPage({
   }
 
   if (!order) {
+    // A signed-in visitor asking for an order that is not theirs (or does not
+    // exist) is a missing page, and should answer 404 so crawlers and uptime
+    // checks see the truth. A guest who has just paid has no token yet, so
+    // their request must still render the friendly explanation below rather
+    // than a bare 404 — that page is the only thing standing between them and
+    // a confirmation email they may not have opened yet.
+    if (token) {
+      notFound();
+    }
+
     return (
       <main className="py-10">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">

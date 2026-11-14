@@ -17,8 +17,13 @@ const DEFAULT_SETTINGS = [
   { key: "default_currency", value: "inr", description: "Default storefront currency code." },
   { key: "tax_rate", value: "18", description: "Default tax rate in percent." },
   { key: "tax_included", value: "false", description: "Whether product prices include tax." },
-  { key: "default_locale", value: "en", description: "Default storefront locale." },
-  { key: "supported_locales", value: "en,hi,te", description: "Comma-separated supported locales." },
+  // These two are informational only: i18n/routing.ts is the source of truth for
+  // which languages exist. There used to be an admin screen that wrote them and
+  // offered Telugu, Tamil and Kannada, but nothing read the value and no
+  // messages file existed for any of those, so the site advertised languages it
+  // would 404 on. Adding a language is a code change, not a setting.
+  { key: "default_locale", value: "en", description: "Default storefront locale (see i18n/routing.ts)." },
+  { key: "supported_locales", value: "en,hi", description: "Locales the storefront ships (see i18n/routing.ts)." },
 ];
 
 async function ensureTable() {

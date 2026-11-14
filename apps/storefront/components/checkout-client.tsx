@@ -15,6 +15,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/medusa";
 import { taxLabel, type TaxBreakdown } from "@/lib/tax";
 import { RazorpayPayButton } from "./razorpay-checkout";
+import { PromoCode } from "./promo-code";
 
 export interface ShippingRate {
   courier_name: string;
@@ -237,6 +238,11 @@ export function CheckoutClient({
             </li>
           )}
         </ul>
+
+        {/* Code entry belongs here as well as in the cart. Before this, a buyer
+            who only remembered their code at the payment step had to navigate
+            back to /cart, apply it, and return — three steps on a phone. */}
+        <PromoCode applied={promoCode ? [promoCode] : []} />
 
         {/* Shipping options — only rendered once we have a PIN to quote. */}
         {shippingRates.length > 0 ? (
