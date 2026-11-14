@@ -66,8 +66,7 @@ Ready-to-ship artwork, handmade décor, made-to-order pieces, custom commissions
 snehavrinda-kala/
 ├── apps/
 │   ├── storefront/   # Next.js public store & customer portal
-│   ├── backend/      # Medusa v2 + custom business modules
-│   └── studio/       # Sanity Studio (editorial)
+│   └── backend/      # Medusa v2 + custom business modules
 ├── packages/
 │   ├── ui/           # Shared design system (terracotta · indigo · saffron)
 │   ├── types/        # Shared API/domain types
