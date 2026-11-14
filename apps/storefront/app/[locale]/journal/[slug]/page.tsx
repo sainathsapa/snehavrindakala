@@ -74,7 +74,7 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   try {
-    const post = await getJournalPost(slug);
+    const post = await getJournalPost(slug, await getLocale());
     if (post) {
       return {
         title: post.title,
@@ -109,7 +109,7 @@ export default async function JournalPostPage({
     // Straight from Postgres: this is a server component talking to its own
     // database, so `fetch()`ing the public API would only add a slow, fragile
     // round trip through the hostname.
-    post = await getJournalPost(slug);
+    post = await getJournalPost(slug, locale);
     related = (await listJournalPosts(50, locale))
       .filter((item) => item.slug !== slug)
       .slice(0, 3);

@@ -58,11 +58,22 @@ export async function listJournalPosts(
 }
 
 /** One published post, with its body. */
-export async function getJournalPost(slug: string): Promise<JournalPost | null> {
+export async function getJournalPost(
+  slug: string,
+  locale = "en"
+): Promise<JournalPost | null> {
   await ensureJournalSeeded();
+  // Same projection as the listing: fall back per field, so a post translated
+  // down to the title still shows its Hindi title with the English body rather
+  // than an empty article.
+  const hindi = locale === "hi";
   const result = await queryResult<JournalPost>(
-    `SELECT id, title, slug, content, excerpt, cover_image, author,
-            published_at, created_at
+    `SELECT id,
+            ${hindi ? "COALESCE(NULLIF(title_hi, ''), title)" : "title"} AS title,
+            slug,
+            ${hindi ? "COALESCE(NULLIF(content_hi, ''), content)" : "content"} AS content,
+            ${hindi ? "COALESCE(NULLIF(excerpt_hi, ''), excerpt)" : "excerpt"} AS excerpt,
+            cover_image, author, published_at, created_at
        FROM journal_posts
       WHERE slug = $1 AND status = 'published'
       LIMIT 1`,

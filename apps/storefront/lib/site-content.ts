@@ -292,6 +292,7 @@ async function createTables(): Promise<void> {
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS title_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS excerpt_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS content_hi TEXT NOT NULL DEFAULT ''`);
 
   // Buyer words. Kept separate from journal posts because a testimonial is an
   // attribution (who, where, which work) rather than an essay.
