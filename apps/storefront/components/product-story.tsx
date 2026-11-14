@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 /**
  * The lower half of a product page: what the work is, what it is made of, and
@@ -11,7 +12,7 @@ import Link from "next/link";
  * than duplicate the composition in two files, every line here is derived from
  * whatever the record actually says, so nothing is invented to fill a slot.
  */
-export function ProductStory({
+export async function ProductStory({
   title,
   artist,
   collection,
@@ -22,14 +23,18 @@ export function ProductStory({
   collection?: string;
   stockType?: string;
 }) {
+  const t = await getTranslations("productDetail");
+
+  // Keyed rather than spelled out, so the label is translated while the value
+  // ("ready to ship") still comes from the tag the admin set.
   const availability =
     stockType === "ready_to_ship"
-      ? "Ready to ship"
+      ? t("availability.ready")
       : stockType === "custom_only"
-        ? "Commission only"
+        ? t("availability.commission")
         : stockType === "made_to_order"
-          ? "Made to order"
-          : "Enquire";
+          ? t("availability.madeToOrder")
+          : t("availability.enquire");
 
   return (
     <>
@@ -37,31 +42,30 @@ export function ProductStory({
       <div className="mt-16 grid gap-12 border-t border-sand-border/60 pt-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-terracotta">
-            The work
+            {t("workEyebrow")}
           </p>
           <h2 className="mt-3 font-serif text-2xl font-semibold leading-snug text-deep-ink sm:text-3xl">
-            Made by hand, in a tradition that predates the market for it
+            {t("workTitle")}
           </h2>
           <p className="mt-4 font-serif text-base italic leading-relaxed text-muted-ink">
             {collection
-              ? `This piece belongs to the ${collection.toLowerCase()} tradition — a language of line, colour and symbol taught from one pair of hands to the next.`
-              : "Every work here is made by hand, by a named maker, in a tradition that was taught rather than invented."}
+              ? t("collectionBody", { collection: collection.toLowerCase() })
+              : t("genericBody")}
           </p>
           <p className="mt-4 font-sans text-sm leading-relaxed text-muted-ink">
-            {artist ? `Made by ${artist}. ` : ""}The border work and the symbols
-            in a piece like this are rarely decorative — they carry meaning the
-            maker chooses, and can usually explain.
+            {artist ? t("madeBy", { artist }) + " " : ""}
+            {t("symbolsNote")}
           </p>
         </div>
 
         <dl className="divide-y divide-sand-border/60 border-y border-sand-border/60">
           {[
-            ["Work", title],
-            ["Art form", collection || "Traditional Indian art"],
-            ...(artist ? [["Maker", artist]] : []),
-            ["Method", "Made by hand, one piece at a time"],
-            ["Origin", "India"],
-            ["Availability", availability],
+            [t("labels.work"), title],
+            [t("labels.artForm"), collection || t("labels.traditional")],
+            ...(artist ? [[t("labels.maker"), artist]] : []),
+            [t("labels.method"), t("values.method")],
+            [t("labels.origin"), t("values.origin")],
+            [t("labels.availability"), availability],
           ].map(([label, value]) => (
             <div
               key={label}
@@ -83,20 +87,20 @@ export function ProductStory({
         {[
           {
             href: "/art-forms",
-            eyebrow: "The tradition",
+            eyebrow: t("doors.tradition"),
             title: collection
-              ? `More about ${collection.toLowerCase()}`
-              : "Read the traditions",
+              ? t("moreAbout", { collection: collection.toLowerCase() })
+              : t("readTraditions"),
           },
           {
             href: "/learn",
-            eyebrow: "The reference",
-            title: "What the symbols mean",
+            eyebrow: t("doors.reference"),
+            title: t("doors.referenceTitle"),
           },
           {
             href: "/custom-art",
-            eyebrow: "Made for you",
-            title: "Commission something like it",
+            eyebrow: t("doors.madeForYou"),
+            title: t("doors.madeForYouTitle"),
           },
         ].map((door, i) => (
           <Link

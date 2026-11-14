@@ -5,12 +5,14 @@ import {
   medusa,
 } from "@/lib/medusa";
 import { localeAlternates } from "@/lib/seo";
+import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
 import {
   findCatalogueItem,
   resolveMedusaHandle,
   translatedProductTitle,
+  translatedProductDescription,
   type CatalogueItem,
 } from "@/lib/catalogue";
 import Link from "next/link";
@@ -164,6 +166,14 @@ export default async function ProductDetailPage({
     product.title
   );
 
+  // The Hindi description when the translation pass has written one. Falls back
+  // to Medusa's English rather than to an empty paragraph.
+  const catalogueDescription =
+    (await translatedProductDescription(product.handle ?? medusaHandle)) ??
+    product.description ??
+    null;
+  const t = await getTranslations("productDetail");
+
   return (
     <main className="py-10">
       <script
@@ -246,7 +256,7 @@ export default async function ProductDetailPage({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 text-sm text-muted-ink font-sans">
           <Link href="/shop" className="hover:text-sindoor transition-colors">
-            ← Back to shop
+            ← {t("backToShop")}
           </Link>
         </nav>
 
@@ -319,10 +329,10 @@ export default async function ProductDetailPage({
 
             <div className="space-y-4">
               <h3 className="text-lg font-serif font-semibold text-deep-ink">
-                Description
+                {t("description")}
               </h3>
               <p className="text-muted-ink font-sans leading-relaxed whitespace-pre-line">
-                {product.description || "Details coming soon."}
+                {catalogueDescription || "Details coming soon."}
               </p>
             </div>
           </div>

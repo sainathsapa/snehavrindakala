@@ -626,5 +626,44 @@
       "wearable": "Wearable art",
       "other": "Other"
     }
+  },
+  "productDetail": {
+    "workEyebrow": "The work",
+    "workTitle": "Made by hand, in a tradition that predates the market for it",
+    "collectionBody": "This piece belongs to the {collection} tradition — a language of line, colour and symbol taught from one pair of hands to the next.",
+    "genericBody": "Every work here is made by hand, by a named maker, in a tradition that was taught rather than invented.",
+    "madeBy": "Made by {artist}.",
+    "symbolsNote": "The border work and the symbols in a piece like this are rarely decorative — they carry meaning the maker chooses, and can usually explain.",
+    "labels": {
+      "work": "Work",
+      "artForm": "Art form",
+      "traditional": "Traditional Indian art",
+      "maker": "Maker",
+      "method": "Method",
+      "origin": "Origin",
+      "availability": "Availability"
+    },
+    "values": {
+      "method": "Made by hand, one piece at a time",
+      "origin": "India"
+    },
+    "availability": {
+      "ready": "Ready to ship",
+      "commission": "Commission only",
+      "madeToOrder": "Made to order",
+      "enquire": "Enquire"
+    },
+    "doors": {
+      "tradition": "The tradition",
+      "reference": "The reference",
+      "referenceTitle": "What the symbols mean",
+      "madeForYou": "Made for you",
+      "madeForYouTitle": "Commission something like it"
+    },
+    "moreAbout": "More about {collection}",
+    "readTraditions": "Read the traditions",
+    "description": "Description",
+    "backToShop": "Back to shop",
+    "addToCart": "Add to Cart"
   }
 }

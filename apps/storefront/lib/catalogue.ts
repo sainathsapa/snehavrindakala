@@ -343,3 +343,26 @@ export async function translatedProductTitle(
     return title;
   }
 }
+
+/**
+ * The translated description for one product in the active locale.
+ *
+ * Separate from the title because the two translate independently: a product
+ * can have a reviewed Hindi title before anyone has written the Hindi prose,
+ * and in that case the English description is still the most useful thing to
+ * show. Returns null when there is nothing translated, so the caller keeps the
+ * Medusa description rather than rendering an empty paragraph.
+ */
+export async function translatedProductDescription(
+  handle: string
+): Promise<string | null> {
+  try {
+    const locale = await localeFromRequest();
+    if (locale === "en") return null;
+    const translations = await productTranslationsFor(locale);
+    const description = translations.get(handle)?.description;
+    return description && description.trim() ? description : null;
+  } catch {
+    return null;
+  }
+}
