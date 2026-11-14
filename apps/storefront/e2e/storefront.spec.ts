@@ -322,9 +322,13 @@ test.describe("product URLs and mode gating", () => {
       ]);
 
     // A listing that links to a 404 is worse than an empty listing.
-    for (const href of hrefs) {
-      const res = await request.get(href);
-      expect(res.status(), `${href} should resolve`).toBe(200);
+    // Fetched concurrently: 21 cold product renders in sequence outrun the test
+    // timeout and fail a run that is actually healthy.
+    const statuses = await Promise.all(
+      hrefs.map(async (href) => ({ href, status: (await request.get(href)).status() }))
+    );
+    for (const { href, status } of statuses) {
+      expect(status, `${href} should resolve`).toBe(200);
     }
   });
 

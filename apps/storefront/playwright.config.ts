@@ -45,5 +45,9 @@ export default defineConfig({
         url: "http://localhost:3200",
         reuseExistingServer: !process.env.CI,
         timeout: 240_000,
+        // The admin login limiter is per-IP and in-process, and the suite signs
+        // in many times from 127.0.0.1. Left on, a run inherits the previous
+        // run's budget and fails with 429 instead of the status under test.
+        env: { E2E_DISABLE_RATE_LIMIT: "1" },
       },
 });

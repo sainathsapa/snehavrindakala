@@ -18,6 +18,15 @@ const FAILED_ATTEMPTS = new Map<string, { count: number; firstAttempt: number }>
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_MAX_ATTEMPTS = 5;
 
+/**
+ * The limiter keeps its state in this process, keyed by caller IP, and the E2E
+ * suite signs in repeatedly from 127.0.0.1. Without an escape hatch the suite's
+ * own login tests consume the budget and later runs fail with 429 rather than
+ * the status they are asserting on. Only the throwaway E2E server sets this, so
+ * production keeps the limiter intact.
+ */
+const RATE_LIMIT_DISABLED = process.env.E2E_DISABLE_RATE_LIMIT === "1";
+
 function getIp(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
@@ -25,6 +34,7 @@ function getIp(req: Request): string {
 }
 
 function checkRateLimit(ip: string): { allowed: boolean; remaining?: number } {
+  if (RATE_LIMIT_DISABLED) return { allowed: true };
   const now = Date.now();
   const record = FAILED_ATTEMPTS.get(ip);
   if (!record || now - record.firstAttempt > RATE_LIMIT_WINDOW) {
