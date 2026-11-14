@@ -1,13 +1,27 @@
+import createIntlMiddleware from "next-intl/middleware";
+import { NextResponse, type NextRequest } from "next/server";
+import { routing } from "./i18n/routing";
+
 /**
- * Admin gate.
+ * Locale routing, plus the admin gate.
  *
- * Without this, every `/admin/*` page and `/api/admin/*` handler was reachable
- * by anyone: the layout only hid the UI, and each route had to remember to call
- * requireAdmin() itself. A single missed check leaks products, customers and
- * orders. If a route is not explicitly public here, it needs a session.
+ * Two jobs, and order matters.
+ *
+ * 1. ADMIN GATE — runs first and is matched only by the admin paths below.
+ *    Every `/admin/*` page and `/api/admin/*` handler was reachable by anyone
+ *    before this existed: the layout only hid the UI, and each route had to
+ *    remember to call requireAdmin() itself. If a route is not explicitly
+ *    public here, it needs a session.
+ *
+ * 2. LOCALE — next-intl rewrites and redirects so `/shop` (English) and
+ *    `/hi/shop` (Hindi) both resolve to the same route tree. English keeps bare
+ *    URLs so nothing already indexed has to move.
+ *
+ * The admin area is deliberately outside the locale tree: the panel is used by
+ * one person, in one language, and translating it would be pure overhead.
  */
 
-import { NextResponse, type NextRequest } from "next/server";
+const intlMiddleware = createIntlMiddleware(routing);
 
 const ADMIN_SESSION_COOKIE = "svk_admin_session";
 const AUTH_COOKIE = "medusa_auth_token";
@@ -24,104 +38,132 @@ function base64urlToBytes(input: string): Uint8Array {
   return bytes;
 }
 
-async function sign(payload: string, secret: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(payload)
-  );
-  return btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+/** Constant-time compare so a wrong cookie cannot be found by timing. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
-/** Same format and secret as lib/admin-session.ts, verified at the edge. */
-async function isValidSession(
-  token: string,
-  secret: string
-): Promise<boolean> {
-  const [body, signature] = token.split(".");
-  if (!body || !signature) return false;
+async function verifyAdminSession(token: string | undefined): Promise<boolean> {
+  if (!token) return false;
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) return false;
 
-  const expected = await sign(body, secret);
-  if (expected.length !== signature.length) return false;
-
-  // Constant-time-ish comparison; the edge runtime has no timingSafeEqual.
-  let mismatch = 0;
-  for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
-  }
-  if (mismatch !== 0) return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  const [payloadB64, signatureB64] = parts;
 
   try {
-    const json = new TextDecoder().decode(base64urlToBytes(body));
-    const session = JSON.parse(json) as { email?: string; role?: string; exp?: number };
-    if (!session.exp || session.exp < Math.floor(Date.now() / 1000)) return false;
-    return Boolean(session.email && session.role);
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const expected = new Uint8Array(
+      await crypto.subtle.sign(
+        "HMAC",
+        key,
+        new TextEncoder().encode(payloadB64)
+      )
+    );
+
+    const givenB64 = signatureB64.replace(/-/g, "+").replace(/_/g, "/");
+    const given = base64urlToBytes(signatureB64);
+    if (given.length !== expected.length) return false;
+    if (
+      !timingSafeEqual(
+        Array.from(expected).join(","),
+        Array.from(given).join(",")
+      )
+    ) {
+      return false;
+    }
+
+    const payload = JSON.parse(
+      new TextDecoder().decode(base64urlToBytes(payloadB64))
+    );
+    if (typeof payload?.exp === "number" && payload.exp < Date.now()) {
+      return false;
+    }
+    return true;
   } catch {
     return false;
   }
 }
 
-export async function middleware(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+/**
+ * Ensure the request carries the resolved locale in a header.
+ *
+ * The root layout renders `<html lang>`, and a root layout cannot read route
+ * params — so the locale is passed down as a header instead.
+ */
+function withLocaleHeader(response: NextResponse, locale: string) {
+  response.headers.set("x-locale", locale);
+  return response;
+}
 
-  // The login page must be reachable while signed out — otherwise there is no
-  // way in. It sits under /admin, so this exemption has to come first.
-  //
-  // The login *endpoint* needs the same exemption. It lives at
-  // /api/admin/login, which the matcher guards, so without this the handler was
-  // 401'd before it ever ran and nobody could sign in — the panel was
-  // unreachable even with the correct credentials.
-  if (pathname === "/admin/login" || pathname === "/api/admin/login") {
+/** Pull the locale off a pathname, defaulting to English. */
+function localeFromPath(pathname: string): string {
+  const first = pathname.split("/")[1];
+  return first && (routing.locales as readonly string[]).includes(first)
+    ? first
+    : routing.defaultLocale;
+}
+
+export default async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // ── Admin gate ──────────────────────────────────────────────────────────
+  // Only admin paths reach this branch; everything else falls through to the
+  // locale handler below.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    // The sign-in page and its handler are the only signed-out entry points.
+    // Without these exceptions the login form 401'd before it ever ran and
+    // nobody could reach the panel even with correct credentials.
+    if (pathname === "/admin/login" || pathname === "/api/admin/login") {
+      return NextResponse.next();
+    }
+
+    // A Medusa OAuth callback is likewise a signed-out entry point.
+    if (pathname === "/api/admin/auth/callback") {
+      return NextResponse.next();
+    }
+
+    const sessionToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+    const hasSession = await verifyAdminSession(sessionToken);
+    const hasMedusaAuth = Boolean(request.cookies.get(AUTH_COOKIE)?.value);
+
+    if (!hasSession && !hasMedusaAuth) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
     return NextResponse.next();
   }
 
-  // A Medusa OAuth callback is likewise a signed-out entry point.
-  if (pathname === "/api/admin/auth/callback") {
-    return NextResponse.next();
-  }
-
-  const sessionToken = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  const secret =
-    process.env.COOKIE_SECRET ||
-    process.env.JWT_SECRET ||
-    (process.env.NODE_ENV === "production"
-      ? ""
-      : "svk-dev-admin-session-secret");
-
-  const hasSession =
-    Boolean(sessionToken && secret) &&
-    (await isValidSession(sessionToken as string, secret));
-
-  // A Medusa customer token may also grant access when the verified email is
-  // on ADMIN_EMAILS. That check needs a backend round-trip, so let the request
-  // through to the server-side `getAdminIdentity()` rather than duplicating
-  // the allow-list logic here.
-  const hasLegacyToken = Boolean(req.cookies.get(AUTH_COOKIE)?.value);
-
-  if (hasSession || hasLegacyToken) {
-    return NextResponse.next();
-  }
-
-  // API routes answer with a status, not a redirect.
-  if (pathname.startsWith("/api/admin")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const loginUrl = new URL("/admin/login", req.url);
-  loginUrl.searchParams.set("next", `${pathname}${search}`);
-  return NextResponse.redirect(loginUrl);
+  // ── Locale ──────────────────────────────────────────────────────────────
+  const response = intlMiddleware(request);
+  return withLocaleHeader(response, localeFromPath(pathname));
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  // Everything except the admin gate (handled above and excluded so the two
+  // matchers cannot both run), Next internals, static files and API routes
+  // that are not admin.
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/((?!admin|api|_next|_vercel|uploads|.*\\..*).*)",
+  ],
 };

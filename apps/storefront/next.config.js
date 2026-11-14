@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
+const createNextIntlPlugin = require("next-intl/plugin");
+
+// Points next-intl at the request config that chooses which message catalogue a
+// render uses. Without this the provider throws "Couldn't find next-intl config
+// file" at build time.
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const backendUrl = new URL(
   process.env.MEDUSA_BACKEND_URL ||
     process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
@@ -77,4 +83,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

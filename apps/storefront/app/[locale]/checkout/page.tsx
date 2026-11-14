@@ -1,5 +1,5 @@
 import { getCart } from "@/lib/cart";
-import { saveCheckoutDetailsAction } from "@/app/cart/actions";
+import { saveCheckoutDetailsAction } from "@/app/[locale]/cart/actions";
 import { getCurrentCustomer } from "@/lib/auth";
 import { CheckoutClient } from "@/components/checkout-client";
 import { taxForAmount } from "@/lib/tax-server";

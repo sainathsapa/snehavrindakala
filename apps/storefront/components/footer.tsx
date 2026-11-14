@@ -3,11 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   LotusRosette,
   DiyaMotif,
   KalashMotif,
-  PaisleyBand,
 } from "@/components/indian-motifs";
 import { GLOSSARY } from "@/lib/art-reference";
 import { PaymentMarks } from "@/components/payment-marks";
@@ -43,40 +43,40 @@ import { PaymentMarks } from "@/components/payment-marks";
 
 const LINK_GROUPS = [
   {
-    heading: "Look",
+    heading: "look",
     links: [
-      { label: "All works", href: "/shop" },
-      { label: "Art forms", href: "/art-forms" },
-      { label: "Learn", href: "/learn" },
-      { label: "Journal", href: "/journal" },
-      { label: "Artists", href: "/artists", platformOnly: true },
+      { key: "allWorks", href: "/shop" },
+      { key: "artForms", href: "/art-forms" },
+      { key: "learn", href: "/learn" },
+      { key: "journal", href: "/journal" },
+      { key: "artists", href: "/artists", platformOnly: true },
     ],
   },
   {
-    heading: "Make",
+    heading: "make",
     links: [
-      { label: "Request a piece", href: "/custom-art" },
-      { label: "How it works", href: "/custom-art#process" },
-      { label: "Our story", href: "/about" },
-      { label: "Write to us", href: "mailto:hello@snehavrinda.in" },
+      { key: "requestAPiece", href: "/custom-art" },
+      { key: "howItWorks", href: "/custom-art#process" },
+      { key: "ourStory", href: "/about" },
+      { key: "writeToUs", href: "mailto:hello@snehavrinda.in" },
     ],
   },
   {
-    heading: "Help",
+    heading: "help",
     links: [
-      { label: "FAQ & support", href: "/faq" },
-      { label: "Track an order", href: "/account" },
-      { label: "Shipping", href: "/policies/shipping" },
-      { label: "Returns", href: "/policies/returns" },
+      { key: "faqSupport", href: "/faq" },
+      { key: "trackOrder", href: "/account" },
+      { key: "shipping", href: "/policies/shipping" },
+      { key: "returns", href: "/policies/returns" },
     ],
   },
   {
-    heading: "Care",
+    heading: "care",
     links: [
-      { label: "Authenticity", href: "/authenticity" },
-      { label: "Disclaimer", href: "/disclaimer" },
-      { label: "Privacy", href: "/policies/privacy" },
-      { label: "Terms", href: "/policies/terms" },
+      { key: "authenticity", href: "/authenticity" },
+      { key: "disclaimer", href: "/disclaimer" },
+      { key: "privacy", href: "/policies/privacy" },
+      { key: "terms", href: "/policies/terms" },
     ],
   },
 ];
@@ -100,6 +100,7 @@ export function Footer({
   socials?: { id: string; label: string; href: string }[];
 }) {
   const pathname = usePathname();
+  const t = useTranslations("footer");
 
   if (pathname.startsWith("/admin")) {
     return null;
@@ -218,9 +219,7 @@ export function Footer({
             </p>
 
             <p className="mt-5 max-w-sm font-serif text-base italic leading-relaxed text-rang-paper/75">
-              A house for Indian art, and the hands that make it. Every work
-              here carries the name of the person who painted, wove, or shaped
-              it.
+              {t("tagline")}
             </p>
 
             {/* The word of the house — a glossary term, so the footer teaches
@@ -242,7 +241,7 @@ export function Footer({
                 href="/learn"
                 className="mt-2 inline-block font-sans text-[9px] font-semibold uppercase tracking-[0.22em] text-haldi/75 transition-colors hover:text-haldi"
               >
-                More in the glossary →
+                {t("moreGlossary")}
               </Link>
             </div>
 
@@ -250,7 +249,7 @@ export function Footer({
             <div className="mt-8 flex items-center gap-3">
               <span aria-hidden="true" className="h-px w-8 bg-haldi/45" />
               <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.26em] text-haldi/75">
-                Bikaner · Rajasthan
+                {t("place")}
               </p>
             </div>
 
@@ -261,14 +260,14 @@ export function Footer({
                 htmlFor="footer-email"
                 className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-haldi/70"
               >
-                Letters from the art house
+                {t("lettersHeading")}
               </label>
               <div className="mt-2.5 flex items-center gap-3 border-b border-rang-paper/25 pb-2 focus-within:border-haldi/70">
                 <input
                   id="footer-email"
                   name="email"
                   type="email"
-                  placeholder="Your email"
+                  placeholder={t("emailPlaceholder")}
                   required
                   className="min-w-0 flex-1 bg-transparent font-sans text-sm text-rang-paper placeholder:text-rang-paper/30 focus:outline-none"
                 />
@@ -286,7 +285,7 @@ export function Footer({
                   required
                   className="mt-0.5 h-3 w-3 shrink-0 cursor-pointer appearance-none border border-rang-paper/40 bg-transparent transition-colors checked:border-haldi checked:bg-haldi"
                 />
-                <span>I agree to receive occasional notes. Unsubscribe anytime.</span>
+                <span>{t("consent")}</span>
               </label>
             </form>
           </div>
@@ -343,13 +342,13 @@ export function Footer({
                           carved arch above it does the decorating. */}
                       <ul className="mt-3.5 space-y-2.5">
                         {links.map((link) => (
-                          <li key={link.label}>
+                          <li key={link.key}>
                             <Link
                               href={link.href}
                               className="group inline-flex items-baseline gap-1.5 font-serif text-[15px] text-rang-paper/75 transition-colors hover:text-haldi"
                             >
                               <span className="h-px w-0 bg-haldi/70 transition-[width] duration-300 group-hover:w-3" />
-                              {link.label}
+                              {t(link.key)}
                             </Link>
                           </li>
                         ))}
@@ -360,10 +359,25 @@ export function Footer({
               })}
             </div>
 
-            {/* The address block, fenced with drawn paisley rather than a
-                plain rule. */}
+            {/* The address block, fenced with the real painted frieze.
+
+                This was a 24px vector paisley band, which at that height read
+                as a rule rather than as ornament. The photograph of the gold
+                vine is the same motif the haveli lintels use, and at 40px it
+                still reads as carving. */}
             <div className="mt-9">
-              <PaisleyBand className="h-6 w-full text-haldi/25" />
+              <div
+                aria-hidden="true"
+                className="relative h-10 w-full overflow-hidden opacity-30 mix-blend-screen"
+              >
+                <Image
+                  src="/images/ornaments/gold-vine-band.jpg"
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
+              </div>
               <div className="mt-4 flex flex-col gap-2 border-t border-rang-paper/12 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-sans text-[11px] leading-relaxed text-rang-paper/55">
                   Bikaner, Rajasthan, India
@@ -376,7 +390,7 @@ export function Footer({
                   </a>
                 </p>
                 <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-rang-paper/40">
-                  Shipping worldwide
+                  {t("shippingWorldwide")}
                 </p>
               </div>
 

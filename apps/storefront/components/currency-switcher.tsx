@@ -23,7 +23,19 @@ const CURRENCIES = [
   { code: "aed", label: "UAE", symbol: "د.إ" },
 ];
 
-export function CurrencySwitcher({ current }: { current: string }) {
+export function CurrencySwitcher({
+  current,
+  compact = false,
+}: {
+  current: string;
+  /**
+   * Shorter option text for the mobile menu sheet.
+   *
+   * The full "₹ INR · India" label made this select nearly twice the width of
+   * the language select sitting beside it, which read as a layout mistake.
+   */
+  compact?: boolean;
+}) {
   const [value, setValue] = useState(current);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -51,7 +63,9 @@ export function CurrencySwitcher({ current }: { current: string }) {
       >
         {CURRENCIES.map((c) => (
           <option key={c.code} value={c.code}>
-            {c.symbol} {c.code.toUpperCase()} · {c.label}
+            {compact
+              ? `${c.symbol} ${c.code.toUpperCase()}`
+              : `${c.symbol} ${c.code.toUpperCase()} · ${c.label}`}
           </option>
         ))}
       </select>

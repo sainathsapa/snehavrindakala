@@ -17,6 +17,7 @@
     "@snehavrinda-kala/types": "workspace:*",
     "@snehavrinda-kala/ui": "workspace:*",
     "next": "15.5.28",
+    "next-intl": "^4.15.1",
     "next-sanity": "^9.4.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",

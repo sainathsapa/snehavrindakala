@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import {
   createCommissionAction,
   type CommissionFormState,
-} from "@/app/custom-art/actions";
+} from "@/app/[locale]/custom-art/actions";
 
 const initialState: CommissionFormState = {};
 

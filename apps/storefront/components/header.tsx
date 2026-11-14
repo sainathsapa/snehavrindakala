@@ -3,8 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { CurrencySwitcher } from "@/components/currency-switcher";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Icon } from "@snehavrinda-kala/ui";
 import { CartCount } from "./cart-count";
 import { KalamBorder } from "./ornaments";
@@ -26,16 +28,16 @@ const navLinks = [
   // They were once two dropdowns over the same taxonomy, showing the same
   // pictures under different names, which is just a decision a visitor has to
   // make for no reason.
-  { label: "Discover", href: "/shop", menu: "discover" as const },
-  { label: "Art Forms", href: "/art-forms" },
-  { label: "Learn", href: "/learn" },
-  { label: "Request", href: "/custom-art" },
-  { label: "Journal", href: "/journal" },
-  { label: "Studio", href: "/about", menu: "studio" as const },
-  { label: "Artists", href: "/artists", platformOnly: true },
+  { key: "discover", href: "/shop", menu: "discover" as const },
+  { key: "artForms", href: "/art-forms" },
+  { key: "learn", href: "/learn" },
+  { key: "request", href: "/custom-art" },
+  { key: "journal", href: "/journal" },
+  { key: "studio", href: "/about", menu: "studio" as const },
+  { key: "artists", href: "/artists", platformOnly: true },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody
   // to sell on the platform, so the page would be a dead end.
-  { label: "Sell", href: "/sell", platformOnly: true },
+  { key: "sell", href: "/sell", platformOnly: true },
 ];
 
 const typeIcons: Record<string, string> = {
@@ -63,6 +65,8 @@ export function Header({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations("nav");
+  const tSettings = useTranslations("currency");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Which dropdown is open. CSS-only hover menus cannot be reached by keyboard
   // or touch, so the menu is explicitly state-driven with click and Escape.
@@ -230,7 +234,7 @@ export function Header({
                         : "text-deep-ink/85 hover:text-kumkum"
                     }`}
                   >
-                    {link.label}
+                    {t(link.key as any)}
                     <span
                       aria-hidden="true"
                       className={`absolute -bottom-1.5 left-0 h-[1.5px] bg-kumkum transition-all duration-300 ${
@@ -257,7 +261,7 @@ export function Header({
                         : "text-deep-ink/85 hover:text-kumkum"
                     }`}
                   >
-                    {link.label}
+                    {t(link.key as any)}
                     <Icon
                       name="chevron-down"
                       size={13}
@@ -439,7 +443,17 @@ export function Header({
               )}
             </div>
 
-            <CurrencySwitcher current={currency} />
+            {/* Switchers stay out of the mobile header row.
+
+                Two selects plus account, cart and the menu button came to
+                366px inside a 390px viewport, so the whole cluster sat off the
+                right edge — which is why the menu and search could not be
+                reached on a phone at all. On small screens these move into the
+                open menu sheet below, where there is room to label them. */}
+            <div className="hidden items-center gap-2 md:flex">
+              <LanguageSwitcher />
+              <CurrencySwitcher current={currency} />
+            </div>
 
             <Link
               href="/account"
@@ -475,11 +489,11 @@ export function Header({
             id="mobile-menu"
             className="border-t border-sand-border/70 pb-6 pt-2 lg:hidden"
           >
-            <div className="relative mb-3 mt-3">
+            <div className="relative mb-4 mt-3">
               <input
                 type="text"
-                placeholder="Search artworks, artists, art forms…"
-                aria-label="Search"
+                placeholder={t("search")}
+                aria-label={t("searchLabel")}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -498,9 +512,9 @@ export function Header({
                 <Link
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-md px-1 py-3 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
+                  className="flex items-center gap-3 rounded-md px-1 py-2 font-sans text-[15px] text-deep-ink/85 hover:text-kumkum"
                 >
-                  {link.label}
+                  {t(link.key as any)}
                 </Link>
                 {/* Sub-links are listed inline rather than behind a toggle: on a
                     phone there is room, and an extra tap to reveal five links is
@@ -521,6 +535,25 @@ export function Header({
                 )}
               </div>
             ))}
+
+            {/* Language and currency, moved here from the header row so a
+                phone has room for the menu, search, account and cart. Side by
+                side with labels, they read as settings rather than as two
+                unlabelled dropdowns competing with the logotype. */}
+            <div className="mt-4 flex items-center gap-4 border-t border-sand-border/60 pt-3 md:hidden">
+              <div className="flex flex-col gap-1">
+                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-ink/70">
+                  {tSettings("language")}
+                </span>
+                <LanguageSwitcher />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-ink/70">
+                  {tSettings("label")}
+                </span>
+                <CurrencySwitcher current={currency} compact />
+              </div>
+            </div>
           </div>
         )}
       </div>

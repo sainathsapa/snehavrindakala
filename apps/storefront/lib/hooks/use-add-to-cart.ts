@@ -11,7 +11,7 @@
  */
 
 import { useState, useTransition } from "react";
-import { addToCartAction } from "@/app/cart/actions";
+import { addToCartAction } from "@/app/[locale]/cart/actions";
 
 export interface AddToCartResult {
   ok: boolean;
