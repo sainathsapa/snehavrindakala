@@ -566,6 +566,39 @@ export function translateArtForms<T extends { slug: string; name: string; descri
 }
 
 /**
+ * Translated names for Medusa product categories.
+ *
+ * Categories live in Medusa, which has one name per record — the same problem
+ * product titles had. This table is the product_translation pattern applied to
+ * categories: keyed on Medusa's handle, so it survives a category being
+ * renamed in the admin without re-keying on an id nobody types.
+ */
+export async function ensureCategoryTranslations(): Promise<void> {
+  await query(`
+    CREATE TABLE IF NOT EXISTS category_translation (
+      id SERIAL PRIMARY KEY,
+      handle TEXT NOT NULL,
+      locale TEXT NOT NULL,
+      name TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (handle, locale)
+    )
+  `);
+}
+
+export async function categoryTranslationsFor(
+  locale: string
+): Promise<Map<string, string>> {
+  if (locale === "en") return new Map();
+  await ensureCategoryTranslations();
+  const rows = await safeRows<{ handle: string; name: string }>(
+    `SELECT handle, name FROM category_translation WHERE locale = $1 AND name <> ''`,
+    [locale]
+  );
+  return new Map(rows.map((row) => [row.handle, row.name]));
+}
+
+/**
  * Write one translation. An empty title deletes the row rather than storing a
  * blank, so "clear this field" returns the product to its English name instead
  * of leaving an invisible empty string behind.

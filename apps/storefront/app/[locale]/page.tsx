@@ -107,9 +107,7 @@ export default async function Home() {
         <div className="relative mx-auto flex max-w-[1400px] items-center gap-6 px-5 sm:px-8 lg:px-12">
           <BotanicalRule className="hidden shrink-0 text-terracotta sm:flex" />
           <p className="font-serif text-lg leading-relaxed text-deep-ink sm:text-xl">
-            Every piece here was made by a hand that learned the form from
-            someone. We work directly with makers across India so the story
-            travels with the work.
+            {t("lede")}
           </p>
         </div>
       </section>
@@ -795,8 +793,7 @@ export default async function Home() {
           <DiyaMotif className="h-7 w-7 text-terracotta/40" />
         </div>
         <p className="mx-auto mt-6 max-w-md px-6 font-serif text-xl italic leading-relaxed text-deep-ink">
-          Every piece here was made by a hand that learned the form from
-          someone.
+          {t("closingLede")}
         </p>
         <Fleuron className="mt-8" />
         <div className="mt-8 flex flex-wrap justify-center gap-3">

@@ -2,7 +2,10 @@ import { unstable_cache } from "next/cache";
 import { medusa } from "@/lib/medusa";
 import { getPreferredCurrency } from "@/lib/currency";
 import { getLocale } from "next-intl/server";
-import { productTranslationsFor } from "@/lib/site-content";
+import {
+  productTranslationsFor,
+  categoryTranslationsFor,
+} from "@/lib/site-content";
 import { productSlug, isOpaqueHandle } from "@/lib/slug";
 
 /**
@@ -158,13 +161,26 @@ async function loadCatalogueFor(currency: string, locale = "en"): Promise<Catalo
   // Swap in translated titles where one exists. English needs no lookup: the
   // Medusa title is already the English title.
   if (locale !== "en" && live.length > 0) {
-    const translations = await productTranslationsFor(locale);
-    if (translations.size > 0) {
-      live = live.map((item) => {
-        const translated = translations.get(item.handle);
-        return translated ? { ...item, title: translated.title } : item;
-      });
-    }
+    const [translations, categoryNames] = await Promise.all([
+      productTranslationsFor(locale),
+      categoryTranslationsFor(locale),
+    ]);
+
+    live = live.map((item) => {
+      const translated = translations.get(item.handle);
+      // A category handle gives the translated category name wherever this
+      // item's collection is shown (cards, filters, breadcrumbs).
+      const categoryHandle = (item.artForms ?? []).find((value) =>
+        categoryNames.has(value)
+      );
+      return {
+        ...item,
+        ...(translated ? { title: translated.title } : {}),
+        ...(categoryHandle
+          ? { collection: categoryNames.get(categoryHandle) as string }
+          : {}),
+      };
+    });
   }
 
   return live;

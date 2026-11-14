@@ -95,7 +95,14 @@
     "empty": "Nothing listed here yet.",
     "emptyHint": "New work is added as it is finished.",
     "filter": "Filter",
-    "sort": "Sort"
+    "sort": "Sort",
+    "allArtForms": "all art forms",
+    "collection": "Collection",
+    "theCollection": "The Collection",
+    "allWorks": "all works",
+    "browseAll": "Browse all works",
+    "work": "work",
+    "works": "works"
   },
   "cart": {
     "title": "Cart",
@@ -594,7 +601,8 @@
         "title": "Read the journal",
         "copy": "Notes on pigment, process and the story behind each piece."
       }
-    }
+    },
+    "closingLede": "Every piece here was made by a hand that learned the form from someone."
   },
   "commission": {
     "artFormLabel": "What kind of art?",

@@ -8,7 +8,8 @@ import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getArtFormByQuery } from "@/lib/slugs";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
+import { categoryTranslationsFor } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function ShopPage({
   // shop never renders blank while the backend is only partly populated.
   const items = await listCatalogue();
   const t = await getTranslations("shop");
+  const locale = await getLocale();
 
   let categories: Array<{
     id: string;
@@ -50,9 +52,13 @@ export default async function ShopPage({
     const { product_categories } = await medusa.listProductCategories({
       limit: 100,
     });
+    // Medusa keeps one name per category, so the Hindi name comes from
+    // category_translation. This page reads Medusa directly rather than through
+    // the catalogue cache, so it has to apply the overlay itself.
+    const translatedNames = await categoryTranslationsFor(locale);
     categories = (product_categories || []).map((category: any) => ({
       id: category.id,
-      name: category.name,
+      name: translatedNames.get(category.handle) ?? category.name,
       handle: category.handle,
     }));
   } catch (err) {
@@ -89,7 +95,7 @@ export default async function ShopPage({
                 href="/art-forms"
                 className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
               >
-                all art forms
+                {t("allArtForms")}
               </Link>
               {categories.map((category) => (
                 <Link

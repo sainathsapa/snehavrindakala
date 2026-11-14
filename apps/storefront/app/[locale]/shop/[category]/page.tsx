@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { getArtFormBySlug, artFormSlugs, slugify } from "@/lib/slugs";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
+import { getTranslations, getLocale } from "next-intl/server";
+import { categoryTranslationsFor } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
@@ -144,6 +146,16 @@ export default async function ShopCategoryPage({
     notFound();
   }
 
+  const t = await getTranslations("shop");
+  const locale = await getLocale();
+
+  // The heading and intro come from Medusa, which holds one name per category,
+  // so the category_translation overlay is applied here rather than in the
+  // catalogue cache this page does not use.
+  const translatedNames = await categoryTranslationsFor(locale);
+  const translatedName = translatedNames.get(resolved.handle);
+  if (translatedName) resolved.name = translatedName;
+
   const baseUrl =
     process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000";
 
@@ -193,12 +205,12 @@ export default async function ShopCategoryPage({
       />
 
       <PageHeader
-        eyebrow="Collection"
+        eyebrow={t("collection")}
         title={resolved.name}
         intro={resolved.description}
         breadcrumb={[
-          { label: "Home", href: "/" },
-          { label: "The Collection", href: "/shop" },
+          { label: t("home"), href: "/" },
+          { label: t("theCollection"), href: "/shop" },
           { label: resolved.name },
         ]}
       />
@@ -207,20 +219,20 @@ export default async function ShopCategoryPage({
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-sand-border/60 pb-5">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-              {items.length} {items.length === 1 ? "work" : "works"}
+              {items.length} {items.length === 1 ? t("work") : t("works")}
             </p>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
               <Link
                 href="/shop"
                 className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
               >
-                all works
+                {t("allWorks")}
               </Link>
               <Link
                 href="/art-forms"
                 className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
               >
-                all art forms
+                {t("allArtForms")}
               </Link>
             </div>
           </div>
@@ -254,7 +266,7 @@ export default async function ShopCategoryPage({
                 href="/shop"
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
               >
-                Browse all works
+                {t("browseAll")}
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
