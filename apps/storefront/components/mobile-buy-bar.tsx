@@ -31,7 +31,7 @@ export function MobileBuyBar({
   const { add, isPending, result } = useAddToCart();
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-sand-border bg-rang-paper/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-rang-paper/85 lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-sand-border bg-rang-paper/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-rang-paper/85 lg:hidden">
       <div className="flex items-center gap-4">
         <div className="min-w-0">
           <p className="font-serif text-lg font-semibold text-deep-ink">

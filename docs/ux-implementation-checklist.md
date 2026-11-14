@@ -96,9 +96,16 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 ## Phase 6 — Ops, a11y, performance, production
 ### 6.1 Admin: product attributes, review moderation — **Completed (review moderation)**
 - `/admin/reviews` moderation queue with approve/reject; nav entry under Products.
-### 6.2 Accessibility audit (focus, contrast, listbox semantics) — **Not started**
-### 6.3 Regression: typecheck, lint, tests, build — **In progress (baseline green)**
-### 6.4 Production readiness notes — **Not started**
+### 6.2 Accessibility audit (focus, contrast, listbox semantics) — **Completed**
+- Search dropdown: proper `combobox`/`listbox`/`option` roles, `aria-expanded`/`aria-controls`/`aria-autocomplete`, `aria-selected` highlight, and full keyboard nav (ArrowUp/Down with wrap, Enter opens highlighted result, Escape closes). Logic extracted to `lib/search-keyboard.ts` with 10 tests.
+- Fixed a real bug: search-result price was `₹${price/100}` (hardcoded rupee + wrong unit); now uses `formatPrice(price, currency)`.
+- Focus rings upgraded from `focus:` to `focus-visible:` on header/mobile search; mobile buy bar respects `env(safe-area-inset-bottom)`.
+- Contrast verified against tokens: muted-ink 6.07:1, deep-ink 13.16:1, terracotta 4.58:1, kumkum 9.28:1 on rang-paper — all meet WCAG AA (terracotta at the 4.5 line for normal text).
+- Existing `aria-pressed` toggles (wishlist, filters) and `aria-expanded`/`aria-controls` drawer already correct.
+### 6.3 Regression: typecheck, lint, tests, build — **Completed**
+- Storefront typecheck ✓, 97 tests pass (4 skipped), build ✓. Backend typecheck ✓, 49 tests pass.
+### 6.4 Production readiness notes — **Completed**
+- Reviews fail closed (unverified when order module absent; never fabricated). Ratings render only from approved reviews. Search degrades to an empty list on backend error; PDP reviews render nothing if the fetch fails.
 
 ---
 

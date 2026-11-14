@@ -8,6 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { CurrencySwitcher } from "@/components/currency-switcher";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Icon } from "@snehavrinda-kala/ui";
+import { formatPrice } from "@/lib/medusa";
+import { nextActiveIndex, activeResult } from "@/lib/search-keyboard";
 import { CartCount } from "./cart-count";
 import { WishlistLink } from "./wishlist-link";
 import { KalamBorder } from "./ornaments";
@@ -77,6 +79,9 @@ export function Header({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // Which result is highlighted for keyboard users. -1 means none, so the input
+  // keeps focus and Enter submits the full search instead of an option.
+  const [searchActiveIndex, setSearchActiveIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -124,6 +129,7 @@ export function Header({
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data.results || []);
+        setSearchActiveIndex(-1);
         setSearchOpen(true);
       }
     } catch (err) {
@@ -139,6 +145,33 @@ export function Header({
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       setSearchResults([]);
+    }
+  };
+
+  // Arrow keys move through the result list, Enter opens the highlighted
+  // result, Escape closes the panel. Without this the dropdown was only usable
+  // by mouse even though it looked like a standard type-ahead.
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!searchOpen || searchResults.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSearchActiveIndex((i) => nextActiveIndex(i, 1, searchResults.length));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSearchActiveIndex((i) => nextActiveIndex(i, -1, searchResults.length));
+    } else if (e.key === "Enter" && searchActiveIndex >= 0) {
+      e.preventDefault();
+      const result = activeResult(searchResults, searchActiveIndex);
+      if (result) {
+        router.push(result.url);
+        setSearchOpen(false);
+        setSearchResults([]);
+        setSearchQuery("");
+        setSearchActiveIndex(-1);
+      }
+    } else if (e.key === "Escape") {
+      setSearchOpen(false);
+      setSearchActiveIndex(-1);
     }
   };
 
@@ -382,12 +415,16 @@ export function Header({
           {/* Utilities: thin-line icons, per the reference. */}
           <div className="ml-auto flex shrink-0 items-center gap-4 lg:ml-0">
             <div className="relative hidden md:block">
-              <form onSubmit={handleSearchSubmit}>
+              <form onSubmit={handleSearchSubmit} role="search">
                 <input
                   ref={searchInputRef}
                   type="text"
                   placeholder="Search"
                   aria-label="Search"
+                  role="combobox"
+                  aria-expanded={searchOpen && searchResults.length > 0}
+                  aria-controls="header-search-results"
+                  aria-autocomplete="list"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -395,7 +432,8 @@ export function Header({
                   }}
                   onFocus={() => setSearchOpen(searchQuery.length >= 2)}
                   onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
-                  className="w-28 rounded-full border border-sand-border bg-surface/70 py-1.5 pl-8 pr-3 font-sans text-[13px] text-deep-ink transition-[width] placeholder:text-muted-ink/70 focus:w-52 focus:outline-none focus:ring-1 focus:ring-kumkum/40"
+                  onKeyDown={handleSearchKeyDown}
+                  className="w-28 rounded-full border border-sand-border bg-surface/70 py-1.5 pl-8 pr-3 font-sans text-[13px] text-deep-ink transition-[width] placeholder:text-muted-ink/70 focus:w-52 focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50"
                 />
                 <Icon
                   name="search"
@@ -405,10 +443,19 @@ export function Header({
               </form>
 
               {searchOpen && searchResults.length > 0 && !searchLoading && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border border-sand-border bg-surface shadow-lifted">
-                  {searchResults.map((result) => (
+                <div
+                  id="header-search-results"
+                  role="listbox"
+                  aria-label="Search results"
+                  className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border border-sand-border bg-surface shadow-lifted"
+                >
+                  {searchResults.map((result, index) => (
                     <button
                       key={`${result.type}-${result.id}`}
+                      type="button"
+                      role="option"
+                      aria-selected={index === searchActiveIndex}
+                      onMouseEnter={() => setSearchActiveIndex(index)}
                       onClick={(e) => {
                         e.preventDefault();
                         router.push(result.url);
@@ -416,7 +463,11 @@ export function Header({
                         setSearchResults([]);
                         setSearchQuery("");
                       }}
-                      className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-rang-paper/60"
+                      className={`flex w-full items-center gap-3 px-3 py-2 text-left ${
+                        index === searchActiveIndex
+                          ? "bg-rang-paper/70"
+                          : "hover:bg-rang-paper/60"
+                      }`}
                     >
                       <Icon
                         name={typeIcons[result.type] as any}
@@ -429,7 +480,7 @@ export function Header({
                         </span>
                         <span className="block truncate font-sans text-xs text-muted-ink">
                           {result.type === "product" && result.price != null
-                            ? `₹${result.price / 100} · Product`
+                            ? `${formatPrice(result.price, result.currency) } · Product`
                             : result.type}
                         </span>
                       </span>
@@ -492,7 +543,7 @@ export function Header({
             id="mobile-menu"
             className="border-t border-sand-border/70 pb-6 pt-2 lg:hidden"
           >
-            <div className="relative mb-4 mt-3">
+            <div className="relative mb-4 mt-3" role="search">
               <input
                 type="text"
                 placeholder={t("search")}
@@ -502,7 +553,7 @@ export function Header({
                   setSearchQuery(e.target.value);
                   debouncedSearch(e.target.value);
                 }}
-                className="w-full rounded-full border border-sand-border bg-surface py-2.5 pl-10 pr-4 font-sans text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus:ring-1 focus:ring-kumkum/40"
+                className="w-full rounded-full border border-sand-border bg-surface py-2.5 pl-10 pr-4 font-sans text-sm text-deep-ink placeholder:text-muted-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50"
               />
               <Icon
                 name="search"
