@@ -40,6 +40,10 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
   // returns queue had no entry point of its own.
   { href: "/admin/returns", label: "Returns", icon: "orders", role: "viewer" },
   { href: "/admin/products", label: "Products", icon: "products", role: "viewer" },
+  // Review moderation sits next to Products: it is a per-product content queue
+  // and a staff member approving a work is the same person checking its
+  // reviews.
+  { href: "/admin/reviews", label: "Reviews", icon: "star", role: "manager" },
   {
     href: "/admin/categories",
     label: "Categories",

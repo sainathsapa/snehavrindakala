@@ -54,7 +54,12 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 - Files: `lib/wishlist-store.ts`, `lib/hooks/use-wishlist.ts`, `components/wishlist-button.tsx`, `components/wishlist-link.tsx`, `app/[locale]/wishlist/page.tsx`, `app/api/store/product-variant/route.ts`.
 - Tests: 13 passing in `wishlist-store.test.ts`.
 - Limitation: no server-side merge across devices after login (would need a wishlist table + sync).
-### 2.4 Verified-purchaser reviews (submit, moderation, accurate counts) — **Not started**
+### 2.4 Verified-purchaser reviews (submit, moderation, accurate counts) — **Completed**
+- Backend `review` module: DML entity + migration + service (public list, approved-only summary, duplicate guard, moderation). Store API `GET/POST /store/reviews` verifies purchase against the order module (fail-closed) and queues every review as `pending`.
+- Storefront: PDP review section (rating summary + list + sign-in-gated form via server action), `StarRating`, `/api/admin/reviews` moderation routes, `/admin/reviews` queue, nav entry.
+- Files: `apps/backend/src/modules/review/*`, `apps/backend/src/api/store/reviews/route.ts`, `apps/storefront/components/product-reviews.tsx`, `components/star-rating.tsx`, `app/[locale]/products/[handle]/review-actions.ts`, `app/api/admin/reviews/*`, `app/admin/reviews/page.tsx`, `lib/medusa.ts` (listReviews/submitReview).
+- Tests: 8 backend (`review-service.test.ts`); ratings only ever shown when approved reviews exist.
+- Limitation: purchase verification relies on the order module being wired; when it is not, reviews are unverified (never fabricated).
 ### 2.5 Related artworks + recently viewed — **Completed**
 - Files: `components/relative-artworks.tsx`, `components/recently-viewed.tsx`.
 - Status: **Completed**.
@@ -86,7 +91,8 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 ### 5.4 Editorial/journal → product linking — **Not started**
 
 ## Phase 6 — Ops, a11y, performance, production
-### 6.1 Admin: product attributes, review moderation — **Not started**
+### 6.1 Admin: product attributes, review moderation — **Completed (review moderation)**
+- `/admin/reviews` moderation queue with approve/reject; nav entry under Products.
 ### 6.2 Accessibility audit (focus, contrast, listbox semantics) — **Not started**
 ### 6.3 Regression: typecheck, lint, tests, build — **In progress (baseline green)**
 ### 6.4 Production readiness notes — **Not started**

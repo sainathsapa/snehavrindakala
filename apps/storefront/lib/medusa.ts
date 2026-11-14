@@ -658,6 +658,47 @@ class MedusaClient {
       `/store/commissions/${encodeURIComponent(referenceId)}`
     );
   }
+
+  /** Approved reviews + rating summary for a product (public read). */
+  async listReviews(productId: string): Promise<{
+    reviews: {
+      id: string;
+      product_id: string;
+      author_name: string | null;
+      rating: number;
+      title: string | null;
+      body: string;
+      verified: boolean;
+      created_at: string;
+    }[];
+    summary: {
+      product_id: string;
+      count: number;
+      average: number | null;
+      distribution: { rating: number; count: number }[];
+    };
+  }> {
+    return this.request(
+      `/store/reviews?product_id=${encodeURIComponent(productId)}`
+    );
+  }
+
+  /** Submit a review for moderation. Requires a signed-in customer id. */
+  async submitReview(data: {
+    product_id: string;
+    variant_id?: string;
+    customer_id: string;
+    author_name?: string;
+    rating: number;
+    title?: string;
+    body: string;
+    photos?: { key: string; mime_type?: string }[];
+  }): Promise<{ review: { id: string; status: string; verified: boolean } }> {
+    return this.request("/store/reviews", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
   // Customer auth
   async registerCustomer(email: string, password: string): Promise<{ token: string }> {
     return this.request<{ token: string }>("/auth/customer/emailpass/register", {

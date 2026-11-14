@@ -14,6 +14,8 @@ import { ArtworkSpecsPanel } from "@/components/artwork-specs-panel";
 import { TrustStrip } from "@/components/trust-strip";
 import { RelativeArtworks } from "@/components/relative-artworks";
 import { WishlistButton } from "@/components/wishlist-button";
+import { ProductReviews } from "@/components/product-reviews";
+import { getCurrentCustomer } from "@/lib/auth";
 import { RecentlyViewed, RecordRecentlyViewed } from "@/components/recently-viewed";
 import {
   findCatalogueItem,
@@ -186,6 +188,13 @@ export default async function ProductDetailPage({
     product.description ??
     null;
   const t = await getTranslations("productDetail");
+
+  // Reviews are public (approved only). A backend hiccup must not take the
+  // product page down, so a failed fetch renders an empty review section.
+  const reviewData = await medusa
+    .listReviews(product.id)
+    .catch(() => null);
+  const customer = await getCurrentCustomer().catch(() => null);
 
   return (
     <main className="relative overflow-hidden py-10">
@@ -380,6 +389,16 @@ export default async function ProductDetailPage({
           collection={product.category?.name || undefined}
           stockType={stockType}
         />
+
+        {reviewData && (
+          <ProductReviews
+            productId={product.id}
+            variantId={variantId}
+            reviews={reviewData.reviews}
+            summary={reviewData.summary}
+            canReview={Boolean(customer?.id)}
+          />
+        )}
 
         <RelativeArtworks
           handle={product.handle ?? medusaHandle}

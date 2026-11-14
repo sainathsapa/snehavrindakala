@@ -33,6 +33,7 @@ module.exports = defineConfig({
     { resolve: "./src/modules/audit" },
     { resolve: "./src/modules/integration_event" },
     { resolve: "./src/modules/notification" },
+    { resolve: "./src/modules/review" },
   ],
   // Payment provider: Razorpay (adapter boundary per build plan Section 12.2)
   payment_providers: [
