@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { formatPrice } from "@/lib/medusa";
 import { TiltPlate } from "@/components/interactive";
 
@@ -22,7 +23,6 @@ const stockLabels: Record<string, string> = {
   made_to_order: "Made to order",
   custom_only: "Commission only",
 };
-
 /**
  * A work, presented as a framed plate.
  *
@@ -49,7 +49,17 @@ export function ProductCard({
   plate,
 }: ProductCardProps) {
   const hasImage = Boolean(image);
-  const availability = stockLabels[stockType] ?? stockType.replace(/_/g, " ");
+  const t = useTranslations("product");
+  // Availability labels come from the catalogue so a Hindi card is fully Hindi.
+  // Keyed off the same three stock types the database stores.
+  const availabilityKey: Record<string, string> = {
+    ready_to_ship: "readyToShip",
+    made_to_order: "madeToOrder",
+    custom_only: "customOnly",
+  };
+  const availability = availabilityKey[stockType]
+    ? t(availabilityKey[stockType])
+    : stockType.replace(/_/g, " ");
 
   return (
     <article className="group">
@@ -85,7 +95,7 @@ export function ProductCard({
               aria-hidden="true"
               className="pointer-events-none absolute bottom-3 left-3 translate-y-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-rang-paper/90 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100"
             >
-              View plate →
+              {t("viewPlate")}
             </span>
 
             {isNew && (

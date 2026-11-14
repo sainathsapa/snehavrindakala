@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { PlateNumber, RunningHead, Fleuron, PaintedRule } from "@/components/editorial";
@@ -18,7 +19,7 @@ export const metadata = {
   title: "Learn",
   description:
     "A plain-language guide to Indian art: what the words mean, what the materials are, and how the traditions came to exist.",
-  alternates: { canonical: "/learn" },
+  alternates: localeAlternates("/learn"),
 };
 
 export const dynamic = "force-dynamic";

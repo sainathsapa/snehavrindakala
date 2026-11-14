@@ -1,4 +1,5 @@
 import { medusa } from "@/lib/medusa";
+import { localeAlternates } from "@/lib/seo";
 import { listCatalogue } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
@@ -7,15 +8,18 @@ import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getArtFormByQuery } from "@/lib/slugs";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "The Collection",
-  description:
-    "Original and handmade Indian artwork — paintings, folk art, textiles, paper and wearable pieces. Every work carries the name of the artist who made it.",
-  alternates: { canonical: "/shop" },
-};
+export async function generateMetadata() {
+  const t = await getTranslations("shop");
+  return {
+    title: t("title"),
+    description: t("intro"),
+    alternates: localeAlternates("/shop"),
+  };
+}
 
 export default async function ShopPage({
   searchParams,
@@ -35,6 +39,7 @@ export default async function ShopPage({
   // Live catalogue, falling back to the seed set when Medusa is empty, so the
   // shop never renders blank while the backend is only partly populated.
   const items = await listCatalogue();
+  const t = await getTranslations("shop");
 
   let categories: Array<{
     id: string;
@@ -57,10 +62,10 @@ export default async function ShopPage({
   return (
     <main className="bg-rang-paper">
       <PageHeader
-        eyebrow="Works available now"
-        title="The Collection"
-        intro={`${items.length} ${items.length === 1 ? "work" : "works"} currently available. Each one is made by hand, and each listing names its maker.`}
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "The Collection" }]}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        intro={t("count", { count: items.length })}
+        breadcrumb={[{ label: t("home"), href: "/" }, { label: t("title") }]}
       />
 
       <section className="relative overflow-hidden pb-16 pt-10 lg:pb-24">

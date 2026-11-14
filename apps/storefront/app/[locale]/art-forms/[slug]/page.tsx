@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { listArtForms } from "@/lib/site-content";
@@ -71,7 +72,7 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: form.name,
     description: form.description || form.story?.slice(0, 160),
-    alternates: { canonical: `/art-forms/${form.slug}` },
+    alternates: localeAlternates(`/art-forms/${form.slug}`),
     openGraph: {
       title: form.name,
       description: form.description,
@@ -92,7 +93,9 @@ export default async function ArtFormPage({ params }: PageProps) {
   // it matches on any of the keys given, so pass the slug *and* the display name
   // (a seeded "Home & Decorative Art" category and the "home-decor" taxonomy
   // entry are the same collection under two spellings).
-  const items = await listCatalogueFor([slug, form.name, form.slug]).catch(() => []);
+  const items = await listCatalogueFor([slug, form.name, form.slug]).catch(
+    () => []
+  );
 
   const others = forms.filter((f) => f.slug !== slug).slice(0, 3);
 

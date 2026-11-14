@@ -96,14 +96,54 @@ async function verifyAdminSession(token: string | undefined): Promise<boolean> {
 }
 
 /**
- * Ensure the request carries the resolved locale in a header.
+ * Stamp the resolved locale onto the request the renderer will see.
  *
- * The root layout renders `<html lang>`, and a root layout cannot read route
- * params — so the locale is passed down as a header instead.
+ * The header has to be on the *request*, because a server component reading
+ * `headers()` never sees response headers — a response-only value left every
+ * reader falling back to English.
+ *
+ * Crucially this mutates next-intl's own response rather than building a new
+ * one. That response carries the internal rewrite that maps `/shop` onto the
+ * `[locale]` route; replacing it with `NextResponse.next()` discarded the
+ * rewrite and rendered an empty page. `NextResponse.next({request})` is used
+ * only to carry the headers, and its `x-middleware-rewrite` is then pointed
+ * back at intl's own target so the routing decision survives.
  */
-function withLocaleHeader(response: NextResponse, locale: string) {
-  response.headers.set("x-locale", locale);
-  return response;
+function withLocaleHeader(
+  response: NextResponse,
+  locale: string,
+  request: NextRequest
+) {
+  // A redirect must stay a redirect. next-intl answers `/shop` with a 307 to
+  // `/hi/shop` when the NEXT_LOCALE cookie disagrees with the URL; rebuilding
+  // that as a passthrough returned 200 with an empty body instead of sending
+  // the browser to the right page. Redirects carry no body to render, so the
+  // header is added to the existing response and returned untouched.
+  if (response.status >= 300 && response.status < 400) {
+    response.headers.set("x-locale", locale);
+    return response;
+  }
+
+  const forwarded = new Headers(request.headers);
+  forwarded.set("x-locale", locale);
+  // The pre-rewrite pathname, so readers can tell `/shop` from `/en/shop`.
+  forwarded.set("x-pathname", request.nextUrl.pathname);
+
+  const passThrough = NextResponse.next({ request: { headers: forwarded } });
+  const rewriteTarget = response.headers.get("x-middleware-rewrite");
+  if (rewriteTarget) {
+    passThrough.headers.set("x-middleware-rewrite", rewriteTarget);
+  }
+
+  // Keep intl's own hints (locale cookie, alternates, middleware-override).
+  response.headers.forEach((value, key) => {
+    const k = key.toLowerCase();
+    if (k === "content-length") return;
+    if (k === "x-middleware-rewrite") return;
+    passThrough.headers.set(key, value);
+  });
+  passThrough.headers.set("x-locale", locale);
+  return passThrough;
 }
 
 /** Pull the locale off a pathname, defaulting to English. */
@@ -154,7 +194,7 @@ export default async function middleware(request: NextRequest) {
 
   // ── Locale ──────────────────────────────────────────────────────────────
   const response = intlMiddleware(request);
-  return withLocaleHeader(response, localeFromPath(pathname));
+  return withLocaleHeader(response, localeFromPath(pathname), request);
 }
 
 export const config = {

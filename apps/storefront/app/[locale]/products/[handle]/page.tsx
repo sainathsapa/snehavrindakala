@@ -4,11 +4,13 @@ import {
   getStockType,
   medusa,
 } from "@/lib/medusa";
+import { localeAlternates } from "@/lib/seo";
 import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
 import {
   findCatalogueItem,
   resolveMedusaHandle,
+  translatedProductTitle,
   type CatalogueItem,
 } from "@/lib/catalogue";
 import Link from "next/link";
@@ -63,7 +65,7 @@ export async function generateMetadata({
       description: `${seeded.title} — a handmade work by ${seeded.artist}${
         seeded.collection ? `, ${seeded.collection.toLowerCase()}` : ""
       }. ${seeded.price ? formatPrice(seeded.price) + ". " : ""}Original Indian artwork from SnehaVrinda Kala.`,
-      alternates: { canonical: `/products/${seeded.handle}` },
+      alternates: localeAlternates(`/products/${seeded.handle}`),
       openGraph: {
         title: `${seeded.title} by ${seeded.artist}`,
         description: `Original handmade Indian artwork by ${seeded.artist}.`,
@@ -74,6 +76,11 @@ export async function generateMetadata({
   }
   const price = getProductPrice(product);
   const currency = (product.variants?.[0]?.calculated_price?.currency_code || "inr").toUpperCase();
+  // Metadata must use the same translated title the page body renders, or the
+  // browser tab, search result and share card would show English over a Hindi
+  // page. `catalogueTitle` falls back to the Medusa title when there is no
+  // translation for this locale.
+  const catalogueTitle = await translatedProductTitle(handle, product.title);
   return {
     // The root layout's title template appends "| SnehaVrinda Kala", so the
     // page title must not repeat the site name. When the product has no artist
@@ -81,16 +88,16 @@ export async function generateMetadata({
     // wrong (the house is not the maker) and redundant — so fall back to the
     // product title alone.
     title: product.metadata?.artist
-      ? `${product.title} by ${product.metadata.artist}`
-      : product.title,
+      ? `${catalogueTitle} by ${product.metadata.artist}`
+      : catalogueTitle,
     description:
       product.description ||
-      `${product.title} — ${formatPrice(price, currency)} by SnehaVrinda Kala.`,
+      `${catalogueTitle} — ${formatPrice(price, currency)} by SnehaVrinda Kala.`,
     alternates: {
       canonical: `/products/${product.handle}`,
     },
     openGraph: {
-      title: product.title,
+      title: catalogueTitle,
       description: product.description || undefined,
       // Next's OpenGraph type union does not include "product". Passing it threw
       // "Invalid OpenGraph type: product" and took the whole product route down
@@ -104,7 +111,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: product.title,
+      title: catalogueTitle,
       description: product.description || undefined,
       images: product.images
         ? product.images.map((i) => i.url)
@@ -149,6 +156,13 @@ export default async function ProductDetailPage({
   const variantId = variants[0]?.id;
   const currency = (product.variants?.[0]?.calculated_price?.currency_code ||
     "inr").toUpperCase();
+  // The visible title, the JSON-LD name and the heading must all be the same
+  // string; a Hindi page whose structured data said an English name would be
+  // indexed under the wrong language.
+  const catalogueTitle = await translatedProductTitle(
+    product.handle ?? medusaHandle,
+    product.title
+  );
 
   return (
     <main className="py-10">
@@ -159,10 +173,10 @@ export default async function ProductDetailPage({
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Product",
-            name: product.title,
+            name: catalogueTitle,
             description:
               product.description ||
-              `${product.title} — available on SnehaVrinda Kala.`,
+              `${catalogueTitle} — available on SnehaVrinda Kala.`,
             image: product.images
               ? product.images.map((i) => i.url).filter(Boolean)
               : [],
@@ -221,7 +235,7 @@ export default async function ProductDetailPage({
               {
                 "@type": "ListItem",
                 position: 4,
-                name: product.title,
+                name: catalogueTitle,
                 item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
                   "http://localhost:3000"}/products/${product.handle}`,
               },
@@ -242,7 +256,7 @@ export default async function ProductDetailPage({
               <div className="relative aspect-square rounded-xl border border-sand-border bg-surface overflow-hidden">
                 <img
                   src={images[0].url}
-                  alt={product.title}
+                  alt={catalogueTitle}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -257,7 +271,7 @@ export default async function ProductDetailPage({
                   <img
                     key={img.id || idx}
                     src={img.url}
-                    alt={product.title}
+                    alt={catalogueTitle}
                     className="w-full h-24 object-cover rounded-md border border-sand-border hover:border-sindoor cursor-pointer transition-colors"
                   />
                 ))}
@@ -271,7 +285,7 @@ export default async function ProductDetailPage({
                 {product.category?.name || "Art"}
               </span>
               <h1 className="text-4xl md:text-5xl font-serif font-semibold text-deep-ink tracking-tight">
-                {product.title}
+                {catalogueTitle}
               </h1>
               {product.subtitle && (
                 <p className="mt-2 text-lg text-muted-ink font-sans">
@@ -315,7 +329,7 @@ export default async function ProductDetailPage({
         </div>
 
         <ProductStory
-          title={product.title}
+          title={catalogueTitle}
           collection={product.category?.name || undefined}
           stockType={stockType}
         />

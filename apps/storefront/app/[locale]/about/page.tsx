@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, KalamBorder } from "@/components/ornaments";
@@ -8,7 +9,7 @@ export const metadata = {
   title: "About",
   description:
     "SnehaVrinda Kala is an Indian art house working directly with artists and craft partners across India — original artwork, handmade pieces, and commissioned work.",
-  alternates: { canonical: "/about" },
+  alternates: localeAlternates("/about"),
 };
 
 export default function AboutPage() {

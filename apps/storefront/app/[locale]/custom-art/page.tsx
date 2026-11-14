@@ -1,4 +1,5 @@
 import { CommissionForm } from "@/components/commission-form";
+import { localeAlternates } from "@/lib/seo";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
@@ -10,7 +11,7 @@ export const metadata = {
   title: "Request a Piece",
   description:
     "Request an original piece from an Indian artist. Send a brief and receive a quote with milestones, proofs and a delivery date before any work begins.",
-  alternates: { canonical: "/custom-art" },
+  alternates: localeAlternates("/custom-art"),
 };
 
 const STEPS = [

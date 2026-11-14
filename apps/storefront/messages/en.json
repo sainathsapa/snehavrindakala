@@ -83,10 +83,15 @@
     "madeToOrder": "Made to order",
     "customOnly": "Commission only",
     "careNote": "Care note",
-    "certificate": "Signed certificate included"
+    "certificate": "Signed certificate included",
+    "viewPlate": "View plate →"
   },
   "shop": {
-    "title": "All works",
+    "title": "The Collection",
+    "eyebrow": "Works available now",
+    "intro": "Every piece is made by hand and names its maker. Filter by art form, or browse the full collection below.",
+    "count": "{count, plural, one {# work} other {# works}} currently available. Each one is made by hand, and each listing names its maker.",
+    "home": "Home",
     "empty": "Nothing listed here yet.",
     "emptyHint": "New work is added as it is finished.",
     "filter": "Filter",

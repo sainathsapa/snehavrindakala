@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { BelButi, MithilaBorder, LotusRosette } from "@/components/indian-motifs";
@@ -10,7 +11,7 @@ export const metadata = {
   title: "Journal",
   description:
     "Artist stories, art-form explainers, technique notes and collection edits from SnehaVrinda Kala.",
-  alternates: { canonical: "/journal" },
+  alternates: localeAlternates("/journal"),
 };
 
 export const dynamic = "force-dynamic";

@@ -297,6 +297,29 @@ async function createTables(): Promise<void> {
     )
   `);
 
+  // Product copy in a second language.
+  //
+  // Medusa keeps one title per product, so translated titles need somewhere of
+  // their own. Keying on (handle, locale) rather than on product id keeps this
+  // readable and lets a row outlive a product delete/recreate cycle in Medusa.
+  // An empty string means "not translated yet" and the caller falls back to the
+  // Medusa title — that is deliberate, so a half-finished translation shows the
+  // English name rather than a blank card.
+  await query(`
+    CREATE TABLE IF NOT EXISTS product_translation (
+      id SERIAL PRIMARY KEY,
+      handle TEXT NOT NULL,
+      locale TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (handle, locale)
+    )
+  `);
+  await query(
+    `CREATE INDEX IF NOT EXISTS product_translation_locale_idx ON product_translation (locale)`
+  );
+
   // Seed once. A table that already has rows is left untouched so admin edits
   // are never overwritten by a redeploy.
   const slides = await queryResult<{ count: string }>(
@@ -417,6 +440,73 @@ export async function listTestimonials(): Promise<Testimonial[]> {
 
 export async function listAllTestimonials(): Promise<Testimonial[]> {
   return safeRows<Testimonial>("SELECT * FROM site_testimonial ORDER BY position, id");
+}
+
+/* ---------------------------- product translations ------------------------- */
+
+export type ProductTranslation = {
+  handle: string;
+  locale: string;
+  title: string;
+  description: string;
+};
+
+/**
+ * Translated product copy for one locale, keyed by handle.
+ *
+ * Returns a map rather than an array because every caller wants to look up by
+ * handle while mapping over a product list. A missing handle means "not
+ * translated", and callers fall back to the Medusa title — showing English is
+ * better than showing nothing.
+ */
+export async function productTranslationsFor(
+  locale: string
+): Promise<Map<string, ProductTranslation>> {
+  const rows = await safeRows<ProductTranslation>(
+    `SELECT handle, locale, title, description
+       FROM product_translation
+      WHERE locale = $1 AND title <> ''`,
+    [locale]
+  );
+  return new Map(rows.map((row) => [row.handle, row]));
+}
+
+/** Every translated row, for the admin editor. */
+export async function listProductTranslations(): Promise<ProductTranslation[]> {
+  return safeRows<ProductTranslation>(
+    "SELECT handle, locale, title, description FROM product_translation ORDER BY handle, locale"
+  );
+}
+
+/**
+ * Write one translation. An empty title deletes the row rather than storing a
+ * blank, so "clear this field" returns the product to its English name instead
+ * of leaving an invisible empty string behind.
+ */
+export async function saveProductTranslation(input: {
+  handle: string;
+  locale: string;
+  title: string;
+  description?: string;
+}): Promise<void> {
+  await ensureSeeded();
+  const title = input.title.trim();
+  if (!title) {
+    await query(
+      "DELETE FROM product_translation WHERE handle = $1 AND locale = $2",
+      [input.handle, input.locale]
+    );
+    return;
+  }
+  await query(
+    `INSERT INTO product_translation (handle, locale, title, description, updated_at)
+     VALUES ($1, $2, $3, $4, NOW())
+     ON CONFLICT (handle, locale)
+     DO UPDATE SET title = EXCLUDED.title,
+                   description = EXCLUDED.description,
+                   updated_at = NOW()`,
+    [input.handle, input.locale, title, input.description?.trim() ?? ""]
+  );
 }
 
 /* ------------------------------- admin writes ------------------------------ */

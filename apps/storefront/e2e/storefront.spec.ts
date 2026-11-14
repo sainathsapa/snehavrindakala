@@ -435,3 +435,72 @@ test.describe("journal", () => {
     expect(title).toContain("SnehaVrinda Kala");
   });
 });
+
+test.describe("Hindi", () => {
+  // Only the first character of the Devanagari block. Enough to tell a
+  // translated document from an English one without asserting on wording that
+  // a translator may legitimately change.
+  const DEVANAGARI = /[\u0900-\u097F]/;
+
+  test("the Hindi shop is served in Hindi, the English shop is not", async ({
+    page,
+  }) => {
+    await page.goto("/shop");
+    const english = await page
+      .locator("a[href*='/products/']")
+      .allInnerTexts();
+    expect(english.length).toBeGreaterThan(0);
+    expect(english.filter((text) => DEVANAGARI.test(text))).toHaveLength(0);
+
+    await page.goto("/hi/shop");
+    const hindi = await page
+      .locator("a[href*='/products/']")
+      .allInnerTexts();
+    // Every card translated, not just the first few: a partial catalogue would
+    // leave buyers reading two languages in one grid.
+    expect(hindi.filter((text) => DEVANAGARI.test(text))).toHaveLength(
+      hindi.length
+    );
+  });
+
+  test("html lang follows the URL, and hreflang links the two", async ({
+    page,
+  }) => {
+    await page.goto("/shop");
+    expect(await page.locator("html").getAttribute("lang")).toBe("en");
+
+    await page.goto("/hi/shop");
+    expect(await page.locator("html").getAttribute("lang")).toBe("hi");
+
+    // Without these Google treats the Hindi pages as unrelated duplicates and
+    // may index only one of them.
+    const tags = await page
+      .locator("link[rel='alternate'][hreflang]")
+      .evaluateAll((els) =>
+        els.map((el) => el.getAttribute("hreflang")?.toLowerCase())
+      );
+    expect(tags).toEqual(expect.arrayContaining(["en", "hi"]));
+  });
+
+  test("a product title matches the language of its URL", async ({ page }) => {
+    // A fresh context so no NEXT_LOCALE cookie is carried in from another test.
+    // With a `hi` cookie next-intl redirects `/products/...` to `/hi/...`,
+    // which is correct routing but would not test the title lookup.
+    await page.context().clearCookies();
+
+    await page.goto("/products/wearable-art-pendant");
+    const englishTitle = await page.locator("h1").first().innerText();
+    expect(DEVANAGARI.test(englishTitle)).toBe(false);
+
+    await page.goto("/hi/products/wearable-art-pendant");
+    const hindiTitle = await page.locator("h1").first().innerText();
+    expect(DEVANAGARI.test(hindiTitle)).toBe(true);
+
+    // The structured data must agree with the visible heading, or the page is
+    // indexed under the wrong language.
+    const ld = JSON.parse(
+      await page.locator("#schema-product").innerText()
+    ) as { name?: string };
+    expect(ld.name).toBe(hindiTitle);
+  });
+});

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localeAlternates } from "@/lib/seo";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, SectionIntro, ArrowLink } from "@/components/ornaments";
 import { ButiField, PaperGrain } from "@/components/grounds";
@@ -8,7 +9,7 @@ export const metadata = {
   title: "Authenticity & provenance",
   description:
     "How a SnehaVrinda Kala work reaches you: made by hand in India, signed by the artist, documented before it is packed, and dispatched with a written record of what it is and where it came from.",
-  alternates: { canonical: "/authenticity" },
+  alternates: localeAlternates("/authenticity"),
 };
 
 // Reads testimonials from Postgres, so it must not be frozen at build time —

@@ -1,4 +1,5 @@
 import { medusa } from "@/lib/medusa";
+import { localeAlternates } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
@@ -11,7 +12,7 @@ export const metadata = {
   title: "Artists & Makers",
   description:
     "Meet the Indian artists and craft partners behind SnehaVrinda Kala — their traditions, techniques, and whether they are currently taking commissions.",
-  alternates: { canonical: "/artists" },
+  alternates: localeAlternates("/artists"),
 };
 
 export default async function ArtistsPage() {

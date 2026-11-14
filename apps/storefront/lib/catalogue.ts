@@ -1,6 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { medusa } from "@/lib/medusa";
 import { getPreferredCurrency } from "@/lib/currency";
+import { getLocale } from "next-intl/server";
+import { productTranslationsFor } from "@/lib/site-content";
 import { productSlug, isOpaqueHandle } from "@/lib/slug";
 
 /**
@@ -137,7 +139,7 @@ function liveToItem(product: any): CatalogueItem {
   };
 }
 
-async function loadCatalogueFor(currency: string): Promise<CatalogueItem[]> {
+async function loadCatalogueFor(currency: string, locale = "en"): Promise<CatalogueItem[]> {
   let live: CatalogueItem[] = [];
   try {
     // Prices are calculated per region, so the request has to name the region
@@ -153,20 +155,34 @@ async function loadCatalogueFor(currency: string): Promise<CatalogueItem[]> {
     console.error("Failed to load products from Medusa", err);
   }
 
+  // Swap in translated titles where one exists. English needs no lookup: the
+  // Medusa title is already the English title.
+  if (locale !== "en" && live.length > 0) {
+    const translations = await productTranslationsFor(locale);
+    if (translations.size > 0) {
+      live = live.map((item) => {
+        const translated = translations.get(item.handle);
+        return translated ? { ...item, title: translated.title } : item;
+      });
+    }
+  }
+
   return live;
 }
 
 /**
- * Cache one catalogue per currency.
+ * Cache one catalogue per currency **and locale**.
  *
  * The cache key includes the currency because the same product has a different
- * calculated price in each one. A single shared cache would serve whichever
- * currency happened to render first to everyone that followed.
+ * calculated price in each one, and it includes the locale because a translated
+ * title differs too. A key missing either would serve whichever variant
+ * happened to render first to everyone that followed — the Hindi shop page
+ * showing English titles, or rupee prices under a dollar label.
  */
-const cachedCatalogue = (currency: string) =>
+const cachedCatalogue = (currency: string, locale: string) =>
   unstable_cache(
-    () => loadCatalogueFor(currency),
-    ["catalogue", currency],
+    () => loadCatalogueFor(currency, locale),
+    ["catalogue", currency, locale],
     { revalidate: 60, tags: ["catalogue"] }
   )();
 
@@ -179,10 +195,11 @@ const cachedCatalogue = (currency: string) =>
  * whole site dynamic is not.
  */
 export async function listCatalogue(
-  currency?: string
+  currency?: string,
+  locale?: string
 ): Promise<CatalogueItem[]> {
   const code = currency ?? (await getPreferredCurrency());
-  return cachedCatalogue(code);
+  return cachedCatalogue(code, locale ?? (await localeFromRequest()));
 }
 
 /**
@@ -191,7 +208,10 @@ export async function listCatalogue(
  * `keys` may contain a taxonomy slug ("folk"), a Medusa handle ("folk-art") and
  * a display name; matching accepts any of them, plus the seed `artForm` value.
  */
-export async function listCatalogueFor(keys: string[]): Promise<CatalogueItem[]> {
+export async function listCatalogueFor(
+  keys: string[],
+  locale?: string
+): Promise<CatalogueItem[]> {
   // Resolve the request through the same alias map the items use. Without this
   // an item tagged "home-decor" could never be found by the collection name
   // "Home & Decorative Art", or vice versa.
@@ -203,7 +223,7 @@ export async function listCatalogueFor(keys: string[]): Promise<CatalogueItem[]>
   );
   if (wanted.size === 0) return [];
 
-  const items = await listCatalogue();
+  const items = await listCatalogue(undefined, locale);
   return items.filter((item) =>
     item.artForms.some((form) => form && wanted.has(form))
   );
@@ -268,4 +288,58 @@ export async function resolveMedusaHandle(readable: string): Promise<string> {
 /** Seed prices are authored in rupees; expose a helper for non-card displays. */
 export function rupeesFromMinorUnits(minor: number | null): number | null {
   return minor == null ? null : Math.round(minor / 100);
+}
+
+/**
+ * The locale implied by the request path.
+ *
+ * Deliberately *not* `getLocale()`. next-intl falls back to the NEXT_LOCALE
+ * cookie when the URL carries no prefix, so a visitor who once opened /hi saw
+ * Hindi product titles on the English /products/... URL. The path is the only
+ * thing that identifies the page, and it is what hreflang and the cache key
+ * must agree with, so it is what we read.
+ *
+ * Uses the `x-middleware-rewrite` header next-intl sets when it maps a clean
+ * path onto the `[locale]` route, so the answer reflects the request rather
+ * than the rewrite target. Falls back to the inbound `x-locale` header, then to
+ * English.
+ */
+async function localeFromRequest(): Promise<string> {
+  try {
+    const { headers } = await import("next/headers");
+    const store = await headers();
+
+    // next-intl rewrites `/shop` to `/en/shop`; the *original* path is what
+    // tells us whether the visitor asked for Hindi.
+    for (const key of ["x-locale", "x-pathname", "x-invoke-path"]) {
+      const value = store.get(key);
+      if (value && value.trim()) return value.trim();
+    }
+  } catch {
+    // Outside a request scope (build-time prerender): English is the default.
+  }
+  return "en";
+}
+
+/**
+ * The translated title for one product in the active locale.
+ *
+ * The product detail page fetches straight from Medusa rather than going
+ * through the cached catalogue, so it needs its own lookup. Returns the Medusa
+ * title when there is no translation, which is the correct behaviour for a
+ * product added since the last translation pass.
+ */
+export async function translatedProductTitle(
+  handle: string,
+  fallback: string | null | undefined
+): Promise<string> {
+  const title = fallback ?? "artwork";
+  try {
+    const locale = await localeFromRequest();
+    if (locale === "en") return title;
+    const translations = await productTranslationsFor(locale);
+    return translations.get(handle)?.title ?? title;
+  } catch {
+    return title;
+  }
 }

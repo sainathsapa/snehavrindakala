@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
@@ -77,7 +78,7 @@ export async function generateMetadata({
       return {
         title: post.title,
         description: post.excerpt ?? undefined,
-        alternates: { canonical: `/journal/${post.slug}` },
+        alternates: localeAlternates(`/journal/${post.slug}`),
         openGraph: {
           title: post.title,
           description: post.excerpt ?? undefined,
