@@ -57,6 +57,14 @@ export async function registerAction(formData: FormData): Promise<void> {
       first_name: firstName || undefined,
       last_name: lastName || undefined,
     });
+
+    // The token from the register route is identity-only: it proves the email
+    // exists but `/store/customers/me` rejects it with 401. Storing it as the
+    // session left every new account redirected straight back to the sign-in
+    // page — the account existed, but the buyer could never reach it.
+    // Signing in returns a proper customer session token.
+    const session = await medusa.loginCustomer(email, password);
+    token = session.token;
   } catch (error) {
     console.error("Registration failed", error);
     redirect("/account/register?error=exists");

@@ -194,16 +194,42 @@ export async function applyPromoCodeAction(
   try {
     await medusa.applyPromoCodes(cart.id, [code]);
   } catch (error) {
-    // Medusa's message is the useful part; fall back to ours only when it is
-    // not an Error (a network fault says nothing about the code itself).
-    const message =
-      error instanceof Error && error.message
-        ? error.message.replace(/^The promotion code /, "Code ").replace(/ is invalid$/, " is not valid.")
-        : "We could not apply that code. Please try again.";
-    return { ok: false, message };
+    return { ok: false, message: promoError(error, code) };
   }
 
   revalidatePath("/cart");
   revalidatePath("/checkout");
   return { ok: true, message: `Code ${code} applied.` };
+}
+
+/**
+ * Turn a Medusa rejection into something a buyer can act on.
+ *
+ * Medusa embeds the raw request in its message ("Medusa API request failed:
+ * 400 /store/carts/cart_.../promotions"). Showing that tells the customer
+ * nothing and exposes an internal id, so the useful sentence is extracted and
+ * anything unrecognised becomes a plain "not valid".
+ */
+function promoError(error: unknown, code: string): string {
+  const raw = error instanceof Error ? error.message : "";
+
+  // "The promotion code X is invalid" -> "Code X is not valid."
+  const invalid = raw.match(/promotion code\s+(\S+)\s+is invalid/i);
+  if (invalid) return `Code ${invalid[1].toUpperCase()} is not valid.`;
+
+  if (/minimum|minimum_quantity|min_item/i.test(raw)) {
+    return `Code ${code} needs a minimum order value.`;
+  }
+  if (/expired|date/i.test(raw)) {
+    return `Code ${code} has expired.`;
+  }
+  if (/already|usage|limit/i.test(raw)) {
+    return `Code ${code} has already been used.`;
+  }
+  if (/currency/i.test(raw)) {
+    return `Code ${code} does not apply in this currency.`;
+  }
+
+  // Never surface the raw request path or status code.
+  return `We could not apply ${code}. Please check it and try again.`;
 }
