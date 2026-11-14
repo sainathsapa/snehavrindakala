@@ -482,6 +482,27 @@ test.describe("Hindi", () => {
     expect(tags).toEqual(expect.arrayContaining(["en", "hi"]));
   });
 
+  test("a Hindi cookie does not hijack an English URL", async ({ page }) => {
+    // Regression. next-intl's localeDetection reads NEXT_LOCALE and the
+    // Accept-Language header, and with it on, visiting /hi once set a cookie
+    // that redirected every later bare URL to Hindi — /shop became /hi/shop
+    // and there was no way back to English without clearing cookies.
+    await page.context().addCookies([
+      { name: "NEXT_LOCALE", value: "hi", domain: "localhost", path: "/" },
+    ]);
+
+    for (const path of ["/", "/shop", "/faq"]) {
+      const response = await page.goto(path);
+      expect(response?.status()).toBe(200);
+      expect(new URL(page.url()).pathname).toBe(path);
+      expect(await page.locator("html").getAttribute("lang")).toBe("en");
+    }
+
+    // And the prefixed URL still speaks Hindi.
+    await page.goto("/hi/shop");
+    expect(await page.locator("html").getAttribute("lang")).toBe("hi");
+  });
+
   test("a product title matches the language of its URL", async ({ page }) => {
     // A fresh context so no NEXT_LOCALE cookie is carried in from another test.
     // With a `hi` cookie next-intl redirects `/products/...` to `/hi/...`,
