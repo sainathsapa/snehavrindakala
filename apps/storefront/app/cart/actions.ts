@@ -86,6 +86,11 @@ export async function saveCheckoutDetailsAction(
   const city = String(formData.get("city") || "").trim();
   const state = String(formData.get("state") || "").trim();
   const postalCode = String(formData.get("postal_code") || "").trim();
+  // Shipping is no longer India-only. The country drives both the Medusa address
+  // and which currencies are offered at checkout.
+  const countryCode = String(formData.get("country_code") || "in")
+    .trim()
+    .toLowerCase();
 
   if (
     !fullName ||
@@ -107,15 +112,55 @@ export async function saveCheckoutDetailsAction(
     city,
     province: state,
     postal_code: postalCode,
-    country_code: "in",
+    country_code: countryCode,
     phone,
   };
+
+  // Billing is often not the delivery address — an office card paying for a
+  // gift sent home, a company account, a relative's house. Copying the shipping
+  // address into billing declared the wrong country to the payment processor
+  // and to customs, so the two are now collected separately. The form leaves
+  // billing blank, and only fills it when the buyer says it differs.
+  const billingDiffers = String(formData.get("billing_differs") || "") === "on";
+  const billingName = String(formData.get("billing_name") || "").trim();
+  const billingAddress1 = String(formData.get("billing_address") || "").trim();
+  const billingCity = String(formData.get("billing_city") || "").trim();
+  const billingState = String(formData.get("billing_state") || "").trim();
+  const billingPostal = String(formData.get("billing_postal_code") || "").trim();
+  const billingCountry = String(formData.get("billing_country_code") || "")
+    .trim()
+    .toLowerCase();
+
+  let billingAddress = shippingAddress;
+  if (billingDiffers) {
+    if (
+      !billingName ||
+      !billingAddress1 ||
+      !billingCity ||
+      !billingState ||
+      !billingPostal ||
+      !billingCountry
+    ) {
+      redirect("/checkout?error=billing");
+    }
+    const [billingFirst, ...billingRest] = billingName.split(/\s+/);
+    billingAddress = {
+      first_name: billingFirst,
+      last_name: billingRest.join(" ") || billingFirst,
+      address_1: billingAddress1,
+      city: billingCity,
+      province: billingState,
+      postal_code: billingPostal,
+      country_code: billingCountry,
+      phone,
+    };
+  }
 
   try {
     await medusa.updateCart(cart.id, {
       email,
       shipping_address: shippingAddress,
-      billing_address: shippingAddress,
+      billing_address: billingAddress,
     });
   } catch (error) {
     console.error("Failed to save checkout details", error);

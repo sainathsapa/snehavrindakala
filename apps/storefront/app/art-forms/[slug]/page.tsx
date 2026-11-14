@@ -219,6 +219,7 @@ export default async function ArtFormPage({ params }: PageProps) {
                   title={item.title}
                   artist={item.artist}
                   price={item.price}
+                  currency={item.currency}
                   stockType={item.stockType}
                   image={item.image}
                   isNew={item.isNew}

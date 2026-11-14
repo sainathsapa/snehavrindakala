@@ -10,6 +10,7 @@ import {
   PaisleyBand,
 } from "@/components/indian-motifs";
 import { GLOSSARY } from "@/lib/art-reference";
+import { PaymentMarks } from "@/components/payment-marks";
 
 /**
  * The footer is the facade of the house.
@@ -43,7 +44,6 @@ import { GLOSSARY } from "@/lib/art-reference";
 const LINK_GROUPS = [
   {
     heading: "Look",
-    sub: "The work",
     links: [
       { label: "All works", href: "/shop" },
       { label: "Art forms", href: "/art-forms" },
@@ -54,7 +54,6 @@ const LINK_GROUPS = [
   },
   {
     heading: "Make",
-    sub: "The commission",
     links: [
       { label: "Request a piece", href: "/custom-art" },
       { label: "How it works", href: "/custom-art#process" },
@@ -63,12 +62,19 @@ const LINK_GROUPS = [
     ],
   },
   {
-    heading: "Care",
-    sub: "The house",
+    heading: "Help",
     links: [
-      { label: "Authenticity", href: "/authenticity" },
+      { label: "FAQ & support", href: "/faq" },
+      { label: "Track an order", href: "/account" },
       { label: "Shipping", href: "/policies/shipping" },
       { label: "Returns", href: "/policies/returns" },
+    ],
+  },
+  {
+    heading: "Care",
+    links: [
+      { label: "Authenticity", href: "/authenticity" },
+      { label: "Disclaimer", href: "/disclaimer" },
       { label: "Privacy", href: "/policies/privacy" },
       { label: "Terms", href: "/policies/terms" },
     ],
@@ -81,11 +87,17 @@ const WORD_OF_THE_HOUSE = GLOSSARY[0];
 export function Footer({
   platformMode = false,
   traditions = [],
+  socials = [],
 }: {
   /** The Artists directory only exists in platform mode. */
   platformMode?: boolean;
   /** The six art forms, shown as a closing strip of plates. */
   traditions?: { name: string; slug: string; image: string }[];
+  /**
+   * Configured social profiles. Empty unless real URLs are set in the
+   * environment, so the footer never shows an icon that goes nowhere.
+   */
+  socials?: { id: string; label: string; href: string }[];
 }) {
   const pathname = usePathname();
 
@@ -284,40 +296,51 @@ export function Footer({
               window a haveli uses to look outward. The arch is drawn once per
               column, behind the list, and the heading sits in its cusp. */}
           <nav aria-label="Footer" className="relative">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
               {LINK_GROUPS.map((group) => {
                 const links = group.links.filter(
                   (link) => platformMode || !("platformOnly" in link)
                 );
                 return (
-                  <div key={group.heading} className="relative pt-8">
-                    {/* A cut-stone ledge above each column.
+                  <div key={group.heading} className="relative pt-11">
+                    {/* A jharokha, not a ledge.
 
-                        This used to be the ornament image squeezed into a
-                        206×20 box. Next serves that at w=256, so a 1400px dense
-                        frieze was being resampled down to about a fifth of its
-                        width: the lotus and vine became an indistinct gold
-                        smudge, which is what made the whole footer read as
-                        "simple geometric shapes". A repeating motif cannot
-                        survive that, so the ledge is drawn at its real size in
-                        CSS instead — a gold rule with a diamond at its centre
-                        and a hairline below, which is what a carved ledge
-                        actually looks like in section. */}
+                        Each column now sits inside a real cusped arch — the
+                        projecting window a haveli uses to look outward — with
+                        a small lotus keystone at the apex. This is drawn in
+                        CSS at whatever size the column happens to be, so the
+                        motif never gets resampled into a smudge the way a
+                        bitmap frieze did when squeezed into a 20px strip. */}
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-1.5"
+                      className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-start"
                     >
-                      <span className="h-px flex-1 bg-gradient-to-r from-transparent to-haldi/45" />
-                      <span className="h-1.5 w-1.5 rotate-45 border border-haldi/60" />
-                      <span className="h-px flex-1 bg-gradient-to-l from-transparent to-haldi/45" />
+                      <svg
+                        viewBox="0 0 120 34"
+                        preserveAspectRatio="none"
+                        className="h-8 w-full max-w-[120px] text-haldi/45"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        vectorEffect="non-scaling-stroke"
+                      >
+                        {/* The arch: two shoulders rising to a pointed cusp. */}
+                        <path d="M2 33 V14 Q2 3 28 3 Q46 3 54 8 Q60 11 60 2 Q60 11 66 8 Q74 3 92 3 Q118 3 118 14 V33" />
+                        {/* A pendant bead hanging in the cusp. */}
+                        <circle cx="60" cy="14" r="2" strokeWidth="1" />
+                        <path d="M60 16 V21" strokeWidth="0.8" />
+                      </svg>
+                      <span className="-mt-1 h-px w-10 bg-haldi/35" />
                     </span>
                     <div className="relative px-1">
                       <h3 className="font-sans text-[9px] font-semibold uppercase tracking-[0.26em] text-haldi">
                         {group.heading}
                       </h3>
-                      <p className="mt-1 font-serif text-[11px] italic leading-snug text-rang-paper/40">
-                        {group.sub}
-                      </p>
+                      {/* The italic sub-line that used to sit here repeated the
+                          heading back at the reader — "Look / The work",
+                          "Help / Questions". Two labels for one column is
+                          noise, so the heading now stands alone and the
+                          carved arch above it does the decorating. */}
                       <ul className="mt-3.5 space-y-2.5">
                         {links.map((link) => (
                           <li key={link.label}>
@@ -353,8 +376,34 @@ export function Footer({
                   </a>
                 </p>
                 <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-rang-paper/40">
-                  Shipping across India
+                  Shipping worldwide
                 </p>
+              </div>
+
+              {/* Payments and socials share this plinth.
+
+                  The payment marks say which methods the Razorpay account
+                  actually accepts, so the row is a statement of fact rather
+                  than a trust badge bought by the yard. Socials only appear
+                  once a real profile URL is configured. */}
+              <div className="mt-5 flex flex-col gap-5 border-t border-rang-paper/12 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <PaymentMarks />
+                {socials.length > 0 && (
+                  <ul aria-label="Social" className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    {socials.map((social) => (
+                      <li key={social.id}>
+                        <a
+                          href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer me"
+                          className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper/55 transition-colors hover:text-haldi"
+                        >
+                          {social.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </nav>

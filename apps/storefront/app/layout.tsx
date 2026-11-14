@@ -3,6 +3,8 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { SiteInteractions } from "@/components/site-interactions";
 import { getPlatformModeFromEnv } from "@/lib/settings";
+import { getPreferredCurrency } from "@/lib/currency";
+import { socialLinks, socialUrls } from "@/lib/social";
 import { artFormSlugs } from "@/lib/slugs";
 import { listArtForms } from "@/lib/site-content";
 
@@ -142,6 +144,9 @@ export default async function RootLayout({
     }));
   }
 
+  const activeCurrency = await getPreferredCurrency();
+  const socials = socialLinks();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
@@ -149,11 +154,13 @@ export default async function RootLayout({
         <Header
           platformMode={getPlatformModeFromEnv()}
           artForms={navArtForms}
+          currency={activeCurrency}
         />
         {children}
         <Footer
           platformMode={getPlatformModeFromEnv() === "platform"}
           traditions={navTraditions}
+          socials={socials}
         />
         <script
           id="schema-organization"
@@ -207,7 +214,7 @@ export default async function RootLayout({
               // The maker, kept distinct from the organisation so search
               // engines can attach the work to a person as well as a shop.
               founder: { "@type": "Person", name: "Sneha Sainath Sapa" },
-              sameAs: [],
+              sameAs: socialUrls(),
             }),
           }}
         />

@@ -223,6 +223,7 @@ export default async function ArtistProfilePage({
                   title={item.title}
                   artist={item.artist}
                   price={item.price}
+                  currency={item.currency}
                   stockType={item.stockType}
                   image={item.image}
                   isNew={item.isNew}

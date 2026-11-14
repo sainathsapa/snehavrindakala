@@ -8,6 +8,7 @@ interface ProductCardProps {
   title: string;
   artist: string;
   price: number | null;
+  currency?: string;
   stockType: string;
   image: string;
   isNew?: boolean;
@@ -40,6 +41,7 @@ export function ProductCard({
   title,
   artist,
   price,
+  currency = "inr",
   stockType,
   image,
   isNew = false,
@@ -119,7 +121,7 @@ export function ProductCard({
           </p>
           <p className="mt-2 flex items-baseline justify-between gap-3 font-sans text-xs">
             <span className="text-muted-ink">{availability}</span>
-            <span className="font-medium text-deep-ink">{formatPrice(price)}</span>
+            <span className="font-medium text-deep-ink">{formatPrice(price, currency.toUpperCase())}</span>
           </p>
         </div>
       </Link>

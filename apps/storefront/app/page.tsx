@@ -486,7 +486,7 @@ export default async function Home() {
                     {product.artist}
                   </p>
                   <p className="mt-2 font-sans text-xs text-deep-ink">
-                    {formatPrice(product.price)}
+                    {formatPrice(product.price, product.currency.toUpperCase())}
                   </p>
                 </div>
               </Link>

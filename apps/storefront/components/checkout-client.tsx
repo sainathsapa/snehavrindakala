@@ -246,7 +246,20 @@ export function CheckoutClient({
         {tax && (
           <p className="mt-4 text-xs text-muted-ink font-sans">
             Includes {taxLabel(tax)} ({formatPrice(tax.total_tax, currency)}).
-            Prices are GST-inclusive.
+            {currency.toUpperCase() === "INR"
+              ? " Prices are GST-inclusive."
+              : ""}
+          </p>
+        )}
+
+        {/* Duties cannot be calculated reliably per destination, so they are
+            disclosed rather than guessed. An estimate that turns out wrong on
+            delivery is a worse experience than a clear warning up front. */}
+        {currency.toUpperCase() !== "INR" && (
+          <p className="mt-2 text-xs text-muted-ink font-sans">
+            Shipping internationally. Import duties or local taxes may be
+            charged by your customs authority on delivery, and are not included
+            in this total.
           </p>
         )}
 

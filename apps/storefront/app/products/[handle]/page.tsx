@@ -15,6 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
 import { getPlatformModeFromEnv } from "@/lib/settings";
+import { getPreferredCurrency } from "@/lib/currency";
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
 // URLs; a relative one silently invalidates the graph.
@@ -124,10 +125,15 @@ export default async function ProductDetailPage({
   // rather than the one Medusa stores. Resolve it before querying, or every
   // product with a short opaque handle 404s from its own listing.
   const medusaHandle = await resolveMedusaHandle(handle);
+  // The detail page fetches the product itself, so it has to name the visitor's
+  // region too — otherwise the shop lists pounds and the product page shows
+  // rupees, which reads as a pricing bug.
+  const activeCurrency = await getPreferredCurrency();
+  const regionId = await medusa.regionIdForCurrency(activeCurrency);
 
   let product: Awaited<ReturnType<typeof medusa.getProduct>>["product"];
   try {
-    const { product: prod } = await medusa.getProduct(medusaHandle);
+    const { product: prod } = await medusa.getProduct(medusaHandle, regionId);
     product = prod;
   } catch {
     // Not in Medusa. The shop no longer renders a hardcoded sample catalogue, so

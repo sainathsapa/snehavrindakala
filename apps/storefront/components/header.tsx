@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 import { Icon } from "@snehavrinda-kala/ui";
 import { CartCount } from "./cart-count";
 import { KalamBorder } from "./ornaments";
@@ -46,8 +47,11 @@ const typeIcons: Record<string, string> = {
 export function Header({
   platformMode = "single-brand",
   artForms = [],
+  currency = "inr",
 }: {
   platformMode?: "platform" | "single-brand";
+  /** Active currency, so the switcher shows what is actually being priced. */
+  currency?: string;
   /** Art traditions, rendered as a small gallery inside the Discover menu. */
   artForms?: {
     label: string;
@@ -434,6 +438,8 @@ export function Header({
                 </div>
               )}
             </div>
+
+            <CurrencySwitcher current={currency} />
 
             <Link
               href="/account"

@@ -5,6 +5,10 @@ import { CheckoutClient } from "@/components/checkout-client";
 import { taxForAmount } from "@/lib/tax-server";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import Link from "next/link";
+import {
+  getPreferredCurrency,
+  SHIPPING_COUNTRIES,
+} from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -48,12 +52,13 @@ export default async function CheckoutPage({
   }
 
   const address = cart?.shipping_address ?? cart?.billing_address ?? null;
+  const activeCurrency = await getPreferredCurrency();
   const deliverySaved = Boolean(cart?.email && address?.postal_code);
 
   const customerState = address?.province || undefined;
   const customerPincode = address?.postal_code || undefined;
   const subtotal = Number(cart?.total ?? 0);
-  const currency = cart?.currency_code || "inr";
+  const currency = cart?.currency_code || activeCurrency;
   const tax = subtotal > 0 ? taxForAmount(subtotal, customerState) : null;
 
   // Quote couriers only once we know where it is going.
@@ -98,7 +103,9 @@ export default async function CheckoutPage({
         >
           {error === "save"
             ? "We could not save your details. Please check the address and try again."
-            : "Please fill in all required delivery details."}
+            : error === "billing"
+              ? "Please complete the billing address, or untick \"Use a different billing address\"."
+              : "Please fill in all required delivery details."}
         </div>
       )}
       <form action={saveCheckoutDetailsAction} className="space-y-4">
@@ -209,18 +216,48 @@ export default async function CheckoutPage({
           </div>
           <div>
             <label
+              htmlFor="country_code"
+              className="block text-sm font-medium text-deep-ink mb-1"
+            >
+              Country
+            </label>
+            <select
+              id="country_code"
+              name="country_code"
+              required
+              autoComplete="country"
+              defaultValue={
+                (address as { country_code?: string } | null)?.country_code?.toLowerCase() ||
+                // Default to a country that matches the chosen currency, so a
+                // visitor browsing in pounds is not asked to enter an Indian
+                // address. The operator precedence here matters: the previous
+                // version left the `|| "in"` outside the ternary, so every
+                // currency fell back to India.
+                SHIPPING_COUNTRIES.find((c) => c.currency === activeCurrency)
+                  ?.code ||
+                "in"
+              }
+              className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+            >
+              {SHIPPING_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
               htmlFor="postal_code"
               className="block text-sm font-medium text-deep-ink mb-1"
             >
-              PIN code
+              Postal / PIN code
             </label>
             <input
               id="postal_code"
               name="postal_code"
               type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              title="6-digit PIN code"
+              inputMode="text"
               autoComplete="postal-code"
               required
               defaultValue={address?.postal_code || undefined}
@@ -228,6 +265,115 @@ export default async function CheckoutPage({
             />
           </div>
         </div>
+
+        {/* Billing separate from delivery.
+
+            Collapsed by default: most buyers pay from the same address they
+            ship to, and showing six extra fields to everyone adds friction for
+            the common case. The checkbox expands them, and the server rejects a
+            half-filled billing address rather than guessing. */}
+        <details className="rounded-md border border-sand-border bg-surface/60 px-4 py-3">
+          <summary className="cursor-pointer font-sans text-sm font-medium text-deep-ink">
+            Billing address differs from delivery address
+          </summary>
+          <label className="mt-3 flex items-center gap-2 font-sans text-sm text-muted-ink">
+            <input
+              type="checkbox"
+              name="billing_differs"
+              className="h-4 w-4 cursor-pointer accent-sindoor"
+            />
+            Use a different billing address
+          </label>
+
+          <div className="mt-4 space-y-4">
+            <div>
+              <label
+                htmlFor="billing_name"
+                className="mb-1 block text-sm font-medium text-deep-ink"
+              >
+                Name on billing address
+              </label>
+              <input
+                id="billing_name"
+                name="billing_name"
+                type="text"
+                autoComplete="off"
+                className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="billing_address"
+                className="mb-1 block text-sm font-medium text-deep-ink"
+              >
+                Billing address
+              </label>
+              <textarea
+                id="billing_address"
+                name="billing_address"
+                rows={2}
+                autoComplete="off"
+                className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div>
+                <label htmlFor="billing_city" className="mb-1 block text-sm font-medium text-deep-ink">
+                  City
+                </label>
+                <input
+                  id="billing_city"
+                  name="billing_city"
+                  type="text"
+                  autoComplete="off"
+                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                />
+              </div>
+              <div>
+                <label htmlFor="billing_state" className="mb-1 block text-sm font-medium text-deep-ink">
+                  State
+                </label>
+                <input
+                  id="billing_state"
+                  name="billing_state"
+                  type="text"
+                  autoComplete="off"
+                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                />
+              </div>
+              <div>
+                <label htmlFor="billing_postal_code" className="mb-1 block text-sm font-medium text-deep-ink">
+                  Postal code
+                </label>
+                <input
+                  id="billing_postal_code"
+                  name="billing_postal_code"
+                  type="text"
+                  autoComplete="off"
+                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                />
+              </div>
+              <div>
+                <label htmlFor="billing_country_code" className="mb-1 block text-sm font-medium text-deep-ink">
+                  Country
+                </label>
+                <select
+                  id="billing_country_code"
+                  name="billing_country_code"
+                  autoComplete="off"
+                  className="w-full rounded-md border border-sand-border bg-surface px-2 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                >
+                  {SHIPPING_COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </details>
+
         <button
           type="submit"
           className={`w-full py-3 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 ${

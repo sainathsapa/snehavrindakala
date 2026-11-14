@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { medusa } from "@/lib/medusa";
+import { getPreferredCurrency } from "@/lib/currency";
 import { productSlug, isOpaqueHandle } from "@/lib/slug";
 
 /**
@@ -17,6 +18,8 @@ export interface CatalogueItem {
   title: string;
   artist: string;
   price: number | null;
+  /** ISO currency the price is expressed in, so it formats correctly. */
+  currency: string;
   stockType: string;
   image: string;
   isNew: boolean;
@@ -117,6 +120,10 @@ function liveToItem(product: any): CatalogueItem {
       (product.metadata?.artist as string | undefined) ??
       "Sneha Sainath Sapa",
     price,
+    currency:
+      variant?.calculated_price?.currency_code ||
+      variant?.prices?.[0]?.currency_code ||
+      "inr",
     stockType: STOCK_TYPES.has(stockType) ? stockType : "ready_to_ship",
     image: product.thumbnail || product.images?.[0]?.url || "/images/products/madhubani-painting.jpg",
     isNew: Boolean(product.metadata?.is_new),
@@ -130,10 +137,14 @@ function liveToItem(product: any): CatalogueItem {
   };
 }
 
-async function loadCatalogue(): Promise<CatalogueItem[]> {
+async function loadCatalogueFor(currency: string): Promise<CatalogueItem[]> {
   let live: CatalogueItem[] = [];
   try {
-    const { products } = await medusa.listProducts({ limit: 100 });
+    // Prices are calculated per region, so the request has to name the region
+    // matching the visitor's currency. Without it every price comes back in the
+    // store default and the currency switcher changes nothing.
+    const regionId = await medusa.regionIdForCurrency(currency);
+    const { products } = await medusa.listProducts({ limit: 100, regionId });
     live = (products ?? []).map(liveToItem);
   } catch (err) {
     // An empty shop is the honest result when the backend is unreachable. The
@@ -146,17 +157,33 @@ async function loadCatalogue(): Promise<CatalogueItem[]> {
 }
 
 /**
- * Every catalogue item, straight from Medusa.
+ * Cache one catalogue per currency.
+ *
+ * The cache key includes the currency because the same product has a different
+ * calculated price in each one. A single shared cache would serve whichever
+ * currency happened to render first to everyone that followed.
+ */
+const cachedCatalogue = (currency: string) =>
+  unstable_cache(
+    () => loadCatalogueFor(currency),
+    ["catalogue", currency],
+    { revalidate: 60, tags: ["catalogue"] }
+  )();
+
+/**
+ * Every catalogue item, straight from Medusa, priced in the visitor's currency.
  *
  * Cached for a short window: the root layout builds the nav menus from this on
  * every request, and an uncached Medusa call there would make every page in the
  * app dynamic. A minute of staleness on a nav menu is invisible; making the
  * whole site dynamic is not.
  */
-export const listCatalogue = unstable_cache(loadCatalogue, ["catalogue"], {
-  revalidate: 60,
-  tags: ["catalogue"],
-});
+export async function listCatalogue(
+  currency?: string
+): Promise<CatalogueItem[]> {
+  const code = currency ?? (await getPreferredCurrency());
+  return cachedCatalogue(code);
+}
 
 /**
  * Catalogue items belonging to one art form.
@@ -202,9 +229,10 @@ export async function listCatalogueCollections(): Promise<
  * cards render from the seed catalogue, so their links must resolve too.
  */
 export async function findCatalogueItem(
-  handle: string
+  handle: string,
+  currency?: string
 ): Promise<CatalogueItem | null> {
-  const items = await listCatalogue();
+  const items = await listCatalogue(currency);
   return items.find((item) => item.handle === handle) ?? null;
 }
 

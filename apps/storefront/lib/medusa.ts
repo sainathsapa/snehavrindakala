@@ -21,6 +21,9 @@ const DEFAULT_CURRENCY =
 
 const REGION_ID = process.env.MEDUSA_REGION_ID || undefined;
 
+/** Currency code -> Medusa region id, filled on first lookup. */
+const regionCache = new Map<string, string>();
+
 /**
  * The publishable key may be linked to more than one sales channel, in which
  * case Medusa refuses to create a cart unless we name the channel explicitly.
@@ -228,12 +231,14 @@ class MedusaClient {
     q?: string;
     handle?: string;
     order?: string;
+    regionId?: string;
   }): string {
     const searchParams = new URLSearchParams();
     searchParams.set("limit", String(params.limit ?? 50));
     searchParams.set("offset", String(params.offset ?? 0));
     searchParams.set("order", params.order ?? "-created_at");
-    if (REGION_ID) searchParams.set("region_id", REGION_ID);
+    const region = params.regionId || REGION_ID;
+    if (region) searchParams.set("region_id", region);
     // Store API hides categories by default; request them so product cards,
     // breadcrumbs, and category filters can show real catalog data.
     searchParams.set("fields", "*categories,*tags");
@@ -252,6 +257,9 @@ class MedusaClient {
     category?: string;
     q?: string;
     handle?: string;
+    order?: string;
+    /** Region whose currency the returned prices are calculated in. */
+    regionId?: string;
   }): Promise<{ products: MedusaProduct[]; count: number }> {
     const data = await this.request<{
       products: MedusaProduct[];
@@ -279,8 +287,11 @@ class MedusaClient {
     };
   }
 
-  async getProduct(handle: string): Promise<{ product: MedusaProduct }> {
-    const { products } = await this.listProducts({ handle, limit: 1 });
+  async getProduct(
+    handle: string,
+    regionId?: string
+  ): Promise<{ product: MedusaProduct }> {
+    const { products } = await this.listProducts({ handle, limit: 1, regionId });
     const product = products[0];
     if (!product) {
       throw new MedusaApiError(
@@ -475,6 +486,32 @@ class MedusaClient {
       );
     }
     return region.id;
+  }
+
+  /**
+   * The Medusa region id for a currency, memoised for the process.
+   *
+   * Prices are calculated per region, so choosing a currency means choosing a
+   * region. Regions rarely change, so caching the lookup avoids a backend round
+   * trip on every render.
+   */
+  async regionIdForCurrency(code: string): Promise<string | undefined> {
+    const wanted = String(code || "").toLowerCase();
+    if (!wanted) return undefined;
+    if (wanted === DEFAULT_CURRENCY && REGION_ID) return REGION_ID;
+    if (regionCache.has(wanted)) return regionCache.get(wanted);
+
+    try {
+      const { regions } = await this.listRegions();
+      const match = (regions ?? []).find(
+        (r) => String(r.currency_code || "").toLowerCase() === wanted
+      );
+      if (!match) return undefined;
+      regionCache.set(wanted, match.id);
+      return match.id;
+    } catch {
+      return undefined;
+    }
   }
 
   // Orders
