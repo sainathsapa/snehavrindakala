@@ -505,5 +505,64 @@
   },
   "learn": {
     "contents": "In this reference"
+  },
+  "home": {
+    "lede": "Every piece here was made by a hand that learned the form from someone. We work with makers who have inherited their tradition and are passing it on.",
+    "onTheHand": "On the hand",
+    "machineCan": "A machine can repeat a shape a million times.",
+    "machineCannot": "What it cannot do is decide, on a Tuesday afternoon, that the border needs one more fish — and then paint it.",
+    "craftNote": "Every work here was made by one person, in one place, over time that no one was billing for. We keep the maker visible because that is the entire difference between an artwork and a product.",
+    "learnTraditions": "Learn the traditions",
+    "readStory": "Read our story",
+    "kolam": "Drawn at the door before sunrise, a kolam welcomes whoever arrives. Consider this one drawn for you.",
+    "waysEyebrow": "Ways in",
+    "artForms": "Art forms",
+    "shopByArtForm": "Shop by art form",
+    "artFormsIntro": "Madhubani, Warli, Pattachitra, Gond and Kalamkari — original paintings and handmade pieces, each with its maker named.",
+    "browse": "Browse",
+    "indianArt": "Indian art",
+    "theStory": "The story",
+    "exploreAllForms": "Explore All Art Forms",
+    "selectedWorks": "Selected works",
+    "fromStudio": "From the studio",
+    "seeFullCollection": "See the full collection",
+    "artistInFocus": "Artist in focus",
+    "artistBody": "Madhubani is painted with a nib, a twig and a fingertip. A single panel can take a month, and the border is often planned before the centre.",
+    "artistBody2": "We work with makers who have inherited their form and are teaching it on. Every work here carries the name of the person who made it.",
+    "meetArtists": "Meet the artists",
+    "exploreTraditions": "Explore the traditions",
+    "requestPiece": "Request a piece",
+    "explore": "Explore",
+    "commission": "Commission",
+    "customTitle": "Custom Art Requests",
+    "customBody": "Have an idea? Let's create it together — portraits, paintings, décor, or something that does not exist yet.",
+    "letsCreate": "Let's Create",
+    "ourStory": "Our Story",
+    "artOfIndia": "The Art of India",
+    "artOfIndiaBody": "Every tradition here began with a maker, a material and a reason. We work with artists across India to keep those reasons visible.",
+    "knowMore": "Know More",
+    "processEyebrow": "The process",
+    "processTitle": "How a work gets made",
+    "processBody": "Not a checkout. A conversation, a quote, a proof, and then the weeks it actually takes.",
+    "continueJourney": "Continue the journey",
+    "howWeStand": "How we stand behind a piece",
+    "browseCollection": "Browse the collection",
+    "routes": {
+      "learn": {
+        "eyebrow": "Learn",
+        "title": "Understand what you are buying",
+        "copy": "What the techniques are, which materials are used, and how each tradition began."
+      },
+      "shop": {
+        "eyebrow": "Shop",
+        "title": "See what is available now",
+        "copy": "Original paintings and handmade pieces, with the maker named on every listing."
+      },
+      "journal": {
+        "eyebrow": "Journal",
+        "title": "Read the journal",
+        "copy": "Notes on pigment, process and the story behind each piece."
+      }
+    }
   }
 }

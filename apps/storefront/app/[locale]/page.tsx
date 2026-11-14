@@ -39,6 +39,7 @@ import {
   ChapterOpener,
 } from "@/components/editorial";
 import { JaaliField, JaaliScreen, PaperGrain, GoldVineBand } from "@/components/grounds";
+import { getTranslations } from "next-intl/server";
 import { listCatalogue } from "@/lib/catalogue";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { formatPrice } from "@/lib/medusa";
@@ -66,6 +67,7 @@ const TRADITIONS = [
 ];
 
 export default async function Home() {
+  const t = await getTranslations("home");
   // Everything curated lives in Postgres and is edited at /admin/content.
   const [slides, artForms, categories, catalogue, testimonials] =
     await Promise.all([
@@ -160,7 +162,7 @@ export default async function Home() {
               </span>
               <span className="h-px w-8 bg-haldi/30" aria-hidden="true" />
               <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-rang-paper/40">
-                On the hand
+                {t("onTheHand")}
               </span>
             </div>
             {/* The words rise into place one at a time, the way a line of
@@ -168,30 +170,27 @@ export default async function Home() {
             <WordRise
               as="p"
               className="mt-6 font-serif text-[28px] font-medium leading-[1.35] text-rang-paper sm:text-[40px] lg:text-[48px]"
-              text="A machine can repeat a shape a million times."
+              text={t("machineCan")}
             />
             <p className="mt-3 font-serif text-[28px] font-medium leading-[1.35] text-rang-paper/55 sm:text-[40px] lg:text-[48px]">
-              What it cannot do is decide, on a Tuesday afternoon, that the
-              border needs one more fish — and then paint it.
+              {t("machineCannot")}
             </p>
             <p className="mt-8 max-w-xl font-sans text-base leading-[1.8] text-rang-paper/70">
-              Every work here was made by one person, in one place, over time
-              that no one was billing for. We keep the maker visible because
-              that is the entire difference between an artwork and a product.
+              {t("craftNote")}
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 href="/art-forms"
                 className="inline-flex items-center gap-2 rounded-full bg-rang-paper px-6 py-3 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-white"
               >
-                Learn the traditions
+                {t("learnTraditions")}
                 <span aria-hidden="true">→</span>
               </Link>
               <Link
                 href="/about"
                 className="inline-flex items-center gap-2 rounded-full border border-rang-paper/40 px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:border-haldi hover:text-haldi"
               >
-                Read our story
+                {t("readStory")}
               </Link>
             </div>
           </Reveal>
@@ -217,8 +216,7 @@ export default async function Home() {
         </div>
         <span className="h-px w-24 bg-sand-border" aria-hidden="true" />
         <p className="max-w-md px-6 text-center font-serif text-sm italic leading-relaxed text-muted-ink">
-          Drawn at the door before sunrise, a kolam welcomes whoever arrives.
-          Consider this one drawn for you.
+          {t("kolam")}
         </p>
       </section>
 
@@ -260,17 +258,16 @@ export default async function Home() {
               />
               <div className="relative">
                 <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-haldi">
-                  Art forms
+                  {t("artForms")}
                 </p>
                 <h3 className="mt-3 font-serif text-3xl font-semibold leading-[1.1] text-rang-paper sm:text-[42px]">
-                  Shop by art form
+                  {t("shopByArtForm")}
                 </h3>
                 <p className="mt-3 max-w-md font-sans text-sm leading-relaxed text-rang-paper/75">
-                  Madhubani, Warli, Pattachitra, Gond and Kalamkari — original
-                  paintings and handmade pieces from across India.
+                  {t("artFormsIntro")}
                 </p>
                 <span className="mt-5 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-haldi">
-                  Browse
+                  {t("browse")}
                   <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
                     →
                   </span>
@@ -283,21 +280,21 @@ export default async function Home() {
               {[
                 {
                   href: "/learn",
-                  eyebrow: "Learn",
-                  title: "Understand what you are buying",
-                  copy: "What the techniques are, which materials are used, and how each tradition began.",
+                  eyebrow: t("routes.learn.eyebrow"),
+                  title: t("routes.learn.title"),
+                  copy: t("routes.learn.copy"),
                 },
                 {
                   href: "/shop",
-                  eyebrow: "Shop",
-                  title: "See what is available now",
-                  copy: "Original paintings and handmade pieces, with the maker named on every listing.",
+                  eyebrow: t("routes.shop.eyebrow"),
+                  title: t("routes.shop.title"),
+                  copy: t("routes.shop.copy"),
                 },
                 {
                   href: "/journal",
-                  eyebrow: "Journal",
-                  title: "Read the journal",
-                  copy: "Notes on pigment, process and the story behind each piece.",
+                  eyebrow: t("routes.journal.eyebrow"),
+                  title: t("routes.journal.title"),
+                  copy: t("routes.journal.copy"),
                 },
               ].map((route) => (
                 <Link
@@ -387,7 +384,7 @@ export default async function Home() {
                 ))}
               </div>
               <ArrowLink href="/art-forms" className="mt-8">
-                Explore All Art Forms
+                {t("exploreAllForms")}
               </ArrowLink>
             </div>
           </div>
@@ -436,13 +433,13 @@ export default async function Home() {
           <div className="flex flex-wrap items-end justify-between gap-6 border-b border-sand-border/60 pb-6">
             <div>
               <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
-                Selected works
+                {t("selectedWorks")}
               </p>
               <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-deep-ink sm:text-[42px]">
-                From the studio
+                {t("fromStudio")}
               </h2>
             </div>
-            <ArrowLink href="/shop">See the full collection</ArrowLink>
+            <ArrowLink href="/shop">{t("seeFullCollection")}</ArrowLink>
           </div>
 
           <div className="mt-12 grid gap-x-8 gap-y-12 lg:grid-cols-[1.4fr_1fr_1fr]">
@@ -515,20 +512,20 @@ export default async function Home() {
 
           <div className="max-w-xl">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
-              Artist in focus
+              {t("artistInFocus")}
             </p>
             <h2 className="mt-3 font-serif text-2xl font-semibold leading-snug text-deep-ink sm:text-3xl">
               &ldquo;My grandmother never signed her work. I sign mine, and I
               write down what she taught me.&rdquo;
             </h2>
             <p className="mt-5 font-sans text-small leading-relaxed text-muted-ink">
-              Madhubani is painted with a nib, a twig and a fingertip. A single
+              {t("artistBody")}{" "}
               panel can take a fortnight, and the border you think is decoration
               is often a genealogy — the fish for fertility, the bamboo for
               endurance, the parrot for the messenger.
             </p>
             <p className="mt-4 font-sans text-small leading-relaxed text-muted-ink">
-              We work with makers who have inherited their form and are teaching
+              {t("artistBody2")}{" "}
               it on. Every work on this site names the hand that made it.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -537,7 +534,7 @@ export default async function Home() {
                   href="/artists"
                   className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
                 >
-                  Meet the artists
+                  {t("meetArtists")}
                   <span aria-hidden="true">→</span>
                 </Link>
               ) : (
@@ -547,7 +544,7 @@ export default async function Home() {
                   href="/art-forms"
                   className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
                 >
-                  Explore the traditions
+                  {t("exploreTraditions")}
                   <span aria-hidden="true">→</span>
                 </Link>
               )}
@@ -555,7 +552,7 @@ export default async function Home() {
                 href="/custom-art"
                 className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
               >
-                Request a piece
+                {t("requestPiece")}
               </Link>
             </div>
           </div>
@@ -637,17 +634,17 @@ export default async function Home() {
                   Commission
                 </p>
                 <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight text-rang-paper sm:text-[40px]">
-                  Custom Art Requests
+                  {t("customTitle")}
                 </h2>
                 <p className="mt-3 max-w-md font-sans text-small leading-relaxed text-rang-paper/80">
-                  Have an idea? Let&apos;s create it together — portraits,
+                  {t("customBody")}{" "}
                   paintings, décor and event artwork made to order.
                 </p>
                 <Link
                   href="/custom-art"
                   className="mt-7 inline-flex items-center gap-2 rounded-full bg-rang-paper px-6 py-3 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-white"
                 >
-                  Let&apos;s Create
+                  {t("letsCreate")}
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -699,10 +696,10 @@ export default async function Home() {
                   Our Story
                 </p>
                 <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight text-rang-paper sm:text-4xl">
-                  The Art of India
+                  {t("artOfIndia")}
                 </h2>
                 <p className="mt-3 font-sans text-small leading-relaxed text-rang-paper/80">
-                  Every tradition here began with a maker, a material and a
+                  {t("artOfIndiaBody")}{" "}
                   reason. We work directly with artists across India so the
                   story travels with the piece.
                 </p>
@@ -710,7 +707,7 @@ export default async function Home() {
                   href="/about"
                   className="mt-6 inline-flex items-center gap-2 rounded-full bg-rang-paper px-6 py-3 font-sans text-sm font-medium text-kumkum transition-colors hover:bg-white"
                 >
-                  Know More
+                  {t("knowMore")}
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -736,10 +733,10 @@ export default async function Home() {
                 The process
               </p>
               <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight text-deep-ink sm:text-4xl">
-                How a work gets made
+                {t("processTitle")}
               </h2>
               <p className="mt-4 font-sans text-sm leading-relaxed text-muted-ink">
-                Not a checkout. A conversation, a quote, a proof, and then the
+                {t("processBody")}{" "}
                 weeks it actually takes.
               </p>
             </div>
@@ -806,14 +803,14 @@ export default async function Home() {
             href="/shop"
             className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
           >
-            Browse the collection
+            {t("browseCollection")}
             <span aria-hidden="true">→</span>
           </Link>
           <Link
             href="/custom-art"
             className="inline-flex items-center gap-2 rounded-full border border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink transition-colors hover:border-kumkum hover:text-kumkum"
           >
-            Request a piece
+            {t("requestPiece")}
           </Link>
         </div>
       </section>
@@ -826,7 +823,7 @@ export default async function Home() {
       <section className="relative overflow-hidden border-t border-sand-border/60 bg-surface/50">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <p className="py-10 text-center font-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-terracotta">
-            Continue the journey
+            {t("continueJourney")}
           </p>
           <div className="grid border-t border-sand-border/60 sm:grid-cols-3">
             {[
@@ -906,7 +903,7 @@ export default async function Home() {
             </div>
             <div className="mt-10 flex justify-center">
               <ArrowLink href="/authenticity">
-                How we stand behind a piece
+                {t("howWeStand")}
               </ArrowLink>
             </div>
           </div>
