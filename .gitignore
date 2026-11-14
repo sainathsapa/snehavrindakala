@@ -62,8 +62,10 @@ coverage/
 # Local design references
 ref*.png
 
-# Design exploration output and review captures (not shipped)
-images/
+# Design exploration output and review captures (not shipped).
+# Anchored to the repo root so it does not also swallow the shipped
+# apps/storefront/public/images tree, which is where the site's art lives.
+/images/
 assets/logo/
 scripts/logo/
 apps/storefront/.review/

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { KalamBorder, MandalaField } from "./ornaments";
 import { JaaliField, PaperGrain, ButiField } from "./grounds";
 import { LotusRosette, PaisleyBand } from "./indian-motifs";
@@ -64,7 +65,22 @@ export function PageHeader({
           {/* A rosette tucked into the top-right, half off the page, the way a
               carved boss sits at the corner of a ceiling. */}
           <LotusRosette className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 text-terracotta/[0.10] sm:h-64 sm:w-64" />
-          <PaisleyBand className="absolute inset-x-0 bottom-0 h-10 w-full text-terracotta/20" />
+          {/* The foot of the masthead is now the real painted frieze rather
+              than a drawn paisley band. At 40px a vector motif reads as a
+              rule; the photograph of gold-on-burgundy ornament reads as a
+              carved ledge, which is what this line is meant to be. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-9 overflow-hidden opacity-[0.22] mix-blend-multiply"
+          >
+            <Image
+              src="/images/ornaments/gold-vine-band.jpg"
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover object-center"
+            />
+          </div>
         </>
       )}
 

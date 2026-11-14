@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import Image from "next/image";
 
 /**
  * Page-level ornament.
@@ -106,6 +107,96 @@ export function RegisterBand({ className = "" }: { className?: string }) {
 }
 
 /**
+ * Real-image ornament.
+ *
+ * The CSS grounds above are economical but they are still flat: crossed rules
+ * and radial dots. At any size you can read them as generated shapes, which is
+ * the one thing a craft site cannot look like. These components swap in actual
+ * painted and photographed ornament — a gold vine frieze, a paisley, a carved
+ * sandstone jaali — so the decoration has the irregularity of something made by
+ * hand.
+ *
+ * All are decorative `alt=""` layers, absolutely positioned behind content.
+ */
+
+/** The gold-on-burgundy vine frieze, used to close a section. */
+export function GoldVineBand({
+  className = "",
+  height = 64,
+}: {
+  className?: string;
+  height?: number;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none w-full overflow-hidden ${className}`}
+      style={{ height }}
+    >
+      <Image
+        src="/images/ornaments/gold-vine-band.jpg"
+        alt=""
+        width={1400}
+        height={64}
+        className="h-full w-full object-cover object-center"
+      />
+    </div>
+  );
+}
+
+/**
+ * A carved jaali screen filling the given box.
+ *
+ * Tinted back with a warm wash so it stays ground rather than subject: at full
+ * opacity the sandstone reads as a photograph someone dropped on the page.
+ */
+export function JaaliScreen({
+  className = "",
+  opacity = 0.16,
+}: {
+  className?: string;
+  opacity?: number;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}
+      style={{ opacity }}
+    >
+      <Image
+        src="/images/ornaments/jaali-arch.jpg"
+        alt=""
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover object-top"
+      />
+    </div>
+  );
+}
+
+/** A single painted paisley, sized by the caller. */
+export function PaisleyMark({
+  className = "",
+  rotate = 0,
+  opacity = 0.2,
+}: {
+  className?: string;
+  rotate?: number;
+  opacity?: number;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      aria-hidden="true"
+      alt=""
+      src="/images/ornaments/paisley-motif.jpg"
+      className={`pointer-events-none select-none ${className}`}
+      style={{ transform: `rotate(${rotate}deg)`, opacity }}
+    />
+  );
+}
+
+/**
  * The ground stack: grain over a tint field. Wraps a section so the ornament
  * sits behind its content and never fights it for attention.
  *
@@ -127,7 +218,7 @@ export function OrnamentGround({
     <Tag className={`relative ${className}`}>
       {variant !== "none" && (
         <>
-          {variant === "jaali" && <JaaliField />}
+          {variant === "jaali" && <JaaliScreen />}
           {variant === "buti" && <ButiField />}
           <PaperGrain />
         </>

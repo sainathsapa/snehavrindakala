@@ -126,6 +126,23 @@
     /* The site default. Set on the body so any element can override it with
        `font-serif`; a rule on `p` would beat inheritance and win. */
     font-family: var(--font-sans);
+    /* Handmade-paper fibre under every page.
+
+       A real photograph of Bikaner kagzi paper, not a CSS dot pattern. It sits
+       under the content at a low fraction so it reads as the surface the site
+       is printed on rather than as a background image competing with the
+       type. `background-attachment: fixed` keeps the fibre from scrolling
+       against the text, which would look like the page is sliding over a
+       photograph. */
+    background-image: linear-gradient(
+        rgba(248, 235, 221, 0.82),
+        rgba(248, 235, 221, 0.82)
+      ),
+      url("/images/textures/paper-ground.jpg");
+    background-size: auto, 800px 800px;
+    background-repeat: repeat, repeat;
+    background-attachment: fixed, fixed;
+    background-blend-mode: normal, multiply;
   }
 }
 

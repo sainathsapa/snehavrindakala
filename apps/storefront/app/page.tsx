@@ -38,7 +38,7 @@ import {
   CornerPeacock,
   ChapterOpener,
 } from "@/components/editorial";
-import { JaaliField, PaperGrain } from "@/components/grounds";
+import { JaaliField, JaaliScreen, PaperGrain, GoldVineBand } from "@/components/grounds";
 import { listCatalogue } from "@/lib/catalogue";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { formatPrice } from "@/lib/medusa";
@@ -230,7 +230,7 @@ export default async function Home() {
           the same grid under a different heading. Each route is a real page:
           nothing here is a teaser that dead-ends. */}
       <section className="relative overflow-hidden border-b border-sand-border/60 py-16 lg:py-24">
-        <JaaliField style={{ opacity: 0.4 }} />
+        <JaaliScreen opacity={0.14} />
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <ChapterOpener
@@ -618,8 +618,15 @@ export default async function Home() {
           differently: a split spread with the ornament carried in a framed
           panel rather than behind type. The commission is a conversation, so
           it reads as an invitation with a footnote, not a billboard. */}
+      {/* A painted frieze closing the browse section.
+
+          This is the one place on the homepage where ornament is allowed to be
+          the subject rather than the ground: a real gold-on-burgundy vine band
+          at full height, reading as the carved lintel above a doorway. */}
+      <GoldVineBand className="border-y border-deep-ink/10" height={72} />
+
       <section className="relative overflow-hidden py-16 lg:py-24">
-        <JaaliField style={{ opacity: 0.35 }} />
+        <JaaliField style={{ opacity: 0.22 }} />
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
