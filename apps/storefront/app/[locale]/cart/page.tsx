@@ -3,10 +3,12 @@ import { formatPrice } from "@/lib/medusa";
 import { removeCartItemAction, updateCartItemAction } from "./actions";
 import { PromoCode } from "@/components/promo-code";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function CartPage() {
+  const t = await getTranslations("cart");
   const cart = await getCart();
   const items = cart?.items ?? [];
 
@@ -14,19 +16,19 @@ export default async function CartPage() {
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
-          Your cart
+          {t("title")}
         </h1>
 
         {items.length === 0 ? (
           <div className="rounded-xl border border-sand-border bg-surface p-8 text-center">
             <p className="text-lg text-muted-ink font-sans mb-6">
-              Your cart is empty.
+              {t("empty")}.
             </p>
             <Link
               href="/shop"
               className="inline-flex items-center gap-2 text-sm font-medium text-sindoor hover:underline"
             >
-              Browse products →
+              {t("browse")} →
             </Link>
           </div>
         ) : (
@@ -35,15 +37,15 @@ export default async function CartPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-sand-border">
-                    <th className="py-4 text-muted-ink font-sans">Item</th>
+                    <th className="py-4 text-muted-ink font-sans">{t("item")}</th>
                     <th className="py-4 text-muted-ink font-sans text-right">
-                      Price
+                      {t("price")}
                     </th>
                     <th className="py-4 text-muted-ink font-sans text-center">
-                      Qty
+                      {t("qty")}
                     </th>
                     <th className="py-4 text-muted-ink font-sans text-right">
-                      Total
+                      {t("total")}
                     </th>
                     <th className="py-4" />
                   </tr>
@@ -120,7 +122,7 @@ export default async function CartPage() {
                             type="submit"
                             className="text-xs text-muted-ink hover:text-sindoor"
                           >
-                            Remove
+                            {t("remove")}
                           </button>
                         </form>
                       </td>
@@ -138,7 +140,7 @@ export default async function CartPage() {
 
             <div className="mt-6 space-y-2 border-t border-sand-border pt-4 font-sans text-sm">
               <div className="flex justify-between gap-4 text-muted-ink">
-                <span>Subtotal</span>
+                <span>{t("subtotal")}</span>
                 <span className="whitespace-nowrap text-deep-ink">
                   {formatPrice(
                     (cart?.original_total ?? cart?.subtotal ?? 0) +
@@ -149,7 +151,7 @@ export default async function CartPage() {
               </div>
               {(cart?.discount_total ?? 0) > 0 && (
                 <div className="flex justify-between gap-4 text-leaf">
-                  <span>Discount</span>
+                  <span>{t("discount")}</span>
                   <span className="whitespace-nowrap font-medium">
                     −{formatPrice(cart?.discount_total ?? 0, cart?.currency_code)}
                   </span>
@@ -159,7 +161,7 @@ export default async function CartPage() {
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
               <div className="text-lg font-serif font-semibold text-deep-ink">
-                Total:
+                {t("total")}:
                 <span className="ml-2 text-sindoor font-bold">
                   {formatPrice(cart?.total ?? 0, cart?.currency_code)}
                 </span>
@@ -168,7 +170,7 @@ export default async function CartPage() {
                 href="/checkout"
                 className="px-6 py-3 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors"
               >
-                Continue to Checkout
+                {t("checkout")}
               </Link>
             </div>
           </>

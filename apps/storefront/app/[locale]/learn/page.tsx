@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { localeAlternates } from "@/lib/seo";
+import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";
 import { PlateNumber, RunningHead, Fleuron, PaintedRule } from "@/components/editorial";
@@ -36,6 +37,7 @@ export const dynamic = "force-dynamic";
  * reference page starts selling, it stops being a reference.
  */
 export default async function LearnPage() {
+  const t = await getTranslations("learn");
   let forms: { name: string; slug: string; image: string }[] = [];
   try {
     const rows = await listArtForms();
@@ -65,7 +67,7 @@ export default async function LearnPage() {
         <div className="mx-auto max-w-[1400px] px-5 py-10 sm:px-8 lg:px-12">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
             <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.3em] text-terracotta">
-              In this reference
+              {t("contents")}
             </span>
             <a href="#glossary" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
               I. The words

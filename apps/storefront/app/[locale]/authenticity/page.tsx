@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { localeAlternates } from "@/lib/seo";
+import { getTranslations, getLocale } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, SectionIntro, ArrowLink } from "@/components/ornaments";
 import { ButiField, PaperGrain } from "@/components/grounds";
 import { listTestimonials } from "@/lib/site-content";
 
-export const metadata = {
-  title: "Authenticity & provenance",
-  description:
-    "How a SnehaVrinda Kala work reaches you: made by hand in India, signed by the artist, documented before it is packed, and dispatched with a written record of what it is and where it came from.",
-  alternates: localeAlternates("/authenticity"),
-};
+
+export async function generateMetadata() {
+  const t = await getTranslations("authenticity");
+  return {
+    title: t("crumb"),
+    description: t("intro"),
+    alternates: localeAlternates("/authenticity"),
+  };
+}
 
 // Reads testimonials from Postgres, so it must not be frozen at build time —
 // otherwise a quote added in the admin never appears here.
@@ -27,49 +31,23 @@ export const dynamic = "force-dynamic";
  * nothing.
  */
 
-const ASSURANCES = [
-  {
-    title: "One pair of hands",
-    body: "Every work on this site is made by the artist named on it. Nothing is resold from a wholesale catalogue, and nothing is machine-printed and called handmade. If a piece took a month, the making time is stated on the product page before you buy.",
-  },
-  {
-    title: "Signed and dated",
-    body: "Paintings and drawings arrive signed. Textile and craft pieces carry a maker's label sewn or stamped on. The signature is not a decoration — it is what lets a piece be identified later, and it is the first thing to look at if you ever resell or insure it.",
-  },
-  {
-    title: "Photographed before packing",
-    body: "Each piece is photographed as finished, from more than one angle, before it is wrapped. Those photographs are the record we send you, and they are the reference we use ourselves if there is ever a question about condition.",
-  },
-  {
-    title: "A written record",
-    body: "Your parcel includes a card stating the work's title, the artist, the materials, the art form and the date it was completed. It is written for the drawer, not the website — the thing you keep when the packaging is gone.",
-  },
-  {
-    title: "Natural variation is the point",
-    body: "Handmade work is not uniform. Dye lots differ, a brush line is not a printed edge, handloom cloth has slubs. We describe material and finish on each listing, and variation within that description is a sign the piece was made by a person.",
-  },
-  {
-    title: "If it is not right, it goes back",
-    body: "If a piece arrives damaged, or materially different from its description and photographs, we make it right: replacement where the work can be repeated, refund where it cannot. See the returns policy for how to start that.",
-  },
-];
+const ASSURANCE_KEYS = ["a1", "a2", "a3", "a4", "a5", "a6"] as const;
 
-const WHAT_WE_WILL_NOT_DO = [
-  "We will not sell a print and call it an original painting.",
-  "We will not put another maker's name on a piece to sell it faster.",
-  "We will not use a stock photograph in place of the actual work you will receive, except where a piece is made to order and the listing says so.",
-];
+const WILL_NOT_KEYS = ["w1", "w2", "w3"] as const;
 
 export default async function AuthenticityPage() {
+  const locale = await getLocale();
+
+  const t = await getTranslations("authenticity");
   const testimonials = await listTestimonials();
 
   return (
     <main className="bg-rang-paper">
       <PageHeader
-        eyebrow="Authenticity"
-        title="What you are actually buying"
-        intro="A handmade work asks you to trust a photograph. Here is exactly what stands behind it, and what happens if it is ever wrong."
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Authenticity" }]}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        intro={t("intro")}
+        breadcrumb={[{ label: t("home"), href: "/" }, { label: t("crumb") }]}
         image="/images/artforms/painting.jpg"
       />
 
@@ -79,19 +57,19 @@ export default async function AuthenticityPage() {
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {ASSURANCES.map((item, index) => (
+            {ASSURANCE_KEYS.map((key, index) => (
               <article
-                key={item.title}
+                key={key}
                 className="relative border-t border-sand-border/70 pt-5"
               >
                 <span className="font-serif text-sm text-terracotta">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h2 className="mt-1 font-serif text-xl text-deep-ink">
-                  {item.title}
+                  {t(`assurances.${key}.title`)}
                 </h2>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
-                  {item.body}
+                  {t(`assurances.${key}.body`)}
                 </p>
               </article>
             ))}
@@ -105,33 +83,32 @@ export default async function AuthenticityPage() {
           <div className="flex flex-col gap-6">
             <BotanicalRule className="text-terracotta" />
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-              The lines we hold
+              {t("linesEyebrow")}
             </p>
           </div>
           <div className="max-w-2xl">
             <ul className="space-y-4">
-              {WHAT_WE_WILL_NOT_DO.map((line) => (
+              {WILL_NOT_KEYS.map((key) => (
                 <li
-                  key={line}
+                  key={key}
                   className="flex gap-4 border-b border-sand-border/60 pb-4 font-sans text-base leading-relaxed text-deep-ink"
                 >
                   <span aria-hidden="true" className="text-terracotta">
                     —
                   </span>
-                  {line}
+                  {t(`willNot.${key}`)}
                 </li>
               ))}
             </ul>
             <p className="mt-6 font-sans text-sm leading-relaxed text-muted-ink">
-              If you ever believe a piece was misdescribed, write to{" "}
+              {t("mailPre")}{" "}
               <a
                 className="text-terracotta underline decoration-sand-border underline-offset-4 hover:decoration-terracotta"
                 href="mailto:hello@snehavrinda.in"
               >
                 hello@snehavrinda.in
               </a>{" "}
-              with the order reference. We would rather take a piece back than
-              have someone own something they were misled about.
+              {t("mailPost")}
             </p>
           </div>
         </div>
@@ -143,8 +120,8 @@ export default async function AuthenticityPage() {
           <PaperGrain />
           <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <SectionIntro
-              eyebrow="In their words"
-              title="From people who have the work at home"
+              eyebrow={t("wordsEyebrow")}
+              title={t("wordsTitle")}
               align="center"
             />
             <div className="mt-10 grid gap-8 sm:grid-cols-2">
@@ -172,9 +149,9 @@ export default async function AuthenticityPage() {
       <section className="py-14 lg:py-20">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="grid gap-6 sm:grid-cols-3">
-            <ArrowLink href="/policies/shipping">How it is packed and shipped</ArrowLink>
-            <ArrowLink href="/policies/returns">If something arrives wrong</ArrowLink>
-            <ArrowLink href="/custom-art">Commission a piece</ArrowLink>
+            <ArrowLink href="/policies/shipping">{t("ship")}</ArrowLink>
+            <ArrowLink href="/policies/returns">{t("returns")}</ArrowLink>
+            <ArrowLink href="/custom-art">{t("commission")}</ArrowLink>
           </div>
         </div>
       </section>

@@ -6,13 +6,16 @@ import { BelButi, MithilaBorder, LotusRosette } from "@/components/indian-motifs
 import { PlateNumber } from "@/components/editorial";
 import { ButiField, PaperGrain } from "@/components/grounds";
 import { listJournalPosts, type JournalListItem } from "@/lib/journal";
+import { getTranslations } from "next-intl/server";
 
-export const metadata = {
-  title: "Journal",
-  description:
-    "Artist stories, art-form explainers, technique notes and collection edits from SnehaVrinda Kala.",
-  alternates: localeAlternates("/journal"),
-};
+export async function generateMetadata() {
+  const t = await getTranslations("journal");
+  return {
+    title: t("crumb"),
+    description: t("intro"),
+    alternates: localeAlternates("/journal"),
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +25,7 @@ export const dynamic = "force-dynamic";
  * of equal cards would make six very different essays look interchangeable.
  */
 export default async function JournalPage() {
+  const t = await getTranslations("journal");
   let posts: JournalListItem[] = [];
 
   try {
@@ -35,10 +39,10 @@ export default async function JournalPage() {
   return (
     <main className="bg-rang-paper">
       <PageHeader
-        eyebrow="Notes from the studio"
-        title="Journal"
-        intro="Artist stories, art-form explainers and technique notes — written to make the work legible, not to sell it."
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Journal" }]}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        intro={t("intro")}
+        breadcrumb={[{ label: t("home"), href: "/" }, { label: t("crumb") }]}
       />
 
       {posts.length === 0 ? (
@@ -46,11 +50,10 @@ export default async function JournalPage() {
           <div className="mx-auto flex max-w-[1400px] flex-col items-center px-5 py-20 text-center sm:px-8 lg:px-12">
             <LotusRosette className="mb-6 h-20 w-20 text-terracotta/30" />
             <p className="max-w-sm font-serif text-xl leading-relaxed text-deep-ink">
-              The first pieces are being written.
+              {t("emptyTitle")}
             </p>
             <p className="mt-2 font-sans text-sm text-muted-ink">
-              Stories about the traditions, the materials and the people behind
-              the work will appear here.
+              {t("emptyBody")}
             </p>
           </div>
         </section>
@@ -100,7 +103,7 @@ export default async function JournalPage() {
                       href={`/journal/${lead.slug}`}
                       className="mt-7 inline-flex items-center gap-2 font-sans text-sm font-medium text-kumkum transition-colors hover:text-sindoor"
                     >
-                      Read the essay
+                      {t("readEssay")}
                       <span aria-hidden="true">→</span>
                     </Link>
                   </div>

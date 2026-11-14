@@ -105,7 +105,16 @@
     "total": "Total",
     "checkout": "Checkout",
     "continueShopping": "Continue shopping",
-    "remove": "Remove"
+    "remove": "Remove",
+    "item": "Item",
+    "price": "Price",
+    "qty": "Qty",
+    "haveCode": "Have a code?",
+    "apply": "Apply",
+    "checking": "Checking…",
+    "codeApplied": "Applied: {codes}",
+    "browse": "Browse products",
+    "discount": "Discount"
   },
   "checkout": {
     "title": "Checkout",
@@ -218,6 +227,63 @@
     "trackOrder": "Track order",
     "requestArt": "Request custom art",
     "signOut": "Sign out"
+  },
+  "about": {
+    "eyebrow": "Our Story",
+    "title": "A house for Indian art, and the hands that make it",
+    "intro": "We work directly with artists and craft partners across India. The maker stays visible, and the story stays with the work.",
+    "home": "Home",
+    "crumb": "About",
+    "since": "Since the first brushstroke",
+    "lede": "SnehaVrinda Kala began as a home for art in all its forms — not a marketplace for objects, but a place where a tradition and the person carrying it stay attached to the work.",
+    "p1": "Every listing shows who made the piece, what it is made from, how to care for it, and whether it is ready to ship or made to order. Nothing is presented as anonymous. If you cannot name the maker, you cannot really know the work.",
+    "p2": "Custom commissions follow a deliberate process — brief, quote, proofs, approval, delivery — so you know exactly what to expect before a brush touches paper.",
+    "p3": "We believe in fair partner terms, transparent attribution, and craft you can trust. The maker stays visible, and the story stays with the work.",
+    "principlesEyebrow": "What we hold to",
+    "principlesTitle": "Four things we will not compromise",
+    "principles": {
+      "p1": {
+        "title": "The maker is named",
+        "body": "Every work carries its artist. Attribution is not a marketing line; it is the difference between art and inventory."
+      },
+      "p2": {
+        "title": "Handmade, or it is not here",
+        "body": "We do not sell prints presented as originals, and we do not stock imported goods dressed as craft."
+      },
+      "p3": {
+        "title": "Fair terms, stated plainly",
+        "body": "Artists are paid on agreed terms with milestones, and commissions are quoted before any work begins."
+      },
+      "p4": {
+        "title": "Nothing is rushed",
+        "body": "Some pieces take weeks. Natural pigment, handloom cloth and made-to-order work have their own pace, and we keep it."
+      }
+    },
+    "behindEyebrow": "Behind the scenes",
+    "behindTitle": "What happens before you see it",
+    "behindAlt": "A work in progress in the studio",
+    "steps": {
+      "s1": {
+        "t": "The ground is prepared",
+        "d": "Cloth is stiffened with tamarind seed and chalk, or paper is sized, or the panel is primed. Nothing is painted on an unprepared surface."
+      },
+      "s2": {
+        "t": "The line goes down first",
+        "d": "In most of these traditions the drawing is a single unbroken discipline. The border is often drawn last but planned first."
+      },
+      "s3": {
+        "t": "Colour is laid in flat",
+        "d": "Natural pigment, often made in the studio. Shading is rare; a form is read by its outline and its fill."
+      },
+      "s4": {
+        "t": "It is signed, and it is explained",
+        "d": "The maker's name, and usually a note of what the symbols mean. That note is what travels with the work."
+      }
+    },
+    "closingTitle": "Begin with a piece, or with an idea",
+    "closingBody": "Browse what is finished, or send a brief and let an artist make something that does not exist yet.",
+    "browse": "Browse the collection",
+    "request": "Request a piece"
   },
   "faq": {
     "eyebrow": "Support",
@@ -339,5 +405,105 @@
     "notFound": "This page could not be found",
     "notFoundBody": "The work may have sold, or the link may be old.",
     "backHome": "Back to the house"
+  },
+  "authenticity": {
+    "crumb": "Authenticity",
+    "eyebrow": "Authenticity",
+    "title": "What you are actually buying",
+    "intro": "A handmade work asks you to trust a photograph. Here is exactly what stands behind it, and what happens if it is ever wrong.",
+    "home": "Home",
+    "assurances": {
+      "a1": {
+        "title": "One pair of hands",
+        "body": "Every work on this site is made by the artist named on it. Nothing is resold from a wholesale catalogue, and nothing is machine-printed and called handmade. If a piece took a month, the making time is stated on the product page before you buy."
+      },
+      "a2": {
+        "title": "Signed and dated",
+        "body": "Paintings and drawings arrive signed. Textile and craft pieces carry a maker's label sewn or stamped on. The signature is not a decoration — it is what lets a piece be identified later, and it is the first thing to look at if you ever resell or insure it."
+      },
+      "a3": {
+        "title": "Photographed before packing",
+        "body": "Each piece is photographed as finished, from more than one angle, before it is wrapped. Those photographs are the record we send you, and they are the reference we use ourselves if there is ever a question about condition."
+      },
+      "a4": {
+        "title": "A written record",
+        "body": "Your parcel includes a card stating the work's title, the artist, the materials, the art form and the date it was completed. It is written for the drawer, not the website — the thing you keep when the packaging is gone."
+      },
+      "a5": {
+        "title": "Natural variation is the point",
+        "body": "Handmade work is not uniform. Dye lots differ, a brush line is not a printed edge, handloom cloth has slubs. We describe material and finish on each listing, and variation within that description is a sign the piece was made by a person."
+      },
+      "a6": {
+        "title": "If it is not right, it goes back",
+        "body": "If a piece arrives damaged, or materially different from its description and photographs, we make it right: replacement where the work can be repeated, refund where it cannot. See the returns policy for how to start that."
+      }
+    },
+    "linesEyebrow": "The lines we hold",
+    "willNot": {
+      "w1": "We will not sell a print and call it an original painting.",
+      "w2": "We will not put another maker's name on a piece to sell it faster.",
+      "w3": "We will not use a stock photograph in place of the actual work you will receive, except where a piece is made to order and the listing says so."
+    },
+    "mailPre": "If you ever believe a piece was misdescribed, write to",
+    "mailPost": "with the order reference. We would rather take a piece back than have someone own something they were misled about.",
+    "wordsEyebrow": "In their words",
+    "wordsTitle": "From people who have the work at home",
+    "ship": "How it is packed and shipped",
+    "returns": "If something arrives wrong",
+    "commission": "Commission a piece"
+  },
+  "customArt": {
+    "crumb": "Request a Piece",
+    "eyebrow": "Made to order",
+    "title": "Let's create something together",
+    "intro": "Not everything should be bought off a wall. Tell an artist what you have in mind — a portrait, a mural, a textile for a particular room — and they will tell you honestly what is possible.",
+    "home": "Home",
+    "request": "Request",
+    "whatEyebrow": "What a commission is",
+    "whatTitle": "The work comes after the conversation",
+    "stepsEyebrow": "The journey",
+    "stepsTitle": "Six stages, nothing hidden",
+    "steps": {
+      "s1": {
+        "title": "Share your idea",
+        "body": "A sentence is enough to begin. Tell us what you have in mind, and attach a reference if you have one — a photograph, a room, a colour."
+      },
+      "s2": {
+        "title": "Tell us the story",
+        "body": "Who is it for? Is it a wedding, a memory, a room that needs something? The story is what the artist actually works from."
+      },
+      "s3": {
+        "title": "We discuss your vision",
+        "body": "An artist considers feasibility, rights, schedule and availability — and says plainly if it cannot be done, and why."
+      },
+      "s4": {
+        "title": "Receive a real quote",
+        "body": "Scope, deliverables, timeline, revision allowance, deposit and expiry, all in writing. Nothing is hidden in a range."
+      },
+      "s5": {
+        "title": "The creation begins",
+        "body": "Accept the quote and pay the deposit. Work starts after that, and you get proofs at each stage."
+      },
+      "s6": {
+        "title": "Your artwork becomes real",
+        "body": "Approve the final proof, and the finished work is packed and sent to you with its maker's name on it."
+      }
+    },
+    "formTitle": "Tell us about your vision",
+    "formNote": "No payment is taken here. You will receive a quote before anything begins.",
+    "whileEyebrow": "While you decide"
+  },
+  "journal": {
+    "crumb": "Journal",
+    "eyebrow": "Journal",
+    "title": "Notes from the studio",
+    "intro": "Artist stories, art-form explainers and technique notes — written to make the work legible, not to sell it.",
+    "home": "Home",
+    "emptyTitle": "The first pieces are being written.",
+    "emptyBody": "Stories about the traditions, the materials and the people behind the work will appear here.",
+    "readEssay": "Read the essay"
+  },
+  "learn": {
+    "contents": "In this reference"
   }
 }

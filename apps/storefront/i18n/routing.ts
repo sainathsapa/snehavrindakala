@@ -14,11 +14,20 @@ import { createNavigation } from "next-intl/navigation";
  * Hindi behind a prefix (`/hi/shop`). That preserves every existing link and
  * the search ranking English has already earned, instead of moving the whole
  * site to `/en/...` for no benefit.
+ *
+ * `localeDetection: false` is essential here, not a style choice. With
+ * detection on, next-intl reads the Accept-Language header and the NEXT_LOCALE
+ * cookie and redirects bare URLs to the detected language — so a visitor who
+ * ever opened /hi could never reach the English site again, because /shop
+ * silently became /hi/shop for them. The URL is now the only thing that
+ * decides the language, which is also what hreflang and the canonical tags
+ * promise search engines.
  */
 export const routing = defineRouting({
   locales: ["en", "hi"],
   defaultLocale: "en",
   localePrefix: "as-needed",
+  localeDetection: false,
 });
 
 export type Locale = (typeof routing.locales)[number];
