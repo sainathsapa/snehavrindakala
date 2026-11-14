@@ -9,6 +9,7 @@ import { CurrencySwitcher } from "@/components/currency-switcher";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Icon } from "@snehavrinda-kala/ui";
 import { CartCount } from "./cart-count";
+import { WishlistLink } from "./wishlist-link";
 import { KalamBorder } from "./ornaments";
 
 /**
@@ -462,6 +463,8 @@ export function Header({
             >
               <Icon name="user" size={19} />
             </Link>
+
+            <WishlistLink />
 
             <Link
               href="/cart"

@@ -1,45 +1,38 @@
 "use client";
 
 /**
- * Wishlist store.
+ * Wishlist store (React binding).
  *
- * Deliberately persistent in `localStorage` for everyone — a guest can save a
- * work without an account, and a signed-in customer gets the same list on the
- * same browser. Storing the card snapshot (handle, title, image, price) lets the
- * wishlist page render instantly without a server round trip per item.
+ * The list algebra lives in `lib/wishlist-store.ts` and is unit-tested there;
+ * this file only wires that logic to React state and to browser storage.
  *
- * A `svk:wishlist-changed` event keeps every subscribe (the PDP heart, the
+ * Persistence is `localStorage` for everyone — a guest can save a work without
+ * an account, and a signed-in customer gets the same list on the same browser.
+ * A `svk:wishlist-changed` event keeps every subscriber (the PDP heart, the
  * header count) in sync when one of them mutates the list.
  */
 import { useCallback, useEffect, useState } from "react";
+import {
+  isWishlisted,
+  loadWishlist,
+  removeFromWishlist,
+  saveWishlist,
+  toggleWishlist,
+  type WishlistEntry,
+} from "@/lib/wishlist-store";
 
-const KEY = "svk:wishlist";
+export type { WishlistEntry };
+
 const EVENT = "svk:wishlist-changed";
-
-export interface WishlistEntry {
-  handle: string;
-  title: string;
-  image?: string;
-  price?: number | null;
-  currency?: string;
-  artist?: string;
-}
 
 function read(): WishlistEntry[] {
   if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return loadWishlist(localStorage);
 }
 
 function write(entries: WishlistEntry[]) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(entries));
+    saveWishlist(localStorage, entries);
     window.dispatchEvent(new Event(EVENT));
   } catch {
     // Storage unavailable (private mode) — nothing to do.
@@ -64,22 +57,16 @@ export function useWishlist() {
   }, []);
 
   const has = useCallback(
-    (handle: string) => entries.some((e) => e.handle === handle),
+    (handle: string) => isWishlisted(entries, handle),
     [entries]
   );
 
   const toggle = useCallback((entry: WishlistEntry) => {
-    const current = read();
-    const exists = current.some((e) => e.handle === entry.handle);
-    write(
-      exists
-        ? current.filter((e) => e.handle !== entry.handle)
-        : [entry, ...current]
-    );
+    write(toggleWishlist(read(), entry));
   }, []);
 
   const remove = useCallback((handle: string) => {
-    write(read().filter((e) => e.handle !== handle));
+    write(removeFromWishlist(read(), handle));
   }, []);
 
   return { entries, ready, has, toggle, remove };

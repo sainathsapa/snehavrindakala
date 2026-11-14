@@ -33,7 +33,7 @@ const BEATS = [
 ] as const;
 
 /** Which beat a raw status maps to. Unknown statuses default to "placed". */
-function progressFrom(status?: string | null, hasShipment = false): number {
+export function progressFrom(status?: string | null, hasShipment = false): number {
   const s = (status || "").toLowerCase();
   if (s === "completed" || s === "delivered") return 3;
   if (s === "shipped" || s === "fulfilled" || s === "partially_fulfilled")

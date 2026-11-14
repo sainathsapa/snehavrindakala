@@ -49,7 +49,11 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 - Full-screen lightbox gallery (keyboard: Esc, ←/→), thumbnail rail, spec panel, trust strip, dispatch line, "commission a similar piece".
 - Files: `components/product-gallery.tsx`, `components/trust-strip.tsx`, `app/[locale]/products/[handle]/page.tsx`.
 - Status: **Completed** (build + typecheck verified).
-### 2.3 Wishlist (persistence, merge after login, page, empty state) — **Not started**
+### 2.3 Wishlist (persistence, merge after login, page, empty state) — **Completed (guest localStorage; login merge not implemented)**
+- Persistent in localStorage for guests and signed-in users on the same browser; header count; `/wishlist` page with empty state and add-to-cart.
+- Files: `lib/wishlist-store.ts`, `lib/hooks/use-wishlist.ts`, `components/wishlist-button.tsx`, `components/wishlist-link.tsx`, `app/[locale]/wishlist/page.tsx`, `app/api/store/product-variant/route.ts`.
+- Tests: 13 passing in `wishlist-store.test.ts`.
+- Limitation: no server-side merge across devices after login (would need a wishlist table + sync).
 ### 2.4 Verified-purchaser reviews (submit, moderation, accurate counts) — **Not started**
 ### 2.5 Related artworks + recently viewed — **Completed**
 - Files: `components/relative-artworks.tsx`, `components/recently-viewed.tsx`.
