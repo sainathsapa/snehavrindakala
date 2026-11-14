@@ -24,7 +24,7 @@ const DEFAULT_DATABASE_URL =
   "postgresql://medusa:medusa@localhost:5432/medusa";
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __svkPgPool: pg.Pool | undefined;
 }
 

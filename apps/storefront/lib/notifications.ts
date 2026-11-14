@@ -65,9 +65,9 @@ const SCHEMA = `
  * ------------------------------------------------------------------ */
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __svkNotificationPool: pg.Pool | undefined;
-  // eslint-disable-next-line no-var
+   
   var __svkNotificationSchemaReady: Promise<void> | undefined;
 }
 
@@ -102,9 +102,9 @@ export async function ensureSchema(): Promise<void> {
  * ------------------------------------------------------------------ */
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __svkNotificationBus: EventEmitter | undefined;
-  // eslint-disable-next-line no-var
+   
   var __svkNotificationListener: pg.Client | undefined;
 }
 
