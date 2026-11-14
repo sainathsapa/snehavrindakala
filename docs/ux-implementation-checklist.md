@@ -1,0 +1,87 @@
+# SnehaVrinda Kala — Product Experience Upgrade: Master Checklist
+
+Living document. Update as work progresses. Statuses: **Not started**, **Completed**, **[!] Blocked**.
+
+---
+
+## Phase 1 — Critical reliability (purchase journey)
+
+### 1.1 Guest order confirmation via signed token — **Completed**
+- What: `/order/[id]` must render the order for a guest when a valid `?t=<token>` is present.
+- Why: A paid guest currently hits a "we can't show this" dead end.
+- Files: `app/[locale]/order/[id]/page.tsx`, `lib/order-token.ts` (exists), `lib/medusa.ts`.
+- Deps: `issueOrderToken` already called in `checkout/complete/route.ts`.
+- Acceptance: `/order/<id>?t=<valid>` shows items/total for no-session; tampered/expired token → friendly refusal; no PII leak without token.
+- Status: **Completed** (token branch added; verify rejects bad/expired).
+
+### 1.2 Reliable confirmation email — **Completed (verified by inspection + graceful degradation)**
+- What: completion route already calls `sendOrderConfirmation`; ensure failures never break order and are logged.
+- Acceptance: missing email / transport → order still completes; returns boolean.
+- Status: **Completed** (existing behaviour confirmed; no regression).
+
+### 1.3 Confirmation states & next steps — **Completed**
+- What: paid order page shows success banner, "what happens next" timeline, shipping expectations.
+- Files: `app/[locale]/order/[id]/page.tsx`.
+- Acceptance: success banner present; timeline shown; returns/track links reachable.
+- Status: **Completed**.
+
+### 1.4 Payment failure / cancellation recovery — **Completed**
+- What: Razorpay cancel/fail keeps cart, offers retry, clear message.
+- Files: `components/razorpay-checkout.tsx`, `components/checkout-client.tsx`.
+- Acceptance: cancel → cart preserved, retry offered; failed → clear message.
+- Status: **Completed** (existing cancel/fail handled; verified copy + retry).
+
+### 1.5 Courier quote failure + out-of-stock during checkout — **Completed**
+- What: explicit banner when no courier quote; block pay if stock fails.
+- Files: `components/checkout-client.tsx`, `app/[locale]/checkout/page.tsx`.
+- Acceptance: no-quote state explanatory; checkout surfaces error from completion.
+- Status: **Completed** (no-quote copy present; completion error surfaced).
+
+---
+
+## Phase 2 — Product experience
+
+### 2.1 Structured product attributes (dimensions, medium, framing, year, edition, dispatch, care) — **Completed**
+- Read from `key:value` tags (`dimensions:`, `medium:`, `framing:`, `year:`, `edition:`, `care:`, `dispatch:`) via `specsFromProduct`; dispatch falls back to a truthful stock-type phrase.
+- Files: `lib/catalogue.ts`, `components/artwork-specs-panel.tsx`. Acceptance: absent values never render; no invented data.
+- Status: **Completed**.
+### 2.2 PDP premium layout: gallery zoom, spec panel, story, trust strip — **Completed**
+- Full-screen lightbox gallery (keyboard: Esc, ←/→), thumbnail rail, spec panel, trust strip, dispatch line, "commission a similar piece".
+- Files: `components/product-gallery.tsx`, `components/trust-strip.tsx`, `app/[locale]/products/[handle]/page.tsx`.
+- Status: **Completed** (build + typecheck verified).
+### 2.3 Wishlist (persistence, merge after login, page, empty state) — **Not started**
+### 2.4 Verified-purchaser reviews (submit, moderation, accurate counts) — **Not started**
+### 2.5 Related artworks + recently viewed — **Completed**
+- Files: `components/relative-artworks.tsx`, `components/recently-viewed.tsx`.
+- Status: **Completed**.
+
+## Phase 3 — Discovery
+### 3.1 Shop sort (newest, price) + filters (price, form, medium, availability) — **Completed**
+### 3.2 Active filter indicators, result counts, clear-all, empty state — **Completed**
+### 3.3 Mobile filter drawer — **Completed**
+- Files: `lib/shop-filters.ts`, `components/shop-controls.tsx`, `app/[locale]/shop/page.tsx`, `app/[locale]/shop/[category]/page.tsx`, `tests/shop-filters.test.ts`.
+- State lives in the URL (shareable, server-filtered). Empty-result state offers "clear filters".
+- Tests: 8 passing in `shop-filters.test.ts`.
+### 3.4 Taxonomy consistency (Medusa categories ↔ art-forms) — **Completed (form chips derived from live catalogue)**
+- Filter chips are built from the collections actually present in the catalogue, so a chip never leads to an empty shelf.
+
+## Phase 4 — Commission
+### 4.1 Reference uploads (signed URLs, size/type limits, progress) — **Not started**
+### 4.2 Improved brief (dimensions, medium, budget, deadline, occasion) — **Not started**
+
+## Phase 5 — Artistic experience & navigation
+### 5.1 Homepage three-journey hierarchy refinement — **Not started**
+### 5.2 Navigation: currency/language visibility, breadcrumbs — **Not started**
+### 5.3 Mobile-first pass (sticky PDP action, filter drawer, targets) — **Not started**
+### 5.4 Editorial/journal → product linking — **Not started**
+
+## Phase 6 — Ops, a11y, performance, production
+### 6.1 Admin: product attributes, review moderation — **Not started**
+### 6.2 Accessibility audit (focus, contrast, listbox semantics) — **Not started**
+### 6.3 Regression: typecheck, lint, tests, build — **In progress (baseline green)**
+### 6.4 Production readiness notes — **Not started**
+
+---
+
+## Verification log
+- Baseline `pnpm --filter @snehavrinda-kala/storefront run typecheck` at `d25ece7`: **pass**.

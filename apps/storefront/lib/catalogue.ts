@@ -34,6 +34,26 @@ export interface CatalogueItem {
   collection: string;
   /** True when the item came from the seed file rather than Medusa. */
   seeded: boolean;
+  /** Factual, decision-grade attributes for the product page. */
+  specs: ArtworkSpecs;
+}
+
+/**
+ * The facts a buyer needs before committing to a one-of-one purchase.
+ *
+ * Every field is optional because the store API exposes metadata only via tags,
+ * and not every product has been tagged yet. The UI renders only the rows that
+ * carry a real value — it never invents a dimension or a year to fill a grid.
+ */
+export interface ArtworkSpecs {
+  dimensions?: string;
+  medium?: string;
+  framing?: string;
+  year?: string;
+  edition?: string;
+  /** Human phrasing, e.g. "Ships in 3–5 days". */
+  dispatch?: string;
+  care?: string;
 }
 
 const STOCK_TYPES = new Set(["ready_to_ship", "made_to_order", "custom_only"]);
@@ -91,6 +111,47 @@ function tagValue(product: any, prefix: string): string | undefined {
   return undefined;
 }
 
+/**
+ * Read the decision-grade facts a product page needs.
+ *
+ * The store API returns tags but not metadata, so each attribute is written as
+ * `key:value` — the same channel the maker and availability already use. Tags
+ * are matched case-insensitively. Without a value there is simply no row; the
+ * UI never fills the gap with a guess.
+ *
+ * `dispatch` falls back to a stock-type phrase (a ready-to-ship work has a
+ * genuinely different lead time from a made-to-order one), which is truthful
+ * for every product rather than a made-up date.
+ */
+export function specsFromProduct(product: any, stockType: string): ArtworkSpecs {
+  const tag = (key: string) =>
+    tagValue(product, key) ?? tagValue(product, key.toLowerCase());
+
+  const dispatchTag = tag("dispatch");
+  const dispatch =
+    dispatchTag ??
+    (stockType === "made_to_order"
+      ? "Made to order · usually ships in 2–3 weeks"
+      : stockType === "custom_only"
+        ? "Commissioned piece · timeline confirmed with your quote"
+        : "Ready to ship · usually dispatches in 2–4 business days");
+
+  const specs: ArtworkSpecs = {
+    dimensions: tag("dimensions"),
+    medium: tag("medium"),
+    framing: tag("framing"),
+    year: tag("year"),
+    edition: tag("edition"),
+    dispatch,
+    care: tag("care"),
+  };
+
+  // Drop empty fields so callers can test presence cheaply.
+  return Object.fromEntries(
+    Object.entries(specs).filter(([, v]) => Boolean(v && v.trim()))
+  ) as ArtworkSpecs;
+}
+
 function liveToItem(product: any): CatalogueItem {
   const variant = product.variants?.[0];
   const price =
@@ -139,6 +200,7 @@ function liveToItem(product: any): CatalogueItem {
     }),
     collection: categories[0]?.name ?? "",
     seeded: false,
+    specs: specsFromProduct(product, stockType),
   };
 }
 

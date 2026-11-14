@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { getArtFormBySlug, artFormSlugs, slugify } from "@/lib/slugs";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
+import { ShopControls } from "@/components/shop-controls";
+import { applyShopFilters, availableMediums } from "@/lib/shop-filters";
 import { getTranslations, getLocale } from "next-intl/server";
 import { categoryTranslationsFor } from "@/lib/site-content";
 
@@ -136,10 +138,21 @@ export async function generateMetadata({
 
 export default async function ShopCategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{
+    form?: string;
+    medium?: string;
+    availability?: "ready" | "made-to-order" | "all";
+    min?: string;
+    max?: string;
+    sort?: "featured" | "newest" | "price-asc" | "price-desc";
+    query?: string;
+  }>;
 }) {
   const { category } = await params;
+  const sp = await searchParams;
   const resolved = await resolveCategory(category);
 
   if (!resolved) {
@@ -170,6 +183,22 @@ export default async function ShopCategoryPage({
   } catch (err) {
     console.error("Failed to load products for category", err);
   }
+
+  const num = (v?: string) => {
+    const n = v != null && v !== "" ? Number(v) : NaN;
+    return Number.isFinite(n) ? n : undefined;
+  };
+  // On a category page the collection is a page property, not a removable chip,
+  // so `form` is intentionally not applied from the query string here.
+  const filtered = applyShopFilters(items, {
+    query: sp.query,
+    medium: sp.medium,
+    availability: sp.availability,
+    min: num(sp.min),
+    max: num(sp.max),
+    sort: sp.sort,
+  });
+  const mediums = availableMediums(items);
 
   const breadcrumb = {
     "@context": "https://schema.org",
@@ -217,7 +246,7 @@ export default async function ShopCategoryPage({
 
       <section className="pb-20 pt-10">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-sand-border/60 pb-5">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-sand-border/60 pb-5">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
               {items.length} {items.length === 1 ? t("work") : t("works")}
             </p>
@@ -237,9 +266,19 @@ export default async function ShopCategoryPage({
             </div>
           </div>
 
-          {items.length > 0 ? (
+          {items.length > 0 && (
+            <ShopControls
+              total={items.length}
+              shown={filtered.length}
+              forms={[]}
+              mediums={mediums}
+              basePath={`/shop/${resolved.handle}`}
+            />
+          )}
+
+          {filtered.length > 0 ? (
             <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
-              {items.map((item) => (
+              {filtered.map((item) => (
                 <ProductCard
                   key={item.handle}
                   handle={item.handle}

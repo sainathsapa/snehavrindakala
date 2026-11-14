@@ -9,11 +9,18 @@ import { localeAlternates } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
+import { ProductGallery } from "@/components/product-gallery";
+import { ArtworkSpecsPanel } from "@/components/artwork-specs-panel";
+import { TrustStrip } from "@/components/trust-strip";
+import { RelativeArtworks } from "@/components/relative-artworks";
+import { WishlistButton } from "@/components/wishlist-button";
+import { RecentlyViewed, RecordRecentlyViewed } from "@/components/recently-viewed";
 import {
   findCatalogueItem,
   resolveMedusaHandle,
   translatedProductTitle,
   translatedProductDescription,
+  specsFromProduct,
   type CatalogueItem,
 } from "@/lib/catalogue";
 import Link from "next/link";
@@ -167,6 +174,11 @@ export default async function ProductDetailPage({
     product.title
   );
 
+  // Decision-grade facts read from the product's tags (the only metadata
+  // channel the store API exposes). Values that are absent simply do not
+  // render, so the panel never shows invented dimensions or a guessed year.
+  const specs = specsFromProduct(product, stockType);
+
   // The Hindi description when the translation pass has written one. Falls back
   // to Medusa's English rather than to an empty paragraph.
   const catalogueDescription =
@@ -264,31 +276,14 @@ export default async function ProductDetailPage({
 
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="flex flex-col gap-4">
-            {images.length > 0 ? (
-              <div className="relative aspect-square rounded-xl border border-sand-border bg-surface overflow-hidden">
-                <img
-                  src={images[0].url}
-                  alt={catalogueTitle}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="relative aspect-square rounded-xl border border-sand-border bg-rang-paper flex items-center justify-center">
-                <span className="text-muted-ink">No image available</span>
-              </div>
-            )}
-            {images.slice(1).length > 0 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.slice(1, 5).map((img, idx) => (
-                  <img
-                    key={img.id || idx}
-                    src={img.url}
-                    alt={catalogueTitle}
-                    className="w-full h-24 object-cover rounded-md border border-sand-border hover:border-sindoor cursor-pointer transition-colors"
-                  />
-                ))}
-              </div>
-            )}
+            <ProductGallery
+              images={images.map((img: any, i: number) => ({
+                id: img.id || String(i),
+                url: img.url,
+                alt: catalogueTitle,
+              }))}
+              title={catalogueTitle}
+            />
           </div>
 
           <div className="flex flex-col gap-6">
@@ -302,6 +297,11 @@ export default async function ProductDetailPage({
               {product.subtitle && (
                 <p className="mt-2 text-lg text-muted-ink font-sans">
                   {product.subtitle}
+                </p>
+              )}
+              {String(product.metadata?.artist || "").trim() && (
+                <p className="mt-2 font-sans text-sm italic text-muted-ink">
+                  by {String(product.metadata?.artist)}
                 </p>
               )}
             </div>
@@ -318,6 +318,11 @@ export default async function ProductDetailPage({
               <p className="mt-2 text-sm text-muted-ink font-sans capitalize">
                 {stockType.replace(/_/g, " ")}
               </p>
+              {specs.dispatch && (
+                <p className="mt-1 font-sans text-xs text-terracotta">
+                  {specs.dispatch}
+                </p>
+              )}
 
               <ProductOptions
                 variants={variants}
@@ -327,6 +332,36 @@ export default async function ProductDetailPage({
                 isCustomOnly={isCustomOnly}
                 handle={handle}
               />
+
+              {!isCustomOnly && (
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/custom-art"
+                    className="inline-flex items-center gap-1.5 font-sans text-sm text-terracotta transition-colors hover:text-kumkum"
+                  >
+                    Commission a similar piece
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                  <WishlistButton
+                    handle={product.handle ?? medusaHandle}
+                    title={catalogueTitle}
+                    image={images[0]?.url}
+                    price={price}
+                    currency={currency}
+                    artist={
+                      typeof product.metadata?.artist === "string"
+                        ? product.metadata.artist
+                        : undefined
+                    }
+                  />
+                </div>
+              )}
+            </div>
+
+            <ArtworkSpecsPanel specs={specs} />
+
+            <div className="border-t border-sand-border/60 pt-4">
+              <TrustStrip />
             </div>
 
             <div className="space-y-4">
@@ -345,7 +380,22 @@ export default async function ProductDetailPage({
           collection={product.category?.name || undefined}
           stockType={stockType}
         />
+
+        <RelativeArtworks
+          handle={product.handle ?? medusaHandle}
+          collection={product.category?.name || undefined}
+        />
+
+        <RecentlyViewed excludeHandle={product.handle ?? medusaHandle} />
       </div>
+
+      <RecordRecentlyViewed
+        handle={product.handle ?? medusaHandle}
+        title={catalogueTitle}
+        image={images[0]?.url}
+        price={price}
+        currency={currency}
+      />
     </main>
   );
 }

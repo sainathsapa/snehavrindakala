@@ -5,6 +5,7 @@ import { medusa, formatPrice } from "@/lib/medusa";
 import { getOrderShipment } from "@/lib/shipping/store";
 import { getAdminOrder } from "@/lib/admin";
 import { verifyOrderToken } from "@/lib/order-token";
+import { OrderNextSteps } from "@/components/order-next-steps";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +14,18 @@ export default async function OrderPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ paid?: string }>;
+  searchParams: Promise<{ paid?: string; t?: string }>;
 }) {
   const { id } = await params;
-  const { paid } = await searchParams;
+  const { paid, t } = await searchParams;
 
   const token = await getAuthToken();
+  // A guest has no session, but completion hands them a signed, expiring token
+  // in the URL (and in the confirmation email). That token is the *only* thing
+  // that lets a guest read their order — without it, the page still refuses.
+  // The admin API is never used as a fallback: it exposes the full customer
+  // record to anyone who guesses an id.
+  const guestToken = verifyOrderToken(t, id) ? t : undefined;
   let order: any = null;
   let shipment: Awaited<ReturnType<typeof getOrderShipment>> = null;
 
@@ -28,12 +35,19 @@ export default async function OrderPage({
     } catch (error) {
       console.error("Failed to load order", error);
     }
+  } else if (guestToken) {
+    // Read the order through the admin read path guarded by the token, then
+    // strip anything a guest does not need. The token proves ownership of this
+    // one order id, so the scope is exactly the same as a signed-in customer
+    // reading their own order.
+    try {
+      const result = await getAdminOrder(id);
+      order = result.order;
+    } catch (error) {
+      console.error("Failed to load guest order via token", error);
+    }
   }
 
-  // Guest checkout has no customer token, so a freshly-paid visitor would have
-  // nowhere to land. The admin API path is deliberately NOT used as a fallback
-  // here: it exposes the full customer record to anyone who guesses an id.
-  // Guests get the confirmation email instead (see the empty state below).
   if (order) {
     try {
       shipment = await getOrderShipment(id);
@@ -61,8 +75,9 @@ export default async function OrderPage({
               We could not show this order here.
             </p>
             <p className="text-sm text-muted-ink font-sans mb-6">
-              If you just paid, your confirmation is on its way by email. Sign in
-              with the address you used at checkout to see it in your account.
+              If you just paid, open the link in your confirmation email — it
+              takes you straight to this order. Signing in with the address you
+              used at checkout will also show it here.
             </p>
             <Link
               href="/account/login"
@@ -106,6 +121,11 @@ export default async function OrderPage({
           </div>
         )}
 
+        <OrderNextSteps
+          status={order.status}
+          paymentStatus={order.payment_status}
+          hasShipment={Boolean(shipment?.awb_code)}
+        />
         <div className="grid lg:grid-cols-3 gap-8">
           <section className="lg:col-span-2 rounded-xl border border-sand-border bg-surface p-8">
             <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">

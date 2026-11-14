@@ -5,6 +5,8 @@ import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
 import { PaisleyField, BotanicalRule } from "@/components/ornaments";
 import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
+import { ShopControls } from "@/components/shop-controls";
+import { applyShopFilters, availableMediums } from "@/lib/shop-filters";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getArtFormByQuery } from "@/lib/slugs";
@@ -25,11 +27,23 @@ export async function generateMetadata() {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    form?: string;
+    medium?: string;
+    availability?: "ready" | "made-to-order" | "all";
+    min?: string;
+    max?: string;
+    sort?: "featured" | "newest" | "price-asc" | "price-desc";
+    query?: string;
+  }>;
 }) {
-  const { q } = await searchParams;
+  const sp = await searchParams;
+  const { q } = sp;
 
-  // Redirect legacy query-param URLs to SEO-friendly paths (/shop?q=Folk → /shop/folk)
+  // Redirect legacy query-param URLs to SEO-friendly paths (/shop?q=Folk → /shop/folk).
+  // Only the short `q` is treated this way; the in-shop text search uses
+  // `query` so it cannot accidentally bounce a real search to a category.
   if (q?.trim()) {
     const artForm = getArtFormByQuery(q.trim());
     if (artForm) {
@@ -65,6 +79,34 @@ export default async function ShopPage({
     console.error("Failed to load product categories from Medusa", err);
   }
 
+  const num = (v?: string) => {
+    const n = v != null && v !== "" ? Number(v) : NaN;
+    return Number.isFinite(n) ? n : undefined;
+  };
+
+  const filtered = applyShopFilters(items, {
+    query: sp.query,
+    form: sp.form,
+    medium: sp.medium,
+    availability: sp.availability,
+    min: num(sp.min),
+    max: num(sp.max),
+    sort: sp.sort,
+  });
+
+  // Form options: derive from what is actually in the catalogue (not a remote
+  // list that can disagree), so a chip never leads to an empty shelf.
+  const formCounts = new Map<string, number>();
+  for (const item of items) {
+    if (item.collection) formCounts.set(item.collection, (formCounts.get(item.collection) ?? 0) + 1);
+  }
+  const forms = [...formCounts.entries()].map(([label, count]) => ({
+    value: label.toLowerCase(),
+    label,
+    count,
+  }));
+  const mediums = availableMediums(items);
+
   return (
     <main className="bg-rang-paper">
       <PageHeader
@@ -80,38 +122,43 @@ export default async function ShopPage({
         <PaisleyField className="pointer-events-none absolute right-0 top-8 hidden h-72 w-72 text-terracotta/[0.05] lg:block" />
 
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          {/* ── Filter rail ────────────────────────────────────────────────
-              Kept as a plain row of quiet text links. On a gallery page the
-              filters should behave like a caption line, not a toolbar. */}
-          {categories.length > 0 && (
-            <nav
-              aria-label="Filter by collection"
-              className="mb-10 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-sand-border/60 pb-5"
+          <nav
+            aria-label="Filter by collection"
+            className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-sand-border/60 pb-5"
+          >
+            <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
+              Browse
+            </span>
+            <Link
+              href="/art-forms"
+              className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
             >
-              <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-                Browse
-              </span>
+              {t("allArtForms")}
+            </Link>
+            {categories.map((category) => (
               <Link
-                href="/art-forms"
+                key={category.id}
+                href={`/shop/${category.handle}`}
                 className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
               >
-                {t("allArtForms")}
+                {category.name}
               </Link>
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/shop/${category.handle}`}
-                  className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </nav>
+            ))}
+          </nav>
+
+          {items.length > 0 && (
+            <ShopControls
+              total={items.length}
+              shown={filtered.length}
+              forms={forms}
+              mediums={mediums}
+              basePath="/shop"
+            />
           )}
 
-          {items.length > 0 ? (
+          {filtered.length > 0 ? (
             <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
-              {items.map((item) => (
+              {filtered.map((item) => (
                 <ProductCard
                   key={item.handle}
                   handle={item.handle}
@@ -125,7 +172,7 @@ export default async function ShopPage({
                 />
               ))}
             </div>
-          ) : (
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <BotanicalRule className="mb-6 text-terracotta" />
               <p className="max-w-sm font-serif text-xl leading-relaxed text-deep-ink">
@@ -136,6 +183,26 @@ export default async function ShopPage({
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
               >
                 Browse by art form
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          ) : (
+            // Filters produced no matches. Say so, and offer the one action
+            // that fixes it (clear the filters) rather than a dead grid.
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <BotanicalRule className="mb-6 text-terracotta" />
+              <p className="max-w-sm font-serif text-xl leading-relaxed text-deep-ink">
+                No works match these filters.
+              </p>
+              <p className="mt-2 max-w-sm font-sans text-sm text-muted-ink">
+                Try removing a filter, widening the price, or searching a
+                different tradition.
+              </p>
+              <Link
+                href="/shop"
+                className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
+              >
+                Clear filters
                 <span aria-hidden="true">→</span>
               </Link>
             </div>

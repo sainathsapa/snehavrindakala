@@ -47,7 +47,13 @@ export function PincodeAutofill({
             return;
           }
 
-          const form = document.querySelector("form");
+          // Scope to this input's own form. `document.querySelector("form")`
+          // returns the first form in the document, which is a search or
+          // newsletter form in the header/footer, not the checkout form — the
+          // lookup succeeded but wrote city and state into a form the buyer
+          // never sees.
+          const form = (document.getElementById(pinName) as HTMLInputElement
+            | null)?.form;
           const city = form?.querySelector<HTMLInputElement>(
             `input[name="${cityName}"]`
           );
@@ -96,7 +102,7 @@ export function PincodeAutofill({
           const next = event.target.value.replace(/[^0-9]/g, "").slice(0, 6);
           setPin(next);
           // A changed PIN invalidates the auto-filled district and state.
-          const form = document.querySelector("form");
+          const form = (event.target as HTMLInputElement).form;
           for (const name of [cityName, stateName]) {
             const input = form?.querySelector<HTMLInputElement>(
               `input[name="${name}"]`
