@@ -24,44 +24,25 @@ export function ImageUpload({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        await uploadFile(files[0]);
-      }
-    },
-    [disabled, accept, maxSize]
-  );
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-  }, []);
-
-  const handleFileSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        await uploadFile(file);
-      }
-      e.target.value = ""; // reset so same file can be selected again
-    },
-    []
-  );
-
   const uploadFile = async (file: File) => {
     if (disabled) return;
 
-    // Validate file type
-    if (!file.type.match(accept)) {
+    // `accept` is a comma-separated list like "image/png,image/jpeg", not a
+    // regex. Passing it to String.match() made every upload fail the type check
+    // and return here silently — the picker opened, the file was chosen, and
+    // nothing happened with no error shown. Split and compare instead.
+    const allowed = accept
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const typeOk =
+      allowed.length === 0 ||
+      allowed.some((t) =>
+        t.endsWith("/*")
+          ? file.type.startsWith(t.slice(0, -1))
+          : file.type === t
+      );
+    if (!typeOk) {
       setError(`Invalid file type. Allowed: ${accept}`);
       setTimeout(() => setError(null), 4000);
       return;
@@ -112,6 +93,39 @@ export function ImageUpload({
     }
   };
 
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        await uploadFile(files[0]);
+      }
+    },
+    [disabled, accept, maxSize]
+  );
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  }, []);
+
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        await uploadFile(file);
+      }
+      e.target.value = ""; // reset so same file can be selected again
+    },
+    [uploadFile]
+  );
+
   return (
     <div
       className="relative"
@@ -142,7 +156,9 @@ export function ImageUpload({
 
         {value ? (
           <>
-            { }
+            {/* Preview of a just-uploaded file; next/image cannot optimise a
+                runtime upload path, so a plain img is correct here. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={value}
               alt="Selected image preview"

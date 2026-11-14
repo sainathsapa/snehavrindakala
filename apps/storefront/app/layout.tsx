@@ -189,6 +189,24 @@ export default async function RootLayout({
                 "custom art commissions",
               ],
               areaServed: { "@type": "Country", name: "India" },
+              // A real, inspectable location matters for local search and for
+              // trust: an art house with no address reads as a dropshipper.
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: "Bikaner",
+                addressRegion: "Rajasthan",
+                addressCountry: "IN",
+              },
+              email: "hello@snehavrinda.in",
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer service",
+                email: "hello@snehavrinda.in",
+                availableLanguage: ["en", "hi"],
+              },
+              // The maker, kept distinct from the organisation so search
+              // engines can attach the work to a person as well as a shop.
+              founder: { "@type": "Person", name: "Sneha Sainath Sapa" },
               sameAs: [],
             }),
           }}

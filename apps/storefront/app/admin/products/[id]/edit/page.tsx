@@ -75,8 +75,27 @@ export default function EditProductPage() {
         setCurrency(loaded.currency_code || "inr");
         setCategoryId(loaded.category_id || "");
         setImage(data.thumbnail || data.images?.[0]?.url || "");
-        setArtist((data.metadata?.artist as string) || "");
-        setStockType((data.metadata?.stock_type as string) || "ready_to_ship");
+        // Artist and availability live in tags, because the Medusa store API
+        // does not expose metadata. Reading metadata here left both fields blank
+        // on every product created through the panel.
+        const tagValue = (prefix: string): string => {
+          const tags = [
+            ...(data.tags ?? []),
+            ...(data.metadata?.tags ?? []),
+          ] as { value?: string }[];
+          const hit = tags.find((t) =>
+            typeof t?.value === "string" && t.value.startsWith(`${prefix}:`)
+          );
+          return hit?.value ? hit.value.slice(prefix.length + 1) : "";
+        };
+        setArtist(
+          tagValue("artist") || (data.metadata?.artist as string) || ""
+        );
+        setStockType(
+          tagValue("stock") ||
+            (data.metadata?.stock_type as string) ||
+            "ready_to_ship"
+        );
         setDescription(data.description || "");
         setLoading(false);
       })
