@@ -665,6 +665,19 @@
       "paper": "Paper & stationery",
       "wearable": "Wearable art",
       "other": "Other"
+    },
+    "references": "Reference images or documents",
+    "referencesHint": "Optional — up to 5 files, JPG/PNG/WebP/PDF, 10 MB each. Kept private.",
+    "uploading": "Uploading…",
+    "intendedUse": "What is it for?",
+    "intendedUsePlaceholder": "Select an occasion",
+    "use": {
+      "gift": "A gift",
+      "home": "Home décor",
+      "wedding": "A wedding or ceremony",
+      "corporate": "A corporate or office space",
+      "keepsake": "A personal keepsake",
+      "other": "Other"
     }
   },
   "productDetail": {

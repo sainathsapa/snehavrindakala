@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import {
@@ -51,12 +51,138 @@ function SubmitButton() {
 const inputClass =
   "w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor";
 
+interface UploadedRef {
+  key: string;
+  mime_type: string;
+  size_bytes: number;
+  original_filename?: string | null;
+}
+
+/**
+ * Reference uploads.
+ *
+ * Files are sent to `/api/store/commission-upload` as soon as they are chosen,
+ * so the buyer sees progress straight away and the brief submit stays fast. Only
+ * the returned storage keys are carried into the form, as JSON in a hidden
+ * field — the server stores files privately and never exposes a public URL.
+ */
+function ReferenceUpload({
+  onChange,
+}: {
+  onChange: (refs: UploadedRef[]) => void;
+}) {
+  const t = useTranslations("commission");
+  const [refs, setRefs] = useState<UploadedRef[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const update = (next: UploadedRef[]) => {
+    setRefs(next);
+    onChange(next);
+  };
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setError(null);
+    const accepted: UploadedRef[] = [];
+    setBusy(true);
+    try {
+      for (const file of Array.from(files)) {
+        // Guard on the client too, so an obvious mistake is caught instantly.
+        const okType = ["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type);
+        if (!okType) {
+          setError("Please use a JPG, PNG, WebP image or a PDF.");
+          continue;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          setError("Each file must be 10 MB or smaller.");
+          continue;
+        }
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/store/commission-upload", {
+          method: "POST",
+          body: fd,
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.key) {
+          setError(body.error || "Upload failed. Please try again.");
+          continue;
+        }
+        accepted.push({
+          key: body.key,
+          mime_type: body.mime_type,
+          size_bytes: body.size_bytes,
+          original_filename: body.original_filename,
+        });
+      }
+      if (accepted.length > 0) {
+        update([...refs, ...accepted].slice(0, 5));
+      }
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div>
+      <label htmlFor="references" className="block text-sm font-medium text-deep-ink mb-1">
+        {t("references")}{" "}
+        <span className="text-muted-ink font-normal">{t("sizeOptional")}</span>
+      </label>
+      <input
+        id="references"
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        multiple
+        onChange={(e) => handleFiles(e.target.files)}
+        className="block w-full cursor-pointer rounded-md border border-dashed border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink file:mr-3 file:rounded file:border-0 file:bg-sindoor file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-rang-paper hover:border-sindoor/60"
+      />
+      <p className="mt-1 text-xs text-muted-ink font-sans">{t("referencesHint")}</p>
+      {busy && (
+        <p className="mt-1 text-xs text-sindoor font-sans">{t("uploading")}</p>
+      )}
+      {error && (
+        <p role="alert" className="mt-1 text-xs text-red-700 font-sans">
+          {error}
+        </p>
+      )}
+      {refs.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {refs.map((r, i) => (
+            <li
+              key={r.key}
+              className="flex items-center justify-between rounded bg-rang-paper px-2 py-1 text-xs font-sans text-deep-ink"
+            >
+              <span className="truncate">
+                {r.original_filename || `Reference ${i + 1}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => update(refs.filter((x) => x.key !== r.key))}
+                className="ml-2 text-muted-ink hover:text-kumkum"
+                aria-label={`Remove ${r.original_filename || `reference ${i + 1}`}`}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function CommissionForm() {
   const t = useTranslations("commission");
   const [state, formAction] = useActionState(
     createCommissionAction,
     initialState
   );
+  const [attachments, setAttachments] = useState<UploadedRef[]>([]);
   const errors = state.fieldErrors ?? {};
 
   return (
@@ -120,6 +246,37 @@ export function CommissionForm() {
             {t("briefHint")}
           </p>
         )}
+      </div>
+
+      <ReferenceUpload onChange={setAttachments} />
+      <input
+        type="hidden"
+        name="attachments"
+        value={JSON.stringify(attachments)}
+      />
+
+      <div>
+        <label
+          htmlFor="intended_use"
+          className="block text-sm font-medium text-deep-ink mb-1"
+        >
+          {t("intendedUse")}{" "}
+          <span className="text-muted-ink font-normal">{t("sizeOptional")}</span>
+        </label>
+        <select
+          id="intended_use"
+          name="intended_use"
+          className={inputClass}
+          defaultValue=""
+        >
+          <option value="">{t("intendedUsePlaceholder")}</option>
+          <option value="A gift">{t("use.gift")}</option>
+          <option value="Home décor">{t("use.home")}</option>
+          <option value="A wedding or ceremony">{t("use.wedding")}</option>
+          <option value="A corporate or office space">{t("use.corporate")}</option>
+          <option value="A personal keepsake">{t("use.keepsake")}</option>
+          <option value="Other">{t("use.other")}</option>
+        </select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

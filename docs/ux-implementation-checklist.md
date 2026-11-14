@@ -70,8 +70,14 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 - Filter chips are built from the collections actually present in the catalogue, so a chip never leads to an empty shelf.
 
 ## Phase 4 — Commission
-### 4.1 Reference uploads (signed URLs, size/type limits, progress) — **Not started**
-### 4.2 Improved brief (dimensions, medium, budget, deadline, occasion) — **Not started**
+### 4.1 Reference uploads (signed URLs, size/type limits, progress) — **Completed (private filesystem storage; signed-URL/S3 not used — project uses a local volume)**
+- `/api/store/commission-upload` writes to `MEDIA_ROOT/commission-private` (the project's real storage: filesystem + `storefront_media` docker volume, not S3 — confirmed). Files are private, served only via an admin-guarded path later. Keys travel as JSON in a hidden form field; backend persists `commission_attachment` rows.
+- Files: `app/api/store/commission-upload/route.ts`, `lib/commission-upload.ts`, `components/commission-form.tsx`, `app/[locale]/custom-art/actions.ts`, `lib/medusa.ts`, `apps/backend/src/api/store/commissions/route.ts`.
+- Tests: 10 passing in `tests/commission-upload.test.ts`.
+- Note: no malware scan pipeline wired (no scanner in the codebase); files are stored privately and staff-reviewed.
+### 4.2 Improved brief (dimensions, medium, budget, deadline, occasion) — **Completed**
+- Added "What is it for?" occasion/intended-use selector (maps to existing `intended_use`), kept dimensions/budget/deadline/PIN.
+- Status: **Completed**.
 
 ## Phase 5 — Artistic experience & navigation
 ### 5.1 Homepage three-journey hierarchy refinement — **Not started**

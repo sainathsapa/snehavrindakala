@@ -665,6 +665,19 @@
       "paper": "कागज़ और स्टेशनरी",
       "wearable": "पहनने योग्य कला",
       "other": "अन्य"
+    },
+    "references": "संदर्भ चित्र या दस्तावेज़",
+    "referencesHint": "वैकल्पिक — अधिकतम 5 फ़ाइलें, JPG/PNG/WebP/PDF, प्रत्येक 10 MB। निजी रहते हैं।",
+    "uploading": "अपलोड हो रहा है…",
+    "intendedUse": "यह किस अवसर के लिए है?",
+    "intendedUsePlaceholder": "अवसर चुनें",
+    "use": {
+      "gift": "उपहार",
+      "home": "घर की सजावट",
+      "wedding": "विवाह या समारोह",
+      "corporate": "कॉर्पोरेट या कार्यालय",
+      "keepsake": "व्यक्तिगत स्मृति",
+      "other": "अन्य"
     }
   },
   "productDetail": {

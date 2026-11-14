@@ -24,6 +24,7 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
     target_date,
     delivery_region,
     delivery_pin,
+    attachments,
   } = body;
 
   if (!art_form || !brief) {
@@ -46,6 +47,28 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
       delivery_pin,
       status: "New",
     });
+
+    // Reference files were uploaded to private storage by the storefront and
+    // only their keys arrive here. Persist one attachment row each so staff can
+    // read them through the admin route. A storage failure on one file must not
+    // discard a brief that is otherwise complete, so failures are logged and the
+    // request still succeeds.
+    if (Array.isArray(attachments)) {
+      for (const att of attachments) {
+        if (!att || typeof att.key !== "string") continue;
+        try {
+          await commissionService.createCommissionAttachment({
+            commission_request_id: commission.id,
+            object_key: att.key,
+            mime_type: String(att.mime_type || "application/octet-stream"),
+            size_bytes: Number(att.size_bytes) || 0,
+            original_filename: att.original_filename ?? undefined,
+          });
+        } catch (attErr) {
+          console.error("Failed to persist commission attachment", attErr);
+        }
+      }
+    }
 
     return res.status(201).json({
       commission_request: {

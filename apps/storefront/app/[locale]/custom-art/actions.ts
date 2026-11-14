@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { medusa } from "@/lib/medusa";
 import { getCurrentCustomer } from "@/lib/auth";
+import { parseAttachmentList } from "@/lib/commission-upload";
 
 export interface CommissionFormState {
   error?: string;
@@ -28,6 +29,11 @@ export async function createCommissionAction(
   const intendedUse = String(formData.get("intended_use") || "").trim();
   const consent = formData.get("consent");
   const email = String(formData.get("email") || "").trim();
+  // Reference files are uploaded by the client before submit (to
+  // /api/store/commission-upload) and their storage keys travel in this field as
+  // JSON. They are private files, so the action only ever handles opaque keys,
+  // never URLs. Parsing (and the 5-file cap) lives in a tested helper.
+  const attachments = parseAttachmentList(String(formData.get("attachments") || ""));
 
   const fieldErrors: Record<string, string> = {};
 
@@ -61,6 +67,7 @@ export async function createCommissionAction(
   try {
     const response = await medusa.createCommissionRequest({
       customer_id: customer?.id || undefined,
+      customer_email: email || undefined,
       art_form: artForm,
       brief,
       intended_use: intendedUse || undefined,
@@ -68,6 +75,7 @@ export async function createCommissionAction(
       budget_range: budget || undefined,
       target_date: targetDate || undefined,
       delivery_pin: deliveryPin || undefined,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
     referenceId = response.reference_id;
   } catch (error) {

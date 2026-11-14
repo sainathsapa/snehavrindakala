@@ -626,6 +626,7 @@ class MedusaClient {
   // Commissions (custom module)
   async createCommissionRequest(data: {
     customer_id?: string;
+    customer_email?: string;
     art_form: string;
     brief: string;
     intended_use?: string;
@@ -634,6 +635,12 @@ class MedusaClient {
     target_date?: string;
     delivery_region?: string;
     delivery_pin?: string;
+    attachments?: {
+      key: string;
+      mime_type: string;
+      size_bytes: number;
+      original_filename?: string | null;
+    }[];
   }): Promise<{
     commission_request: MedusaCommissionRequest;
     reference_id: string;
