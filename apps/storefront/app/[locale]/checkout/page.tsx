@@ -3,6 +3,7 @@ import { saveCheckoutDetailsAction } from "@/app/[locale]/cart/actions";
 import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
 import { medusa } from "@/lib/medusa";
 import { CheckoutClient } from "@/components/checkout-client";
+import { PincodeAutofill } from "@/components/pincode-autofill";
 import { MandalaMark } from "@/components/grounds";
 import { taxForAmount } from "@/lib/tax-server";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
@@ -55,10 +56,39 @@ export default async function CheckoutPage({
 
   const address = cart?.shipping_address ?? cart?.billing_address ?? null;
   const activeCurrency = await getPreferredCurrency();
-  const deliverySaved = Boolean(cart?.email && address?.postal_code);
 
-  const customerState = address?.province || undefined;
-  const customerPincode = address?.postal_code || undefined;
+  // Prefill from the saved address book when the cart has no address yet.
+  // This is the whole point of saving an address: a returning buyer should not
+  // retype it, and the default shipping address is the one they chose as
+  // "default" precisely so it would be offered here.
+  let savedAddress: any = null;
+  if (!address) {
+    const authToken = await getAuthToken();
+    if (authToken) {
+      try {
+        const list = await medusa.listCustomerAddresses(authToken);
+        savedAddress =
+          list.find((entry: any) => entry.is_default_shipping) ?? list[0] ?? null;
+      } catch {
+        // No session or no addresses: the form is simply empty, as before.
+      }
+    }
+  }
+
+  // Address details count as given when the cart has an address, or when we
+  // can prefill one from the buyer's address book. Previously only the cart
+  // counted, so a returning buyer with a default address still had to submit
+  // an address form they had already filled in, wait for a round trip, and only
+  // then see a courier quote and a pay button.
+  const deliverySaved = Boolean(
+    (cart?.email || savedAddress) &&
+      (address?.postal_code || savedAddress?.postal_code)
+  );
+
+  const customerState =
+    address?.province || savedAddress?.province || undefined;
+  const customerPincode =
+    address?.postal_code || savedAddress?.postal_code || undefined;
   const subtotal = Number(cart?.total ?? 0);
   const currency = cart?.currency_code || activeCurrency;
   const tax = subtotal > 0 ? taxForAmount(subtotal, customerState) : null;
@@ -87,24 +117,6 @@ export default async function CheckoutPage({
   const fullName = [address?.first_name, address?.last_name]
     .filter(Boolean)
     .join(" ");
-
-  // Prefill from the saved address book when the cart has no address yet.
-  // This is the whole point of saving an address: a returning buyer should not
-  // retype it, and the default shipping address is the one they chose as
-  // "default" precisely so it would be offered here.
-  let savedAddress: any = null;
-  if (!address) {
-    const authToken = await getAuthToken();
-    if (authToken) {
-      try {
-        const list = await medusa.listCustomerAddresses(authToken);
-        savedAddress =
-          list.find((entry: any) => entry.is_default_shipping) ?? list[0] ?? null;
-      } catch {
-        // No session or no addresses: the form is simply empty, as before.
-      }
-    }
-  }
 
   const prefill = address ?? savedAddress;
   const prefillName = [prefill?.first_name, prefill?.last_name]
@@ -205,12 +217,13 @@ export default async function CheckoutPage({
           />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <PincodeAutofill initialPin={prefill?.postal_code || undefined} />
           <div>
             <label
               htmlFor="city"
               className="block text-sm font-medium text-deep-ink mb-1"
             >
-              City
+              City / District
             </label>
             <input
               id="city"
@@ -270,24 +283,6 @@ export default async function CheckoutPage({
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label
-              htmlFor="postal_code"
-              className="block text-sm font-medium text-deep-ink mb-1"
-            >
-              Postal / PIN code
-            </label>
-            <input
-              id="postal_code"
-              name="postal_code"
-              type="text"
-              inputMode="text"
-              autoComplete="postal-code"
-              required
-              defaultValue={prefill?.postal_code || undefined}
-              className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
-            />
           </div>
         </div>
 

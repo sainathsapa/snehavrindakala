@@ -116,6 +116,7 @@ export interface MedusaCart {
   original_total?: number;
   /** Codes currently applied. Medusa returns these once they take effect. */
   promotions?: Array<{ id?: string; code?: string }> | null;
+  shipping_methods?: Array<{ id?: string }> | null;
 }
 
 export interface MedusaOrder {
@@ -434,6 +435,40 @@ class MedusaClient {
         body: JSON.stringify(item),
       }
     ).then((r) => r.cart);
+  }
+
+  /**
+   * Attach a shipping method to a cart if it has none.
+   *
+   * Medusa refuses to complete a cart that contains shippable items but has no
+   * shipping method ("No shipping method selected but the cart contains items
+   * that require shipping"). Checkout charged the customer a Shiprocket quote and
+   * created the Razorpay order, but never registered a method on the cart, so
+   * every paid order failed at completion and the money was taken for nothing.
+   *
+   * The customer is still charged the real courier quote; this method exists so
+   * Medusa can convert the cart, and its own price is zero to avoid charging
+   * shipping twice.
+   */
+  async ensureShippingMethod(cartId: string): Promise<void> {
+    const cart = await this.getCart(cartId);
+    if (cart?.shipping_methods?.length) return;
+
+    const { shipping_options } = await this.request<{
+      shipping_options: Array<{ id: string }>;
+    }>(`/store/shipping-options?cart_id=${encodeURIComponent(cartId)}`);
+
+    if (!shipping_options?.length) {
+      throw new Error("No shipping option is configured for this region");
+    }
+
+    await this.request(
+      `/store/carts/${encodeURIComponent(cartId)}/shipping-methods`,
+      {
+        method: "POST",
+        body: JSON.stringify({ option_id: shipping_options[0].id }),
+      }
+    );
   }
 
   /**

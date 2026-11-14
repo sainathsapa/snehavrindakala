@@ -132,6 +132,15 @@ export async function POST(req: Request) {
       );
     }
 
+    // Medusa refuses to complete a cart with shippable items and no shipping
+    // method. Checkout charges a Shiprocket quote but never registered a method,
+    // so every paid order failed here after the money was taken.
+    try {
+      await medusa.ensureShippingMethod(cart_id);
+    } catch (err) {
+      console.error("Failed to attach shipping method:", err);
+    }
+
     // Make completion resilient: if the payment session was not created for
     // any reason, initialise it now so Medusa can convert the cart.
     try {
