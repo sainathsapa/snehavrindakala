@@ -541,3 +541,43 @@ test.describe("Hindi", () => {
     expect(ld.name).toBe(hindiTitle);
   });
 });
+
+test.describe("promo codes", () => {
+  test("a valid code discounts the cart", async ({ page }) => {
+    // Assumes the WELCOME10 promotion exists (10% off order, INR). Only proves
+    // the reject path was insufficient: a code that is accepted but applies no
+    // discount still renders "Applied" in some builds.
+    await page.goto("/products/wearable-art-pendant");
+    await page.getByRole("button", { name: /Add to [Cc]art/i }).first().click();
+    await page.waitForTimeout(2000);
+
+    await page.goto("/cart");
+    await page.locator("input[name=code]").first().fill("WELCOME10");
+    await page.getByRole("button", { name: /Apply/i }).first().click();
+    await page.waitForTimeout(3000);
+
+    await page.goto("/cart");
+    const body = await page.locator("main").innerText();
+    expect(body).toContain("WELCOME10");
+    // The discount row only renders when discount_total is non-zero, so its
+    // presence is what distinguishes "accepted" from "actually discounted".
+    expect(body).toMatch(/Discount/i);
+  });
+
+  test("an unknown code is rejected in plain language", async ({ page }) => {
+    await page.goto("/products/wearable-art-pendant");
+    await page.getByRole("button", { name: /Add to [Cc]art/i }).first().click();
+    await page.waitForTimeout(2000);
+
+    await page.goto("/cart");
+    await page.locator("input[name=code]").first().fill("NOTAREALCODE");
+    await page.getByRole("button", { name: /Apply/i }).first().click();
+    await page.waitForTimeout(3000);
+
+    const body = await page.locator("main").innerText();
+    // Medusa embeds the request path and status in its error message, so the
+    // raw string must never reach the page.
+    expect(body).not.toContain("/store/carts/");
+    expect(body).not.toMatch(/Medusa API request failed/);
+  });
+});
