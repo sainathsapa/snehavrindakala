@@ -581,3 +581,54 @@ test.describe("promo codes", () => {
     expect(body).not.toMatch(/Medusa API request failed/);
   });
 });
+
+test.describe("checkout handshake", () => {
+  const FIELDS: Array<[string, string]> = [
+    ["full_name", "Test Buyer"],
+    ["email", "test.buyer@example.com"],
+    ["phone", "9876543210"],
+    ["address", "1 MG Road"],
+    ["city", "Bikaner"],
+    ["state", "Rajasthan"],
+    ["postal_code", "334001"],
+  ];
+
+  async function fillDelivery(page: import("@playwright/test").Page) {
+    await page.goto("/products/wearable-art-pendant");
+    await page.getByRole("button", { name: /Add to [Cc]art/i }).first().click();
+    await page.waitForTimeout(2000);
+    await page.goto("/checkout");
+    const form = page.locator("main form").first();
+    for (const [name, value] of FIELDS) {
+      await form.locator(`[name=${name}]`).fill(value);
+    }
+    await form.getByRole("button", { name: /Save delivery details/i }).click();
+    // The pay button only renders on the ?saved=1 redirect that follows a
+    // successful save, so waiting for it is the assertion that the address
+    // actually persisted rather than bouncing back with ?error=missing.
+    await page.getByRole("button", { name: /Pay .* now/i }).waitFor({ timeout: 20000 });
+  }
+
+  test("a saved delivery address reveals the pay button", async ({ page }) => {
+    await fillDelivery(page);
+    await expect(page.getByRole("button", { name: /Pay .* now/i })).toBeVisible();
+  });
+
+  test("a forged payment signature is refused", async ({ request }) => {
+    // The signature is the only thing standing between a crafted POST and a
+    // free order, so it is worth asserting on directly.
+    const res = await request.post("/api/store/checkout/complete", {
+      data: {
+        cart_id: "cart_does_not_matter",
+        razorpay_order_id: "order_FAKE",
+        razorpay_payment_id: "pay_FAKE",
+        razorpay_signature: "deadbeefdeadbeef",
+      },
+    });
+    expect(res.ok()).toBe(false);
+    const body = JSON.stringify(await res.json());
+    // Never echo Medusa's internal request path, whatever the failure was.
+    expect(body).not.toContain("/store/carts/");
+    expect(body).not.toContain("Medusa API request failed");
+  });
+});

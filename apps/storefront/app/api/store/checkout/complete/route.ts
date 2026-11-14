@@ -184,10 +184,15 @@ export async function POST(req: Request) {
       shipping_error: shippingError,
     });
   } catch (err) {
+    // Medusa's client embeds the request path and status in its message
+    // ("Medusa API request failed: 404 /store/carts/cart_x"). Returning that
+    // verbatim hands an unauthenticated caller a map of the backend, so it is
+    // logged and replaced with a sentence the buyer can act on.
+    console.error("Checkout completion failed", err);
     return NextResponse.json(
       {
         error:
-          err instanceof Error ? err.message : "Failed to complete order",
+          "We could not complete your order. Please try again, or contact us if the payment was taken.",
       },
       { status: 500 }
     );
