@@ -102,7 +102,14 @@
     "allWorks": "सभी कृतियाँ",
     "browseAll": "सभी कृतियाँ देखें",
     "work": "कृति",
-    "works": "कृतियाँ"
+    "works": "कृतियाँ",
+    "beforeYouChoose": "चुनने से पहले",
+    "doorTradition": "परंपरा",
+    "doorTraditionTitle": "यह रूप कहाँ से आया",
+    "doorMaterials": "सामग्री",
+    "doorMaterialsTitle": "कृति किससे बनी है",
+    "doorMade": "आपके लिए",
+    "doorMadeTitle": "अपने लिए कुछ बनवाएँ"
   },
   "cart": {
     "title": "कार्ट",
@@ -121,7 +128,9 @@
     "checking": "जाँच हो रही है…",
     "codeApplied": "लगा हुआ: {codes}",
     "browse": "उत्पाद देखें",
-    "discount": "छूट"
+    "discount": "छूट",
+    "addToCart": "कार्ट में जोड़ें",
+    "adding": "जोड़ा जा रहा है…"
   },
   "checkout": {
     "title": "भुगतान",
@@ -186,7 +195,10 @@
     "readStory": "कहानी पढ़ें",
     "traditionLede": "परंपरा बनाए जाने से जीवित रहती है, सहेजे जाने से नहीं। इस साइट की हर कृति उसे जीवित रखने का एक तरीक़ा है।",
     "seeWork": "कृतियाँ देखें",
-    "understandCraft": "शिल्प समझें"
+    "understandCraft": "शिल्प समझें",
+    "viewAll": "सभी देखें",
+    "keepLooking": "और देखें",
+    "worksInTradition": "इस परंपरा की कृतियाँ"
   },
   "account": {
     "title": "आपका खाता",
@@ -522,7 +534,9 @@
     "home": "मुखपृष्ठ",
     "emptyTitle": "पहले लेख लिखे जा रहे हैं।",
     "emptyBody": "परंपराओं, सामग्री और कृति के पीछे के लोगों की कहानियाँ यहाँ आएँगी।",
-    "readEssay": "लेख पढ़ें"
+    "readEssay": "लेख पढ़ें",
+    "leadEssay": "प्रमुख निबंध",
+    "earlierEntries": "पुरानी प्रविष्टियाँ"
   },
   "learn": {
     "crumb": "जानें",
@@ -545,7 +559,11 @@
     "journalLink": "पत्रिका — तकनीक और इतिहास पर लेख →",
     "formsLink": "सभी छह परंपराएँ →",
     "searchGlossary": "शब्दावली खोजें",
-    "allLanguages": "सभी भाषाएँ"
+    "allLanguages": "सभी भाषाएँ",
+    "plateMaterials": "सामग्री",
+    "plateTraditions": "परंपराएँ",
+    "plateWords": "शब्द",
+    "plateHistory": "इतिहास"
   },
   "home": {
     "lede": "यहाँ की हर कृति ऐसे हाथों ने बनाई है जिन्होंने यह रूप किसी से सीखा है। हम उन कारीगरों के साथ काम करते हैं जिन्हें अपनी परंपरा विरासत में मिली है और जो उसे आगे बढ़ा रहे हैं।",

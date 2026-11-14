@@ -65,7 +65,7 @@ export default async function JournalPage() {
             <section className="relative overflow-hidden pb-16 lg:pb-24">
               <BelButi className="pointer-events-none absolute -right-4 top-0 hidden h-20 w-48 text-terracotta/[0.12] lg:block" />
               <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-                <PlateNumber number={1} label="Lead essay" className="mb-8" />
+                <PlateNumber number={1} label={t("leadEssay")} className="mb-8" />
 
                 <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
                   <Link href={`/journal/${lead.slug}`} className="group block">
@@ -122,7 +122,7 @@ export default async function JournalPage() {
               <ButiField style={{ opacity: 0.6 }} />
               <PaperGrain />
               <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-                <PlateNumber number={2} label="Earlier entries" className="mb-10" />
+                <PlateNumber number={2} label={t("earlierEntries")} className="mb-10" />
 
                 <ul className="divide-y divide-sand-border/60">
                   {rest.map((post, index) => {

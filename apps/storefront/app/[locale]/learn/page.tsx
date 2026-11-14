@@ -101,7 +101,7 @@ export default async function LearnPage() {
         <PaperGrain />
         <HamsaMotif className="pointer-events-none absolute right-4 top-10 hidden h-24 w-32 text-terracotta/[0.10] lg:block" />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <PlateNumber number={1} label="The words" className="mb-8" />
+          <PlateNumber number={1} label={t("plateWords")} className="mb-8" />
 
           <div className="grid gap-10 lg:grid-cols-[280px_1fr] lg:gap-16">
             <div>
@@ -126,7 +126,7 @@ export default async function LearnPage() {
       >
         <PeacockEye className="pointer-events-none absolute -left-2 top-16 hidden h-40 w-28 text-terracotta/[0.10] lg:block" />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <PlateNumber number={2} label="The materials" className="mb-8" />
+          <PlateNumber number={2} label={t("plateMaterials")} className="mb-8" />
 
           <div className="max-w-2xl">
             <h2 className="font-serif text-3xl font-semibold leading-[1.1] tracking-[-0.01em] text-deep-ink sm:text-[38px]">
@@ -199,7 +199,7 @@ export default async function LearnPage() {
         <ButiField style={{ opacity: 0.35 }} />
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <PlateNumber number={3} label="The history" className="mb-8" />
+          <PlateNumber number={3} label={t("plateHistory")} className="mb-8" />
 
           <div className="grid gap-10 lg:grid-cols-[280px_1fr] lg:gap-16">
             <div className="lg:sticky lg:top-28 lg:self-start">
@@ -247,7 +247,7 @@ export default async function LearnPage() {
         className="relative scroll-mt-24 border-t border-sand-border/60 py-16 lg:py-24"
       >
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-          <PlateNumber number={4} label="The traditions" className="mb-8" />
+          <PlateNumber number={4} label={t("plateTraditions")} className="mb-8" />
           <RunningHead left="Read the six forms" right="From the reference" />
 
           <div className="mt-10 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">

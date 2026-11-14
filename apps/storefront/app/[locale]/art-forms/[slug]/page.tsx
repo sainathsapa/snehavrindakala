@@ -221,13 +221,13 @@ export default async function ArtFormPage({ params }: PageProps) {
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <div className="flex flex-wrap items-end justify-between gap-4 border-b border-sand-border/60 pb-5">
               <h2 className="font-serif text-2xl font-semibold text-deep-ink sm:text-3xl">
-                Works in this tradition
+                {t("worksInTradition")}
               </h2>
               <Link
                 href={`/shop/${form.slug}`}
                 className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
               >
-                view all →
+                {t("viewAll")} →
               </Link>
             </div>
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
@@ -255,7 +255,7 @@ export default async function ArtFormPage({ params }: PageProps) {
           <KalamBorder className="absolute inset-x-0 top-0 text-haldi/30" />
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
             <h2 className="font-serif text-2xl font-semibold text-rang-paper sm:text-3xl">
-              Keep looking
+              {t("keepLooking")}
             </h2>
             <div className="mt-8 grid gap-6 sm:grid-cols-3">
               {others.map((other) => (

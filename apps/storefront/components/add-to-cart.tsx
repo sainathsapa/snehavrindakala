@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 
 interface AddToCartProps {
@@ -14,6 +15,7 @@ export function AddToCart({
   disabled = false,
   disabledReason,
 }: AddToCartProps) {
+  const t = useTranslations("cart");
   const { add, isPending, result } = useAddToCart();
 
   if (disabled) {
@@ -35,7 +37,7 @@ export function AddToCart({
         onClick={() => add(variantId, 1)}
         className="w-full py-4 bg-terracotta text-white rounded-xl font-semibold hover:bg-terracotta/90 focus:outline-none focus:ring-2 focus:ring-terracotta focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
       >
-        {isPending ? "Adding…" : "Add to Cart"}
+        {isPending ? t("adding") : t("addToCart")}
       </button>
 
       {result && (

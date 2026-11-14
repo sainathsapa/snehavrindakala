@@ -102,7 +102,14 @@
     "allWorks": "all works",
     "browseAll": "Browse all works",
     "work": "work",
-    "works": "works"
+    "works": "works",
+    "beforeYouChoose": "Before you choose",
+    "doorTradition": "The tradition",
+    "doorTraditionTitle": "Where each form comes from",
+    "doorMaterials": "The materials",
+    "doorMaterialsTitle": "What the work is made of",
+    "doorMade": "Made for you",
+    "doorMadeTitle": "Have something made to order"
   },
   "cart": {
     "title": "Cart",
@@ -121,7 +128,9 @@
     "checking": "Checking…",
     "codeApplied": "Applied: {codes}",
     "browse": "Browse products",
-    "discount": "Discount"
+    "discount": "Discount",
+    "addToCart": "Add to Cart",
+    "adding": "Adding…"
   },
   "checkout": {
     "title": "Checkout",
@@ -186,7 +195,10 @@
     "readStory": "Read the story",
     "traditionLede": "A tradition survives by being made, not by being preserved. Every work on this site is a way of keeping one alive.",
     "seeWork": "See the work",
-    "understandCraft": "Understand the craft"
+    "understandCraft": "Understand the craft",
+    "viewAll": "view all",
+    "keepLooking": "Keep looking",
+    "worksInTradition": "Works in this tradition"
   },
   "account": {
     "title": "Your account",
@@ -522,7 +534,9 @@
     "home": "Home",
     "emptyTitle": "The first pieces are being written.",
     "emptyBody": "Stories about the traditions, the materials and the people behind the work will appear here.",
-    "readEssay": "Read the essay"
+    "readEssay": "Read the essay",
+    "leadEssay": "Lead essay",
+    "earlierEntries": "Earlier entries"
   },
   "learn": {
     "crumb": "Learn",
@@ -545,7 +559,11 @@
     "journalLink": "The journal — essays on technique and history →",
     "formsLink": "All six traditions →",
     "searchGlossary": "Search the glossary",
-    "allLanguages": "All languages"
+    "allLanguages": "All languages",
+    "plateMaterials": "The materials",
+    "plateTraditions": "The traditions",
+    "plateWords": "The words",
+    "plateHistory": "The history"
   },
   "home": {
     "lede": "Every piece here was made by a hand that learned the form from someone. We work with makers who have inherited their tradition and are passing it on.",

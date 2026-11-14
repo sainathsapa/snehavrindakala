@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 import { formatPrice } from "@/lib/medusa";
 import { Button } from "@snehavrinda-kala/ui";
@@ -33,6 +34,7 @@ export function ProductOptions({
   isCustomOnly,
   handle,
 }: ProductOptionsProps) {
+  const t = useTranslations("cart");
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     variants[0]?.id ?? null
   );
@@ -130,7 +132,7 @@ export function ProductOptions({
             onClick={() => add(selectedVariantId, 1)}
             className="w-full py-4 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
-            {isPendingAdd ? "Adding…" : "Add to Cart"}
+            {isPendingAdd ? t("adding") : t("addToCart")}
           </button>
         )}
         {result && (

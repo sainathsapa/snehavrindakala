@@ -153,24 +153,24 @@ export default async function ShopPage({
         <PaperGrain />
         <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <p className="py-10 text-center font-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-terracotta">
-            Before you choose
+            {t("beforeYouChoose")}
           </p>
           <div className="grid border-t border-sand-border/60 sm:grid-cols-3">
             {[
               {
                 href: "/art-forms",
-                eyebrow: "The tradition",
-                title: "Where each form comes from",
+                eyebrow: t("doorTradition"),
+                title: t("doorTraditionTitle"),
               },
               {
                 href: "/learn",
-                eyebrow: "The materials",
-                title: "What the work is made of",
+                eyebrow: t("doorMaterials"),
+                title: t("doorMaterialsTitle"),
               },
               {
                 href: "/custom-art",
-                eyebrow: "Made for you",
-                title: "Have something made to order",
+                eyebrow: t("doorMade"),
+                title: t("doorMadeTitle"),
               },
             ].map((door, i) => (
               <Link
