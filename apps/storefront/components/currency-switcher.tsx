@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 
 /**
  * Currency picker.
@@ -11,7 +12,7 @@ import { useRouter } from "next/navigation";
  * calculated per region on the server — switching currency client-side would only
  * relabel numbers, not re-price them.
  *
- * Deliberately small: four currencies that actually have prices behind them
+ * Deliberately small: five currencies that actually have prices behind them
  * rather than a long menu of flags that fall back to INR.
  */
 
@@ -39,6 +40,8 @@ export function CurrencySwitcher({
   const [value, setValue] = useState(current);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const t = useTranslations("currency");
+  const locale = useLocale();
 
   useEffect(() => setValue(current), [current]);
 
@@ -47,28 +50,46 @@ export function CurrencySwitcher({
     await fetch("/api/currency", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currency: next }),
+      body: JSON.stringify({ currency: next, locale }),
     });
     startTransition(() => router.refresh());
   }
 
   return (
-    <label className="flex items-center gap-2">
-      <span className="sr-only">Currency</span>
+    <label className="group relative inline-flex items-center">
+      <span className="sr-only">{t("label")}</span>
+      {/* The unit mark reads as a currency before the select is opened — the
+          select alone showed an abbreviation and nothing else. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-2 font-serif text-[13px] leading-none text-terracotta/80"
+      >
+        {CURRENCIES.find((c) => c.code === value)?.symbol ?? "₹"}
+      </span>
       <select
         value={value}
         onChange={(e) => change(e.target.value)}
         disabled={pending}
-        className="cursor-pointer rounded-sm border border-sand-border bg-transparent px-2 py-1 font-sans text-[11px] uppercase tracking-[0.12em] text-deep-ink/80 transition-colors hover:border-terracotta/50 focus:border-terracotta focus:outline-none disabled:opacity-60"
+        className="cursor-pointer appearance-none rounded-sm border border-sand-border/70 bg-transparent py-1 pl-6 pr-6 font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-deep-ink/75 transition-colors hover:border-kumkum hover:text-kumkum focus:border-sindoor focus:outline-none focus:ring-1 focus:ring-sindoor/40 disabled:opacity-60"
       >
         {CURRENCIES.map((c) => (
           <option key={c.code} value={c.code}>
             {compact
-              ? `${c.symbol} ${c.code.toUpperCase()}`
-              : `${c.symbol} ${c.code.toUpperCase()} · ${c.label}`}
+              ? `${c.code.toUpperCase()}`
+              : `${c.code.toUpperCase()} · ${c.label}`}
           </option>
         ))}
       </select>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 10 6"
+        className="pointer-events-none absolute right-1.5 h-1.5 w-2.5 text-deep-ink/45 transition-colors group-hover:text-kumkum"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      >
+        <path d="M1 1l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </label>
   );
 }

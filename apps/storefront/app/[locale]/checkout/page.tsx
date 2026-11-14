@@ -3,6 +3,7 @@ import { saveCheckoutDetailsAction } from "@/app/[locale]/cart/actions";
 import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
 import { medusa } from "@/lib/medusa";
 import { CheckoutClient } from "@/components/checkout-client";
+import { MandalaMark } from "@/components/grounds";
 import { taxForAmount } from "@/lib/tax-server";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import Link from "next/link";
@@ -419,7 +420,8 @@ export default async function CheckoutPage({
   );
 
   return (
-    <main className="py-10">
+    <main className="relative overflow-hidden py-10">
+      <MandalaMark className="absolute -right-14 -top-10 hidden h-64 w-64 lg:block" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <nav className="mb-6 text-sm font-sans">
           <Link

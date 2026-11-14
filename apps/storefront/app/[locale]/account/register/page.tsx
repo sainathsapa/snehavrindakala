@@ -17,7 +17,7 @@ export default async function RegisterPage({
         <Card elevated>
           <CardHeader>
             <CardTitle>{t("registerTitle")}</CardTitle>
-            <p className="mt-2 text-sm text-muted font-sans">
+            <p className="mt-2 text-sm text-muted-ink font-sans">
               {t("registerIntro")}
             </p>
           </CardHeader>
@@ -32,7 +32,7 @@ export default async function RegisterPage({
             <form action={registerAction} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="first_name" className="block text-sm font-medium text-ink mb-1">
+                  <label htmlFor="first_name" className="block text-sm font-medium text-deep-ink mb-1">
                     {t("firstName")}
                   </label>
                   <input
@@ -40,11 +40,11 @@ export default async function RegisterPage({
                     name="first_name"
                     type="text"
                     autoComplete="given-name"
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
                 <div>
-                  <label htmlFor="last_name" className="block text-sm font-medium text-ink mb-1">
+                  <label htmlFor="last_name" className="block text-sm font-medium text-deep-ink mb-1">
                     {t("lastName")}
                   </label>
                   <input
@@ -52,12 +52,12 @@ export default async function RegisterPage({
                     name="last_name"
                     type="text"
                     autoComplete="family-name"
-                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                    className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-ink mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-deep-ink mb-1">
                   {t("email")}
                 </label>
                 <input
@@ -66,11 +66,11 @@ export default async function RegisterPage({
                   type="email"
                   autoComplete="email"
                   required
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-ink mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-deep-ink mb-1">
                   {t("password")}
                 </label>
                 <input
@@ -80,19 +80,19 @@ export default async function RegisterPage({
                   autoComplete="new-password"
                   required
                   minLength={8}
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-madder"
+                  className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-madder text-white rounded-md font-medium hover:bg-madder/90 transition-colors"
+                className="w-full py-3 bg-sindoor text-white rounded-md font-medium hover:bg-sindoor/90 transition-colors"
               >
                 {t("createBtn")}
               </button>
             </form>
-            <p className="mt-6 text-sm text-muted font-sans">
+            <p className="mt-6 text-sm text-muted-ink font-sans">
               {t("haveAccount")}{" "}
-              <Link href="/account/login" className="text-madder underline">
+              <Link href="/account/login" className="text-sindoor underline">
                 {t("signInLink")}
               </Link>
             </p>

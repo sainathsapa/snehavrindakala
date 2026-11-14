@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
+import { KalashMark } from "@/components/grounds";
 import { medusa, formatPrice } from "@/lib/medusa";
 import { logoutAction } from "./actions";
 import { changePasswordAction, updateProfileAction } from "./address-actions";
@@ -53,7 +54,8 @@ export default async function AccountPage({
   const errorParam = typeof params.error === "string" ? params.error : "";
 
   return (
-    <main className="py-10">
+    <main className="relative overflow-hidden py-10">
+      <KalashMark className="absolute -right-8 -top-6 hidden h-52 w-52 lg:block" opacity={0.1} />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>

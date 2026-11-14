@@ -4,6 +4,7 @@ import {
   getStockType,
   medusa,
 } from "@/lib/medusa";
+import { CornerFlourish } from "@/components/grounds";
 import { localeAlternates } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
@@ -175,7 +176,8 @@ export default async function ProductDetailPage({
   const t = await getTranslations("productDetail");
 
   return (
-    <main className="py-10">
+    <main className="relative overflow-hidden py-10">
+      <CornerFlourish className="absolute -left-8 -top-8 hidden h-72 w-72 lg:block" />
       <script
         id="schema-product"
         type="application/ld+json"

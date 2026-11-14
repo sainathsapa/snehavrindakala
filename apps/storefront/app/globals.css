@@ -323,3 +323,15 @@ img {
     scroll-behavior: auto !important;
   }
 }
+
+/* Painted ornament images carry their own warm cream ground, which would show
+   as a hard-edged rectangle over the paper texture. A radial mask dissolves the
+   edges so only the motif reads. */
+.ornament-fade {
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    #000 42%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(ellipse at center, #000 42%, transparent 72%);
+}

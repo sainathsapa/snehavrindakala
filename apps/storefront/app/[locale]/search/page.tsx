@@ -4,6 +4,7 @@ import { universalSearch, type SearchResult } from "@/lib/search";
 import { artFormSlugs } from "@/lib/slugs";
 import { getTranslations, getLocale } from "next-intl/server";
 import { productTranslationsFor } from "@/lib/site-content";
+import { PeacockMark } from "@/components/grounds";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   };
 
   return (
-    <main className="py-10">
+    <main className="relative overflow-hidden py-10">
+      <PeacockMark className="absolute -right-10 top-2 hidden h-56 w-56 lg:block" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="mb-6 text-sm font-sans">
           <Link

@@ -2,6 +2,7 @@ import { getCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/medusa";
 import { removeCartItemAction, updateCartItemAction } from "./actions";
 import { PromoCode } from "@/components/promo-code";
+import { KalashMark } from "@/components/grounds";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
@@ -13,7 +14,8 @@ export default async function CartPage() {
   const items = cart?.items ?? [];
 
   return (
-    <main className="py-10">
+    <main className="relative overflow-hidden py-10">
+      <KalashMark className="absolute -right-6 -top-4 hidden h-48 w-48 lg:block" />
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink mb-8">
           {t("title")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   LOCALE_LABELS,
   routing,
@@ -23,10 +23,24 @@ export function LanguageSwitcher() {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations("currency");
 
   return (
-    <label className="relative inline-flex items-center">
-      <span className="sr-only">Language</span>
+    <label className="group relative inline-flex items-center">
+      <span className="sr-only">{t("language")}</span>
+      {/* A globe rather than nothing: two adjacent selects with only
+          abbreviations in them were indistinguishable at a glance. */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 16 16"
+        className="pointer-events-none absolute left-2 h-3 w-3 text-terracotta/80"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      >
+        <circle cx="8" cy="8" r="6.2" />
+        <path d="M1.8 8h12.4M8 1.8c1.7 1.7 2.5 3.9 2.5 6.2S9.7 12.5 8 14.2C6.3 12.5 5.5 10.3 5.5 8S6.3 3.5 8 1.8z" />
+      </svg>
       <select
         value={locale}
         onChange={(e) => {
@@ -35,7 +49,7 @@ export function LanguageSwitcher() {
           // it keeps the visitor on the same page instead of sending them home.
           router.replace(pathname, { locale: next });
         }}
-        className="cursor-pointer appearance-none rounded-sm border border-sand-border/70 bg-transparent py-1 pl-2 pr-6 font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-deep-ink/75 transition-colors hover:border-kumkum hover:text-kumkum focus:outline-none focus:ring-2 focus:ring-sindoor"
+        className="cursor-pointer appearance-none rounded-sm border border-sand-border/70 bg-transparent py-1 pl-6 pr-6 font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-deep-ink/75 transition-colors hover:border-kumkum hover:text-kumkum focus:outline-none focus:ring-2 focus:ring-sindoor"
       >
         {routing.locales.map((code) => (
           <option key={code} value={code}>
@@ -46,7 +60,7 @@ export function LanguageSwitcher() {
       <svg
         aria-hidden="true"
         viewBox="0 0 10 6"
-        className="pointer-events-none absolute right-1.5 h-1.5 w-2.5 text-deep-ink/45"
+        className="pointer-events-none absolute right-1.5 h-1.5 w-2.5 text-deep-ink/45 transition-colors group-hover:text-kumkum"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.4"

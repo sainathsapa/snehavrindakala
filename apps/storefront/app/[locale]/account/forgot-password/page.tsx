@@ -20,7 +20,7 @@ export default async function ForgotPasswordPage({
           <Card elevated>
             <CardHeader>
               <CardTitle>Password reset sent</CardTitle>
-              <p className="mt-2 text-sm text-muted font-sans">
+              <p className="mt-2 text-sm text-muted-ink font-sans">
                 If an account exists for that email, you’ll receive a reset link.
               </p>
             </CardHeader>
@@ -44,7 +44,7 @@ export default async function ForgotPasswordPage({
         <Card elevated>
           <CardHeader>
             <CardTitle>{t("forgotTitle")}</CardTitle>
-            <p className="mt-2 text-sm text-muted font-sans">
+            <p className="mt-2 text-sm text-muted-ink font-sans">
               {t("forgotIntro")}
             </p>
           </CardHeader>
@@ -82,7 +82,7 @@ export default async function ForgotPasswordPage({
                 {t("sendReset")}
               </button>
             </form>
-            <p className="mt-6 text-sm text-muted font-sans">
+            <p className="mt-6 text-sm text-muted-ink font-sans">
               {t("remembered")}{" "}
               <Link href="/account/login" className="text-sindoor underline">
                 {t("signInLink")}

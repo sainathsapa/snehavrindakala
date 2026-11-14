@@ -227,3 +227,147 @@ export function OrnamentGround({
     </Tag>
   );
 }
+
+/**
+ * A painted kalash (the ceremonial pot) used as a section seal.
+ *
+ * The site's ornament is photographed pigment rather than vector approximations,
+ * so it carries the medium into pages that are otherwise all type — the cart,
+ * checkout and account screens. Kept out of the way of text: it is a margin mark,
+ * not a watermark, and is hidden from assistive tech.
+ */
+export function KalashMark({
+  className = "",
+  opacity = 0.14,
+}: {
+  className?: string;
+  opacity?: number;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      aria-hidden="true"
+      alt=""
+      src="/images/ornaments/kalash.jpg"
+      className={`pointer-events-none select-none ornament-fade mix-blend-multiply ${className}`}
+      style={{ opacity }}
+    />
+  );
+}
+
+/**
+ * A repeating band of painted paisley, for closing a section.
+ *
+ * Tiled from the single motif so one asset covers any width; the alternative was
+ * exporting four fixed-width strips per breakpoint.
+ */
+export function PaisleyBand({ className = "" }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none h-4 w-full ${className}`}
+      style={{
+        backgroundImage: "url(/images/ornaments/paisley-motif.jpg)",
+        backgroundRepeat: "repeat-x",
+        backgroundSize: "auto 100%",
+        opacity: 0.22,
+      }}
+    />
+  );
+}
+
+/**
+ * Painted assets for the site's ornament: lotus, peacock, mandala, a running
+ * floral band and a corner flourish.
+ *
+ * These are photographed pigment, not vector approximations of it, because the
+ * difference is the whole point — a site selling hand-painted work should not
+ * dress itself in flat geometry. All are decorative only, so each is hidden from
+ * assistive tech and marked `alt=""`.
+ */
+export function LotusMark({
+  className = "",
+  opacity = 0.16,
+}: {
+  className?: string;
+  opacity?: number;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      aria-hidden="true"
+      alt=""
+      src="/images/ornaments/lotus.jpg"
+      className={`pointer-events-none select-none ornament-fade mix-blend-multiply ${className}`}
+      style={{ opacity }}
+    />
+  );
+}
+
+export function PeacockMark({
+  className = "",
+  opacity = 0.14,
+}: {
+  className?: string;
+  opacity?: number;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      aria-hidden="true"
+      alt=""
+      src="/images/ornaments/peacock.jpg"
+      className={`pointer-events-none select-none ornament-fade mix-blend-multiply ${className}`}
+      style={{ opacity }}
+    />
+  );
+}
+
+export function MandalaMark({
+  className = "",
+  opacity = 0.12,
+}: {
+  className?: string;
+  opacity?: number;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      aria-hidden="true"
+      alt=""
+      src="/images/ornaments/mandala.jpg"
+      className={`pointer-events-none select-none ornament-fade mix-blend-multiply ${className}`}
+      style={{ opacity }}
+    />
+  );
+}
+
+/** A running floral frieze, for setting off a heading or closing a section. */
+export function FloralBand({ className = "" }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none h-6 w-full ${className}`}
+      style={{
+        backgroundImage: "url(/images/ornaments/floral-band.jpg)",
+        backgroundRepeat: "repeat-x",
+        backgroundSize: "auto 100%",
+        opacity: 0.3,
+      }}
+    />
+  );
+}
+
+/** A painted corner flourish, pinned to whichever corner `className` places it. */
+export function CornerFlourish({ className = "" }: { className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      aria-hidden="true"
+      alt=""
+      src="/images/ornaments/corner-flourish.jpg"
+      className={`pointer-events-none select-none ornament-fade mix-blend-multiply ${className}`}
+      style={{ opacity: 0.18 }}
+    />
+  );
+}
