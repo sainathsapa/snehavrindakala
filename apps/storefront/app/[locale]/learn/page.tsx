@@ -16,12 +16,14 @@ import { GlossaryExplorer } from "@/components/glossary-explorer";
 import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import { listArtForms } from "@/lib/site-content";
 
-export const metadata = {
-  title: "Learn",
-  description:
-    "A plain-language guide to Indian art: what the words mean, what the materials are, and how the traditions came to exist.",
-  alternates: localeAlternates("/learn"),
-};
+export async function generateMetadata() {
+  const t = await getTranslations("learn");
+  return {
+    title: t("crumb"),
+    description: t("intro"),
+    alternates: localeAlternates("/learn"),
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -53,10 +55,10 @@ export default async function LearnPage() {
   return (
     <main className="bg-rang-paper">
       <PageHeader
-        eyebrow="Reference"
-        title="Learn"
-        intro="What the words mean, what the work is made of, and where the traditions come from. No shop on this page — only what a visitor needs in order to see."
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Learn" }]}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        intro={t("intro")}
+        breadcrumb={[{ label: t("home"), href: "/" }, { label: t("crumb") }]}
       />
 
       {/* ── Contents ───────────────────────────────────────────────────────
@@ -70,16 +72,16 @@ export default async function LearnPage() {
               {t("contents")}
             </span>
             <a href="#glossary" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
-              I. The words
+              {t("tocWords")}
             </a>
             <a href="#materials" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
-              II. The materials
+              {t("tocMaterials")}
             </a>
             <a href="#timeline" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
-              III. The history
+              {t("tocHistory")}
             </a>
             <a href="#traditions" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
-              IV. The traditions
+              {t("tocTraditions")}
             </a>
           </div>
         </div>
@@ -96,14 +98,10 @@ export default async function LearnPage() {
           <div className="grid gap-10 lg:grid-cols-[280px_1fr] lg:gap-16">
             <div>
               <h2 className="font-serif text-3xl font-semibold leading-[1.1] tracking-[-0.01em] text-deep-ink sm:text-[38px]">
-                Words you will
-                <br />
-                keep meeting
+                {t("wordsTitle")}
               </h2>
               <p className="mt-5 max-w-xs font-serif text-base leading-relaxed text-muted-ink">
-                Sixteen terms, most of them untranslated on shop pages that use
-                them constantly. Each is given in its own language, because the
-                English word is usually a lossy translation.
+                {t("wordsIntro")}
               </p>
               <MithilaBorder className="mt-7 h-3 w-32 text-terracotta/30" />
             </div>
@@ -124,12 +122,10 @@ export default async function LearnPage() {
 
           <div className="max-w-2xl">
             <h2 className="font-serif text-3xl font-semibold leading-[1.1] tracking-[-0.01em] text-deep-ink sm:text-[38px]">
-              What the work is made of
+              {t("materialsTitle")}
             </h2>
             <p className="mt-5 font-serif text-lg leading-relaxed text-muted-ink">
-              Every material here is chosen for a reason that can be stated. A
-              tradition that used rice paste did so because a household already
-              had rice — not because rice is picturesque.
+              {t("materialsIntro")}
             </p>
           </div>
 
@@ -205,9 +201,7 @@ export default async function LearnPage() {
                 history
               </h2>
               <p className="mt-5 max-w-xs font-serif text-base leading-relaxed text-muted-ink">
-                Nine moments, in ranges rather than single years — because the
-                dates are argued about, and pretending otherwise would be a lie
-                told in the service of tidiness.
+                {t("historyIntro")}
               </p>
               <Fleuron className="mt-7 justify-start" />
             </div>
@@ -280,26 +274,26 @@ export default async function LearnPage() {
             <div className="mt-10 flex flex-col items-center py-12 text-center">
               <LotusRosette className="h-14 w-14 text-terracotta/30" />
               <p className="mt-4 font-serif text-lg italic text-muted-ink">
-                The traditions are being catalogued.
+                {t("traditionsEmpty")}
               </p>
             </div>
           )}
 
           <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-sand-border/60 pt-8">
             <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-terracotta">
-              Keep reading
+              {t("keepReading")}
             </span>
             <Link
               href="/journal"
               className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum"
             >
-              The journal — essays on technique and history →
+              {t("journalLink")}
             </Link>
             <Link
               href="/art-forms"
               className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum"
             >
-              All six traditions →
+              {t("formsLink")}
             </Link>
           </div>
         </div>

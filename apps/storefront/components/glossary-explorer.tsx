@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { GlossaryTerm } from "@/lib/art-reference";
 
 /**
@@ -15,6 +16,7 @@ import type { GlossaryTerm } from "@/lib/art-reference";
  * hardcoded, so adding a term in a new language extends the filter on its own.
  */
 export function GlossaryExplorer({ entries }: { entries: GlossaryTerm[] }) {
+  const t = useTranslations("learn");
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState<string | null>(null);
 
@@ -53,7 +55,7 @@ export function GlossaryExplorer({ entries }: { entries: GlossaryTerm[] }) {
     <div>
       <div className="flex flex-col gap-4 border-y border-sand-border/60 py-5 sm:flex-row sm:items-center sm:justify-between">
         <label className="relative flex w-full sm:max-w-xs">
-          <span className="sr-only">Search the glossary</span>
+          <span className="sr-only">{t("searchGlossary")}</span>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -88,7 +90,7 @@ export function GlossaryExplorer({ entries }: { entries: GlossaryTerm[] }) {
               : "border-sand-border text-muted-ink hover:border-terracotta/50 hover:text-deep-ink"
           }`}
         >
-          All languages
+          {t("allLanguages")}
         </button>
         {languages.map((name) => (
           <button

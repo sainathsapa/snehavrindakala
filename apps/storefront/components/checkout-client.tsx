@@ -56,6 +56,27 @@ interface CheckoutClientProps {
 const rateKey = (rate: ShippingRate) =>
   `${rate.courier_name}::${rate.service_name}`;
 
+/**
+ * The option pre-selected when checkout opens.
+ *
+ * Cheapest, not first. The couriers returned for a typical Indian pincode
+differ by a few rupees and a day or two, and which one came back first from
+the quoting API was close to arbitrary — so the pre-tick could change between
+visits for no reason the buyer could see. Ordering by price makes the default
+explicable ("we picked the least expensive") and consistent.
+ *
+ * Ties break on the printed key so the choice is stable across renders.
+ */
+function cheapestRateKey(rates: ShippingRate[]): string {
+  if (rates.length === 0) return "";
+
+  const cheapest = rates
+    .slice()
+    .sort((a, b) => a.rate - b.rate || rateKey(a).localeCompare(rateKey(b)))[0];
+
+  return rateKey(cheapest);
+}
+
 export function CheckoutClient({
   cartId,
   currency,
@@ -71,7 +92,7 @@ export function CheckoutClient({
 }: CheckoutClientProps) {
   const router = useRouter();
   const [selectedRateKey, setSelectedRateKey] = useState(() =>
-    shippingRates[0] ? rateKey(shippingRates[0]) : ""
+    cheapestRateKey(shippingRates)
   );
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
