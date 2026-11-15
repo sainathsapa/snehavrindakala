@@ -803,7 +803,10 @@ function Field({
       onChange(event.target.value),
     onBlur,
     className:
-      "w-full rounded-md border bg-surface px-3 py-2.5 font-sans text-base text-deep-ink placeholder:text-muted-ink/60 transition-colors focus:outline-none focus:ring-2 sm:text-sm " +
+      // Translucent, not opaque `bg-surface`. The page carries a fixed
+      // handmade-paper texture; a solid fill on each field covered it and left a
+      // visible seam across the form where the texture stopped.
+      "w-full rounded-md border bg-surface/60 px-3 py-2.5 font-sans text-base text-deep-ink placeholder:text-muted-ink/60 transition-colors focus:bg-surface focus:outline-none focus:ring-2 sm:text-sm " +
       (error
         ? "border-sindoor focus:ring-sindoor/40"
         : "border-sand-border focus:border-sindoor/60 focus:ring-sindoor/25"),
@@ -817,7 +820,7 @@ function Field({
       </label>
 
       {prefix ? (
-        <div className="flex items-stretch rounded-md border border-sand-border bg-surface focus-within:border-sindoor/60 focus-within:ring-2 focus-within:ring-sindoor/25">
+        <div className="flex items-stretch rounded-md border border-sand-border bg-surface/60 focus-within:border-sindoor/60 focus-within:bg-surface focus-within:ring-2 focus-within:ring-sindoor/25">
           <span className="flex shrink-0 items-center border-r border-sand-border/70 px-3 font-sans text-sm text-muted-ink">
             {prefix}
           </span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useCallback } from "react";
 import { Button } from "@snehavrinda-kala/ui";
 
@@ -63,6 +64,7 @@ export function RazorpayPayButton({
   onSuccess,
   onError,
 }: RazorpayPayButtonProps) {
+  const t = useTranslations("checkout");
   const [status, setStatus] = useState<"idle" | "paying" | "success" | "error">(
     "idle"
   );
@@ -178,9 +180,9 @@ export function RazorpayPayButton({
           </svg>
         </div>
         <h3 className="text-lg font-serif font-semibold text-deep-ink">
-          Payment successful
+          {t("paySuccess")}
         </h3>
-        <p className="text-muted-ink font-sans">Your order is being confirmed…</p>
+        <p className="text-muted-ink font-sans">{t("payConfirming")}</p>
       </div>
     );
   }
@@ -189,10 +191,10 @@ export function RazorpayPayButton({
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
         <h3 className="text-lg font-serif font-semibold text-deep-ink">
-          Payment failed
+          {t("payFailed")}
         </h3>
         <p className="text-sm text-red-700 font-sans mb-4">{errorMessage}</p>
-        <Button onClick={() => setStatus("idle")}>Try again</Button>
+        <Button onClick={() => setStatus("idle")}>{t("payRetry")}</Button>
       </div>
     );
   }
@@ -201,11 +203,9 @@ export function RazorpayPayButton({
     <Button
       onClick={handlePay}
       disabled={status === "paying"}
-      className="w-full py-4 bg-sindoor text-rang-paper rounded-xl font-semibold hover:bg-sindoor/90 focus:outline-none focus:ring-2 focus:ring-sindoor focus:ring-offset-2 transition-colors disabled:opacity-50"
+      className="w-full rounded-sm bg-kumkum px-6 py-4 font-sans text-sm font-semibold tracking-wide text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {status === "paying"
-        ? "Processing payment…"
-        : `Pay ₹${(amount / 100).toLocaleString("en-IN")} now`}
+      {status === "paying" ? t("payProcessing") : t("payNow")}
     </Button>
   );
 }

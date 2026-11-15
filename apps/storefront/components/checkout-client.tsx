@@ -25,7 +25,12 @@
  * payment and `complete` still verifies the signature server-side.
  */
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
@@ -246,53 +251,48 @@ export function CheckoutClient({
   const addressCountry = countryByCode(initialAddress?.country_code);
 
   return (
-    <ol className="space-y-6 lg:space-y-8">
-      {/* ══ Step 1 — Delivery ════════════════════════════════════════════ */}
-      <li>
-        <section
-          id="delivery"
-          aria-labelledby="delivery-heading"
-          className="overflow-hidden rounded-lg border border-sand-border/80 bg-surface"
-        >
-          <header className="flex items-start justify-between gap-4 border-b border-sand-border/60 px-5 py-4 sm:px-7">
-            <div className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-semibold ${
-                  addressStepComplete
-                    ? "bg-leaf/15 text-leaf"
-                    : "bg-sindoor text-rang-paper"
-                }`}
-              >
-                {addressStepComplete ? "✓" : "1"}
-              </span>
-              <div>
-                <h2
-                  id="delivery-heading"
-                  className="font-serif text-lg font-semibold leading-tight text-deep-ink sm:text-xl"
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_330px] lg:items-start lg:gap-14">
+      {/* ══ Left — the two steps, separated by a hairline ══════════ */}
+      <ol className="lg:divide-y lg:divide-sand-border/70">
+        {/* ── Step 1 — Delivery ──────────────────────────────────── */}
+        <li className="pb-7 lg:pb-10 lg:pr-4">
+          <section id="delivery" aria-labelledby="delivery-heading">
+            <header className="mb-6 flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <span
+                  aria-hidden="true"
+                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-sans text-[11px] font-semibold ${
+                    addressStepComplete
+                      ? "border-leaf/50 bg-leaf/10 text-leaf"
+                      : "border-kumkum/50 bg-kumkum/5 text-kumkum"
+                  }`}
                 >
-                  {t("stepDelivery")}
-                </h2>
-                <p className="mt-0.5 font-sans text-[13px] text-muted-ink">
-                  {addressStepComplete
-                    ? t("step1Hint")
-                    : t("step1Intro")}
-                </p>
+                  {addressStepComplete ? "✓" : "1"}
+                </span>
+                <div>
+                  <h2
+                    id="delivery-heading"
+                    className="font-serif text-xl font-semibold tracking-tight text-deep-ink"
+                  >
+                    {t("stepDelivery")}
+                  </h2>
+                  <p className="mt-0.5 font-sans text-[13px] text-muted-ink">
+                    {addressStepComplete ? t("step1Hint") : t("step1Intro")}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {addressStepComplete && (
-              <button
-                type="button"
-                onClick={() => setEditingAddress(true)}
-                className="shrink-0 rounded-full border border-sand-border px-3 py-1 font-sans text-xs font-medium text-deep-ink transition-colors hover:border-sindoor hover:text-sindoor"
-              >
-                {t("editAddress")}
-              </button>
-            )}
-          </header>
+              {addressStepComplete && (
+                <button
+                  type="button"
+                  onClick={() => setEditingAddress(true)}
+                  className="shrink-0 font-sans text-xs font-medium text-terracotta underline underline-offset-4 hover:text-kumkum"
+                >
+                  {t("editAddress")}
+                </button>
+              )}
+            </header>
 
-          <div className="px-5 py-5 sm:px-7 sm:py-6">
             {addressStepComplete && addressSummary ? (
               <div className="font-sans text-sm leading-relaxed text-deep-ink">
                 <p className="font-medium">{addressSummary.name}</p>
@@ -310,7 +310,7 @@ export function CheckoutClient({
                 {addressError && (
                   <p
                     role="alert"
-                    className="mb-4 rounded-md border border-sindoor/40 bg-sindoor/5 px-3 py-2 font-sans text-sm text-sindoor"
+                    className="mb-5 border-l-2 border-sindoor bg-sindoor/5 px-3 py-2 font-sans text-sm text-sindoor"
                   >
                     {addressError}
                   </p>
@@ -334,7 +334,7 @@ export function CheckoutClient({
                   }
                   submitting={savingAddress}
                   submitLabel={
-                    addressSaved ? t("updateAddress") : t("continueToPayment")
+                    addressSaved ? t("updateAddress") : t("saveAndContinue")
                   }
                   submitHint={
                     addressSaved ? t("hintChangeAddress") : t("hintNewAddress")
@@ -355,258 +355,255 @@ export function CheckoutClient({
                 )}
               </>
             )}
-          </div>
-        </section>
-      </li>
+          </section>
+        </li>
 
-      {/* ══ Step 2 — Speed and payment ═══════════════════════════════════ */}
-      <li>
-        <section
-          id="payment"
-          aria-labelledby="payment-heading"
-          aria-disabled={!addressStepComplete}
-          className={`overflow-hidden rounded-lg border bg-surface transition-opacity ${
-            addressStepComplete
-              ? "border-sand-border/80"
-              : "border-sand-border/50 opacity-70"
-          }`}
-        >
-          <header className="flex items-start gap-3 border-b border-sand-border/60 px-5 py-4 sm:px-7">
-            <span
-              aria-hidden="true"
-              className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-semibold ${
-                addressStepComplete
-                  ? "bg-sindoor text-rang-paper"
-                  : "bg-sand-border/70 text-muted-ink"
-              }`}
-            >
-              2
-            </span>
-            <div>
-              <h2
-                id="payment-heading"
-                className="font-serif text-lg font-semibold leading-tight text-deep-ink sm:text-xl"
+        {/* ── Step 2 — Speed and payment ─────────────────────────── */}
+        <li className="border-t border-sand-border/70 pt-7 lg:border-t-0 lg:pt-10 lg:pr-4">
+          <section id="payment" aria-labelledby="payment-heading">
+            <header className="mb-6 flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-sans text-[11px] font-semibold ${
+                  addressStepComplete
+                    ? "border-kumkum/50 bg-kumkum/5 text-kumkum"
+                    : "border-sand-border/80 text-muted-ink"
+                }`}
               >
-                {t("stepPayment")}
-              </h2>
-              <p className="mt-0.5 font-sans text-[13px] text-muted-ink">
-                {addressStepComplete
-                  ? t("step2Hint")
-                  : t("step2Locked")}
-              </p>
-            </div>
-          </header>
-
-          <div className="space-y-6 px-5 py-5 sm:px-7 sm:py-6">
-            {/* ── Order lines ──────────────────────────────────────── */}
-            <ul className="space-y-3 font-sans text-sm">
-              {lines.map((line) => (
-                <li key={line.id} className="flex items-start gap-3">
-                  {line.thumbnail ? (
-                    // A thumbnail is the fastest way to confirm "this is the
-                    // right painting" at the moment of paying.
-                    <img
-                      src={line.thumbnail}
-                      alt=""
-                      className="h-14 w-14 shrink-0 rounded-sm border border-sand-border/70 object-cover"
-                    />
-                  ) : null}
-                  <span className="min-w-0 flex-1 text-deep-ink">
-                    <span className="block leading-snug">{line.title}</span>
-                    {line.variant_title ? (
-                      <span className="block text-xs text-muted-ink">
-                        {line.variant_title}
-                      </span>
-                    ) : null}
-                    <span className="block text-xs text-muted-ink">
-                      {t("quantity")} {line.quantity}
-                    </span>
-                  </span>
-                  <span className="whitespace-nowrap text-deep-ink">
-                    {formatPrice(line.total, currency)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            {/* ── Totals ───────────────────────────────────────────── */}
-            <dl className="space-y-2 border-t border-sand-border/60 pt-4 font-sans text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-ink">{t("subtotal")}</dt>
-                <dd className="text-deep-ink">{formatPrice(subtotal + discount, currency)}</dd>
+                2
+              </span>
+              <div>
+                <h2
+                  id="payment-heading"
+                  className="font-serif text-xl font-semibold tracking-tight text-deep-ink"
+                >
+                  {t("stepPayment")}
+                </h2>
+                <p className="mt-0.5 font-sans text-[13px] text-muted-ink">
+                  {addressStepComplete ? t("step2Hint") : t("step2Locked")}
+                </p>
               </div>
+            </header>
 
-              {discount > 0 && (
-                <div className="flex justify-between gap-4 text-leaf">
-                  <dt>
-                    Discount
-                    {promoCode ? (
-                      <span className="ml-1 text-xs text-muted-ink">({promoCode})</span>
-                    ) : null}
-                  </dt>
-                  <dd className="whitespace-nowrap font-medium">
-                    −{formatPrice(discount, currency)}
-                  </dd>
-                </div>
+            <div className="space-y-6">
+              {/* ── Courier choice ────────────────────────────────── */}
+              {addressStepComplete && shippingRates.length > 0 && (
+                <fieldset>
+                  <legend className="mb-3 font-sans text-[13px] font-medium uppercase tracking-[0.14em] text-deep-ink">
+                    {t("deliverySpeed")}
+                  </legend>
+                  <div className="space-y-2">
+                    {shippingRates.map((rate) => {
+                      const key = rateKey(rate);
+                      const checked = key === selectedRateKey;
+                      return (
+                        <label
+                          key={key}
+                          className={`flex cursor-pointer items-start gap-3 rounded-sm border bg-surface/60 px-4 py-3 transition-colors ${
+                            checked
+                              ? "border-kumkum/60 bg-kumkum/[0.05]"
+                              : "border-sand-border hover:border-kumkum/40"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="shipping_rate"
+                            value={key}
+                            checked={checked}
+                            onChange={() => setSelectedRateKey(key)}
+                            className="mt-1 accent-kumkum focus:ring-kumkum"
+                          />
+                          <span className="flex-1 font-sans text-sm">
+                            <span className="block font-medium text-deep-ink">
+                              {rate.courier_name}
+                            </span>
+                            <span className="block text-xs text-muted-ink">
+                              {rate.service_name}
+                              {rate.expected_delivery ? ` · ${rate.expected_delivery}` : ""}
+                            </span>
+                          </span>
+                          <span className="whitespace-nowrap font-sans text-sm font-medium text-deep-ink">
+                            {rate.rate === 0 ? t("free") : formatPrice(rate.rate, currency)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
               )}
 
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-ink">{t("shipping")}</dt>
-                <dd className="text-deep-ink">
-                  {!addressStepComplete ? (
-                    <span className="text-muted-ink">{t("shippingCalculatedNext")}</span>
-                  ) : shippingRates.length === 0 ? (
-                    <span className="text-muted-ink">{t("shippingConfirmed")}</span>
-                  ) : shippingAmount === 0 ? (
-                    <span className="font-medium text-leaf">{t("free")}</span>
-                  ) : (
-                    formatPrice(shippingAmount, currency)
-                  )}
+              {addressStepComplete && shippingRates.length === 0 && (
+                <p className="bg-rang-paper px-3 py-2.5 font-sans text-xs leading-relaxed text-muted-ink">
+                  {t("quoteFailed")}
+                </p>
+              )}
+
+              {/* ── Order lines — a confirmation before paying ───── */}
+              <div>
+                <ul className="space-y-3 font-sans text-sm">
+                  {lines.map((line) => (
+                    <li key={line.id} className="flex items-start gap-3">
+                      {line.thumbnail ? (
+                        <img
+                          src={line.thumbnail}
+                          alt=""
+                          className="h-14 w-14 shrink-0 rounded-sm border border-sand-border/70 object-cover"
+                        />
+                      ) : null}
+                      <span className="min-w-0 flex-1 text-deep-ink">
+                        <span className="block leading-snug">{line.title}</span>
+                        {line.variant_title ? (
+                          <span className="block text-xs text-muted-ink">
+                            {line.variant_title}
+                          </span>
+                        ) : null}
+                        <span className="block text-xs text-muted-ink">
+                          {t("quantity")} {line.quantity}
+                        </span>
+                      </span>
+                      <span className="whitespace-nowrap text-deep-ink">
+                        {formatPrice(line.total, currency)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-5 border-t border-sand-border/60 pt-4">
+                  <PromoCode applied={promoCode ? [promoCode] : []} />
+                </div>
+
+                {error && (
+                  <p
+                    role="alert"
+                    className="mt-4 border-l-2 border-sindoor bg-sindoor/5 px-3 py-2 font-sans text-sm text-sindoor"
+                  >
+                    {error}
+                  </p>
+                )}
+
+                {/* ── The single primary action ───────────────────── */}
+                {addressStepComplete ? (
+                  <div className="mt-6">
+                    <RazorpayPayButton
+                      amount={grandTotal}
+                      currency={currency}
+                      name="SnehaVrinda Kala"
+                      description={`Order · ${formatPrice(grandTotal, currency)}`}
+                      onSuccess={handlePaid}
+                      onError={(message) => setError(message)}
+                      createSession={async () => {
+                        const res = await fetch("/api/store/checkout/payment-session", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            cart_id: cartId,
+                            shipping_rate: selectedRate,
+                          }),
+                        });
+                        const body = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                          throw new Error(body.error || "We could not start the payment.");
+                        }
+                        return {
+                          orderId: body.razorpay_order_id,
+                          amount: body.amount,
+                          currency: body.currency,
+                        };
+                      }}
+                    />
+                    {completing && (
+                      <p className="mt-3 text-center font-sans text-sm text-muted-ink">
+                        {t("completing")}
+                      </p>
+                    )}
+                    <p className="mt-3 text-center font-sans text-xs text-muted-ink">
+                      {t("paySecure")}
+                    </p>
+                  </div>
+                ) : (
+                  // No second button here. Step 1's own submit already says
+                  // "Continue to payment", and repeating that instruction as
+                  // another filled button made the two steps look like they were
+                  // arguing about what to do next.
+                  <p className="mt-6 border-t border-sand-border/60 pt-4 font-sans text-xs leading-relaxed text-muted-ink">
+                    {t("addAddressFirst")}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        </li>
+      </ol>
+
+      {/* ══ Right — the totals, sticky on desktop ═══════════════════ */}
+      <aside
+        className="mx-auto max-w-xl lg:sticky lg:top-24 lg:order-none lg:max-w-none"
+      >
+        <div className="lg:border-t-2 lg:border-kumkum/70 lg:pt-5">
+          <h2 className="sr-only">{t("orderSummary")}</h2>
+          <dl className="space-y-3 font-sans text-sm">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-ink">{t("subtotal")}</dt>
+              <dd className="text-deep-ink">{formatPrice(subtotal + discount, currency)}</dd>
+            </div>
+
+            {discount > 0 && (
+              <div className="flex items-baseline justify-between gap-4 text-leaf">
+                <dt>
+                  {t("discount")}
+                  {promoCode ? (
+                    <span className="ml-1 text-xs text-muted-ink">({promoCode})</span>
+                  ) : null}
+                </dt>
+                <dd className="whitespace-nowrap font-medium">
+                  −{formatPrice(discount, currency)}
                 </dd>
               </div>
-            </dl>
-
-            {/* ── Promo ────────────────────────────────────────────── */}
-            <PromoCode applied={promoCode ? [promoCode] : []} />
-
-            {/* ── Courier choice ───────────────────────────────────── */}
-            {addressStepComplete && shippingRates.length > 0 && (
-              <fieldset>
-                <legend className="mb-3 font-sans text-[13px] font-medium text-deep-ink">
-                  {t("deliverySpeed")}
-                </legend>
-                <div className="space-y-2">
-                  {shippingRates.map((rate) => {
-                    const key = rateKey(rate);
-                    const checked = key === selectedRateKey;
-                    return (
-                      <label
-                        key={key}
-                        className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${
-                          checked
-                            ? "border-sindoor bg-sindoor/5"
-                            : "border-sand-border hover:border-sindoor/50"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="shipping_rate"
-                          value={key}
-                          checked={checked}
-                          onChange={() => setSelectedRateKey(key)}
-                          className="mt-1 accent-sindoor focus:ring-sindoor"
-                        />
-                        <span className="flex-1 font-sans text-sm">
-                          <span className="block font-medium text-deep-ink">
-                            {rate.courier_name}
-                          </span>
-                          <span className="block text-xs text-muted-ink">
-                            {rate.service_name}
-                            {rate.expected_delivery ? ` · ${rate.expected_delivery}` : ""}
-                          </span>
-                        </span>
-                        <span className="whitespace-nowrap font-sans text-sm font-medium text-deep-ink">
-                          {rate.rate === 0 ? "Free" : formatPrice(rate.rate, currency)}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
             )}
 
-            {addressStepComplete && shippingRates.length === 0 && (
-              <p className="rounded-md bg-rang-paper px-3 py-2.5 font-sans text-xs text-muted-ink">
-                {t("quoteFailed")}
-              </p>
-            )}
-
-            {/* ── Total ────────────────────────────────────────────── */}
-            <div className="flex items-baseline justify-between border-t border-sand-border/60 pt-4">
-              <span className="font-sans text-sm font-medium uppercase tracking-[0.12em] text-muted-ink">
-                {t("total")}
-              </span>
-              <span className="font-serif text-2xl font-semibold text-deep-ink sm:text-3xl">
-                {formatPrice(grandTotal, currency)}
-              </span>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-ink">{t("shipping")}</dt>
+              <dd className="text-deep-ink">
+                {!addressStepComplete ? (
+                  <span className="text-muted-ink">{t("shippingCalculatedNext")}</span>
+                ) : shippingRates.length === 0 ? (
+                  <span className="text-muted-ink">{t("shippingConfirmed")}</span>
+                ) : shippingAmount === 0 ? (
+                  <span className="font-medium text-leaf">{t("free")}</span>
+                ) : (
+                  formatPrice(shippingAmount, currency)
+                )}
+              </dd>
             </div>
 
             {tax && (
-              <p className="font-sans text-xs leading-relaxed text-muted-ink">
-                Includes {taxLabel(tax)} ({formatPrice(tax.total_tax, currency)}).
-                {currency.toUpperCase() === "INR" ? " Prices are GST-inclusive." : ""}
-              </p>
-            )}
-
-            {/* Duties cannot be calculated reliably per destination, so they are
-                disclosed rather than guessed. */}
-            {currency.toUpperCase() !== "INR" && (
-              <p className="font-sans text-xs leading-relaxed text-muted-ink">
-                Shipping internationally. Import duties or local taxes may be charged
-                by your customs authority on delivery, and are not included in this
-                total.
-              </p>
-            )}
-
-            {error && (
-              <p
-                role="alert"
-                className="rounded-md border border-sindoor/40 bg-sindoor/5 px-3 py-2 font-sans text-sm text-sindoor"
-              >
-                {error}
-              </p>
-            )}
-
-            {/* ── The single primary action ────────────────────────── */}
-            {addressStepComplete ? (
-              <div>
-                <RazorpayPayButton
-                  amount={grandTotal}
-                  currency={currency}
-                  name="SnehaVrinda Kala"
-                  description={`Order · ${formatPrice(grandTotal, currency)}`}
-                  onSuccess={handlePaid}
-                  onError={(message) => setError(message)}
-                  createSession={async () => {
-                    const res = await fetch("/api/store/checkout/payment-session", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        cart_id: cartId,
-                        shipping_rate: selectedRate,
-                      }),
-                    });
-                    const body = await res.json().catch(() => ({}));
-                    if (!res.ok) {
-                      throw new Error(body.error || "We could not start the payment.");
-                    }
-                    return {
-                      orderId: body.razorpay_order_id,
-                      amount: body.amount,
-                      currency: body.currency,
-                    };
-                  }}
-                />
-                {completing && (
-                  <p className="mt-3 text-center font-sans text-sm text-muted-ink">
-                    {t("completing")}
-                  </p>
-                )}
-                <p className="mt-3 text-center font-sans text-xs text-muted-ink">
-                  {t("paySecure")}
-                </p>
+              // Catalogue prices already include GST, so this is a disclosure of
+              // the tax *within* the total, not a charge added to it. Shown as a
+              // bare line item it read as an extra cost that the total ignored.
+              <div className="flex items-baseline justify-between gap-4 text-muted-ink">
+                <dt>{t("includesTax", { label: taxLabel(tax) })}</dt>
+                <dd>{formatPrice(tax.total_tax, currency)}</dd>
               </div>
-            ) : (
-              <Link
-                href="#delivery"
-                className="block w-full rounded-full bg-kumkum px-6 py-3.5 text-center font-sans text-sm font-semibold text-rang-paper transition-colors hover:bg-sindoor"
-              >
-                {t("addAddressFirst")}
-              </Link>
             )}
-          </div>
-        </section>
-      </li>
-    </ol>
+
+            <div className="flex items-baseline justify-between gap-4 border-t border-sand-border/60 pt-4">
+              <dt className="font-medium uppercase tracking-[0.12em] text-muted-ink">
+                {t("total")}
+              </dt>
+              <dd className="whitespace-nowrap font-serif text-2xl font-semibold text-deep-ink">
+                {formatPrice(grandTotal, currency)}
+              </dd>
+            </div>
+
+            {currency.toUpperCase() !== "INR" && (
+              <p className="font-sans text-[11px] leading-relaxed text-muted-ink">
+                Import duties or local taxes may be charged by your customs
+                authority on delivery, and are not included in this total.
+              </p>
+            )}
+          </dl>
+        </div>
+      </aside>
+    </div>
   );
 }

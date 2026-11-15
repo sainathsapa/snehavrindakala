@@ -181,9 +181,9 @@ export default async function CheckoutPage() {
     : null;
 
   return (
-    <main className="py-8 sm:py-12">
+    <main className="py-10 sm:py-14">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <nav className="mb-5 font-sans text-sm">
+        <nav className="mb-6 font-sans text-sm">
           <Link
             href="/cart"
             className="text-muted-ink transition-colors hover:text-kumkum"
@@ -192,80 +192,75 @@ export default async function CheckoutPage() {
           </Link>
         </nav>
 
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
-              {t("secureCheckoutEyebrow")}
-            </p>
-            <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight text-deep-ink md:text-4xl">
-              Checkout
-            </h1>
-          </div>
-          <p className="max-w-sm font-sans text-[13px] leading-relaxed text-muted-ink">
+        <header className="mb-10 border-b border-sand-border/70 pb-6">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+            {t("secureCheckoutEyebrow")}
+          </p>
+          <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight text-deep-ink sm:text-4xl">
+            {t("title")}
+          </h1>
+          <p className="mt-3 max-w-xl font-sans text-sm leading-relaxed text-muted-ink">
             {t("checkoutIntro")}
           </p>
-        </div>
+        </header>
 
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
-          <CheckoutClient
-            cartId={cart?.id ?? ""}
-            currency={currency}
-            subtotal={subtotal}
-            lines={(items ?? []).map((item) => ({
-              id: item.id,
-              title: item.product_title || item.title || "Product",
-              variant_title: item.variant_title,
-              quantity: item.quantity,
-              total: item.total ?? (item.unit_price ?? 0) * item.quantity,
-              thumbnail:
-                (item as { thumbnail?: string | null }).thumbnail ?? null,
-            }))}
-            shippingRates={shippingRates}
-            tax={tax}
-            discount={Number(cart?.discount_total ?? 0)}
-            promoCode={(cart?.promotions ?? [])
-              .map((promotion) => promotion.code)
-              .filter((code): code is string => Boolean(code))
-              .join(", ")}
-            addressSaved={addressSaved}
-            addressSummary={addressSummary}
-            savedAddresses={savedAddresses}
-            initialAddress={initialAddress}
-            canSaveToAccount={Boolean(token)}
-            lockedEmail={customer?.email ?? null}
-            saveAddress={saveCheckoutAddressAction}
-            saveAddressToBook={saveAddressToBookAction}
-          />
+        <CheckoutClient
+          cartId={cart?.id ?? ""}
+          currency={currency}
+          subtotal={subtotal}
+          lines={(items ?? []).map((item) => ({
+            id: item.id,
+            title: item.product_title || item.title || "Product",
+            variant_title: item.variant_title,
+            quantity: item.quantity,
+            total: item.total ?? (item.unit_price ?? 0) * item.quantity,
+            thumbnail:
+              (item as { thumbnail?: string | null }).thumbnail ?? null,
+          }))}
+          shippingRates={shippingRates}
+          tax={tax}
+          discount={Number(cart?.discount_total ?? 0)}
+          promoCode={(cart?.promotions ?? [])
+            .map((promotion) => promotion.code)
+            .filter((code): code is string => Boolean(code))
+            .join(", ")}
+          addressSaved={addressSaved}
+          addressSummary={addressSummary}
+          savedAddresses={savedAddresses}
+          initialAddress={initialAddress}
+          canSaveToAccount={Boolean(token)}
+          lockedEmail={customer?.email ?? null}
+          saveAddress={saveCheckoutAddressAction}
+          saveAddressToBook={saveAddressToBookAction}
+        />
 
-          {/* The reassurance rail. Kept outside the two steps so it does not
-              compete with the primary action, and sticky on desktop so it is
-              present at the moment of paying. */}
-          <aside className="lg:sticky lg:top-28">
-            <div className="rounded-lg border border-sand-border/70 bg-surface/70 p-5">
-              <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-terracotta">
-                {t("reassuranceEyebrow")}
-              </p>
+        {/* Reassurance sits below the journey rather than beside it: the right
+            column belongs to the totals, which have to stay visible while the
+            buyer types. */}
+        <section className="mt-14 border-t border-sand-border/70 pt-8">
+          <div className="grid gap-6 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-10">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-terracotta">
+              {t("reassuranceEyebrow")}
+            </p>
+            <div>
               <TrustStrip compact />
-
-              <div className="mt-4 border-t border-sand-border/60 pt-3">
-                <p className="font-sans text-xs leading-relaxed text-muted-ink">
-                  {countryByCode(initialAddress.country_code)?.name
-                    ? `${t("deliveringTo", {
-                        country: countryByCode(initialAddress.country_code)!.name,
-                      })} `
-                    : ""}
-                  {t("reassuranceBody")}
-                </p>
-                <Link
-                  href="/policies/shipping"
-                  className="mt-2 inline-block font-sans text-xs font-medium text-terracotta underline-offset-4 hover:underline"
-                >
-                  {t("shippingReturns")}
-                </Link>
-              </div>
+              <p className="mt-4 max-w-2xl font-sans text-xs leading-relaxed text-muted-ink">
+                {countryByCode(initialAddress.country_code)?.name
+                  ? `${t("deliveringTo", {
+                      country: countryByCode(initialAddress.country_code)!.name,
+                    })} `
+                  : ""}
+                {t("reassuranceBody")}
+              </p>
+              <Link
+                href="/policies/shipping"
+                className="mt-2 inline-block font-sans text-xs font-medium text-terracotta underline-offset-4 hover:underline"
+              >
+                {t("shippingReturns")}
+              </Link>
             </div>
-          </aside>
-        </div>
+          </div>
+        </section>
       </div>
     </main>
   );
