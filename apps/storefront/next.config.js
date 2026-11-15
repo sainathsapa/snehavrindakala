@@ -24,7 +24,6 @@ const nextConfig = {
   output: process.env.NEXT_STANDALONE === "true" ? "standalone" : undefined,
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "cdn.sanity.io" },
       { protocol: "https", hostname: backendUrl.hostname },
       { protocol: "http", hostname: backendUrl.hostname },
       // S3 / CloudFront media storage (build plan Section 12.6)
