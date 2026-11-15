@@ -233,7 +233,8 @@
     "formPostal": "Postal code",
     "assureCertificate": "Certificate of authenticity with every work",
     "assurePacked": "Packed by the studio, insured in transit",
-    "assureReturns": "Returns as set out in our published policy"
+    "assureReturns": "Returns as set out in our published policy",
+    "formBillElsewhereHint": "Optional — leave unticked if the invoice goes to the same address."
   },
   "artForm": {
     "pageTitle": "Indian Art Forms",

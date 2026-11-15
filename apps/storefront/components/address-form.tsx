@@ -748,7 +748,12 @@ export function AddressForm({
             }}
             className="mt-0.5 h-4 w-4 rounded border-sand-border accent-sindoor"
           />
-          {t("formBillElsewhere")}
+          <span className="flex-1">
+            {t("formBillElsewhere")}
+            <span className="mt-0.5 block text-xs font-normal text-muted-ink">
+              {t("formBillElsewhereHint")}
+            </span>
+          </span>
         </label>
 
         {billElsewhere && (
@@ -781,7 +786,7 @@ export function AddressForm({
               required
             />
 
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-5">
               <Field
                 label={t("formBillingStreet")}
                 value={billing.address_1}
