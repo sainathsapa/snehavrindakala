@@ -55,10 +55,17 @@ Living checklist for the checkout / address / PDP pass. Statuses: **Not started*
 - [x] 1.5 Address book at checkout: pick a saved address, add a new one, edit in place,
       clear default marker, switch address without restarting checkout.
 - [x] 1.6 Billing folded into an optional, consistent section (no nested duplicate selects).
-  **Not done:** billing is not shown at all. The old page rendered a second full
-  address block for billing; rather than duplicate two combobox grids the checkout
-  now collects delivery only, which matches how a gallery despatches and what
-  Razorpay needs. Revisit if invoices must carry a separate billing address.
+  Billing defaults to the delivery address. A buyer who needs the invoice made out
+  to someone else ticks "Invoice to a different billing address", which prefills
+  name, country, postcode, state and city from the delivery address and asks only
+  for the street line. Validated by a looser rule than delivery — name, country,
+  street and city required; postal code and province optional — because a
+  registered office may not have them and blocking an order over that is worse
+  than a blank invoice field.
+
+  Verified in Postgres: shipping "12 MI Road, Jaipur" and billing "Plot 9,
+  Sitapura Industrial Area" are stored as separate addresses; without opting in,
+  billing mirrors shipping exactly as before.
 - [x] 1.7 Checkout journey: delivery → speed → total → pay, one primary action per step,
       sticky summary, guest checkout and signed order tokens untouched.
 
@@ -183,6 +190,35 @@ quote set changes, with 8 tests.
 
 ### Still open
 
-- Billing address is still not collected (see Part 1.6).
-- The right totals column leaves empty space below it on tall desktop screens
-  once the summary is short; it is sticky rather than filled.
+- ~~Billing address is still not collected.~~ Done — see Part 1.6.
+- ~~The right totals column leaves empty space below it on tall desktop screens
+  once the summary is short.~~ Fixed: the column now carries the certificate,
+  packing and returns reassurance, checked against what the site already says.
+
+## Third pass — billing and the totals column
+
+Both items left open by the previous pass are now closed.
+
+**Separate billing address.** Opt-in, off by default, so the common case gains no
+fields. The whole path was verified end to end rather than at the UI only: the
+cart stores two distinct `cart_address` rows, one for shipping and one for
+billing, and leaving the box unticked still mirrors shipping as it always did.
+
+**The empty band under the totals.** Rather than pad it, the column now carries
+the reassurance a buyer wants at the moment of paying. Each line was checked
+against the site rather than written from memory: the certificate claim matches
+the trust strip and the authenticity page, and the returns line points at the
+published policy — an earlier draft said "seven days", which the policy only
+grants on ready-to-ship work and not on commissions, so it would have been false
+on exactly the baskets that matter most.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | clean |
+| `npx next build` | exit 0 |
+| `npx vitest run` | 168 passed, 4 skipped |
+| Browser, 1440 / 834 / 390 | 71 / 71 checks |
+| `/hi/checkout` | 588 Devanagari chars, no English leakage |
+| Billing persisted | separate ship/bill rows confirmed in Postgres |
