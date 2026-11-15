@@ -27,6 +27,7 @@
 
 import {
   useCallback,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -43,6 +44,10 @@ import {
   type SavedAddress,
 } from "./address-form";
 import type { AddressDraft, AddressField } from "@/lib/location/search";
+import {
+  cheapestRateKey,
+  resolveSelectedRate,
+} from "@/lib/shipping/select-rate";
 import { countryByCode } from "@/lib/location";
 
 export interface ShippingRate {
@@ -108,15 +113,9 @@ const rateKey = (rate: ShippingRate) =>
 /**
  * The option pre-selected when checkout opens: the least expensive one.
  *
- * Ties break on the printed key so the choice is stable across renders.
+ * The rule lives in `lib/shipping/select-rate.ts` so it can be tested without a
+ * browser — see the comment there for the bug this encodes.
  */
-function cheapestRateKey(rates: ShippingRate[]): string {
-  if (rates.length === 0) return "";
-  const cheapest = rates
-    .slice()
-    .sort((a, b) => a.rate - b.rate || rateKey(a).localeCompare(rateKey(b)))[0];
-  return rateKey(cheapest);
-}
 
 export function CheckoutClient({
   cartId,
@@ -153,6 +152,23 @@ export function CheckoutClient({
   const [selectedRateKey, setSelectedRateKey] = useState(() =>
     cheapestRateKey(shippingRates)
   );
+
+  /**
+   * Courier quotes only exist once a delivery address is on the cart, so on the
+   * first render `shippingRates` is empty and the initial state above settles on
+   * "". The quotes then arrive after the address is saved and the page
+   * refreshes — but a `useState` initialiser never runs again, so no courier was
+   * ever selected: every radio rendered unchecked and shipping showed "Free"
+   * beside three quotes of ₹99–₹118, with the total silently too low.
+   *
+   * This adopts the cheapest option whenever the available set changes and the
+   * current choice is not among them. It never overrides a choice the buyer
+   * made, because that key is still present in the new set.
+   */
+  useEffect(() => {
+    if (shippingRates.length === 0) return;
+    setSelectedRateKey((current) => resolveSelectedRate(shippingRates, current));
+  }, [shippingRates]);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
