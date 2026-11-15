@@ -118,13 +118,29 @@ export function ProductGallery({
   const currentRatio =
     ratios[currentKey] ?? current.aspectRatio ?? FALLBACK_RATIO;
 
+  /**
+   * Record the *actual* ratio of the image on screen.
+   *
+   * This must overwrite, not only fill a gap. The first version refused to
+   * replace an existing entry, which meant a frame that had once been measured
+   * could never correct itself — if the same URL started serving a different
+   * crop, or a placeholder ratio was applied first, the artwork sat in the wrong
+   * shaped box permanently. The whole point of reading the real ratio is that it
+   * is the truth about the image being displayed right now.
+   */
   const recordRatio = (key: string, node: HTMLImageElement) => {
-    if (node.naturalWidth && node.naturalHeight) {
-      setRatios((existing) =>
-        existing[key]
-          ? existing
-          : { ...existing, [key]: node.naturalWidth / node.naturalHeight }
-      );
+    const measured =
+      node.naturalWidth && node.naturalHeight
+        ? node.naturalWidth / node.naturalHeight
+        : null;
+
+    if (measured) {
+      setRatios((existing) => {
+        const previous = existing[key];
+        // Cheap equality guard: a re-render per identical load would be noise.
+        if (previous && Math.abs(previous - measured) < 0.0005) return existing;
+        return { ...existing, [key]: measured };
+      });
     }
     setLoaded((existing) => (existing[key] ? existing : { ...existing, [key]: true }));
   };
