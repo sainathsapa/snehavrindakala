@@ -10,11 +10,6 @@ export async function getAuthToken(): Promise<string | undefined> {
   return cookieStore.get(AUTH_COOKIE)?.value;
 }
 
-export async function authHeaders(): Promise<Record<string, string>> {
-  const token = await getAuthToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export async function getCurrentCustomer(): Promise<any | null> {
   const token = await getAuthToken();
   if (!token) return null;

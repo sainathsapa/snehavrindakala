@@ -85,10 +85,6 @@ export async function getPreferredCurrency(): Promise<string> {
   return DEFAULT_CURRENCY_CODE;
 }
 
-export function currencyLabel(code: string): string {
-  return CURRENCIES.find((c) => c.code === code)?.label ?? code.toUpperCase();
-}
-
 /**
  * Where we will actually ship.
  *
@@ -107,13 +103,3 @@ export const SHIPPING_COUNTRIES: { code: string; name: string; currency: string 
   { code: "ae", name: "United Arab Emirates", currency: "aed" },
   { code: "sa", name: "Saudi Arabia", currency: "aed" },
 ];
-
-/**
- * Whether a destination needs a customs declaration.
- *
- * Anything leaving India does. The checkout says so plainly rather than
- * estimating duty, because a wrong estimate is worse than an honest warning.
- */
-export function isInternational(countryCode: string): boolean {
-  return countryCode.toLowerCase() !== "in";
-}

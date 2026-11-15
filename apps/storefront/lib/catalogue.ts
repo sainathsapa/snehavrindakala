@@ -350,18 +350,6 @@ export async function listCatalogueFor(
 }
 
 /** Distinct collection names present in the catalogue, for nav menus. */
-export async function listCatalogueCollections(): Promise<
-  { name: string; count: number }[]
-> {
-  const items = await listCatalogue();
-  const counts = new Map<string, number>();
-  for (const item of items) {
-    if (!item.collection) continue;
-    counts.set(item.collection, (counts.get(item.collection) ?? 0) + 1);
-  }
-  return [...counts.entries()].map(([name, count]) => ({ name, count }));
-}
-
 /**
  * Look up a single catalogue item by handle.
  *
@@ -403,11 +391,6 @@ export async function resolveMedusaHandle(readable: string): Promise<string> {
     // Backend unreachable; fall through and let the caller try the handle raw.
   }
   return readable;
-}
-
-/** Seed prices are authored in rupees; expose a helper for non-card displays. */
-export function rupeesFromMinorUnits(minor: number | null): number | null {
-  return minor == null ? null : Math.round(minor / 100);
 }
 
 /**
