@@ -1,4 +1,4 @@
-import { getTranslations, getLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { localeAlternates } from "@/lib/seo";
 import { PageHeader } from "@/components/page-header";
@@ -45,7 +45,6 @@ export default async function MakersPage() {
   if (getPlatformModeFromEnv() === "platform") notFound();
 
   const t = await getTranslations("makers");
-  const locale = await getLocale();
 
   let items: Awaited<ReturnType<typeof listCatalogue>> = [];
   try {
@@ -98,8 +97,16 @@ export default async function MakersPage() {
                     </p>
                   </header>
 
+                  {/* Every work, not a preview of four.
+
+                      The page used to show the first four and offer "View works"
+                      pointing at /shop — the whole catalogue, unfiltered. With
+                      one maker holding twenty-one pieces that left seventeen of
+                      them reachable from nowhere on this page, and the link
+                      delivered the visitor to someone else's work. A directory
+                      of makers that hides most of the work is not a directory. */}
                   <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-                    {works.slice(0, 4).map((item) => (
+                    {works.map((item) => (
                       <ProductCard
                         key={item.handle}
                         handle={item.handle}
@@ -110,25 +117,14 @@ export default async function MakersPage() {
                         stockType={item.stockType}
                         image={item.image}
                         isNew={item.isNew}
-                  medium={item.specs?.medium}
-                  dimensions={item.specs?.dimensions}
+                        medium={item.specs?.medium}
+                        dimensions={item.specs?.dimensions}
+                        collection={item.collection}
                       />
                     ))}
                   </div>
-
-                  {works.length > 4 && (
-                    <div className="mt-6">
-                      <Link
-                        href="/shop"
-                        className="font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum"
-                      >
-                        {t("viewWorks")} →
-                      </Link>
-                    </div>
-                  )}
                 </article>
               ))}
-
               <p className="max-w-2xl border-t border-sand-border/60 pt-6 font-sans text-[12px] leading-relaxed text-muted-ink/80">
                 {t("indexNote")}
               </p>

@@ -26,6 +26,14 @@ interface ProductCardProps {
    */
   medium?: string;
   dimensions?: string;
+  /**
+   * The tradition this work belongs to, shown after the maker.
+   *
+   * The `category` prop above never had a call site, so cards could not state a
+   * tradition at all. The catalogue already carries `collection` as a plain
+   * name, which is what a wall label wants — no id, no handle.
+   */
+  collection?: string;
 }
 
 const stockLabels: Record<string, string> = {
@@ -59,6 +67,7 @@ export function ProductCard({
   plate,
   medium,
   dimensions,
+  collection,
 }: ProductCardProps) {
   const hasImage = Boolean(image);
   const t = useTranslations("product");
@@ -140,7 +149,8 @@ export function ProductCard({
           {/* Maker first, then tradition — the order a wall label uses. */}
           <p className="mt-1 font-sans text-xs italic text-muted-ink">
             {artist}
-            {category ? ` · ${category.name}` : ""}
+            {(category?.name || collection) &&
+              ` · ${category?.name || collection}`}
           </p>
           {(medium || dimensions) && (
             <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-ink/80">
