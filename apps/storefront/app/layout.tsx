@@ -32,10 +32,15 @@ export default async function RootLayout({
 }) {
   const locale = (await headers()).get("x-locale") || "en";
   const dir = RTL_LOCALES.has(locale) ? "rtl" : "ltr";
+  // Hindi gets the Devanagari stack on the body. The token itself lists Manrope
+  // as its first Latin fallback, so English words embedded in Hindi copy (brand
+  // names, "Madhubani") still set in the Latin face instead of jumping to a
+  // system font. English pages are untouched: `font-sans` stays as it was.
+  const bodyFont = locale === "hi" ? "font-devanagari" : "font-sans";
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
-      <body className="font-sans antialiased">{children}</body>
+      <body className={`${bodyFont} antialiased`}>{children}</body>
     </html>
   );
 }
