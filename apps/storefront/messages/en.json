@@ -718,7 +718,8 @@
     "seeWork": "See the work",
     "understandCraft": "Understand the craft",
     "traditionLede": "A tradition survives by being made, not by being preserved. Every piece here is the work of a hand that is still learning.",
-    "meetMakers": "Meet the makers"
+    "meetMakers": "Meet the makers",
+    "worksCount": "{count, plural, =0 {No works yet} one {# work} other {# works}}"
   },
   "commission": {
     "artFormLabel": "What kind of art?",
