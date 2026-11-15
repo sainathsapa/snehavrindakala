@@ -7,6 +7,7 @@ import type { SavedAddress } from "@/components/address-form";
 import { taxForAmount } from "@/lib/tax-server";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { countryByCode } from "@/lib/location";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { getPreferredCurrency, SHIPPING_COUNTRIES } from "@/lib/currency";
 import {
@@ -16,10 +17,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Checkout",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata() {
+  // The tab title is the first thing a Hindi reader sees; it must match the page.
+  const t = await getTranslations("checkout");
+  return { title: t("title"), robots: { index: false, follow: false } };
+}
 
 const PICKUP_POSTCODE = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
 
@@ -33,6 +35,8 @@ const PICKUP_POSTCODE = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
  * costs the customer their input (see `components/address-form.tsx`).
  */
 export default async function CheckoutPage() {
+  // Declared before any early return, so the empty-cart branch can translate too.
+  const t = await getTranslations("checkout");
   const [cart, customer] = await Promise.all([getCart(), getCurrentCustomer()]);
   const items = cart?.items ?? [];
 
@@ -41,17 +45,17 @@ export default async function CheckoutPage() {
       <main className="py-10">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <h1 className="mb-8 font-serif text-3xl font-semibold text-deep-ink md:text-4xl">
-            Checkout
+            {t("title")}
           </h1>
           <div className="rounded-lg border border-sand-border bg-surface p-10 text-center">
             <p className="mb-6 font-sans text-lg text-muted-ink">
-              Your cart is empty.
+              {t("emptyCart")}
             </p>
             <Link
               href="/shop"
               className="inline-flex items-center gap-2 font-sans text-sm font-medium text-kumkum hover:underline"
             >
-              Browse artworks →
+              {t("browseArtworks")} →
             </Link>
           </div>
         </div>
@@ -184,22 +188,21 @@ export default async function CheckoutPage() {
             href="/cart"
             className="text-muted-ink transition-colors hover:text-kumkum"
           >
-            ← Back to cart
+            ← {t("backToCart")}
           </Link>
         </nav>
 
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
-              Secure checkout
+              {t("secureCheckoutEyebrow")}
             </p>
             <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight text-deep-ink md:text-4xl">
               Checkout
             </h1>
           </div>
           <p className="max-w-sm font-sans text-[13px] leading-relaxed text-muted-ink">
-            Two steps: where it is going, then how it gets there and how you pay.
-            Every charge is shown before you commit.
+            {t("checkoutIntro")}
           </p>
         </div>
 
@@ -240,23 +243,24 @@ export default async function CheckoutPage() {
           <aside className="lg:sticky lg:top-28">
             <div className="rounded-lg border border-sand-border/70 bg-surface/70 p-5">
               <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-terracotta">
-                Buying from the studio
+                {t("reassuranceEyebrow")}
               </p>
               <TrustStrip compact />
 
               <div className="mt-4 border-t border-sand-border/60 pt-3">
                 <p className="font-sans text-xs leading-relaxed text-muted-ink">
                   {countryByCode(initialAddress.country_code)?.name
-                    ? `Delivering to ${countryByCode(initialAddress.country_code)?.name}. `
+                    ? `${t("deliveringTo", {
+                        country: countryByCode(initialAddress.country_code)!.name,
+                      })} `
                     : ""}
-                  Every work is packed by the studio and shipped with a certificate
-                  of authenticity.
+                  {t("reassuranceBody")}
                 </p>
                 <Link
                   href="/policies/shipping"
                   className="mt-2 inline-block font-sans text-xs font-medium text-terracotta underline-offset-4 hover:underline"
                 >
-                  Shipping &amp; returns
+                  {t("shippingReturns")}
                 </Link>
               </div>
             </div>

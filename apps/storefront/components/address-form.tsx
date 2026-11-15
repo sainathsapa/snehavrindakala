@@ -27,6 +27,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Combobox } from "./combobox";
 import {
   COUNTRIES,
@@ -132,6 +133,7 @@ export function AddressForm({
   focusField = null,
   lockedEmail = null,
 }: AddressFormProps) {
+  const t = useTranslations("checkout");
   const [draft, setDraft] = useState<AddressDraft>(() => {
     // A half-typed draft beats a prefill: the buyer typed it seconds ago.
     const restored = readDraft();
@@ -382,7 +384,7 @@ export function AddressForm({
               }}
               className="shrink-0 rounded-full border border-sand-border px-3 py-1 font-sans text-xs font-medium text-deep-ink transition-colors hover:border-sindoor hover:text-sindoor"
             >
-              Edit
+              {t("formEdit")}
             </button>
           </div>
         </div>
@@ -398,7 +400,7 @@ export function AddressForm({
               }}
               className="font-sans text-sm text-terracotta underline-offset-4 hover:underline"
             >
-              Use a different address
+              {t("formUseDifferent")}
             </button>
           )}
           <button
@@ -436,7 +438,7 @@ export function AddressForm({
           disabled={busy}
           className="w-full rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-semibold text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50 focus-visible:ring-offset-2 disabled:opacity-60"
         >
-          {busy ? "Saving…" : submitLabel}
+          {busy ? t("savingAddress") : submitLabel}
         </button>
         {submitHint && (
           <p className="text-center font-sans text-xs text-muted-ink">{submitHint}</p>
@@ -454,7 +456,7 @@ export function AddressForm({
       {saved.length > 0 && (
         <div className="space-y-2">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-ink">
-            Saved addresses
+            {t("formSavedAddresses")}
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
             {saved.map((entry, index) => {
@@ -486,7 +488,7 @@ export function AddressForm({
                     )}
                     {index === 0 && !entry.is_default && saved.length > 1 && (
                       <span className="text-[9px] font-normal uppercase tracking-wider text-muted-ink">
-                        Recent
+                        {t("formRecent")}
                       </span>
                     )}
                   </span>
@@ -507,14 +509,14 @@ export function AddressForm({
             }}
             className="font-sans text-xs font-medium text-terracotta underline-offset-4 hover:underline"
           >
-            + Add a new address
+            {t("formAddNew")}
           </button>
         </div>
       )}
 
       {/* ── Who ─────────────────────────────────────────────────────── */}
       <Field
-        label="Full name"
+        label={t("formFullName")}
         value={draft.full_name}
         onChange={(value) => set("full_name", value)}
         onBlur={() => blurField("full_name")}
@@ -529,7 +531,7 @@ export function AddressForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Email"
+          label={t("formEmail")}
           type="email"
           value={lockedEmail ?? draft.email}
           onChange={(value) => set("email", value)}
@@ -545,7 +547,7 @@ export function AddressForm({
         />
 
         <Field
-          label="Phone"
+          label={t("formPhone")}
           type="tel"
           value={draft.phone}
           onChange={(value) => set("phone", value)}
@@ -559,7 +561,7 @@ export function AddressForm({
           autoComplete="tel-national"
           inputMode="tel"
           prefix={dialCode ? `+${dialCode}` : undefined}
-          hint="For delivery updates only."
+          hint={t("formPhoneHint")}
           inputRef={(node) => {
             refs.current.phone = node;
           }}
@@ -569,11 +571,11 @@ export function AddressForm({
 
       {/* ── Where ───────────────────────────────────────────────────── */}
       <Combobox
-        label="Country"
+        label={t("formCountry")}
         value={country?.name ?? ""}
         onValueChange={changeCountry}
         options={COUNTRIES.map((entry) => entry.name)}
-        placeholder="Search countries"
+        placeholder={t("formSearchCountries")}
         error={touched.country_code ? errors.country_code : undefined}
         autoComplete="country-name"
         required
@@ -607,28 +609,28 @@ export function AddressForm({
 
         {canSearchStates ? (
           <Combobox
-            label={country?.code === "in" ? "State" : "State / region"}
+            label={country?.code === "in" ? t("formState") : t("formStateRegion")}
             value={draft.province}
             onValueChange={changeState}
             onInputChange={(text) => set("province", text)}
             options={states}
-            placeholder="Search states"
+            placeholder={t("formSearchStates")}
             error={touched.province ? errors.province : undefined}
             autoComplete="address-level1"
             disabled={!draft.country_code}
             required
-            emptyMessage="No state matches that spelling."
+            emptyMessage={t("formNoStateMatch")}
           />
         ) : (
           <Field
-            label={country?.code === "in" ? "State" : "State / region"}
+            label={country?.code === "in" ? t("formState") : t("formStateRegion")}
             value={draft.province}
             onChange={(value) => set("province", value)}
             onBlur={() => blurField("province")}
             error={touched.province ? errors.province : undefined}
             autoComplete="address-level1"
             disabled={!draft.country_code}
-            hint={draft.country_code && !country?.hasRegions ? "We list no regions here — type yours." : undefined}
+            hint={draft.country_code && !country?.hasRegions ? t("formNoRegions") : undefined}
             inputRef={(node) => {
               refs.current.province = node;
             }}
@@ -639,22 +641,22 @@ export function AddressForm({
 
       {canSearchCities ? (
         <Combobox
-          label="City / district"
+          label={t("formCity")}
           value={draft.city}
           onValueChange={(value) => set("city", value)}
           onInputChange={(text) => set("city", text)}
           options={cities}
-          placeholder="Search or type your city"
+          placeholder={t("formSearchCities")}
           allowFreeText
           error={touched.city ? errors.city : undefined}
           autoComplete="address-level2"
           disabled={!draft.province}
-          hint={!draft.province ? "Choose a state first." : "Not listed? Type it and we will use it."}
+          hint={!draft.province ? t("formChooseStateFirst") : t("formCityNotListed")}
           required
         />
       ) : (
         <Field
-          label="City / district"
+          label={t("formCity")}
           value={draft.city}
           onChange={(value) => set("city", value)}
           onBlur={() => blurField("city")}
@@ -669,13 +671,13 @@ export function AddressForm({
       )}
 
       <Field
-        label="Street address"
+        label={t("formStreet")}
         value={draft.address_1}
         onChange={(value) => set("address_1", value)}
         onBlur={() => blurField("address_1")}
         error={touched.address_1 ? errors.address_1 : undefined}
         autoComplete="address-line1"
-        placeholder="House or flat number, building, street"
+        placeholder={t("formStreetPlaceholder")}
         inputRef={(node) => {
           refs.current.address_1 = node;
         }}
@@ -684,11 +686,11 @@ export function AddressForm({
       />
 
       <Field
-        label="Apartment, landmark"
+        label={t("formLine2")}
         value={draft.address_2}
         onChange={(value) => set("address_2", value)}
         autoComplete="address-line2"
-        placeholder="Floor, block, a landmark the courier will recognise"
+        placeholder={t("formLine2Placeholder")}
         inputRef={(node) => {
           refs.current.address_2 = node;
         }}
@@ -703,7 +705,7 @@ export function AddressForm({
               onChange={(event) => setSaveToBook(event.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-sand-border accent-sindoor"
             />
-            Save this address for next time
+            {t("formSaveToBook")}
           </label>
           {saveToBook && saved.length > 0 && (
             <label className="flex cursor-pointer items-center gap-2 pl-6 font-sans text-xs text-muted-ink">
@@ -713,7 +715,7 @@ export function AddressForm({
                 onChange={(event) => setMakeDefault(event.target.checked)}
                 className="h-3.5 w-3.5 rounded border-sand-border accent-sindoor"
               />
-              Make it my default delivery address
+              {t("formMakeDefault")}
             </label>
           )}
         </div>
@@ -730,7 +732,7 @@ export function AddressForm({
         disabled={busy}
         className="w-full rounded-full bg-kumkum px-6 py-3.5 font-sans text-sm font-semibold text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50 focus-visible:ring-offset-2 disabled:opacity-60"
       >
-        {busy ? "Saving…" : submitLabel}
+        {busy ? t("savingAddress") : submitLabel}
       </button>
 
       {submitHint && (
@@ -779,6 +781,7 @@ function Field({
   autoCapitalize?: "words" | "off";
   inputRef?: (node: HTMLInputElement | null) => void;
 }) {
+  const t = useTranslations("checkout");
   const id = `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
@@ -810,7 +813,7 @@ function Field({
     <div className={multiline ? "" : "min-w-0"}>
       <label htmlFor={id} className="mb-1.5 block font-sans text-[13px] font-medium text-deep-ink">
         {label}
-        {!required && <span className="ml-1 font-normal text-muted-ink">(optional)</span>}
+        {!required && <span className="ml-1 font-normal text-muted-ink">({t("formOptional")})</span>}
       </label>
 
       {prefix ? (

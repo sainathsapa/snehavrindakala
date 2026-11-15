@@ -27,6 +27,7 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { formatPrice } from "@/lib/medusa";
 import { taxLabel, type TaxBreakdown } from "@/lib/tax";
@@ -132,6 +133,7 @@ export function CheckoutClient({
   lockedEmail = null,
 }: CheckoutClientProps) {
   const router = useRouter();
+  const t = useTranslations("checkout");
 
   /** Step 1 collapses once a valid address exists; Edit re-opens it. */
   const [editingAddress, setEditingAddress] = useState(!addressSaved);
@@ -269,12 +271,12 @@ export function CheckoutClient({
                   id="delivery-heading"
                   className="font-serif text-lg font-semibold leading-tight text-deep-ink sm:text-xl"
                 >
-                  Delivery address
+                  {t("stepDelivery")}
                 </h2>
                 <p className="mt-0.5 font-sans text-[13px] text-muted-ink">
                   {addressStepComplete
-                    ? "Where your artwork is going."
-                    : "Where should we send this?"}
+                    ? t("step1Hint")
+                    : t("step1Intro")}
                 </p>
               </div>
             </div>
@@ -285,7 +287,7 @@ export function CheckoutClient({
                 onClick={() => setEditingAddress(true)}
                 className="shrink-0 rounded-full border border-sand-border px-3 py-1 font-sans text-xs font-medium text-deep-ink transition-colors hover:border-sindoor hover:text-sindoor"
               >
-                Edit address
+                {t("editAddress")}
               </button>
             )}
           </header>
@@ -332,12 +334,10 @@ export function CheckoutClient({
                   }
                   submitting={savingAddress}
                   submitLabel={
-                    addressSaved ? "Update delivery address" : "Continue to payment"
+                    addressSaved ? t("updateAddress") : t("continueToPayment")
                   }
                   submitHint={
-                    addressSaved
-                      ? "Changing your address re-quotes the courier."
-                      : "We quote couriers for your PIN and show every charge before you pay."
+                    addressSaved ? t("hintChangeAddress") : t("hintNewAddress")
                   }
                   canSaveToAccount={canSaveToAccount}
                   focusField={focusField}
@@ -350,7 +350,7 @@ export function CheckoutClient({
                     onClick={() => setEditingAddress(false)}
                     className="mt-4 font-sans text-sm text-muted-ink underline underline-offset-4 hover:text-sindoor"
                   >
-                    Keep the current address
+                    {t("keepCurrent")}
                   </button>
                 )}
               </>
@@ -387,12 +387,12 @@ export function CheckoutClient({
                 id="payment-heading"
                 className="font-serif text-lg font-semibold leading-tight text-deep-ink sm:text-xl"
               >
-                Delivery speed and payment
+                {t("stepPayment")}
               </h2>
               <p className="mt-0.5 font-sans text-[13px] text-muted-ink">
                 {addressStepComplete
-                  ? "Everything is included in the total below."
-                  : "Add your delivery address to see courier options."}
+                  ? t("step2Hint")
+                  : t("step2Locked")}
               </p>
             </div>
           </header>
@@ -419,7 +419,7 @@ export function CheckoutClient({
                       </span>
                     ) : null}
                     <span className="block text-xs text-muted-ink">
-                      Quantity {line.quantity}
+                      {t("quantity")} {line.quantity}
                     </span>
                   </span>
                   <span className="whitespace-nowrap text-deep-ink">
@@ -432,7 +432,7 @@ export function CheckoutClient({
             {/* ── Totals ───────────────────────────────────────────── */}
             <dl className="space-y-2 border-t border-sand-border/60 pt-4 font-sans text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-ink">Subtotal</dt>
+                <dt className="text-muted-ink">{t("subtotal")}</dt>
                 <dd className="text-deep-ink">{formatPrice(subtotal + discount, currency)}</dd>
               </div>
 
@@ -451,14 +451,14 @@ export function CheckoutClient({
               )}
 
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-ink">Shipping</dt>
+                <dt className="text-muted-ink">{t("shipping")}</dt>
                 <dd className="text-deep-ink">
                   {!addressStepComplete ? (
-                    <span className="text-muted-ink">Calculated next</span>
+                    <span className="text-muted-ink">{t("shippingCalculatedNext")}</span>
                   ) : shippingRates.length === 0 ? (
-                    <span className="text-muted-ink">Confirmed by our team</span>
+                    <span className="text-muted-ink">{t("shippingConfirmed")}</span>
                   ) : shippingAmount === 0 ? (
-                    <span className="font-medium text-leaf">Free</span>
+                    <span className="font-medium text-leaf">{t("free")}</span>
                   ) : (
                     formatPrice(shippingAmount, currency)
                   )}
@@ -473,7 +473,7 @@ export function CheckoutClient({
             {addressStepComplete && shippingRates.length > 0 && (
               <fieldset>
                 <legend className="mb-3 font-sans text-[13px] font-medium text-deep-ink">
-                  Delivery speed
+                  {t("deliverySpeed")}
                 </legend>
                 <div className="space-y-2">
                   {shippingRates.map((rate) => {
@@ -517,16 +517,14 @@ export function CheckoutClient({
 
             {addressStepComplete && shippingRates.length === 0 && (
               <p className="rounded-md bg-rang-paper px-3 py-2.5 font-sans text-xs text-muted-ink">
-                We could not quote couriers for this address. Our team will confirm
-                shipping before dispatch, and you will not be charged more than the
-                total shown.
+                {t("quoteFailed")}
               </p>
             )}
 
             {/* ── Total ────────────────────────────────────────────── */}
             <div className="flex items-baseline justify-between border-t border-sand-border/60 pt-4">
               <span className="font-sans text-sm font-medium uppercase tracking-[0.12em] text-muted-ink">
-                Total
+                {t("total")}
               </span>
               <span className="font-serif text-2xl font-semibold text-deep-ink sm:text-3xl">
                 {formatPrice(grandTotal, currency)}
@@ -591,11 +589,11 @@ export function CheckoutClient({
                 />
                 {completing && (
                   <p className="mt-3 text-center font-sans text-sm text-muted-ink">
-                    Completing your order…
+                    {t("completing")}
                   </p>
                 )}
                 <p className="mt-3 text-center font-sans text-xs text-muted-ink">
-                  Secure payment by Razorpay · UPI, cards &amp; net banking
+                  {t("paySecure")}
                 </p>
               </div>
             ) : (
@@ -603,7 +601,7 @@ export function CheckoutClient({
                 href="#delivery"
                 className="block w-full rounded-full bg-kumkum px-6 py-3.5 text-center font-sans text-sm font-semibold text-rang-paper transition-colors hover:bg-sindoor"
               >
-                Add your delivery address
+                {t("addAddressFirst")}
               </Link>
             )}
           </div>
