@@ -405,7 +405,6 @@ export function CheckoutClient({
                   {line.thumbnail ? (
                     // A thumbnail is the fastest way to confirm "this is the
                     // right painting" at the moment of paying.
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={line.thumbnail}
                       alt=""

@@ -4,7 +4,6 @@ import {
   getStockType,
   medusa,
 } from "@/lib/medusa";
-import { CornerFlourish } from "@/components/grounds";
 import { localeAlternates } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
@@ -24,12 +23,10 @@ import {
   translatedProductTitle,
   translatedProductDescription,
   specsFromProduct,
-  type CatalogueItem,
 } from "@/lib/catalogue";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
-import { getPlatformModeFromEnv } from "@/lib/settings";
 import { getPreferredCurrency } from "@/lib/currency";
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
@@ -60,17 +57,15 @@ export async function generateMetadata({
   if (!handle) return { title: "SnehaVrinda Kala" };
   let product: Awaited<ReturnType<typeof medusa.getProduct>>["product"] | null = null;
   try {
-    const { product: prod } = await medusa.getProduct(
-      await resolveMedusaHandle(handle)
-    );
+    const { product: prod } = await medusa.getProduct(await resolveMedusaHandle(handle));
     product = prod;
   } catch {
     // handled in component
   }
   if (!product) {
-    // Seed-catalogue items are not in Medusa, and their pages render from the
-    // catalogue — so their metadata must come from there too, otherwise every
-    // seeded product shipped with the title "Product not found".
+    // Seeded items render from the catalogue, so their metadata must come from
+    // there too, otherwise every seeded product shipped the title "Product not
+    // found".
     const seeded = await findCatalogueItem(handle);
     if (!seeded) return { title: "Product not found" };
     return {
@@ -91,63 +86,65 @@ export async function generateMetadata({
   const currency = (product.variants?.[0]?.calculated_price?.currency_code || "inr").toUpperCase();
   // Metadata must use the same translated title the page body renders, or the
   // browser tab, search result and share card would show English over a Hindi
-  // page. `catalogueTitle` falls back to the Medusa title when there is no
-  // translation for this locale.
+  // page.
   const catalogueTitle = await translatedProductTitle(handle, product.title);
   return {
-    // The root layout's title template appends "| SnehaVrinda Kala", so the
-    // page title must not repeat the site name. When the product has no artist
-    // metadata the fallback would read "... by SnehaVrinda Kala", which is both
-    // wrong (the house is not the maker) and redundant — so fall back to the
-    // product title alone.
     title: product.metadata?.artist
       ? `${catalogueTitle} by ${product.metadata.artist}`
       : catalogueTitle,
     description:
       product.description ||
       `${catalogueTitle} — ${formatPrice(price, currency)} by SnehaVrinda Kala.`,
-    alternates: {
-      canonical: `/products/${product.handle}`,
-    },
+    alternates: { canonical: `/products/${product.handle}` },
     openGraph: {
       title: catalogueTitle,
       description: product.description || undefined,
       // Next's OpenGraph type union does not include "product". Passing it threw
-      // "Invalid OpenGraph type: product" and took the whole product route down
-      // in production. `article` is the closest supported value; the Product
-      // semantics live in the JSON-LD block below.
+      // "Invalid OpenGraph type: product" and took the whole route down.
       type: "article",
       url: `/products/${product.handle}`,
-      images: product.images
-        ? product.images.map((i) => ({ url: i.url }))
-        : [],
+      images: product.images ? product.images.map((i) => ({ url: i.url })) : [],
     },
     twitter: {
       card: "summary_large_image",
       title: catalogueTitle,
       description: product.description || undefined,
-      images: product.images
-        ? product.images.map((i) => i.url)
-        : [],
+      images: product.images ? product.images.map((i) => i.url) : [],
     },
     price: price != null ? (price / 100).toString() : undefined,
     priceCurrency: currency,
   };
-};
+}
 
+/**
+ * The artwork page.
+ *
+ * Composition, top to bottom — the order a visitor actually reads it:
+ *
+ *   breadcrumb → the work (gallery) → what it is (title, art form, artist)
+ *   → what it costs and whether it is available → the facts (specs)
+ *   → how to buy it → why to trust it → the story → reviews → siblings
+ *
+ * Two deliberate departures from the previous layout:
+ *
+ *  1. **The gallery is a column, not a square.** It keeps a sticky stage on wide
+ *     screens so the artwork stays in view while a long column of information
+ *     scrolls — the way a gallery wall label sits beside the work.
+ *
+ *  2. **No card stack.** The right column is typography, whitespace and
+ *     hairlines. Borders around the price, the specs, the trust strip and the
+ *     description made four boxes competing for the same attention, which is the
+ *     opposite of editorial.
+ */
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ handle: string }>;
 }) {
   const { handle } = await params;
-  // The card may link to a handle we generated from the title (see lib/slug.ts)
-  // rather than the one Medusa stores. Resolve it before querying, or every
-  // product with a short opaque handle 404s from its own listing.
+  // The card may link to a handle we generated from the title rather than the
+  // one Medusa stores. Resolve it before querying.
   const medusaHandle = await resolveMedusaHandle(handle);
-  // The detail page fetches the product itself, so it has to name the visitor's
-  // region too — otherwise the shop lists pounds and the product page shows
-  // rupees, which reads as a pricing bug.
   const activeCurrency = await getPreferredCurrency();
   const regionId = await medusa.regionIdForCurrency(activeCurrency);
 
@@ -156,8 +153,6 @@ export default async function ProductDetailPage({
     const { product: prod } = await medusa.getProduct(medusaHandle, regionId);
     product = prod;
   } catch {
-    // Not in Medusa. The shop no longer renders a hardcoded sample catalogue, so
-    // a miss here is a genuine 404 rather than a sample work to display.
     notFound();
   }
 
@@ -167,39 +162,41 @@ export default async function ProductDetailPage({
   const stockType = getStockType(product);
   const isCustomOnly = stockType === "custom_only";
   const variantId = variants[0]?.id;
-  const currency = (product.variants?.[0]?.calculated_price?.currency_code ||
-    "inr").toUpperCase();
-  // The visible title, the JSON-LD name and the heading must all be the same
-  // string; a Hindi page whose structured data said an English name would be
-  // indexed under the wrong language.
+  const currency = (product.variants?.[0]?.calculated_price?.currency_code || "inr").toUpperCase();
   const catalogueTitle = await translatedProductTitle(
     product.handle ?? medusaHandle,
     product.title
   );
-
-  // Decision-grade facts read from the product's tags (the only metadata
-  // channel the store API exposes). Values that are absent simply do not
-  // render, so the panel never shows invented dimensions or a guessed year.
   const specs = specsFromProduct(product, stockType);
-
-  // The Hindi description when the translation pass has written one. Falls back
-  // to Medusa's English rather than to an empty paragraph.
   const catalogueDescription =
     (await translatedProductDescription(product.handle ?? medusaHandle)) ??
     product.description ??
     null;
   const t = await getTranslations("productDetail");
 
-  // Reviews are public (approved only). A backend hiccup must not take the
-  // product page down, so a failed fetch renders an empty review section.
-  const reviewData = await medusa
-    .listReviews(product.id)
-    .catch(() => null);
+  const reviewData = await medusa.listReviews(product.id).catch(() => null);
   const customer = await getCurrentCustomer().catch(() => null);
 
+  const artist =
+    typeof product.metadata?.artist === "string" ? product.metadata.artist : undefined;
+  const artForm = product.category?.name || "Art";
+
+  const availability =
+    stockType === "ready_to_ship"
+      ? t("availability.ready")
+      : stockType === "custom_only"
+        ? t("availability.commission")
+        : stockType === "made_to_order"
+          ? t("availability.madeToOrder")
+          : t("availability.enquire");
+
+  const inStock =
+    variants[0]?.inventory_quantity == null || (variants[0]?.inventory_quantity ?? 0) > 0;
+
+  const productUrl = `${SITE_ORIGIN}/products/${product.handle}`;
+
   return (
-    <main className="relative overflow-hidden py-10 pb-24 lg:pb-10">
-      <CornerFlourish className="absolute -left-8 -top-8 hidden h-72 w-72 lg:block" />
+    <main className="pb-32 lg:pb-20">
       <script
         id="schema-product"
         type="application/ld+json"
@@ -218,13 +215,9 @@ export default async function ProductDetailPage({
             sku: product.handle,
             offers: {
               "@type": "Offer",
-              url: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
-                "http://localhost:3000"}/products/${product.handle}`,
+              url: productUrl,
               priceCurrency: (currency || "INR").toUpperCase(),
-              price:
-                price != null
-                  ? (price / 100).toString()
-                  : undefined,
+              price: price != null ? (price / 100).toString() : undefined,
               availability:
                 stockType === "made_to_order"
                   ? "https://schema.org/PreOrder"
@@ -241,47 +234,23 @@ export default async function ProductDetailPage({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              {
-                "@type": "ListItem",
-                position: 1,
-                name: "Home",
-                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
-                  "http://localhost:3000"}`,
-              },
-              {
-                "@type": "ListItem",
-                position: 2,
-                name: "Shop",
-                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
-                  "http://localhost:3000"}/shop`,
-              },
+              { "@type": "ListItem", position: 1, name: "Home", item: SITE_ORIGIN },
+              { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_ORIGIN}/shop` },
               {
                 "@type": "ListItem",
                 position: 3,
-                name: product.category?.name || "Art",
-                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
-                  "http://localhost:3000"}/shop/${
-                  product.category?.handle || slugify(
-                    product.category?.name || "art"
-                  )
-                }`,
+                name: artForm,
+                item: `${SITE_ORIGIN}/shop/${product.category?.handle || slugify(artForm)}`,
               },
-              {
-                "@type": "ListItem",
-                position: 4,
-                name: catalogueTitle,
-                item: `${process.env.NEXT_PUBLIC_STOREFRONT_URL ||
-                  "http://localhost:3000"}/products/${product.handle}`,
-              },
+              { "@type": "ListItem", position: 4, name: catalogueTitle, item: productUrl },
             ],
           }),
         }}
       />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Visible breadcrumb — the JSON-LD below mirrors this trail for
-            search engines, but a visitor also needs to *see* where they are and
-            how to step back up. */}
-        <nav aria-label="Breadcrumb" className="mb-8 font-sans text-sm text-muted-ink">
+
+      {/* ── Breadcrumb ────────────────────────────────────────────────── */}
+      <div className="mx-auto max-w-[1400px] px-4 pt-6 sm:px-6 lg:px-10">
+        <nav aria-label="Breadcrumb" className="font-sans text-[12.5px] text-muted-ink">
           <ol className="flex flex-wrap items-center gap-1.5">
             <li>
               <Link href="/" className="transition-colors hover:text-sindoor">
@@ -308,17 +277,21 @@ export default async function ProductDetailPage({
               </>
             )}
             <li aria-hidden="true" className="text-sand-border">/</li>
-            <li aria-current="page" className="truncate text-deep-ink">
+            <li aria-current="page" className="max-w-[16rem] truncate text-deep-ink">
               {catalogueTitle}
             </li>
           </ol>
         </nav>
+      </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          <div className="flex flex-col gap-4">
+      {/* ── The work and everything about it ──────────────────────────── */}
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
+        <div className="mt-6 grid items-start gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-16">
+          {/* Gallery — sticky on desktop so the artwork stays beside its label. */}
+          <div className="lg:sticky lg:top-24">
             <ProductGallery
-              images={images.map((img: any, i: number) => ({
-                id: img.id || String(i),
+              images={images.map((img: any, index: number) => ({
+                id: img.id || String(index),
                 url: img.url,
                 alt: catalogueTitle,
               }))}
@@ -326,99 +299,126 @@ export default async function ProductDetailPage({
             />
           </div>
 
-          <div className="flex flex-col gap-6">
+          {/* The label. */}
+          <div className="flex flex-col gap-7 lg:pt-2">
+            {/* 1 — What it is */}
             <div>
-              <span className="text-xs font-medium text-sindoor uppercase tracking-wider">
-                {product.category?.name || "Art"}
-              </span>
-              <h1 className="text-4xl md:text-5xl font-serif font-semibold text-deep-ink tracking-tight">
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-terracotta">
+                {artForm}
+              </p>
+              <h1 className="mt-2.5 font-serif text-3xl font-semibold leading-[1.12] tracking-tight text-deep-ink sm:text-4xl lg:text-[2.75rem]">
                 {catalogueTitle}
               </h1>
               {product.subtitle && (
-                <p className="mt-2 text-lg text-muted-ink font-sans">
+                <p className="mt-3 font-serif text-lg italic leading-relaxed text-muted-ink">
                   {product.subtitle}
                 </p>
               )}
-              {String(product.metadata?.artist || "").trim() && (
-                <p className="mt-2 font-sans text-sm italic text-muted-ink">
-                  by {String(product.metadata?.artist)}
+              {artist && (
+                <p className="mt-3 font-sans text-sm text-deep-ink/80">
+                  <span className="text-muted-ink">{t("artistLabel")} · </span>
+                  {artist}
                 </p>
               )}
             </div>
 
-            <div className="border-y border-sand-border py-4">
-              <div className="flex items-baseline gap-4">
-                <span className="text-3xl font-serif font-bold text-deep-ink">
+            {/* 2 — What it costs, and whether you can have it */}
+            <div className="border-y border-sand-border/60 py-5">
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span className="font-serif text-3xl font-semibold text-deep-ink sm:text-4xl">
                   {formatPrice(price, currency)}
                 </span>
-                {price != null && (
-                  <span className="text-sm text-muted-ink font-sans">{currency}</span>
+                <span className="font-sans text-xs uppercase tracking-[0.12em] text-muted-ink">
+                  {currency.toUpperCase()}
+                </span>
+              </div>
+
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-[13px]">
+                <span
+                  className={`inline-flex items-center gap-1.5 ${
+                    inStock && !isCustomOnly ? "text-leaf" : "text-terracotta"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      inStock && !isCustomOnly ? "bg-leaf" : "bg-terracotta"
+                    }`}
+                  />
+                  {availability}
+                </span>
+                {specs.dispatch && (
+                  <>
+                    <span aria-hidden="true" className="text-sand-border">·</span>
+                    <span className="text-muted-ink">{specs.dispatch}</span>
+                  </>
                 )}
               </div>
-              <p className="mt-2 text-sm text-muted-ink font-sans capitalize">
-                {stockType.replace(/_/g, " ")}
-              </p>
-              {specs.dispatch && (
-                <p className="mt-1 font-sans text-xs text-terracotta">
-                  {specs.dispatch}
-                </p>
-              )}
-
-              <ProductOptions
-                variants={variants}
-                price={price}
-                currency={currency}
-                stockType={stockType}
-                isCustomOnly={isCustomOnly}
-                handle={handle}
-              />
-
-              {!isCustomOnly && (
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <Link
-                    href="/custom-art"
-                    className="inline-flex items-center gap-1.5 font-sans text-sm text-terracotta transition-colors hover:text-kumkum"
-                  >
-                    Commission a similar piece
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                  <WishlistButton
-                    handle={product.handle ?? medusaHandle}
-                    title={catalogueTitle}
-                    image={images[0]?.url}
-                    price={price}
-                    currency={currency}
-                    artist={
-                      typeof product.metadata?.artist === "string"
-                        ? product.metadata.artist
-                        : undefined
-                    }
-                  />
-                </div>
-              )}
             </div>
 
-            <ArtworkSpecsPanel specs={specs} />
+            {/* 3 — How to buy it. One primary action. */}
+            <ProductOptions
+              variants={variants}
+              price={price}
+              currency={currency}
+              stockType={stockType}
+              isCustomOnly={isCustomOnly}
+              handle={handle}
+            />
 
-            <div className="border-t border-sand-border/60 pt-4">
+            {/* Secondary actions, quieter by design. */}
+            {!isCustomOnly && (
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                <WishlistButton
+                  handle={product.handle ?? medusaHandle}
+                  title={catalogueTitle}
+                  image={images[0]?.url}
+                  price={price}
+                  currency={currency}
+                  artist={artist}
+                />
+                <span aria-hidden="true" className="text-sand-border">·</span>
+                <Link
+                  href="/custom-art"
+                  className="font-sans text-sm text-terracotta underline-offset-4 transition-colors hover:text-kumkum hover:underline"
+                >
+                  {t("commissionSecondary")} →
+                </Link>
+              </div>
+            )}
+
+            {/* 4 — The facts, in the open. Not behind a tab. */}
+            {Object.keys(specs).length > 0 && (
+              <ArtworkSpecsPanel specs={specs} title={t("details")} />
+            )}
+
+            {/* 5 — Why to trust the purchase, right next to the decision. */}
+            <div className="border-t border-sand-border/60 pt-5">
+              <p className="mb-3 font-sans text-[11px] uppercase tracking-[0.18em] text-muted-ink">
+                {t("shippingNote")}
+              </p>
               <TrustStrip />
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-serif font-semibold text-deep-ink">
-                {t("description")}
-              </h3>
-              <p className="text-muted-ink font-sans leading-relaxed whitespace-pre-line">
-                {catalogueDescription || "Details coming soon."}
-              </p>
-            </div>
+            {/* 6 — The prose description, where a buyer expects it. */}
+            {catalogueDescription && (
+              <div className="space-y-3 border-t border-sand-border/60 pt-5">
+                <h2 className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
+                  {t("description")}
+                </h2>
+                <p className="whitespace-pre-line font-sans text-[15px] leading-[1.75] text-muted-ink">
+                  {catalogueDescription}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* ── Below the fold: the story, then the social proof ─────────── */}
         <ProductStory
           title={catalogueTitle}
+          artist={artist}
           collection={product.category?.name || undefined}
-          stockType={stockType}
         />
 
         {reviewData && (
@@ -452,10 +452,8 @@ export default async function ProductDetailPage({
         price={price}
         currency={currency}
         isCustomOnly={isCustomOnly}
-        inStock={
-          variants[0]?.inventory_quantity == null ||
-          (variants[0]?.inventory_quantity ?? 0) > 0
-        }
+        inStock={inStock}
+        title={catalogueTitle}
       />
     </main>
   );

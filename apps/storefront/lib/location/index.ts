@@ -21,7 +21,26 @@
  *     stops "Rajastan" or a city in the wrong country reaching a courier label.
  */
 
-import { SHIPPING_COUNTRIES } from "@/lib/currency";
+/**
+ * Deliberately **not** imported from `lib/currency`.
+ *
+ * `lib/currency` reads a cookie through `next/headers`, so importing it here
+ * would drag a server-only module into the client bundle the moment a combobox
+ * imported this file — which is exactly what broke the production build. The
+ * destinations are restated below and a unit test asserts the two lists agree, so
+ * the duplication cannot silently drift.
+ */
+export const SHIPPING_COUNTRY_CODES: { code: string; name: string; currency: string }[] = [
+  { code: "in", name: "India", currency: "inr" },
+  { code: "us", name: "United States", currency: "usd" },
+  { code: "ca", name: "Canada", currency: "usd" },
+  { code: "gb", name: "United Kingdom", currency: "gbp" },
+  { code: "de", name: "Germany", currency: "eur" },
+  { code: "fr", name: "France", currency: "eur" },
+  { code: "nl", name: "Netherlands", currency: "eur" },
+  { code: "ae", name: "United Arab Emirates", currency: "aed" },
+  { code: "sa", name: "Saudi Arabia", currency: "aed" },
+];
 
 export interface CountryOption {
   /** ISO 3166-1 alpha-2, lowercase — the form Medusa stores. */
@@ -50,9 +69,9 @@ export interface CountryOption {
 /**
  * The shipping destinations, enriched with calling codes and picker ability.
  *
- * `SHIPPING_COUNTRIES` in `lib/currency` stays the single source of *where we
- * ship* (it is tied to regions that have prices). This adds the presentation
- * facts the picker needs without duplicating that list.
+ * `SHIPPING_COUNTRY_CODES` mirrors `SHIPPING_COUNTRIES` in `lib/currency` (which
+ * is tied to regions that have prices). This file adds the presentation facts the
+ * picker needs; a test asserts the two lists agree.
  */
 const DIAL_CODES: Record<string, string> = {
   in: "91",
@@ -81,7 +100,7 @@ const POSTAL: Record<string, { example: string; label: string }> = {
 /** Countries we can enumerate regions for. */
 const REGION_COUNTRIES = new Set(["in", "us", "ca", "gb", "de", "fr", "nl", "ae"]);
 
-export const COUNTRIES: CountryOption[] = SHIPPING_COUNTRIES.map((country) => ({
+export const COUNTRIES: CountryOption[] = SHIPPING_COUNTRY_CODES.map((country) => ({
   code: country.code,
   name: country.name,
   dialCode: DIAL_CODES[country.code] ?? "",

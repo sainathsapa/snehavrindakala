@@ -151,7 +151,18 @@
     "includesTax": "Includes {tax}",
     "gstInclusive": "Prices are GST-inclusive.",
     "dutyNotice": "Shipping internationally. Import duties or local taxes may be charged by your customs authority on delivery, and are not included in this total.",
-    "payNow": "Pay now"
+    "payNow": "Pay now",
+    "stepDelivery": "Delivery address",
+    "stepPayment": "Delivery speed and payment",
+    "editAddress": "Edit address",
+    "savedAddresses": "Saved addresses",
+    "addNewAddress": "Add a new address",
+    "useDifferentAddress": "Use a different address",
+    "deliveryCalculatedNext": "Calculated next",
+    "shippingConfirmedByTeam": "Confirmed by our team",
+    "addAddressFirst": "Add your delivery address",
+    "secureCheckoutEyebrow": "Secure checkout",
+    "checkoutIntro": "Two steps: where it is going, then how it gets there and how you pay. Every charge is shown before you commit."
   },
   "artForm": {
     "pageTitle": "Indian Art Forms",
@@ -718,7 +729,14 @@
     "description": "Description",
     "backToShop": "Back to shop",
     "addToCart": "Add to Cart",
-    "home": "Home"
+    "home": "Home",
+    "authenticityNote": "How we certify every work",
+    "continueLabel": "Continue exploring",
+    "details": "Details",
+    "artistLabel": "Artist",
+    "shippingNote": "Packed by the studio · certificate of authenticity · tracked courier",
+    "commissionSecondary": "Commission a similar piece",
+    "saveToWishlist": "Save to wishlist"
   },
   "policies": {
     "shippingTitle": "Shipping & delivery",

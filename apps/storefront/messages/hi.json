@@ -151,7 +151,18 @@
     "includesTax": "{tax} शामिल",
     "gstInclusive": "कीमतों में जीएसटी शामिल है।",
     "dutyNotice": "अंतरराष्ट्रीय शिपिंग। आपके देश के सीमा शुल्क विभाग द्वारा डिलीवरी पर आयात शुल्क या स्थानीय कर लिया जा सकता है, जो इस कुल राशि में शामिल नहीं है।",
-    "payNow": "अब भुगतान करें"
+    "payNow": "अब भुगतान करें",
+    "stepDelivery": "डिलीवरी पता",
+    "stepPayment": "डिलीवरी की गति और भुगतान",
+    "editAddress": "पता बदलें",
+    "savedAddresses": "सहेजे गए पते",
+    "addNewAddress": "नया पता जोड़ें",
+    "useDifferentAddress": "दूसरा पता इस्तेमाल करें",
+    "deliveryCalculatedNext": "आगे गणना होगी",
+    "shippingConfirmedByTeam": "हमारी टीम पुष्टि करेगी",
+    "addAddressFirst": "अपना डिलीवरी पता जोड़ें",
+    "secureCheckoutEyebrow": "सुरक्षित भुगतान",
+    "checkoutIntro": "दो चरण: कहाँ भेजना है, फिर कैसे भेजना है और भुगतान। हर शुल्क पहले दिखाया जाता है।"
   },
   "artForm": {
     "pageTitle": "भारतीय कला-रूप",
@@ -718,7 +729,14 @@
     "description": "विवरण",
     "backToShop": "दुकान पर लौटें",
     "addToCart": "कार्ट में जोड़ें",
-    "home": "होम"
+    "home": "होम",
+    "authenticityNote": "हम हर कृति को कैसे प्रमाणित करते हैं",
+    "continueLabel": "और देखें",
+    "details": "विवरण",
+    "artistLabel": "कलाकार",
+    "shippingNote": "स्टूडियो द्वारा पैक · प्रामाणिकता प्रमाणपत्र · ट्रैक किया गया कूरियर",
+    "commissionSecondary": "ऐसी ही कृति बनवाएँ",
+    "saveToWishlist": "इच्छा-सूची में सहेजें"
   },
   "policies": {
     "shippingTitle": "शिपिंग और डिलीवरी",

@@ -292,3 +292,21 @@ describe("isBlank", () => {
     expect(isBlank({ ...EMPTY_ADDRESS, city: "Jaipur" })).toBe(false);
   });
 });
+
+describe("destination list stays in sync with lib/currency", () => {
+  it("lists exactly the countries we ship to and price for", async () => {
+    // `lib/location` deliberately restates the destination list rather than
+    // importing `lib/currency`, because that module reads a cookie through
+    // `next/headers` and would drag server-only code into the client bundle.
+    // This test is what keeps the copy honest.
+    const { SHIPPING_COUNTRIES } = await import("../lib/currency");
+    expect(COUNTRIES.map((c) => c.code).sort()).toEqual(
+      SHIPPING_COUNTRIES.map((c) => c.code).sort()
+    );
+    for (const country of SHIPPING_COUNTRIES) {
+      const mirror = COUNTRIES.find((c) => c.code === country.code);
+      expect(mirror?.name).toBe(country.name);
+      expect(mirror?.currency).toBe(country.currency);
+    }
+  });
+});
