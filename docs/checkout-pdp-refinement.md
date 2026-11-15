@@ -121,3 +121,68 @@ Localisation: `/hi/checkout` renders 500+ Devanagari characters and
 - A `stock:custom_only` piece (e.g. `gold-leaf-miniature-portrait`) has no Add to
   Cart by design; it leads to the commission conversation.
 - The sticky buy bar repeats the price below `lg` on purpose.
+
+## Second pass — localisation and checkout redesign
+
+### The i18n bug: pages reverted to English
+
+Reported as "it keeps changing back to English". Reproduced by clicking, not by
+loading URLs: `/hi/shop` → click any product → landed on `/products/...` with
+zero Devanagari. The URL-based spot check had missed it entirely because
+Hindi *pages* worked; what broke was *navigation between* them.
+
+Root cause: with `localePrefix: "as-needed"`, a locale prefix is only added by
+next-intl's locale-aware helpers. 47 files imported `Link` from `next/link`
+and four used `next/navigation`'s `useRouter`, which build bare URLs. Only one
+file in the app used the locale-aware versions.
+
+- All non-admin `Link`/`useRouter`/`usePathname` now come from `@/i18n/routing`.
+  The admin panel stays on plain `next/link` — it is outside the locale tree.
+- 27 server `redirect()` calls in account, seller, shop and commission actions
+  went through a new `lib/locale-redirect.ts`. So a failed Hindi login no longer
+  silently switches the shopper to English.
+- The wishlist and artists pages were the last two screens rendering pure
+  English; both are translated now.
+
+Verified by clicking every header link from `/hi`: 8/8 stay Hindi, 0
+English-only pages.
+
+### The checkout redesign
+
+Structural changes, driven by a visual review of the old page:
+
+- Steps sit on the page with hairline rules instead of nested rounded cards.
+- The totals became a real right column, sticky on desktop.
+- One primary action per step. Step 2's duplicate "Add your delivery address"
+  button became a sentence; step 1's submit says "Save address and continue".
+- The tax line says "Includes CGST + SGST" — prices are GST-inclusive, so the
+  total correctly does not move, but a bare row read as an ignored charge.
+- A floating mobile total bar was tried and removed: it covered the phone field.
+  The totals already state the amount once.
+
+### A pricing bug the redesign exposed
+
+With the finished page on screen, all three courier radios rendered unchecked
+while shipping showed "Free" beside quotes of ₹99/₹105/₹118 — the total read
+₹5,600 instead of ₹5,699.
+
+Quotes only exist once an address is on the cart, so the island's `useState`
+initialiser ran against an empty list and settled on `""`; the quotes arrived
+after the save-and-refresh, but an initialiser never runs twice. The rule is now
+`resolveSelectedRate` in `lib/shipping/select-rate.ts`, applied whenever the
+quote set changes, with 8 tests.
+
+### Verification (Docker stack, `docker compose up -d --build`)
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | clean |
+| `npx vitest run` | 157 passed, 4 skipped |
+| Browser, 1440 / 834 / 390 | 71 / 71 checks |
+| `/hi/checkout` | 558 Devanagari chars, no English leakage |
+
+### Still open
+
+- Billing address is still not collected (see Part 1.6).
+- The right totals column leaves empty space below it on tall desktop screens
+  once the summary is short; it is sticky rather than filled.
