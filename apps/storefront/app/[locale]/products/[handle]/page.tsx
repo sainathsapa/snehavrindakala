@@ -30,6 +30,7 @@ import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
 import { getPreferredCurrency } from "@/lib/currency";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 import { listArtForms } from "@/lib/site-content";
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
@@ -215,6 +216,32 @@ export default async function ProductDetailPage({
   // Link to whichever slug the tradition page actually serves. Falling back to
   // the category handle produced a 404 (/art-forms/painting-drawing).
   const traditionSlug = traditionRecord?.slug;
+
+  // Where a maker link should go depends on the mode.
+  //
+  // /makers is single-brand only and 404s in platform mode; /artists is the
+  // reverse. Linking unconditionally to /makers#slug therefore broke every
+  // product page in platform mode — a 404 behind the maker's name on all of
+  // them. Each mode gets the directory it actually serves.
+  const platformMode = getPlatformModeFromEnv() === "platform";
+  let makerHref: string | undefined;
+  if (artist) {
+    if (!platformMode) {
+      makerHref = `/makers#${slugify(artist)}`;
+    } else {
+      // Artists carry a real slug from the artists module, which is not always
+      // slugify(name); look it up rather than guessing one that 404s.
+      const bySlug = await medusa
+        .listArtists({ limit: 100 })
+        .then(({ artists }) =>
+          artists?.find((a) => a.display_name === artist)
+        )
+        .catch(() => undefined);
+      makerHref = bySlug?.slug
+        ? `/artists/${bySlug.slug}`
+        : "/artists";
+    }
+  }
 
   const availability =
     stockType === "ready_to_ship"
@@ -480,7 +507,7 @@ export default async function ProductDetailPage({
               }
               origin={traditionRecord?.origin || undefined}
               maker={artist}
-              makerHref={artist ? `/makers#${slugify(artist)}` : undefined}
+              makerHref={makerHref}
               title={t("theRecord")}
               labels={{
                 tradition: t("recordTradition"),
