@@ -919,5 +919,30 @@
     "empty": "Makers will be listed here as the collection grows.",
     "emptyBody": "Every product record names its maker, so this page fills itself as works are added.",
     "indexNote": "Listed from the catalogue. A maker appears here once a work of theirs is published."
+  },
+  "track": {
+    "eyebrow": "Orders",
+    "title": "Track an order",
+    "intro": "Enter your order number and the email you used at checkout.",
+    "orderId": "Order number",
+    "orderIdHint": "e.g. ord_01J… or 1042",
+    "email": "Email address",
+    "emailHint": "you@example.com",
+    "submit": "Find my order",
+    "submitting": "Looking…",
+    "found": "Order found",
+    "status": "Status",
+    "payment": "Payment",
+    "placed": "Placed",
+    "total": "Total",
+    "items": "In this order",
+    "tracking": "Tracking",
+    "carrier": "Carrier",
+    "trackingNumber": "Tracking number",
+    "openTracking": "Track with the carrier",
+    "noShipment": "Tracking appears here once the parcel is handed to the courier.",
+    "viewOrder": "View order",
+    "again": "Continue browsing",
+    "privacyNote": "We show an order only when the number and the email address both match it. So that we do not reveal who has ordered what, a mismatch never says which of the two was wrong."
   }
 }

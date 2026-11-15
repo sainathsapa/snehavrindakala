@@ -144,5 +144,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return entries;
+  // ── Hindi ─────────────────────────────────────────────────────────────────
+  //
+  // The site is fully bilingual but the sitemap listed English only, so every
+  // Hindi page — all of /hi/shop, /hi/art-forms, the translated journal essays —
+  // was invisible to a crawler entering here. Each English entry gets a Hindi
+  // twin, with `alternates.languages` on both so the pair is declared as one
+  // page in two languages rather than two unrelated pages competing for the
+  // same query.
+  //
+  // Built from the finished list rather than alongside each push above, so a
+  // route added later cannot be listed in English and forgotten in Hindi.
+  const withAlternates = (entry: MetadataRoute.Sitemap[number]) => {
+    const path = entry.url.slice(baseUrl.length) || "/";
+    const en = path === "/" ? "/" : path;
+    const hi = path === "/" ? "/hi" : `/hi${path}`;
+    return { ...entry, alternates: { languages: { en, hi } } };
+  };
+
+  const english = entries.map(withAlternates);
+  const hindi = entries.map((entry) => {
+    const path = entry.url.slice(baseUrl.length) || "/";
+    const en = path === "/" ? "/" : path;
+    const hi = path === "/" ? "/hi" : `/hi${path}`;
+    return {
+      ...entry,
+      url: `${baseUrl}${hi}`,
+      alternates: { languages: { en, hi } },
+    };
+  });
+
+  return [...english, ...hindi];
 }

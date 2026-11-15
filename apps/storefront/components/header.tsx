@@ -183,6 +183,26 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-40 border-b border-sand-border/70 bg-rang-paper/95 backdrop-blur supports-[backdrop-filter]:bg-rang-paper/85">
+      {/* Utility strip.
+
+          Language and currency used to sit in the main row beside the search
+          field and the account/cart icons. Two selects at 11px uppercase plus
+          their padding took roughly 150px out of a row that also has to hold
+          the wordmark, the primary nav, the search box and three icon targets —
+          so on a laptop the nav links were the first thing to be squeezed.
+
+          Moving them here gives them their own line, keeps them always visible
+          (a visitor looking for Hindi should not have to open a menu), and
+          leaves the main row to the things a buyer uses every visit. The strip
+          is visually quiet — small, right-aligned, above a hairline — so it
+          reads as furniture rather than as a second navigation bar. */}
+      <div className="hidden border-b border-sand-border/40 md:block">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-2 px-5 py-1.5 sm:px-8 lg:px-12">
+          <LanguageSwitcher />
+          <span aria-hidden="true" className="h-3 w-px bg-sand-border/70" />
+          <CurrencySwitcher current={currency} />
+        </div>
+      </div>
       <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
         <div className="flex h-[88px] items-center gap-6">
           {/* Brand cluster: sprig + rule, then the lotus mark and wordmark. */}
@@ -501,17 +521,8 @@ export function Header({
               )}
             </div>
 
-            {/* Switchers stay out of the mobile header row.
-
-                Two selects plus account, cart and the menu button came to
-                366px inside a 390px viewport, so the whole cluster sat off the
-                right edge — which is why the menu and search could not be
-                reached on a phone at all. On small screens these move into the
-                open menu sheet below, where there is room to label them. */}
-            <div className="hidden items-center gap-2 md:flex">
-              <LanguageSwitcher />
-              <CurrencySwitcher current={currency} />
-            </div>
+            {/* Language and currency now live in the utility strip above this
+                row, so they are not repeated here. */}
 
             <Link
               href="/account"

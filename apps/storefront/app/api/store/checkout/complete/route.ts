@@ -12,8 +12,10 @@
  */
 
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import crypto from "crypto";
 import { medusa } from "@/lib/medusa";
+import { CART_COOKIE } from "@/lib/cart";
 import { getAdminOrder } from "@/lib/admin";
 import { createShipmentForOrder } from "@/lib/shipping/create-order-shipment";
 import { issueOrderToken } from "@/lib/order-token";
@@ -180,6 +182,23 @@ export async function POST(req: Request) {
     // This is what lets the confirmation page work without exposing the order
     // to anyone who guesses an id.
     const orderToken = issueOrderToken(order.id);
+
+    // The cart is finished, so forget it.
+    //
+    // The cart cookie outlived the order. `getCart` only returns null when
+    // Medusa throws, and a completed cart still answers reads for a while, so
+    // the buyer paid, landed on the confirmation page, and then found the same
+    // items still in the cart. Clearing the id here is what makes the cart
+    // empty the moment the order exists.
+    try {
+      const jar = await cookies();
+      jar.delete(CART_COOKIE);
+    } catch (err) {
+      // A cookie write can fail outside a request scope; the order is already
+      // placed, and failing the response over a stale cookie would be worse
+      // than leaving it.
+      console.error("Could not clear the cart cookie after checkout:", err);
+    }
 
     return NextResponse.json({
       ok: true,

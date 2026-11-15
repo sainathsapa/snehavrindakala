@@ -10,7 +10,17 @@ export async function getCart(): Promise<MedusaCart | null> {
   if (!cartId) return null;
 
   try {
-    return await medusa.getCart(cartId);
+    const cart = await medusa.getCart(cartId);
+    // A completed cart is no longer a cart.
+    //
+    // Medusa keeps answering reads for a cart it has already converted into an
+    // order, so a buyer who had just paid could still see their items. Checking
+    // the state here means a stale cookie shows an empty cart rather than a
+    // finished one, whichever path left it behind.
+    if (cart && (cart as { completed_at?: string | null }).completed_at) {
+      return null;
+    }
+    return cart;
   } catch {
     // Cart was completed or removed; treat it as empty.
     return null;

@@ -65,7 +65,7 @@ const LINK_GROUPS = [
     heading: "help",
     links: [
       { key: "faqSupport", href: "/faq" },
-      { key: "trackOrder", href: "/account" },
+      { key: "trackOrder", href: "/track" },
       { key: "shipping", href: "/policies/shipping" },
       { key: "returns", href: "/policies/returns" },
     ],
