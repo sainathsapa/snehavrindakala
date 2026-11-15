@@ -14,9 +14,14 @@
  *
  * Usage:
  *   node scripts/check-redirects.mjs                     # against localhost:3000
+ *   node scripts/check-redirects.mjs http://localhost:3001
  *   node scripts/check-redirects.mjs https://snehavrinda.in
  *
- * Exit code 0 only when every hop ends on a 200.
+ * Exit codes:
+ *   0  every hop ends on a 200
+ *   1  at least one redirect is broken
+ *   2  the target is not running this repository's redirect table, so no score
+ *      was produced (see the guard below)
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -44,6 +49,50 @@ if (redirects.length === 0) {
 }
 
 let failures = 0;
+
+// Guard against silently auditing the wrong server.
+//
+// The default target is localhost:3000, which on a developer machine is often a
+// stale container left running from an earlier session. Auditing that instead
+// of the build under test produced a confident, entirely false "1/6 redirects
+// resolve" while the real build was passing 6/6 — the worst kind of result,
+// because it looks like a regression rather than a mistake in the harness.
+//
+// Reachability is not a usable signal: a stale server answers happily and even
+// has its own (different) redirects for the same URLs. What distinguishes the
+// builds is the redirect *table* itself. So one known rule is used as a
+// fingerprint — if the server does not send `/products/001` where this config
+// says it should, it is not running this config and the run refuses to score.
+const fingerprint = redirects[0];
+if (fingerprint) {
+  let actual = "";
+  try {
+    const res = await fetch(`${base}${fingerprint.from}`, { redirect: "manual" });
+    actual = res.headers.get("location") || "";
+  } catch {
+    actual = "";
+  }
+
+  // Compare on path only; the Location header may be absolute.
+  let actualPath = actual;
+  try {
+    actualPath = actual ? new URL(actual, base).pathname : "";
+  } catch {
+    actualPath = actual;
+  }
+
+  if (actualPath && actualPath !== fingerprint.to) {
+    console.error(
+      `REFUSING to score ${base} — it is not serving this repository's ` +
+        `redirect table.\n` +
+        `  ${fingerprint.from} -> ${actualPath || "(no redirect)"}\n` +
+        `  next.config.js says -> ${fingerprint.to}\n` +
+        `Pass the origin of the build under test, e.g. ` +
+        `node scripts/check-redirects.mjs http://localhost:3001`
+    );
+    process.exit(2);
+  }
+}
 
 for (const { from, to } of redirects) {
   // `redirect: "manual"` so the hop is observed rather than followed, which
