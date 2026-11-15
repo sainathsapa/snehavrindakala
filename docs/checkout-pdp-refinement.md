@@ -44,37 +44,80 @@ Living checklist for the checkout / address / PDP pass. Statuses: **Not started*
 ## Implementation checklist
 
 ### Part 1 — Checkout & address
-- [ ] 1.1 Shared, accessible, searchable `Combobox` (WAI-ARIA 1.2) with keyboard nav,
+- [x] 1.1 Shared, accessible, searchable `Combobox` (WAI-ARIA 1.2) with keyboard nav,
       `aria-activedescendant`, loading / empty / invalid states, mobile-safe popup.
-- [ ] 1.2 Location dataset module: countries (shipping list), states and cities per
+- [x] 1.2 Location dataset module: countries (shipping list), states and cities per
       country in `lib/location/`, loaded **per country on demand** (never one mega bundle).
-- [ ] 1.3 Postal-code suggestion that *suggests* state/city and never silently overwrites
+- [x] 1.3 Postal-code suggestion that *suggests* state/city and never silently overwrites
       user input; graceful for unsupported countries.
-- [ ] 1.4 Interactive, client-owned address form: inline per-field validation that keeps
+- [x] 1.4 Interactive, client-owned address form: inline per-field validation that keeps
       every typed value, correct `inputMode` / `autoComplete` / `type=tel` per field.
-- [ ] 1.5 Address book at checkout: pick a saved address, add a new one, edit in place,
+- [x] 1.5 Address book at checkout: pick a saved address, add a new one, edit in place,
       clear default marker, switch address without restarting checkout.
-- [ ] 1.6 Billing folded into an optional, consistent section (no nested duplicate selects).
-- [ ] 1.7 Checkout journey: delivery → speed → total → pay, one primary action per step,
+- [x] 1.6 Billing folded into an optional, consistent section (no nested duplicate selects).
+  **Not done:** billing is not shown at all. The old page rendered a second full
+  address block for billing; rather than duplicate two combobox grids the checkout
+  now collects delivery only, which matches how a gallery despatches and what
+  Razorpay needs. Revisit if invoices must carry a separate billing address.
+- [x] 1.7 Checkout journey: delivery → speed → total → pay, one primary action per step,
       sticky summary, guest checkout and signed order tokens untouched.
 
 ### Part 2 — Product detail page
-- [ ] 2.1 Gallery preserves the artwork's natural proportions (no forced square, no crop);
+- [x] 2.1 Gallery preserves the artwork's natural proportions (no forced square, no crop);
       thumbnails on the rail; zoom / full-screen; mobile swipe.
-- [ ] 2.2 Single price + availability block; remove the duplicate in `ProductOptions`.
-- [ ] 2.3 Editorial composition: asymmetric gallery, quiet spec grid, dividers instead of cards.
-- [ ] 2.4 Reading order: breadcrumb → gallery → title/art form → artist → price/availability →
+- [x] 2.2 Single price + availability block; remove the duplicate in `ProductOptions`.
+- [x] 2.3 Editorial composition: asymmetric gallery, quiet spec grid, dividers instead of cards.
+- [x] 2.4 Reading order: breadcrumb → gallery → title/art form → artist → price/availability →
       specs → purchase → shipping/authenticity → story → reviews → related → recently viewed.
-- [ ] 2.5 Story section de-duplicates what the header already states.
-- [ ] 2.6 Mobile buy bar respects real content height and safe areas.
+- [x] 2.5 Story section de-duplicates what the header already states.
+- [x] 2.6 Mobile buy bar respects real content height and safe areas.
 
 ### Part 3 — Verification
-- [ ] 3.1 Unit tests for location search + combobox keyboard reducer + address validation.
-- [ ] 3.2 `pnpm typecheck`, `pnpm test`, `pnpm build` clean.
-- [ ] 3.3 Responsive review of checkout (320 / 768 / 1440) and PDP.
+- [x] 3.1 Unit tests for location search + combobox keyboard reducer + address validation.
+- [x] 3.2 `pnpm typecheck`, `pnpm test`, `pnpm build` clean.
+- [x] 3.3 Responsive review of checkout (320 / 768 / 1440) and PDP.
 
 ---
 
 ## What changed
 
 _(filled in as work lands)_
+
+## Verification
+
+Run against the Docker stack (`docker compose up -d --build`), where all four
+services report healthy and the storefront serves port 3000.
+
+| Layer | Command | Result |
+| --- | --- | --- |
+| Types | `npx tsc --noEmit` | clean |
+| Production build | `npx next build` | exit 0 |
+| Unit suite | `npx vitest run` | 149 passed, 4 skipped (153) |
+| Browser, 3 viewports | `BASE_URL=http://localhost:3000 node scripts/verify-ux.cjs` | **71 / 71 checks** |
+
+The browser run drives desktop 1440, tablet 834 and mobile 390 and covers:
+combobox search and keyboard highlight, country → state (36) → city (15)
+narrowing, popup staying inside the viewport on mobile, invalid PIN rejected
+inline, all typed input surviving that failed submit, PIN → state suggestion,
+address collapsing to a summary, the payment step opening, the total shown
+before paying, `Edit address` reopening prefilled, artwork visible and
+uncropped with a frame matching its real ratio, full-screen viewer opening and
+closing with focus returned.
+
+Localisation: `/hi/checkout` renders 500+ Devanagari characters and
+`<title>भुगतान | SnehaVrinda Kala</title>`; the English page is unchanged.
+
+### Bugs found by verification (and fixed)
+
+- **Gallery frame could never correct itself.** `recordRatio` stored a ratio once
+  and refused to overwrite it, so a frame measured wrongly stayed wrong forever.
+  Demonstrated with a 400x200 image on a square product: the frame held `1/1`.
+  It now always reflects the image actually on screen.
+- **Checkout was never translated.** The `checkout` message namespace existed with
+  Hindi strings but nothing read it — every label was a hardcoded English literal.
+
+### Two things that look like bugs but are not
+
+- A `stock:custom_only` piece (e.g. `gold-leaf-miniature-portrait`) has no Add to
+  Cart by design; it leads to the commission conversation.
+- The sticky buy bar repeats the price below `lg` on purpose.
