@@ -408,11 +408,11 @@ export default async function Home() {
             />
             {/* Same rule as the artist band: the directory is platform-only. */}
             <ArrowLink
-              href={platformMode ? "/artists" : "/art-forms"}
+              href={platformMode ? "/artists" : "/makers"}
               tone="light"
               className="mt-6"
             >
-              {platformMode ? "Explore the Journey" : "Explore the traditions"}
+              {platformMode ? "Explore the Journey" : t("meetMakers")}
             </ArrowLink>
           </div>
         </div>
@@ -512,14 +512,10 @@ export default async function Home() {
               write down what she taught me.&rdquo;
             </h2>
             <p className="mt-5 font-sans text-small leading-relaxed text-muted-ink">
-              {t("artistBody")}{" "}
-              panel can take a fortnight, and the border you think is decoration
-              is often a genealogy — the fish for fertility, the bamboo for
-              endurance, the parrot for the messenger.
+              {t("artistBody")}
             </p>
             <p className="mt-4 font-sans text-small leading-relaxed text-muted-ink">
-              {t("artistBody2")}{" "}
-              it on. Every work on this site names the hand that made it.
+              {t("artistBody2")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {platformMode ? (
@@ -534,10 +530,10 @@ export default async function Home() {
                 // In single-brand mode there is no directory to send anyone to,
                 // so the primary action leads to the traditions instead.
                 <Link
-                  href="/art-forms"
+                  href="/makers"
                   className="inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
                 >
-                  {t("exploreTraditions")}
+                  {t("meetArtists")}
                   <span aria-hidden="true">→</span>
                 </Link>
               )}
@@ -630,8 +626,7 @@ export default async function Home() {
                   {t("customTitle")}
                 </h2>
                 <p className="mt-3 max-w-md font-sans text-small leading-relaxed text-rang-paper/80">
-                  {t("customBody")}{" "}
-                  paintings, décor and event artwork made to order.
+                  {t("customBody")}
                 </p>
                 <Link
                   href="/custom-art"
@@ -692,9 +687,7 @@ export default async function Home() {
                   {t("artOfIndia")}
                 </h2>
                 <p className="mt-3 font-sans text-small leading-relaxed text-rang-paper/80">
-                  {t("artOfIndiaBody")}{" "}
-                  reason. We work directly with artists across India so the
-                  story travels with the piece.
+                  {t("artOfIndiaBody")}
                 </p>
                 <Link
                   href="/about"
@@ -729,8 +722,7 @@ export default async function Home() {
                 {t("processTitle")}
               </h2>
               <p className="mt-4 font-sans text-sm leading-relaxed text-muted-ink">
-                {t("processBody")}{" "}
-                weeks it actually takes.
+                {t("processBody")}
               </p>
             </div>
 

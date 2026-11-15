@@ -717,7 +717,8 @@
     "enterExhibition": "Enter the exhibition",
     "seeWork": "See the work",
     "understandCraft": "Understand the craft",
-    "traditionLede": "A tradition survives by being made, not by being preserved. Every piece here is the work of a hand that is still learning."
+    "traditionLede": "A tradition survives by being made, not by being preserved. Every piece here is the work of a hand that is still learning.",
+    "meetMakers": "Meet the makers"
   },
   "commission": {
     "artFormLabel": "What kind of art?",
@@ -901,5 +902,16 @@
     "commissionsOpen": "Commissions open",
     "notAccepting": "Not accepting",
     "empty": "Artist profiles are being prepared."
+  },
+  "makers": {
+    "title": "The makers",
+    "eyebrow": "Who makes this",
+    "intro": "Every work on this site carries the name of the person who made it. This page gathers them.",
+    "breadcrumbHome": "Home",
+    "worksCount": "{count, plural, =0 {No works listed yet} one {# work} other {# works}}",
+    "viewWorks": "See their works",
+    "empty": "Makers will be listed here as the collection grows.",
+    "emptyBody": "Every product record names its maker, so this page fills itself as works are added.",
+    "indexNote": "Listed from the catalogue. A maker appears here once a work of theirs is published."
   }
 }
