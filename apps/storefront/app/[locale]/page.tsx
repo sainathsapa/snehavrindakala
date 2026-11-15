@@ -475,6 +475,15 @@ export default async function Home() {
                   <p className="mt-1 font-sans text-xs italic text-muted-ink">
                     {product.artist}
                   </p>
+                  {/* Absent until the catalogue carries a medium; the row is
+                      omitted rather than left blank. */}
+                  {(product.specs?.medium || product.specs?.dimensions) && (
+                    <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-ink/80">
+                      {[product.specs?.medium, product.specs?.dimensions]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
                   <p className="mt-2 font-sans text-xs text-deep-ink">
                     {formatPrice(product.price, product.currency.toUpperCase())}
                   </p>

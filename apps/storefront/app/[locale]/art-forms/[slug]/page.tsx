@@ -242,6 +242,8 @@ export default async function ArtFormPage({ params }: PageProps) {
                   stockType={item.stockType}
                   image={item.image}
                   isNew={item.isNew}
+                  medium={item.specs?.medium}
+                  dimensions={item.specs?.dimensions}
                 />
               ))}
             </div>

@@ -227,6 +227,8 @@ export default async function ArtistProfilePage({
                   stockType={item.stockType}
                   image={item.image}
                   isNew={item.isNew}
+                  medium={item.specs?.medium}
+                  dimensions={item.specs?.dimensions}
                 />
               ))}
             </div>

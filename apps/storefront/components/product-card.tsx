@@ -16,6 +16,16 @@ interface ProductCardProps {
   category?: { id: string; name: string; handle?: string } | null;
   /** Shown as a catalogue plate number when the card is part of a set. */
   plate?: number;
+  /**
+   * The facts a wall label carries beyond title and maker.
+   *
+   * Optional and rendered conditionally: most records do not have a medium or
+   * a dimension yet, and an empty row would claim information the catalogue does
+   * not hold. Passing nothing leaves the caption exactly as it was, so the five
+   * existing call sites are unaffected until the data exists.
+   */
+  medium?: string;
+  dimensions?: string;
 }
 
 const stockLabels: Record<string, string> = {
@@ -47,6 +57,8 @@ export function ProductCard({
   isNew = false,
   category,
   plate,
+  medium,
+  dimensions,
 }: ProductCardProps) {
   const hasImage = Boolean(image);
   const t = useTranslations("product");
@@ -125,10 +137,16 @@ export function ProductCard({
           <h3 className="mt-1 font-serif text-lg font-semibold leading-tight text-deep-ink transition-colors group-hover:text-kumkum">
             {title}
           </h3>
+          {/* Maker first, then tradition — the order a wall label uses. */}
           <p className="mt-1 font-sans text-xs italic text-muted-ink">
             {artist}
             {category ? ` · ${category.name}` : ""}
           </p>
+          {(medium || dimensions) && (
+            <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-ink/80">
+              {[medium, dimensions].filter(Boolean).join(" · ")}
+            </p>
+          )}
           <p className="mt-2 flex items-baseline justify-between gap-3 font-sans text-xs">
             <span className="text-muted-ink">{availability}</span>
             <span className="font-medium text-deep-ink">{formatPrice(price, currency.toUpperCase())}</span>
