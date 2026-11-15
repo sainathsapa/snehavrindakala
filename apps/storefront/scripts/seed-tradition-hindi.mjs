@@ -31,6 +31,44 @@ const APPLY = process.argv.includes("--apply");
  * describing a sentence that is no longer there.
  */
 const TRADITIONS = {
+  // The six categories. Their Hindi already lived in messages/hi.json, which the
+  // art-form pages read first; these values match it so the database column is
+  // not the one empty place left when the message file is missing.
+  painting: {
+    name_hi: "चित्रकला और रेखांकन",
+    description_hi:
+      "मूल चित्र, रेखाचित्र, व्यक्तिचित्र, प्रिंट और चित्रांकन — हर माध्यम में।",
+    en: "Original paintings, sketches, portraits, prints, and illustration across mediums.",
+  },
+  folk: {
+    name_hi: "पारंपरिक और लोक कला",
+    description_hi:
+      "क्षेत्रीय परंपराओं और पीढ़ियों से चली आ रही तकनीक पर टिकी हस्तनिर्मित कृतियाँ।",
+    en: "Handmade works rooted in regional traditions and passed-down technique.",
+  },
+  "home-decor": {
+    name_hi: "गृह और सजावटी कला",
+    description_hi:
+      "मूर्तिक और उपयोगी कृतियाँ जो शिल्प को रोज़ के जीवन में लाती हैं।",
+    en: "Sculptural and functional pieces that bring craft into daily living.",
+  },
+  textile: {
+    name_hi: "वस्त्र और तंतु कला",
+    description_hi: "हथकरघे पर और हाथ से बुने, छपे और कढ़े हुए वस्त्र।",
+    en: "Woven, printed, and embroidered textiles made on handlooms and by hand.",
+  },
+  paper: {
+    name_hi: "कागज़, लेखन-सामग्री और पुस्तकें",
+    description_hi:
+      "हस्तनिर्मित और पुनर्चक्रित कागज़ से बनी डायरियाँ, प्रिंट और कागज़ की वस्तुएँ।",
+    en: "Journals, prints, and paper goods made from handmade and recycled stock.",
+  },
+  wearable: {
+    name_hi: "पहनने योग्य कला",
+    description_hi:
+      "छोटी, निजी कलाकृतियों के रूप में बने आभूषण और श्रृंगार।",
+    en: "Jewellery and adornment crafted as small, personal artworks.",
+  },
   madhubani: {
     name_hi: "मधुबनी",
     description_hi:

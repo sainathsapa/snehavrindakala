@@ -11,6 +11,7 @@
 const tsParser = require("@typescript-eslint/parser");
 const tsPlugin = require("@typescript-eslint/eslint-plugin");
 const nextPlugin = require("@next/eslint-plugin-next");
+const reactHooks = require("eslint-plugin-react-hooks");
 
 module.exports = [
   {
@@ -34,9 +35,15 @@ module.exports = [
         ecmaFeatures: { jsx: true },
       },
     },
-    plugins: { "@typescript-eslint": tsPlugin, "@next/next": nextPlugin },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+      "@next/next": nextPlugin,
+      "react-hooks": reactHooks,
+    },
     rules: {
       "no-console": "warn",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",

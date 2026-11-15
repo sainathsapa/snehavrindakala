@@ -293,6 +293,11 @@ async function createTables(): Promise<void> {
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS title_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS excerpt_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS content_hi TEXT NOT NULL DEFAULT ''`);
+  // Which tradition an essay is about, by art-form slug. Empty means the essay
+  // is not about one tradition in particular. A column rather than a join table
+  // because the relationship runs one way: an essay belongs to at most one
+  // tradition, while a tradition may have several essays.
+  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS art_form TEXT NOT NULL DEFAULT ''`);
 
   // Buyer words. Kept separate from journal posts because a testimonial is an
   // attribution (who, where, which work) rather than an essay.

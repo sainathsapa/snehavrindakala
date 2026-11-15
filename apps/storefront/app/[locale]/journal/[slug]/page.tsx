@@ -225,6 +225,34 @@ export default async function JournalPostPage({
                   </dd>
                 </div>
               )}
+              {/* The tradition this essay is about, carried in the marginalia
+                  the way a printed essay names its subject. Present only when
+                  the post is about one tradition — the kolam piece is about a
+                  practice, not an art form, and gets no row. */}
+              {post.art_form && (
+                <div>
+                  <dt className="font-sans text-[10px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+                    Tradition
+                  </dt>
+                  <dd className="mt-1 font-serif text-sm">
+                    <Link
+                      href={`/art-forms/${post.art_form}`}
+                      className="text-deep-ink underline decoration-terracotta/40 underline-offset-4 transition-colors hover:text-kumkum"
+                    >
+                      {
+                        ({
+                          madhubani: "Madhubani",
+                          warli: "Warli",
+                          pattachitra: "Pattachitra",
+                          gond: "Gond",
+                          kalamkari: "Kalamkari",
+                        } as Record<string, string>)[post.art_form] ??
+                          post.art_form
+                      }
+                    </Link>
+                  </dd>
+                </div>
+              )}
             </dl>
             <MithilaBorder className="mt-8 h-3 w-28 text-terracotta/30" />
           </aside>

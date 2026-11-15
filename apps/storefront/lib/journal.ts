@@ -26,6 +26,8 @@ export interface JournalListItem {
   author: string | null;
   published_at: string | null;
   created_at: string;
+  /** Art-form slug this essay is about; empty when it is about no one tradition. */
+  art_form: string;
 }
 
 export interface JournalPost extends JournalListItem {
@@ -47,7 +49,7 @@ export async function listJournalPosts(
             ${hindi ? "COALESCE(NULLIF(title_hi, ''), title)" : "title"} AS title,
             slug,
             ${hindi ? "COALESCE(NULLIF(excerpt_hi, ''), excerpt)" : "excerpt"} AS excerpt,
-            cover_image, author, published_at, created_at
+            cover_image, author, published_at, created_at, art_form
        FROM journal_posts
       WHERE status = 'published'
       ORDER BY published_at DESC NULLS LAST, created_at DESC
@@ -73,7 +75,7 @@ export async function getJournalPost(
             slug,
             ${hindi ? "COALESCE(NULLIF(content_hi, ''), content)" : "content"} AS content,
             ${hindi ? "COALESCE(NULLIF(excerpt_hi, ''), excerpt)" : "excerpt"} AS excerpt,
-            cover_image, author, published_at, created_at
+            cover_image, author, published_at, created_at, art_form
        FROM journal_posts
       WHERE slug = $1 AND status = 'published'
       LIMIT 1`,
