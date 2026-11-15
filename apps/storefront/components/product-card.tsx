@@ -36,11 +36,6 @@ interface ProductCardProps {
   collection?: string;
 }
 
-const stockLabels: Record<string, string> = {
-  ready_to_ship: "Ready to ship",
-  made_to_order: "Made to order",
-  custom_only: "Commission only",
-};
 /**
  * A work, presented as a framed plate.
  *
@@ -152,8 +147,12 @@ export function ProductCard({
             {(category?.name || collection) &&
               ` · ${category?.name || collection}`}
           </p>
+          {/* One step darker than a caption: the medium is a factual claim
+              about the object, so it has to be readable rather than decorative.
+              muted-ink measures 6.07:1 on the paper ground; the 80% variant used
+              here first measured 3.91:1, under the 4.5:1 AA minimum. */}
           {(medium || dimensions) && (
-            <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-ink/80">
+            <p className="mt-1 font-sans text-[11.5px] leading-relaxed text-muted-ink">
               {[medium, dimensions].filter(Boolean).join(" · ")}
             </p>
           )}

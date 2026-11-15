@@ -353,9 +353,11 @@ export default async function Home() {
                     {product.artist}
                   </p>
                   {/* Absent until the catalogue carries a medium; the row is
-                      omitted rather than left blank. */}
+                      omitted rather than left blank. muted-ink rather than a
+                      faded caption, because this is a factual claim about the
+                      object and has to clear AA contrast. */}
                   {(product.specs?.medium || product.specs?.dimensions) && (
-                    <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-ink/80">
+                    <p className="mt-1 font-sans text-[11.5px] leading-relaxed text-muted-ink">
                       {[product.specs?.medium, product.specs?.dimensions]
                         .filter(Boolean)
                         .join(" · ")}
