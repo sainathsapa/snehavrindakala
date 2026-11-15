@@ -74,6 +74,30 @@ export function ProductGallery({
     };
   }, [lightbox, active, go]);
 
+  /**
+   * Mark every image the browser has *already* decoded as loaded.
+   *
+   * `onLoad` alone is not enough: when the image is served from the SSR HTML, or
+   * the response is cached, the load event fires before React attaches its
+   * handler. The state then stayed `false` forever and the artwork rendered at
+   * `opacity-0` — a completely invisible painting, which is what shipped while
+   * the build, the typecheck and the unit tests were all green. Checking
+   * `complete` after mount closes that hole; the class is only ever *raised* to
+   * visible, never lowered.
+   */
+  useEffect(() => {
+    for (const image of images) {
+      const key = image.id || image.url;
+      const node = `img[data-gallery-key="${key}"]` as string;
+      const element = document.querySelector<HTMLImageElement>(node);
+      if (element?.complete && element.naturalWidth > 0) {
+        recordRatio(key, element);
+      }
+    }
+    // Deliberately keyed on the image list, not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.map((image) => image.id || image.url).join("|")]);
+
   // Return focus to the artwork when the viewer closes — otherwise a keyboard
   // user is left at the top of the document.
   const closeLightbox = useCallback(() => {
@@ -145,6 +169,7 @@ export function ProductGallery({
         >
           <img
             key={currentKey}
+            data-gallery-key={currentKey}
             src={current.url}
             alt={current.alt || title}
             onLoad={(event) => recordRatio(currentKey, event.currentTarget)}

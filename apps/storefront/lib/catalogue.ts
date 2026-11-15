@@ -112,6 +112,25 @@ function tagValue(product: any, prefix: string): string | undefined {
 }
 
 /**
+ * The maker's name, whichever channel it arrived on.
+ *
+ * The store API exposes tags but not metadata, so the seed and the admin both
+ * write the artist as the tag `artist:<name>`. Reading `metadata.artist` alone
+ * was silently blank for every product — the product page showed no maker at
+ * all, which is a strange thing for an art house to omit. Both channels are
+ * checked, tag first, because that is the one the storefront can actually read.
+ */
+export function artistFromProduct(product: any): string | undefined {
+  const fromTag = tagValue(product, "artist");
+  if (fromTag?.trim()) return fromTag.trim();
+  const fromMetadata = product?.metadata?.artist;
+  if (typeof fromMetadata === "string" && fromMetadata.trim()) {
+    return fromMetadata.trim();
+  }
+  return undefined;
+}
+
+/**
  * Read the decision-grade facts a product page needs.
  *
  * The store API returns tags but not metadata, so each attribute is written as
@@ -122,6 +141,11 @@ function tagValue(product: any, prefix: string): string | undefined {
  * `dispatch` falls back to a stock-type phrase (a ready-to-ship work has a
  * genuinely different lead time from a made-to-order one), which is truthful
  * for every product rather than a made-up date.
+ *
+ * The fallback states only the *timing*, never the availability: the product page
+ * already prints "Ready to ship" as a status pill one line above, and repeating
+ * it here read as the page stuttering. A tag written by the admin is used
+ * verbatim, because the operator wrote it deliberately.
  */
 export function specsFromProduct(product: any, stockType: string): ArtworkSpecs {
   const tag = (key: string) =>
@@ -131,10 +155,10 @@ export function specsFromProduct(product: any, stockType: string): ArtworkSpecs 
   const dispatch =
     dispatchTag ??
     (stockType === "made_to_order"
-      ? "Made to order · usually ships in 2–3 weeks"
+      ? "Usually ships in 2–3 weeks"
       : stockType === "custom_only"
-        ? "Commissioned piece · timeline confirmed with your quote"
-        : "Ready to ship · usually dispatches in 2–4 business days");
+        ? "Timeline confirmed with your quote"
+        : "Usually dispatches in 2–4 business days");
 
   const specs: ArtworkSpecs = {
     dimensions: tag("dimensions"),

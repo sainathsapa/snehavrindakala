@@ -23,6 +23,7 @@ import {
   translatedProductTitle,
   translatedProductDescription,
   specsFromProduct,
+  artistFromProduct,
 } from "@/lib/catalogue";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -89,8 +90,8 @@ export async function generateMetadata({
   // page.
   const catalogueTitle = await translatedProductTitle(handle, product.title);
   return {
-    title: product.metadata?.artist
-      ? `${catalogueTitle} by ${product.metadata.artist}`
+    title: artistFromProduct(product)
+      ? `${catalogueTitle} by ${artistFromProduct(product)}`
       : catalogueTitle,
     description:
       product.description ||
@@ -177,8 +178,9 @@ export default async function ProductDetailPage({
   const reviewData = await medusa.listReviews(product.id).catch(() => null);
   const customer = await getCurrentCustomer().catch(() => null);
 
-  const artist =
-    typeof product.metadata?.artist === "string" ? product.metadata.artist : undefined;
+  // Tags are the channel the store API actually returns; `metadata.artist` alone
+  // left the maker blank on every product page.
+  const artist = artistFromProduct(product);
   const artForm = product.category?.name || "Art";
 
   const availability =
