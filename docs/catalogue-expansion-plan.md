@@ -146,3 +146,40 @@ Minimum standard for new work images:
 
 These are the owner's to supply. The code is ready for them; the data is not
 something this project may invent.
+
+## 11. Photography: the actual constraint
+
+An earlier proposal for this phase included "reallocate images to reduce
+repetition". Inspection showed the premise was wrong, and the task was dropped
+rather than faked.
+
+What exists:
+
+| Asset | Count |
+| --- | --- |
+| Real photographs of a specific work (`public/images/products/`) | **6** |
+| Art-form category photographs, reused as stand-ins | 6 |
+| Products in the catalogue | **21** |
+
+There is no pool of unused photography to draw on, so "reallocation" could only
+mean pointing one work at a photograph of a *different* work. That is the one
+thing this project must not do: a picture of the wrong painting is worse than no
+picture, because it is a false claim about a one-of-one object.
+
+Measured state of the catalogue grid, for the record:
+
+- `/shop` shows 21 cards drawn from 12 distinct images, with no image used more
+  than three times. (An earlier note claimed five; that figure counted repeats
+  across the *homepage*, which stacks the same photo in several sections, not
+  repeats across the listing.)
+- `madhubani-celebration` has no image at all and renders an "Image coming soon"
+  plate. This is honest and needs no code change.
+
+What would actually fix it is **15 more photographs**, one per untagged work.
+Until they exist, the homepage orders the works that do have their own photo
+first (`app/[locale]/page.tsx`, `orderedForDisplay`) so the lead positions show
+real work; that is ordering only and hides nothing.
+
+Related: no art form carries a Hindi description (`description_hi` is empty for
+all six), so `/hi` product records show the English description. Machine
+translating art-historical copy would be worse than the gap.
