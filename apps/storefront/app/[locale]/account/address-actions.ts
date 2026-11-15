@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { localeRedirect } from "@/lib/locale-redirect";
+import { getLocale } from "next-intl/server";
 import { medusa } from "@/lib/medusa";
 import { getAuthToken, getCurrentCustomer } from "@/lib/auth";
 import { SHIPPING_COUNTRIES } from "@/lib/currency";
@@ -53,14 +54,14 @@ function missingFields(address: ReturnType<typeof readAddress>): string[] {
 
 export async function saveAddressAction(formData: FormData): Promise<void> {
   const token = await getAuthToken();
-  if (!token) redirect("/account/login?next=/account/addresses");
+  if (!token) localeRedirect("/account/login?next=/account/addresses", await getLocale());
 
   const address = readAddress(formData);
   const missing = missingFields(address);
   if (missing.length > 0) {
     // Name the first thing that is wrong rather than a generic failure: the
     // buyer can then fix it without guessing.
-    redirect(`/account/addresses?error=missing&field=${encodeURIComponent(missing[0])}`);
+    localeRedirect(`/account/addresses?error=missing&field=${encodeURIComponent(missing[0])}`, await getLocale());
   }
 
   const id = String(formData.get("id") ?? "").trim();
@@ -77,17 +78,17 @@ export async function saveAddressAction(formData: FormData): Promise<void> {
     }
   } catch (error) {
     console.error("Saving address failed", error);
-    redirect("/account/addresses?error=save");
+    localeRedirect("/account/addresses?error=save", await getLocale());
   }
 
   revalidatePath("/account/addresses");
   revalidatePath("/checkout");
-  redirect("/account/addresses?saved=1");
+  localeRedirect("/account/addresses?saved=1", await getLocale());
 }
 
 export async function deleteAddressAction(formData: FormData): Promise<void> {
   const token = await getAuthToken();
-  if (!token) redirect("/account/login?next=/account/addresses");
+  if (!token) localeRedirect("/account/login?next=/account/addresses", await getLocale());
 
   const id = String(formData.get("id") ?? "").trim();
   if (id) {
@@ -95,18 +96,18 @@ export async function deleteAddressAction(formData: FormData): Promise<void> {
       await medusa.deleteCustomerAddress(token, id);
     } catch (error) {
       console.error("Deleting address failed", error);
-      redirect("/account/addresses?error=delete");
+      localeRedirect("/account/addresses?error=delete", await getLocale());
     }
   }
 
   revalidatePath("/account/addresses");
   revalidatePath("/checkout");
-  redirect("/account/addresses?deleted=1");
+  localeRedirect("/account/addresses?deleted=1", await getLocale());
 }
 
 export async function updateProfileAction(formData: FormData): Promise<void> {
   const token = await getAuthToken();
-  if (!token) redirect("/account/login");
+  if (!token) localeRedirect("/account/login", await getLocale());
 
   const first_name = String(formData.get("first_name") ?? "").trim();
   const last_name = String(formData.get("last_name") ?? "").trim();
@@ -120,25 +121,25 @@ export async function updateProfileAction(formData: FormData): Promise<void> {
     });
   } catch (error) {
     console.error("Updating profile failed", error);
-    redirect("/account?error=profile");
+    localeRedirect("/account?error=profile", await getLocale());
   }
 
   revalidatePath("/account");
-  redirect("/account?saved=profile");
+  localeRedirect("/account?saved=profile", await getLocale());
 }
 
 export async function changePasswordAction(formData: FormData): Promise<void> {
   const token = await getAuthToken();
   const customer = await getCurrentCustomer();
-  if (!token || !customer?.email) redirect("/account/login");
+  if (!token || !customer?.email) localeRedirect("/account/login", await getLocale());
 
   const current = String(formData.get("current_password") ?? "");
   const next = String(formData.get("new_password") ?? "");
   const confirm = String(formData.get("confirm_password") ?? "");
 
-  if (!current || !next) redirect("/account?error=password#password");
-  if (next.length < 8) redirect("/account?error=password_short#password");
-  if (next !== confirm) redirect("/account?error=password_mismatch#password");
+  if (!current || !next) localeRedirect("/account?error=password#password", await getLocale());
+  if (next.length < 8) localeRedirect("/account?error=password_short#password", await getLocale());
+  if (next !== confirm) localeRedirect("/account?error=password_mismatch#password", await getLocale());
 
   try {
     // Verify the current password first. Without this, anyone holding a live
@@ -153,8 +154,8 @@ export async function changePasswordAction(formData: FormData): Promise<void> {
     await medusa.requestPasswordReset(customer.email);
   } catch (error) {
     console.error("Changing password failed", error);
-    redirect("/account?error=password_wrong#password");
+    localeRedirect("/account?error=password_wrong#password", await getLocale());
   }
 
-  redirect("/account?reset=sent");
+  localeRedirect("/account?reset=sent", await getLocale());
 }

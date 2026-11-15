@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { localeRedirect } from "@/lib/locale-redirect";
+import { getLocale } from "next-intl/server";
 import { medusa } from "@/lib/medusa";
 
 export const AUTH_COOKIE = "medusa_auth_token";
@@ -28,7 +29,7 @@ export async function getCurrentCustomer(): Promise<any | null> {
 export async function requireCustomer() {
   const customer = await getCurrentCustomer();
   if (!customer) {
-    redirect("/account/login");
+    localeRedirect("/account/login", await getLocale());
   }
   return customer;
 }

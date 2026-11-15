@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { medusa } from "@/lib/medusa";
 import { localeAlternates } from "@/lib/seo";
 import { Link } from "@/i18n/routing";
@@ -16,6 +17,7 @@ export const metadata = {
 };
 
 export default async function ArtistsPage() {
+  const t = await getTranslations("artists");
   // The artists directory is a marketplace feature. In single-brand mode the
   // house is the only seller, so this route is a dead end — and a crawler must
   // not index it. 404 rather than render an empty directory.
@@ -32,10 +34,10 @@ export default async function ArtistsPage() {
   return (
     <main className="bg-rang-paper">
       <PageHeader
-        eyebrow="The hands behind the work"
-        title="Artists & makers"
-        intro="Every work on this site has a name attached to it. These are the people who make them — their traditions, their techniques, and whether they are currently taking on commissions."
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Artists" }]}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        intro={t("intro")}
+        breadcrumb={[{ label: t("home"), href: "/" }, { label: t("title") }]}
       />
 
       <section className="pb-20">
@@ -74,9 +76,9 @@ export default async function ArtistsPage() {
                     </p>
                     <p className="mt-2 font-sans text-[11px] uppercase tracking-[0.16em]">
                       {artist.commission_available ? (
-                        <span className="text-kumkum">Commissions open</span>
+                        <span className="text-kumkum">{t("commissionsOpen")}</span>
                       ) : (
-                        <span className="text-muted-ink/70">Not accepting</span>
+                        <span className="text-muted-ink/70">{t("notAccepting")}</span>
                       )}
                     </p>
                   </div>
@@ -87,7 +89,7 @@ export default async function ArtistsPage() {
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <BotanicalRule className="mb-6 text-terracotta" />
               <p className="max-w-sm font-serif text-xl leading-relaxed text-deep-ink">
-                Artist profiles are being prepared.
+                {t("empty")}
               </p>
               <p className="mt-2 font-sans text-sm text-muted-ink">
                 In the meantime, the collection names every maker on the work

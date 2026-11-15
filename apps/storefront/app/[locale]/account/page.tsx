@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/routing";
-import { redirect } from "next/navigation";
+import { localeRedirect } from "@/lib/locale-redirect";
+import { getLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
 import { KalashMark } from "@/components/grounds";
@@ -28,7 +29,7 @@ export default async function AccountPage({
 }) {
   const customer = await getCurrentCustomer();
   if (!customer) {
-    redirect("/account/login");
+    localeRedirect("/account/login", await getLocale());
   }
 
   const t = await getTranslations("account");

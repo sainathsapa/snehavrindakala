@@ -1,6 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { localeRedirect } from "@/lib/locale-redirect";
+import { getLocale } from "next-intl/server";
 import { medusa } from "@/lib/medusa";
 import { getCurrentCustomer } from "@/lib/auth";
 import { parseAttachmentList } from "@/lib/commission-upload";
@@ -86,5 +87,5 @@ export async function createCommissionAction(
     };
   }
 
-  redirect(`/commission-status/${encodeURIComponent(referenceId)}?new=1`);
+  localeRedirect(`/commission-status/${encodeURIComponent(referenceId)}?new=1`, await getLocale());
 }

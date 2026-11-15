@@ -8,7 +8,7 @@ import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import { ShopControls } from "@/components/shop-controls";
 import { applyShopFilters, availableMediums } from "@/lib/shop-filters";
 import { Link } from "@/i18n/routing";
-import { redirect } from "next/navigation";
+import { localeRedirect } from "@/lib/locale-redirect";
 import { getArtFormByQuery } from "@/lib/slugs";
 import { getTranslations, getLocale } from "next-intl/server";
 import { categoryTranslationsFor } from "@/lib/site-content";
@@ -47,7 +47,7 @@ export default async function ShopPage({
   if (q?.trim()) {
     const artForm = getArtFormByQuery(q.trim());
     if (artForm) {
-      redirect(`/shop/${artForm.slug}`);
+      localeRedirect(`/shop/${artForm.slug}`, await getLocale());
     }
   }
 

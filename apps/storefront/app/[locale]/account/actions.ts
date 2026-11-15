@@ -1,7 +1,8 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { localeRedirect } from "@/lib/locale-redirect";
+import { getLocale } from "next-intl/server";
 import { medusa } from "@/lib/medusa";
 import { AUTH_COOKIE } from "@/lib/auth";
 import { claimCartForCustomer } from "@/lib/cart";
@@ -11,7 +12,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") || "");
 
   if (!email || !password) {
-    redirect("/account/login?error=missing");
+    localeRedirect("/account/login?error=missing", await getLocale());
   }
 
   let token: string;
@@ -20,7 +21,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     token = result.token;
   } catch (error) {
     console.error("Login failed", error);
-    redirect("/account/login?error=invalid");
+    localeRedirect("/account/login?error=invalid", await getLocale());
   }
 
   const cookieStore = await cookies();
@@ -35,7 +36,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   // Give the basket to the account so it follows them to another device.
   await claimCartForCustomer(token);
 
-  redirect("/account");
+  localeRedirect("/account", await getLocale());
 }
 
 export async function registerAction(formData: FormData): Promise<void> {
@@ -45,7 +46,7 @@ export async function registerAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") || "");
 
   if (!email || !password) {
-    redirect("/account/register?error=missing");
+    localeRedirect("/account/register?error=missing", await getLocale());
   }
 
   let token: string;
@@ -67,7 +68,7 @@ export async function registerAction(formData: FormData): Promise<void> {
     token = session.token;
   } catch (error) {
     console.error("Registration failed", error);
-    redirect("/account/register?error=exists");
+    localeRedirect("/account/register?error=exists", await getLocale());
   }
 
   const cookieStore = await cookies();
@@ -82,11 +83,11 @@ export async function registerAction(formData: FormData): Promise<void> {
   // A new account should keep whatever they had in the basket while signing up.
   await claimCartForCustomer(token);
 
-  redirect("/account");
+  localeRedirect("/account", await getLocale());
 }
 
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE);
-  redirect("/");
+  localeRedirect("/", await getLocale());
 }

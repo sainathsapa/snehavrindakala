@@ -1,13 +1,14 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { localeRedirect } from "@/lib/locale-redirect";
+import { getLocale } from "next-intl/server";
 import { getAuthToken } from "@/lib/auth";
 import { medusa } from "@/lib/medusa";
 
 export async function applySellerAction(formData: FormData): Promise<void> {
   const token = await getAuthToken();
   if (!token) {
-    redirect("/account/login");
+    localeRedirect("/account/login", await getLocale());
   }
 
   const application = {
@@ -26,8 +27,8 @@ export async function applySellerAction(formData: FormData): Promise<void> {
     });
   } catch (error) {
     console.error("Seller application failed", error);
-    redirect("/seller?error=save");
+    localeRedirect("/seller?error=save", await getLocale());
   }
 
-  redirect("/seller");
+  localeRedirect("/seller", await getLocale());
 }

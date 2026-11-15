@@ -865,5 +865,25 @@
     "typeArtForm": "Art form",
     "typeJournal": "Journal",
     "typePage": "Page"
+  },
+  "wishlist": {
+    "title": "Saved works",
+    "subtitle": "Works you have kept to consider later.",
+    "loading": "Loading…",
+    "empty": "Nothing saved yet.",
+    "emptyHint": "Tap “Save” on any artwork to keep it here.",
+    "browse": "Browse the collection",
+    "addToCart": "Add to cart",
+    "adding": "Adding…",
+    "remove": "Remove"
+  },
+  "artists": {
+    "eyebrow": "The hands behind the work",
+    "title": "Artists & makers",
+    "intro": "Every work on this site has a name attached to it. These are the people who make them — their traditions, their techniques, and whether they are currently taking on commissions.",
+    "home": "Home",
+    "commissionsOpen": "Commissions open",
+    "notAccepting": "Not accepting",
+    "empty": "Artist profiles are being prepared."
   }
 }

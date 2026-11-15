@@ -9,11 +9,13 @@
  */
 import { Link } from "@/i18n/routing";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useWishlist, type WishlistEntry } from "@/lib/hooks/use-wishlist";
 import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 import { formatPrice } from "@/lib/medusa";
 
 function WishlistRow({ entry }: { entry: WishlistEntry }) {
+  const t = useTranslations("wishlist");
   const { remove } = useWishlist();
   const { add, isPending, result } = useAddToCart();
   const [adding, setAdding] = useState(false);
@@ -84,14 +86,14 @@ function WishlistRow({ entry }: { entry: WishlistEntry }) {
             disabled={adding || isPending}
             className="rounded-full bg-sindoor px-4 py-1.5 font-sans text-xs font-medium text-rang-paper transition-colors hover:bg-sindoor/90 disabled:opacity-50"
           >
-            {adding || isPending ? "Adding…" : "Add to cart"}
+            {adding || isPending ? t("adding") : t("addToCart")}
           </button>
           <button
             type="button"
             onClick={() => remove(entry.handle)}
             className="font-sans text-xs text-muted-ink hover:text-kumkum"
           >
-            Remove
+            {t("remove")}
           </button>
         </div>
       </div>
@@ -100,33 +102,34 @@ function WishlistRow({ entry }: { entry: WishlistEntry }) {
 }
 
 export default function WishlistPage() {
+  const t = useTranslations("wishlist");
   const { entries, ready } = useWishlist();
 
   return (
     <main className="py-12">
       <div className="mx-auto max-w-3xl px-5 sm:px-8">
         <h1 className="font-serif text-3xl font-semibold text-deep-ink sm:text-4xl">
-          Saved works
+          {t("title")}
         </h1>
         <p className="mt-2 font-sans text-sm text-muted-ink">
-          Works you have kept to consider later.
+          {t("subtitle")}
         </p>
 
         {!ready ? (
-          <p className="mt-10 font-sans text-sm text-muted-ink">Loading…</p>
+          <p className="mt-10 font-sans text-sm text-muted-ink">{t("loading")}</p>
         ) : entries.length === 0 ? (
           <div className="mt-10 rounded-sm border border-sand-border bg-surface/60 p-10 text-center">
             <p className="font-serif text-xl text-deep-ink">
-              Nothing saved yet.
+              {t("empty")}
             </p>
             <p className="mt-2 font-sans text-sm text-muted-ink">
-              Tap “Save” on any artwork to keep it here.
+              {t("emptyHint")}
             </p>
             <Link
               href="/shop"
               className="mt-6 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
             >
-              Browse the collection
+              {t("browse")}
               <span aria-hidden="true">→</span>
             </Link>
           </div>
