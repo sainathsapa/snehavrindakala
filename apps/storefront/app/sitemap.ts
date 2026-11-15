@@ -108,6 +108,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
+  // ── Single-brand routes ──────────────────────────────────────────────────
+  // The makers page exists only where there is no /artists directory. It is
+  // listed before the platform block so the two can never both appear.
+  if (getPlatformModeFromEnv() !== "platform") {
+    entries.push({
+      url: `${baseUrl}/makers`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+      lastModified: now,
+    });
+  }
+
   // ── Platform-only routes ─────────────────────────────────────────────────
   // Only in platform mode: in single-brand mode /artists and /sell 404 by
   // design, so listing them here would be a broken sitemap.

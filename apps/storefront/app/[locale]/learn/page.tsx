@@ -32,6 +32,14 @@ export async function generateMetadata() {
   };
 }
 
+// Left dynamic: the root layout reads `headers()` to resolve the locale,
+// which makes every route under it request-scoped, so `revalidate` alone
+// cannot produce a cached render. Converting these routes to ISR needs the
+// locale to come from `params` instead of a request header — a change to the
+// layout that affects every page, and therefore out of scope for this phase.
+// Recorded here so the next attempt does not repeat the mistake of adding
+// `revalidate` and assuming it took effect: verify with the build output,
+// where an ISR route prints ● and a dynamic one prints ƒ.
 export const dynamic = "force-dynamic";
 
 /**
