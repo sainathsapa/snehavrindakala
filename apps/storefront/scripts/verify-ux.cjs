@@ -189,7 +189,7 @@ async function verifyCheckout(page, label, { fullFlow }) {
   const pin = page.locator("input[autocomplete='postal-code']").first();
   await pin.fill("00");
   await page.locator("textarea").first().fill("12 MI Road, near Panch Batti");
-  await page.getByRole("button", { name: /Continue to payment/i }).first().click();
+  await page.getByRole("button", { name: /Save address and continue/i }).first().click();
   await page.waitForTimeout(800);
   check(`[${label}] invalid PIN is rejected inline`, (await page.getByRole("alert").count()) > 0);
   check(
@@ -215,12 +215,18 @@ async function verifyCheckout(page, label, { fullFlow }) {
     .inputValue();
   check(`[${label}] PIN suggests the state`, /rajasthan/i.test(suggestedState), suggestedState);
 
-  await page.getByRole("button", { name: /Continue to payment/i }).first().click();
+  await page.getByRole("button", { name: /Save address and continue/i }).first().click();
   await page.waitForTimeout(6000);
 
   const done = await page.locator("main").innerText();
   check(`[${label}] address saves and collapses to a summary`, /Edit address/i.test(done));
-  check(`[${label}] the payment step becomes available`, /Pay .* now/i.test(done));
+  // The button now reads "Pay now"; the amount lives in the totals column so it
+  // is not restated inside the button.
+  const payButton = page.getByRole("button", { name: /^Pay now$/i }).first();
+  check(
+    `[${label}] the payment step becomes available`,
+    await payButton.isVisible()
+  );
   check(`[${label}] complete total is shown before paying`, /Total/i.test(done));
 
   // Edit must reopen the form without losing the address.
