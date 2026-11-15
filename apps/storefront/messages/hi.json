@@ -226,7 +226,14 @@
     "payProcessing": "भुगतान हो रहा है…",
     "discount": "छूट",
     "tax": "जीएसटी",
-    "saveAndContinue": "पता सहेजें और आगे बढ़ें"
+    "saveAndContinue": "पता सहेजें और आगे बढ़ें",
+    "formBillElsewhere": "चालान किसी दूसरे बिलिंग पते पर भेजें",
+    "formBillingName": "बिलिंग नाम",
+    "formBillingStreet": "बिलिंग पता",
+    "formPostal": "पिन कोड",
+    "assureCertificate": "हर कृति के साथ प्रामाणिकता प्रमाणपत्र",
+    "assurePacked": "स्टूडियो द्वारा पैक, पारगमन में बीमित",
+    "assureReturns": "वापसी हमारी प्रकाशित नीति के अनुसार"
   },
   "artForm": {
     "pageTitle": "भारतीय कला-रूप",

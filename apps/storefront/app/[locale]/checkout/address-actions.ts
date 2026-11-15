@@ -25,7 +25,7 @@ import { getCart } from "@/lib/cart";
 import { medusa } from "@/lib/medusa";
 import { getAuthToken } from "@/lib/auth";
 import { COUNTRY_CODES } from "@/lib/location/limits";
-import { validateAddress, firstInvalidField, type AddressDraft } from "@/lib/location/search";
+import { validateAddress, firstInvalidField, validateBilling, type AddressDraft, type BillingAddress, type BillingField } from "@/lib/location/search";
 
 export interface AddressSaveResult {
   ok: boolean;
@@ -60,20 +60,41 @@ function toMedusaAddress(draft: AddressDraft) {
   };
 }
 
+/** The invoice party, which carries no phone number of its own. */
+function toBillingAddress(billing: BillingAddress) {
+  return {
+    ...splitName(billing.full_name),
+    company: undefined,
+    address_1: billing.address_1.trim(),
+    address_2: billing.address_2.trim() || null,
+    city: billing.city.trim(),
+    province: billing.province.trim(),
+    postal_code: billing.postal_code.trim(),
+    country_code: billing.country_code.toLowerCase(),
+    phone: null,
+  };
+}
+
 /**
  * Store the delivery address on the cart.
  *
  * Returns `{ ok: false, error }` instead of redirecting so the caller keeps the
- * customer's input. Billing mirrors shipping: the previous implementation only
- * collected a separate billing address behind a nested disclosure, which is more
- * friction than a tax invoice justifies for a curated art store, and Razorpay
- * only requires a billing country. A buyer who genuinely needs a different
- * billing address can say so in the order notes; the invoice is raised by the
- * studio.
+ * customer's input.
+ *
+ * Billing defaults to the delivery address, which is what almost every order
+ * wants and what Razorpay requires as a minimum. A buyer who needs a different
+ * billing address — a company office, a gift, a registered business — can opt
+ * into one; when they do, `billing` is validated separately and stored on its
+ * own. It is never silently overwritten with the delivery address, because an
+ * invoice made out to the wrong party is worse than one extra field.
  */
 export async function saveCheckoutAddressAction(
   draft: AddressDraft,
-  options: { saveToBook?: boolean } = {}
+  options: {
+    saveToBook?: boolean;
+    /** Present only when the buyer asked to bill somewhere else. */
+    billing?: BillingAddress | null;
+  } = {}
 ): Promise<AddressSaveResult> {
   const cart = await getCart();
   if (!cart) {
@@ -96,14 +117,30 @@ export async function saveCheckoutAddressAction(
     return { ok: false, error: "We do not deliver to that country yet." };
   }
 
+  // A billing address is optional, but one that was given must be complete.
+  if (options.billing) {
+    const billingErrors = validateBilling(options.billing);
+    const firstBilling = (Object.keys(billingErrors) as BillingField[])[0];
+    if (firstBilling) {
+      return {
+        ok: false,
+        error: billingErrors[firstBilling],
+        fields: [`billing_${firstBilling}`],
+      };
+    }
+  }
+
   const email = draft.email.trim();
   const address = toMedusaAddress(draft);
+  const billingAddress = options.billing
+    ? toBillingAddress(options.billing)
+    : address;
 
   try {
     await medusa.updateCart(cart.id, {
       email,
       shipping_address: address,
-      billing_address: address,
+      billing_address: billingAddress,
     });
   } catch (error) {
     console.error("Failed to save checkout address", error);

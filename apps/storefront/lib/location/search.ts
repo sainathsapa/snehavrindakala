@@ -208,6 +208,69 @@ export function isBlank(draft: AddressDraft): boolean {
 }
 
 /**
+ * An address used only for billing — the contact details belong to the order,
+ * not to this address, so they are deliberately absent.
+ */
+export interface BillingAddress {
+  full_name: string;
+  country_code: string;
+  postal_code: string;
+  province: string;
+  city: string;
+  address_1: string;
+  address_2: string;
+}
+
+export type BillingField = keyof BillingAddress;
+
+export const EMPTY_BILLING: BillingAddress = {
+  full_name: "",
+  country_code: "",
+  postal_code: "",
+  province: "",
+  city: "",
+  address_1: "",
+  address_2: "",
+};
+
+/** True when a billing address has nothing typed in it yet. */
+export function isBlankBilling(billing: BillingAddress): boolean {
+  return Object.values(billing).every((value) => !String(value ?? "").trim());
+}
+
+/**
+ * Validation for a billing address that differs from the delivery address.
+ *
+ * It is deliberately looser than `validateAddress`: a billing address has to be
+ * plausible enough to raise an invoice, but a buyer may legitimately bill to a
+ * registered office whose street line does not look like a delivery address.
+ * Email and phone are not asked for again.
+ */
+export function validateBilling(
+  billing: BillingAddress
+): Partial<Record<BillingField, string>> {
+  const errors: Partial<Record<BillingField, string>> = {};
+
+  if (!billing.full_name.trim()) {
+    errors.full_name = "Enter the name the invoice should be made out to.";
+  }
+
+  if (!countryByCode(billing.country_code)) {
+    errors.country_code = "Choose a country.";
+  }
+
+  if (!billing.address_1.trim()) {
+    errors.address_1 = "Enter the billing street address.";
+  }
+
+  if (!billing.city.trim()) {
+    errors.city = "Enter the billing city.";
+  }
+
+  return errors;
+}
+
+/**
  * Which field the form should focus when a submit is rejected.
  *
  * Top-of-form order, not object-key order: the first *visible* problem is the one

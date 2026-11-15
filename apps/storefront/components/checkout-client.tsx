@@ -43,7 +43,11 @@ import {
   AddressForm,
   type SavedAddress,
 } from "./address-form";
-import type { AddressDraft, AddressField } from "@/lib/location/search";
+import type {
+  AddressDraft,
+  AddressField,
+  BillingAddress,
+} from "@/lib/location/search";
 import {
   cheapestRateKey,
   resolveSelectedRate,
@@ -93,7 +97,7 @@ interface CheckoutClientProps {
   /** Server actions, handed down so the client component stays one island. */
   saveAddress: (
     draft: AddressDraft,
-    options: { saveToBook: boolean }
+    options: { saveToBook: boolean; billing?: BillingAddress | null }
   ) => Promise<{ ok: boolean; error?: string }>;
   saveAddressToBook: (
     draft: AddressDraft,
@@ -185,7 +189,10 @@ export function CheckoutClient({
   const addressStepComplete = addressSaved && !editingAddress;
 
   const handleAddressSubmit = useCallback(
-    async (draft: AddressDraft, options: { saveToBook: boolean }) => {
+    async (
+      draft: AddressDraft,
+      options: { saveToBook: boolean; billing?: BillingAddress | null }
+    ) => {
       setSavingAddress(true);
       setAddressError(null);
 
@@ -618,6 +625,31 @@ export function CheckoutClient({
               </p>
             )}
           </dl>
+
+          {/* The column is sticky and the form beside it is tall, so below the
+              totals there was a long empty band. Rather than leave it bare, this
+              carries the reassurance a buyer wants at the moment of paying —
+              which is also why it belongs here and not at the foot of the page. */}
+          <div className="mt-6 hidden border-t border-sand-border/60 pt-5 lg:block">
+            <ul className="space-y-2.5 font-sans text-xs leading-relaxed text-muted-ink">
+              {[
+                t("assureCertificate"),
+                t("assurePacked"),
+                // Deliberately not a blanket "seven days": the published policy
+                // gives 7 days on ready-to-ship work and none on commissions, and
+                // the cart does not carry per-line stock type here. Pointing at
+                // the actual policy is true for every basket.
+                t("assureReturns"),
+              ].map((line) => (
+                <li key={line} className="flex items-start gap-2">
+                  <span aria-hidden="true" className="mt-1 text-terracotta">
+                    —
+                  </span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </aside>
     </div>

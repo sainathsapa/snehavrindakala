@@ -226,7 +226,14 @@
     "payProcessing": "Processing payment…",
     "discount": "Discount",
     "tax": "GST",
-    "saveAndContinue": "Save address and continue"
+    "saveAndContinue": "Save address and continue",
+    "formBillElsewhere": "Invoice to a different billing address",
+    "formBillingName": "Billing name",
+    "formBillingStreet": "Billing address",
+    "formPostal": "Postal code",
+    "assureCertificate": "Certificate of authenticity with every work",
+    "assurePacked": "Packed by the studio, insured in transit",
+    "assureReturns": "Returns as set out in our published policy"
   },
   "artForm": {
     "pageTitle": "Indian Art Forms",

@@ -40,13 +40,18 @@ import {
 } from "@/lib/location";
 import {
   EMPTY_ADDRESS,
+  EMPTY_BILLING,
   composePhone,
+  isBlankBilling,
   firstInvalidField,
   localPhoneDigits,
   validateAddress,
+  validateBilling,
   validatePhone,
   validatePostal,
   type AddressDraft,
+  type BillingAddress,
+  type BillingField,
   type AddressField,
 } from "@/lib/location/search";
 
@@ -72,7 +77,10 @@ export interface AddressFormProps {
   /** The saved address currently in use, if any. */
   selectedId?: string | null;
   /** Called with the validated draft; the parent decides what to do with it. */
-  onSubmit: (draft: AddressDraft, options: { saveToBook: boolean }) => Promise<void> | void;
+  onSubmit: (
+    draft: AddressDraft,
+    options: { saveToBook: boolean; billing?: BillingAddress | null }
+  ) => Promise<void> | void;
   /** Called when the buyer picks a different saved address. */
   onSelectSaved?: (address: SavedAddress) => void;
   /** Called to enter editing for a saved address. */
@@ -145,6 +153,12 @@ export function AddressForm({
   const [touched, setTouched] = useState<Partial<Record<AddressField, boolean>>>({});
   const [saveToBook, setSaveToBook] = useState(false);
   const [makeDefault, setMakeDefault] = useState(saved.length === 0);
+  // Billing mirrors delivery by default, which is what nearly every order
+  // wants. The separate block is opt-in so it costs nothing to the common case.
+  const [billElsewhere, setBillElsewhere] = useState(false);
+  const [billing, setBilling] = useState<BillingAddress>(EMPTY_BILLING);
+  const [billingErrors, setBillingErrors] =
+    useState<Partial<Record<BillingField, string>>>({});
   const [suggesting, setSuggesting] = useState(false);  /**
    * State/city the buyer has not personally edited. The suggestion may replace
    * those, and only those — the rule that keeps a lookup from silently
@@ -320,9 +334,22 @@ export function AddressForm({
       return;
     }
 
+    // A billing address was asked for, so it must be complete before we send it.
+    if (billElsewhere) {
+      const nextBilling = validateBilling(billing);
+      setBillingErrors(nextBilling);
+      if (Object.keys(nextBilling).length > 0) {
+        setBillElsewhere(true);
+        return;
+      }
+    }
+
     setSuggesting(true);
     try {
-      await onSubmit({ ...draft, email: lockedEmail ?? draft.email }, { saveToBook });
+      await onSubmit(
+        { ...draft, email: lockedEmail ?? draft.email },
+        { saveToBook, billing: billElsewhere ? billing : null }
+      );
       clearDraft();
     } finally {
       setSuggesting(false);
@@ -695,6 +722,107 @@ export function AddressForm({
           refs.current.address_2 = node;
         }}
       />
+
+      {/* Billing. Collapsed by default so the common case stays short, but
+          available when the invoice has to go to a different party. */}
+      <div className="pt-1">
+        <label className="flex cursor-pointer items-start gap-2 font-sans text-sm text-deep-ink">
+          <input
+            type="checkbox"
+            checked={billElsewhere}
+            onChange={(event) => {
+              setBillElsewhere(event.target.checked);
+              // Start from the delivery address: a company office is usually the
+              // same city and country, and copying saves retyping.
+              if (event.target.checked && isBlankBilling(billing)) {
+                setBilling({
+                  full_name: draft.full_name,
+                  country_code: draft.country_code,
+                  postal_code: draft.postal_code,
+                  province: draft.province,
+                  city: draft.city,
+                  address_1: "",
+                  address_2: "",
+                });
+              }
+            }}
+            className="mt-0.5 h-4 w-4 rounded border-sand-border accent-sindoor"
+          />
+          {t("formBillElsewhere")}
+        </label>
+
+        {billElsewhere && (
+          <div className="mt-4 space-y-5 border-l-2 border-kumkum/30 pl-4">
+            <Field
+              label={t("formBillingName")}
+              value={billing.full_name}
+              onChange={(value) => setBilling((b) => ({ ...b, full_name: value }))}
+              error={billingErrors.full_name}
+              required
+              autoComplete="off"
+            />
+
+            <Combobox
+              label={t("formCountry")}
+              value={countryByCode(billing.country_code)?.name ?? ""}
+              onValueChange={(name) => {
+                const picked = COUNTRIES.find((entry) => entry.name === name);
+                setBilling((b) => ({
+                  ...b,
+                  country_code: picked?.code ?? "",
+                  // A province from the previous country is meaningless here.
+                  province: picked?.code === b.country_code ? b.province : "",
+                }));
+              }}
+              options={COUNTRIES.map((entry) => entry.name)}
+              placeholder={t("formSearchCountries")}
+              error={billingErrors.country_code}
+              autoComplete="off"
+              required
+            />
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field
+                label={t("formBillingStreet")}
+                value={billing.address_1}
+                onChange={(value) => setBilling((b) => ({ ...b, address_1: value }))}
+                error={billingErrors.address_1}
+                required
+                autoComplete="off"
+              />
+              <Field
+                label={t("formLine2")}
+                value={billing.address_2}
+                onChange={(value) => setBilling((b) => ({ ...b, address_2: value }))}
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-3">
+              <Field
+                label={t("formCity")}
+                value={billing.city}
+                onChange={(value) => setBilling((b) => ({ ...b, city: value }))}
+                error={billingErrors.city}
+                required
+                autoComplete="off"
+              />
+              <Field
+                label={t("formStateRegion")}
+                value={billing.province}
+                onChange={(value) => setBilling((b) => ({ ...b, province: value }))}
+                autoComplete="off"
+              />
+              <Field
+                label={countryByCode(billing.country_code)?.postalLabel ?? t("formPostal")}
+                value={billing.postal_code}
+                onChange={(value) => setBilling((b) => ({ ...b, postal_code: value }))}
+                autoComplete="off"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {canSaveToAccount && onSaveToBook && (
         <div className="space-y-2 rounded-md border border-sand-border/80 bg-rang-paper/40 p-3">
