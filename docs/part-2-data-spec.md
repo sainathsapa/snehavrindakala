@@ -72,22 +72,47 @@ tagged with at least `medium` and `dimensions`.
 
 ## 3. Tradition region — `site_art_form.origin`
 
-The `origin` column already exists and is already rendered by the PDP record
-block. It is empty for all six traditions, so the Region row never appears.
+The `origin` column exists, is rendered by the PDP record block, and is empty for
+all six rows, so the Region row never appears. `docs/design-system.md:523`
+defines the intended shape: one line, e.g. `Mithila, Bihar · 14th century onward`
+— it doubles as the art-form page eyebrow and the museum-label Origin field.
 
-| slug | Suggested shape (fill with the real thing) |
+### Why this is not a five-minute data entry job
+
+The six rows are **categories, not traditions**. Reading the products filed under
+each one:
+
+| Category | What it actually contains |
 | --- | --- |
-| `painting` | `<region>, <state>` |
-| `folk` | … |
-| `home-decor` | … |
-| `textile` | … |
-| `paper` | … |
-| `wearable` | … |
+| Painting & Drawing | custom portraiture, Kishangarh miniature, Gond (Madhya Pradesh) |
+| Home & Decorative Art | Bidar (Karnataka), studio stoneware, terracotta, block print |
+| Textile & Fibre Art | Kalamkari (Andhra Pradesh), Phulkari (Punjab), studio embroidery |
+| Wearable Art | Ikat, filigree silver, studio ceramics |
+| Paper, Stationery & Books | studio-made journals, lacquerware |
+| Traditional & Folk Art | Madhubani (Bihar), Pattachitra (Odisha), Warli (Maharashtra) |
 
-The field is free text and is stored in `origin` (English) and `origin_hi`.
+Four of the six straddle several states. A single `origin` line on "Wearable Art"
+or "Home & Decorative Art" would be **false for most of the work filed under it**,
+which is worse than the empty row.
 
-**These are geography, not folklore.** State where the tradition is practised;
-do not add origin legends.
+`origin` is also a historical claim, not a description of the shop's own copy —
+unlike the medium backfill, there is no sentence in the database to lift it from.
+Writing it means asserting a dated origin for a living tradition.
+
+### What to supply, and the two ways to do it
+
+Either:
+
+1. **Split the taxonomy.** Give each genuine tradition its own art form
+   (`madhubani`, `warli`, `pattachitra`, `kalamkari`, `phulkari`, `gond`, …), each
+   with one honest `origin`. This is the durable fix and also makes
+   `/art-forms/<slug>` pages worth having.
+2. **Leave `origin` empty for the mixed categories**, and populate it only where
+   a category really is one tradition. Partial truth beats uniform error.
+
+The admin already exposes an Origin field at `/admin/content`, so this needs no
+code — only a decision and the facts.
+
 
 ---
 
