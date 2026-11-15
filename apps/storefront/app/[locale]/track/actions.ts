@@ -22,7 +22,7 @@
  */
 
 import { getAdminOrder } from "@/lib/admin";
-import { getOrderShipment } from "@/lib/shipping/store";
+import { getOrderShipment, findShipmentByAwb } from "@/lib/shipping/store";
 
 export interface TrackedOrder {
   displayId: string | number | null;
@@ -72,10 +72,10 @@ export async function trackOrder(
   }
 
   // Accept what the buyer actually has in front of them: the order id from the
-  // URL (order_01J...), the display id from the confirmation email (#1042), or
-  // a pasted tracking number. Only the first two can be resolved here; a bare
-  // tracking number is handled by the carrier, so it is rejected with a pointer
-  // rather than a silent failure.
+  // URL (order_01J...) or the display id from the confirmation email (#1042),
+  // and the AWB printed on the parcel. The AWB is the one people reach for —
+  // it is what arrives on the slip and what a courier's app shows — so it is
+  // tried when the id does not resolve rather than rejected outright.
   const id = rawId.replace(/^#/, "");
 
   let record: any = null;
@@ -83,8 +83,22 @@ export async function trackOrder(
     const result = await getAdminOrder(id);
     record = result.order;
   } catch {
-    // Treat an unreadable order the same as a wrong address. Distinguishing
-    // them would tell an attacker which ids exist.
+    // Not an order id. It may still be a tracking number, so resolve that to
+    // the order it belongs to before giving up.
+    try {
+      const shipment = await findShipmentByAwb(id);
+      if (shipment?.order_id) {
+        const result = await getAdminOrder(shipment.order_id);
+        record = result.order;
+      }
+    } catch {
+      // Fall through to the shared rejection below.
+    }
+  }
+
+  if (!record) {
+    // One message for "no such order", "no such AWB" and "wrong email".
+    // Distinguishing them would tell an attacker which ids exist.
     return {
       ok: false,
       error:

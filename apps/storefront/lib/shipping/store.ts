@@ -44,6 +44,17 @@ async function ensureTable() {
       updated_at TIMESTAMP NOT NULL DEFAULT now()
     )
   `);
+  // The track page looks shipments up by AWB, which is a guest-facing query on a
+  // table that grows with every order, so it needs an index.
+  //
+  // Plain, not partial. A partial index on `awb_code <> ''` was tried first and
+  // the planner ignored it: a partial index can only serve a query that repeats
+  // its predicate, so the lookup fell back to a sequential scan while looking
+  // indexed. The index is verified in the plan, not assumed from its existence.
+  await query(`
+    CREATE INDEX IF NOT EXISTS order_shipments_awb_code_idx
+      ON order_shipments (upper(awb_code))
+  `);
 }
 
 export async function saveOrderShipment(
@@ -106,6 +117,31 @@ export async function getOrderShipment(
   const rows = await query(
     "SELECT * FROM order_shipments WHERE order_id = $1 LIMIT 1",
     [orderId]
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * Find a shipment by the number the courier printed on the label.
+ *
+ * Buyers paste the AWB ("tracking number") far more often than the order id —
+ * it is the number on the slip that arrives in the parcel, and the only one
+ * they can read off a courier's app. Without this the track page told them
+ * their order did not exist while it was in transit.
+ *
+ * Matched case-insensitively because carriers print AWB codes in upper case
+ * and people type them however they like. The index in ensureTable() is what
+ * keeps this from scanning every shipment on a guest-facing lookup.
+ */
+export async function findShipmentByAwb(
+  awb: string
+): Promise<OrderShipment | null> {
+  const code = awb.trim();
+  if (!code) return null;
+  await ensureTable();
+  const rows = await query(
+    "SELECT * FROM order_shipments WHERE upper(awb_code) = upper($1) LIMIT 1",
+    [code]
   );
   return rows[0] ?? null;
 }

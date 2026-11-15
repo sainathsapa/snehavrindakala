@@ -923,9 +923,9 @@
   "track": {
     "eyebrow": "Orders",
     "title": "Track an order",
-    "intro": "Enter your order number and the email you used at checkout.",
-    "orderId": "Order number",
-    "orderIdHint": "e.g. ord_01J… or 1042",
+    "intro": "Enter your order number or the tracking number from your parcel, and the email you used at checkout.",
+    "orderId": "Order or tracking number",
+    "orderIdHint": "e.g. 1042, ord_01J… or AWB 1234567890",
     "email": "Email address",
     "emailHint": "you@example.com",
     "submit": "Find my order",
