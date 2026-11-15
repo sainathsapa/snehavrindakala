@@ -1,8 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+/**
+ * `usePathname` comes from the locale-aware module too: it returns the path
+ * *without* the `/hi` prefix, which is what the nav links below compare
+ * against. The raw next/navigation hook would have returned `/hi/shop` and
+ * left every link looking inactive on the Hindi site.
+ */
+import { usePathname, useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { CurrencySwitcher } from "@/components/currency-switcher";

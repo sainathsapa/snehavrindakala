@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { loginAction } from "../actions";
 import { getTranslations } from "next-intl/server";
 import { LotusMark } from "@/components/grounds";

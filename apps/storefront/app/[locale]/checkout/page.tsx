@@ -8,7 +8,7 @@ import { taxForAmount } from "@/lib/tax-server";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { countryByCode } from "@/lib/location";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { getPreferredCurrency, SHIPPING_COUNTRIES } from "@/lib/currency";
 import {
   saveCheckoutAddressAction,

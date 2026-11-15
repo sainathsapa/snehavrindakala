@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { PageHeader } from "@/components/page-header";

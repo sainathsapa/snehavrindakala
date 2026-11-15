@@ -8,7 +8,7 @@
  * dispatched by the wishlist store). Renders nothing while unknown so it does
  * not flash a zero on first paint.
  */
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Icon } from "@snehavrinda-kala/ui";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 

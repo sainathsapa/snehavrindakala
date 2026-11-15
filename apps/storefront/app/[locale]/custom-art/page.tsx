@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 export const dynamic = "force-dynamic";
 

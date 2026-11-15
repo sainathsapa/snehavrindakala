@@ -1,6 +1,6 @@
 import { medusa } from "@/lib/medusa";
 import { localeAlternates } from "@/lib/seo";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";

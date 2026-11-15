@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 const KEY = "svk:recently-viewed";
 const MAX = 8;

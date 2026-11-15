@@ -7,7 +7,7 @@
  */
 
 import { medusa } from "@/lib/medusa";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";

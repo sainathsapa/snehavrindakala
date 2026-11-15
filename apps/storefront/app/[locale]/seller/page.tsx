@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { requireCustomer, getAuthToken } from "@/lib/auth";
 import { applySellerAction } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@snehavrinda-kala/ui";

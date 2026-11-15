@@ -16,7 +16,7 @@
  */
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 import { formatPrice } from "@/lib/medusa";

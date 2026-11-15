@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useRealtimeNotifications } from "@/lib/hooks/use-realtime-notifications";
 import type { AppNotification } from "@/lib/hooks/use-realtime-notifications";
 

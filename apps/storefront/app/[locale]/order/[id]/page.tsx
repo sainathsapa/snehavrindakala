@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { getAuthToken } from "@/lib/auth";
 import { medusa, formatPrice } from "@/lib/medusa";

@@ -6,7 +6,7 @@
  * collection has too few, the list simply shows what exists rather than
  * padding with unrelated work. Nothing renders when there are no siblings.
  */
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { listCatalogueFor } from "@/lib/catalogue";
 import { formatPrice } from "@/lib/medusa";

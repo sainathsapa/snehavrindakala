@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Icon } from "@snehavrinda-kala/ui";
 import { universalSearch, type SearchResult } from "@/lib/search";
 import { artFormSlugs } from "@/lib/slugs";

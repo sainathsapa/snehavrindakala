@@ -25,7 +25,7 @@ import {
   specsFromProduct,
   artistFromProduct,
 } from "@/lib/catalogue";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
 import { getPreferredCurrency } from "@/lib/currency";

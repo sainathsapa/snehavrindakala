@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import type { HeroSlide } from "@/lib/site-content";
 import { KolamMotif, PaisleyBand, DiamondBand, TempleArch } from "./indian-motifs";

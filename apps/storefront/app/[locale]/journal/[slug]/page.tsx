@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { getLocale } from "next-intl/server";
 import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";

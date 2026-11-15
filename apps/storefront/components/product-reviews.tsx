@@ -11,7 +11,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { StarRating } from "./star-rating";
 import {
   submitReviewAction,

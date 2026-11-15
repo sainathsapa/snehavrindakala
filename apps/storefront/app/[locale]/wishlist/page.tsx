@@ -7,7 +7,7 @@
  * on the server. Each entry can be removed or added straight to the cart; the
  * empty state offers a clear next step instead of a blank page.
  */
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useState } from "react";
 import { useWishlist, type WishlistEntry } from "@/lib/hooks/use-wishlist";
 import { useAddToCart } from "@/lib/hooks/use-add-to-cart";

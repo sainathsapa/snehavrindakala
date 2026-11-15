@@ -3,7 +3,7 @@ import { formatPrice } from "@/lib/medusa";
 import { removeCartItemAction, updateCartItemAction } from "./actions";
 import { PromoCode } from "@/components/promo-code";
 import { KalashMark } from "@/components/grounds";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";

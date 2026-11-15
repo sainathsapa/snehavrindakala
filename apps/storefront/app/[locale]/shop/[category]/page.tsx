@@ -1,7 +1,7 @@
 import { medusa } from "@/lib/medusa";
 import { ProductCard } from "@/components/product-card";
 import { listCatalogueFor } from "@/lib/catalogue";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { getArtFormBySlug, artFormSlugs, slugify } from "@/lib/slugs";
 import { PageHeader } from "@/components/page-header";

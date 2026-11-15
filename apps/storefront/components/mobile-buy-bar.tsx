@@ -13,7 +13,7 @@
  * respects the home-indicator inset on iOS.
  */
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 import { formatPrice } from "@/lib/medusa";
 

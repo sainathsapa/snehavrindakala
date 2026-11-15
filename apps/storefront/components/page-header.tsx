@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { KalamBorder, MandalaField } from "./ornaments";
 import { JaaliField, PaperGrain, ButiField } from "./grounds";

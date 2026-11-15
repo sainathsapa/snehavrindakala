@@ -7,7 +7,7 @@
  * Razorpay, returns are accepted per the published policy, and every piece is
  * packed by the studio.
  */
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 const ITEMS = [
   {

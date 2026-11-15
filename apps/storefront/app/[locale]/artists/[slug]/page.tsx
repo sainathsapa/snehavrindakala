@@ -2,7 +2,7 @@ import { medusa } from "@/lib/medusa";
 import { listCatalogue } from "@/lib/catalogue";
 import { ProductCard } from "@/components/product-card";
 import { BotanicalRule } from "@/components/ornaments";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";

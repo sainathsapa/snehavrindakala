@@ -26,9 +26,9 @@
  */
 
 import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { formatPrice } from "@/lib/medusa";
 import { taxLabel, type TaxBreakdown } from "@/lib/tax";
 import { RazorpayPayButton } from "./razorpay-checkout";

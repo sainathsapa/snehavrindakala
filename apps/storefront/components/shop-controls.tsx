@@ -9,7 +9,8 @@
  * do the filtering. The component only reads the current params and navigates.
  */
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "@/i18n/routing";
 import { useState, useTransition, type ReactNode } from "react";
 
 export interface FilterOption {

@@ -7,7 +7,7 @@ import { PaisleyField, BotanicalRule } from "@/components/ornaments";
 import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import { ShopControls } from "@/components/shop-controls";
 import { applyShopFilters, availableMediums } from "@/lib/shop-filters";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { redirect } from "next/navigation";
 import { getArtFormByQuery } from "@/lib/slugs";
 import { getTranslations, getLocale } from "next-intl/server";
