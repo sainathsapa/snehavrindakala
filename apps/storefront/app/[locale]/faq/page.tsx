@@ -61,6 +61,27 @@ export default async function FaqPage() {
 
   return (
     <main className="bg-rang-paper">
+      {/* FAQPage built from the same `sections` the page renders, so the markup
+          and the structured data can never disagree. A question that is not
+          translated into the current locale is already excluded above, which
+          means a Hindi FAQ advertises Hindi questions — not an English set with
+          a Hindi URL. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: sections.flatMap((section) =>
+              section.items.map((item) => ({
+                "@type": "Question",
+                name: item.q,
+                acceptedAnswer: { "@type": "Answer", text: item.a },
+              }))
+            ),
+          }),
+        }}
+      />
       <PageHeader
         eyebrow={t("eyebrow")}
         title={t("title")}

@@ -227,6 +227,33 @@ export default async function ShopCategoryPage({
 
   return (
     <main className="bg-rang-paper">
+      {/* The tradition's shelf, described as a collection. The BreadcrumbList
+          below already exists; this adds the part that says *what is on the
+          shelf*, which is what can earn the page a place for commercial
+          queries like "buy Warli art online". */}
+      <script
+        id="schema-collection"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: resolved.name,
+            url: `${baseUrl}/shop/${resolved.handle}`,
+            isPartOf: { "@type": "WebSite", name: "SnehaVrinda Kala", url: baseUrl },
+            mainEntity: {
+              "@type": "ItemList",
+              numberOfItems: filtered.length,
+              itemListElement: filtered.slice(0, 50).map((item, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                url: `${baseUrl}/products/${item.handle}`,
+                name: item.title,
+              })),
+            },
+          }),
+        }}
+      />
       <script
         id="schema-breadcrumb"
         type="application/ld+json"

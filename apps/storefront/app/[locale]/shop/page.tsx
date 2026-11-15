@@ -109,6 +109,41 @@ export default async function ShopPage({
 
   return (
     <main className="bg-rang-paper">
+      {/* CollectionPage around the works on this shelf.
+
+          Without this, /shop is just a page of links. With it, the listing tells
+          a crawler "this is a curated collection containing these N artworks,
+          in this order" — which is the difference between a page that can rank
+          for "buy Madhubani painting online" and a page that cannot.
+
+          Built from `filtered`, not `items`, so the structured data describes
+          what is actually on screen after a filter is applied. An ItemList that
+          advertises works the visitor's filters hid is a mismatch, and Google
+          treats a mismatched list as noise. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: t("title"),
+            description: t("intro"),
+            mainEntity: {
+              "@type": "ItemList",
+              numberOfItems: filtered.length,
+              itemListElement: filtered.slice(0, 50).map((item, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                url: `${(
+                  process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+                  "http://localhost:3000"
+                ).replace(/\/$/, "")}/products/${item.handle}`,
+                name: item.title,
+              })),
+            },
+          }),
+        }}
+      />
       <PageHeader
         eyebrow={t("eyebrow")}
         title={t("title")}

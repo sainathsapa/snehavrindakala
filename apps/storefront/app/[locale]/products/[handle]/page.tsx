@@ -228,6 +228,40 @@ export default async function ProductDetailPage({
           }),
         }}
       />
+      {/* VisualArtwork alongside Product.
+
+          A Product record answers "what does it cost and is it in stock". It
+          cannot say what the object *is* — a painting on cloth, a woven stole,
+          a silver inlay box. `VisualArtwork` carries exactly those facts, which
+          is what makes a one-of-one work findable as art rather than as a
+          generic retail item.
+
+          Every field is conditional. `specs` is built from real catalogue
+          metadata, and a product that has not been tagged yet simply omits the
+          property — a schema missing `artMedium` is honest; one with an invented
+          medium is a lie to a crawler and to a buyer. */}
+      <script
+        id="schema-visual-artwork"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "VisualArtwork",
+            name: catalogueTitle,
+            url: productUrl,
+            ...(product.description ? { description: product.description } : {}),
+            ...(artist ? { creator: { "@type": "Person", name: artist } } : {}),
+            ...(product.images?.length
+              ? { image: product.images.map((i) => i.url).filter(Boolean) }
+              : {}),
+            ...(specs.medium ? { artMedium: specs.medium } : {}),
+            ...(specs.dimensions ? { size: specs.dimensions } : {}),
+            ...(specs.year ? { dateCreated: specs.year } : {}),
+            ...(specs.edition ? { artEdition: specs.edition } : {}),
+            artform: artForm,
+          }),
+        }}
+      />
       <script
         id="schema-breadcrumb"
         type="application/ld+json"

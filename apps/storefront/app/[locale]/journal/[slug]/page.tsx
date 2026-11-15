@@ -14,6 +14,14 @@ import {
   type JournalPost,
 } from "@/lib/journal";
 
+// Left dynamic: the root layout reads `headers()` to resolve the locale,
+// which makes every route under it request-scoped, so `revalidate` alone
+// cannot produce a cached render. Converting these routes to ISR needs the
+// locale to come from `params` instead of a request header — a change to the
+// layout that affects every page, and therefore out of scope for this phase.
+// Recorded here so the next attempt does not repeat the mistake of adding
+// `revalidate` and assuming it took effect: verify with the build output,
+// where an ISR route prints ● and a dynamic one prints ƒ.
 export const dynamic = "force-dynamic";
 
 /**
@@ -124,8 +132,42 @@ export default async function JournalPostPage({
   const published =
     post.published_at ?? post.created_at;
 
+  // The origin is needed for the fully-qualified URLs schema.org requires; a
+  // relative one silently invalidates the graph.
+  const siteOrigin = (
+    process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"
+  ).replace(/\/$/, "");
+  const postUrl = `${siteOrigin}/journal/${post.slug}`;
+
   return (
     <main className="bg-rang-paper">
+      {/* BlogPosting, not Article: this is a dated, authored editorial piece on a
+          blog path, which is the shape Google expects for an essay. Author and
+          datePublished come from the stored record — nothing is inferred, and
+          fields that are genuinely absent are omitted rather than filled with a
+          placeholder. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: post.title,
+            description: post.excerpt ?? undefined,
+            url: postUrl,
+            mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+            ...(post.cover_image ? { image: [`${siteOrigin}${post.cover_image}`] } : {}),
+            ...(post.author ? { author: { "@type": "Person", name: post.author } } : {}),
+            ...(published ? { datePublished: new Date(published).toISOString() } : {}),
+            publisher: {
+              "@type": "Organization",
+              name: "SnehaVrinda Kala",
+              url: siteOrigin,
+            },
+            inLanguage: locale,
+          }),
+        }}
+      />
       <PageHeader
         eyebrow="Journal"
         title={post.title}
