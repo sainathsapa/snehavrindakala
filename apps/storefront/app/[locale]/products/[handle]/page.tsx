@@ -31,7 +31,7 @@ import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
 import { getPreferredCurrency } from "@/lib/currency";
 import { getPlatformModeFromEnv } from "@/lib/settings";
-import { listArtForms } from "@/lib/site-content";
+import { listArtForms, translateArtForms } from "@/lib/site-content";
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
 // URLs; a relative one silently invalidates the graph.
@@ -177,6 +177,7 @@ export default async function ProductDetailPage({
     product.description ??
     null;
   const t = await getTranslations("productDetail");
+  const artFormMessages = await getTranslations("artForm");
 
   const reviewData = await medusa.listReviews(product.id).catch(() => null);
   const customer = await getCurrentCustomer().catch(() => null);
@@ -216,6 +217,21 @@ export default async function ProductDetailPage({
   // Link to whichever slug the tradition page actually serves. Falling back to
   // the category handle produced a 404 (/art-forms/painting-drawing).
   const traditionSlug = traditionRecord?.slug;
+
+  // The tradition's description is translated the same way /art-forms does it.
+  //
+  // The database column holds English only; the Hindi copy lives in the message
+  // files under `artForm.descriptions.<slug>`. Reading the row directly, as this
+  // page did, showed English prose beside Hindi labels on every /hi product
+  // page while the art-form index showed Hindi correctly — the two surfaces
+  // disagreed about the same sentence.
+  const traditionCopy = traditionRecord
+    ? translateArtForms(
+        [traditionRecord],
+        (key: string) => artFormMessages(key),
+        (key: string) => artFormMessages.has(key)
+      )[0]
+    : undefined;
 
   // Where a maker link should go depends on the mode.
   //
@@ -499,9 +515,7 @@ export default async function ProductDetailPage({
                 // by listArtForms, whereas the category name is English only.
                 traditionRecord?.name || product.category?.name || undefined
               }
-              traditionDescription={
-                traditionRecord?.description || undefined
-              }
+              traditionDescription={traditionCopy?.description || undefined}
               traditionHref={
                 traditionSlug ? `/art-forms/${traditionSlug}` : undefined
               }
