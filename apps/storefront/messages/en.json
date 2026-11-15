@@ -814,7 +814,8 @@
     "theRecord": "The record",
     "recordTradition": "Tradition",
     "recordRegion": "Region",
-    "recordMaker": "Maker"
+    "recordMaker": "Maker",
+    "representativeImage": "Representative image — a photograph of this work is pending."
   },
   "policies": {
     "shippingTitle": "Shipping & delivery",
