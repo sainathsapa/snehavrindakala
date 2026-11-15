@@ -76,3 +76,4 @@ __pycache__/
 # Scratch output from local visual checks (screenshots, measurement scripts)
 .tmp-review/
 *.tmp-review/
+.ux-shots/
