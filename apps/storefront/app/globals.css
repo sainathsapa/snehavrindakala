@@ -173,11 +173,16 @@
   /* Decorative motifs are deliberately placed with negative offsets so they can
      bleed off the edge of their section. Without this, any element that extends
      past the viewport widens the document and every page gains a horizontal
-     scrollbar — the classic 40px mobile overflow. Sections that host motifs set
-     `overflow-hidden`; this is the belt-and-braces guard. */
+     scrollbar — the classic 40px mobile overflow.
+
+     `clip` rather than `hidden`. On an ancestor of a `position: sticky` child,
+     `overflow: hidden` makes that ancestor a scroll container, so the sticky
+     element sticks to *it* — and since `body` never scrolls, the header simply
+     scrolls away with the page. `clip` contains the overflow without
+     establishing a scroll box, which is the part we actually want. */
   html,
   body {
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
   }
 
