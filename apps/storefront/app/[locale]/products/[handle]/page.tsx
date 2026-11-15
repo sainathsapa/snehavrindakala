@@ -10,6 +10,7 @@ import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
 import { ProductGallery } from "@/components/product-gallery";
 import { ArtworkSpecsPanel } from "@/components/artwork-specs-panel";
+import { ArtworkRecord } from "@/components/artwork-record";
 import { TrustStrip } from "@/components/trust-strip";
 import { RelativeArtworks } from "@/components/relative-artworks";
 import { WishlistButton } from "@/components/wishlist-button";
@@ -29,6 +30,7 @@ import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
 import { getPreferredCurrency } from "@/lib/currency";
+import { listArtForms } from "@/lib/site-content";
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
 // URLs; a relative one silently invalidates the graph.
@@ -140,9 +142,9 @@ export async function generateMetadata({
 export default async function ProductDetailPage({
   params,
 }: {
-  params: Promise<{ handle: string }>;
+  params: Promise<{ handle: string; locale: string }>;
 }) {
-  const { handle } = await params;
+  const { handle, locale } = await params;
   // The card may link to a handle we generated from the title rather than the
   // one Medusa stores. Resolve it before querying.
   const medusaHandle = await resolveMedusaHandle(handle);
@@ -182,6 +184,37 @@ export default async function ProductDetailPage({
   // left the maker blank on every product page.
   const artist = artistFromProduct(product);
   const artForm = product.category?.name || "Art";
+
+  // The tradition behind this work.
+  //
+  // Products are filed under Medusa categories (`painting-drawing`) while the
+  // editorial art-form pages use shorter slugs (`painting`), so the two
+  // taxonomies cannot be joined on slug — doing that silently matched nothing
+  // and left the record with no description and no region. The category *name*
+  // is the one field both actually agree on.
+  //
+  // The lookup is fetched in English and localised afterwards on purpose: the
+  // category name is always English, so joining on a localised list broke the
+  // match on the Hindi pages and dropped the whole tradition row there.
+  const categoryName = product.category?.name;
+  const normalise = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const traditionRecord = categoryName
+    ? (await Promise.all([
+        listArtForms("en").catch(() => []),
+        listArtForms(locale).catch(() => []),
+      ]).then(([en, localised]) => {
+        const match = en.find(
+          (f) => normalise(f.name) === normalise(categoryName)
+        );
+        // Return the localised twin of the matched row, so the name is
+        // translated while the match itself stays locale-independent.
+        return localised.find((f) => f.slug === match?.slug) ?? match;
+      }))
+    : undefined;
+
+  // Link to whichever slug the tradition page actually serves. Falling back to
+  // the category handle produced a 404 (/art-forms/painting-drawing).
+  const traditionSlug = traditionRecord?.slug;
 
   const availability =
     stockType === "ready_to_ship"
@@ -427,6 +460,34 @@ export default async function ProductDetailPage({
             {Object.keys(specs).length > 0 && (
               <ArtworkSpecsPanel specs={specs} title={t("details")} />
             )}
+
+            {/* 4b — Where the work comes from and whose hand made it. The spec
+                panel above answers "how big, made of what"; this answers the
+                next question an art buyer asks, and links onward to both the
+                tradition and the maker. Rows appear only where the record has
+                something real to say. */}
+            <ArtworkRecord
+              tradition={
+                // Prefer the tradition record's own name: it is already localised
+                // by listArtForms, whereas the category name is English only.
+                traditionRecord?.name || product.category?.name || undefined
+              }
+              traditionDescription={
+                traditionRecord?.description || undefined
+              }
+              traditionHref={
+                traditionSlug ? `/art-forms/${traditionSlug}` : undefined
+              }
+              origin={traditionRecord?.origin || undefined}
+              maker={artist}
+              makerHref={artist ? `/makers#${slugify(artist)}` : undefined}
+              title={t("theRecord")}
+              labels={{
+                tradition: t("recordTradition"),
+                region: t("recordRegion"),
+                maker: t("recordMaker"),
+              }}
+            />
 
             {/* 5 — Why to trust the purchase, right next to the decision. */}
             <div className="border-t border-sand-border/60 pt-5">

@@ -810,7 +810,11 @@
     "artistLabel": "Artist",
     "shippingNote": "Packed by the studio · certificate of authenticity · tracked courier",
     "commissionSecondary": "Commission a similar piece",
-    "saveToWishlist": "Save to wishlist"
+    "saveToWishlist": "Save to wishlist",
+    "theRecord": "The record",
+    "recordTradition": "Tradition",
+    "recordRegion": "Region",
+    "recordMaker": "Maker"
   },
   "policies": {
     "shippingTitle": "Shipping & delivery",

@@ -810,7 +810,11 @@
     "artistLabel": "कलाकार",
     "shippingNote": "स्टूडियो द्वारा पैक · प्रामाणिकता प्रमाणपत्र · ट्रैक किया गया कूरियर",
     "commissionSecondary": "ऐसी ही कृति बनवाएँ",
-    "saveToWishlist": "इच्छा-सूची में सहेजें"
+    "saveToWishlist": "इच्छा-सूची में सहेजें",
+    "theRecord": "अभिलेख",
+    "recordTradition": "परंपरा",
+    "recordRegion": "क्षेत्र",
+    "recordMaker": "शिल्पकार"
   },
   "policies": {
     "shippingTitle": "शिपिंग और डिलीवरी",

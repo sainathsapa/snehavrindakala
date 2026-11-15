@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { ProductCard } from "@/components/product-card";
 import { listCatalogue } from "@/lib/catalogue";
+import { slugify } from "@/lib/slugs";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { notFound } from "next/navigation";
 
@@ -83,7 +84,7 @@ export default async function MakersPage() {
           {makers.length > 0 ? (
             <div className="space-y-20">
               {makers.map(([maker, works]) => (
-                <article key={maker}>
+                <article key={maker} id={slugify(maker)} className="scroll-mt-28">
                   {/* A maker entry is a caption, not a card: name, count, then
                       the actual works. There is no biography here because none
                       has been written — inventing one would be the single
