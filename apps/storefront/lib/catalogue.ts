@@ -326,8 +326,26 @@ export async function listCatalogueFor(
   if (wanted.size === 0) return [];
 
   const items = await listCatalogue(undefined, locale);
-  return items.filter((item) =>
-    item.artForms.some((form) => form && wanted.has(form))
+
+  // A tradition page can also be matched by the work's own title.
+  //
+  // Individual traditions (Madhubani, Warli, Pattachitra, Gond, Kalamkari) are
+  // not Medusa categories — they sit inside broader ones like "Traditional &
+  // Folk Art". Rather than create five more overlapping categories and move
+  // every product between shelves, a work is counted as belonging to a
+  // tradition when that tradition is named in its title, which every one of
+  // these works already is ("Madhubani Fish and Lotus", "Warli Harvest
+  // Painting", …).
+  //
+  // This adds matches; it never removes any. A key that matched nothing before
+  // is unaffected because the title test simply fails for it.
+  return items.filter(
+    (item) =>
+      item.artForms.some((form) => form && wanted.has(form)) ||
+      [...wanted].some((key) => {
+        const nameInTitle = collectionKey(item.title);
+        return key.length > 3 && nameInTitle.includes(key);
+      })
   );
 }
 

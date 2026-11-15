@@ -29,9 +29,18 @@ import {
 import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { slugify } from "@/lib/slugs";
+import { artFormSlugs } from "@/lib/slugs";
 import { getPreferredCurrency } from "@/lib/currency";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { listArtForms, translateArtForms } from "@/lib/site-content";
+
+/** Normalise a title so "Madhubani Fish and Lotus" contains "madhubani". */
+const collectionKeyForTitle = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
 // URLs; a relative one silently invalidates the graph.
@@ -217,6 +226,19 @@ export default async function ProductDetailPage({
   // Link to whichever slug the tradition page actually serves. Falling back to
   // the category handle produced a 404 (/art-forms/painting-drawing).
   const traditionSlug = traditionRecord?.slug;
+
+  // A work can belong to a named tradition rather than only to a broad category.
+  //
+  // "Madhubani Fish and Lotus" sits in "Traditional & Folk Art", a category that
+  // mixes three traditions and therefore cannot carry one honest origin. When the
+  // work's own title names a tradition the storefront knows, that tradition is the
+  // better record: it has a real place, and its page shows only the works that
+  // actually belong to it. The category remains the fallback.
+  const titledTradition = artFormSlugs.find(
+    (f) =>
+      f.origin &&
+      collectionKeyForTitle(product.title ?? "").includes(f.slug)
+  );
 
   // The tradition's description is translated the same way /art-forms does it.
   //
@@ -513,13 +535,32 @@ export default async function ProductDetailPage({
               tradition={
                 // Prefer the tradition record's own name: it is already localised
                 // by listArtForms, whereas the category name is English only.
-                traditionRecord?.name || product.category?.name || undefined
+                titledTradition?.name ||
+                traditionRecord?.name ||
+                product.category?.name ||
+                undefined
               }
-              traditionDescription={traditionCopy?.description || undefined}
+              traditionDescription={
+                // The named tradition's own line wins. Falling through to the
+                // category description put textile copy under "Kalamkari" and
+                // painting copy under "Gond", because those works sit inside
+                // broader categories that describe something else.
+                titledTradition?.description ||
+                traditionCopy?.description ||
+                undefined
+              }
               traditionHref={
-                traditionSlug ? `/art-forms/${traditionSlug}` : undefined
+                titledTradition
+                  ? `/art-forms/${titledTradition.slug}`
+                  : traditionSlug
+                    ? `/art-forms/${traditionSlug}`
+                    : undefined
               }
-              origin={traditionRecord?.origin || undefined}
+              origin={
+                // Only the tradition's own place, never the category's: a mixed
+                // category has no single region to state.
+                titledTradition?.origin || undefined
+              }
               maker={artist}
               makerHref={makerHref}
               title={t("theRecord")}
