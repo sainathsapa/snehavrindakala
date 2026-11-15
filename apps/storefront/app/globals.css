@@ -223,6 +223,63 @@
   }
 }
 
+/* ── Shared storefront primitives ────────────────────────────────────────
+   The storefront had 24 hand-rolled pill buttons in two shapes: a filled
+   burgundy "primary" and a hairline "outline". They differed only in padding
+   and focus ring, which meant a focus style fixed on one page stayed broken on
+   the next eleven.
+
+   These are declared as component classes rather than a React component on
+   purpose: the shared `Button` in packages/ui is used only by the admin panel,
+   rounds its corners differently (`rounded-md`) and paints with `sindoor` /
+   `peacock`. Rewriting it would have restyled the admin against the storefront's
+   wishes, so the storefront gets its own layer and the admin is untouched.
+
+   Palette, typefaces and radii are unchanged — this only names what pages were
+   already doing by hand. */
+@layer components {
+  /* Section rhythm. Two values, so the page reads as a sequence rather than a
+     stack of arbitrary paddings. */
+  .section {
+    @apply py-16 lg:py-24;
+  }
+
+  .section-tight {
+    @apply py-10 lg:py-14;
+  }
+
+  /* The horizontal gutter used by every wide block on the site. */
+  .shell {
+    @apply mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12;
+  }
+
+  /* Primary action: burgundy pill, parchment label. */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-kumkum px-6 py-3
+      font-sans text-sm font-medium text-rang-paper transition-colors
+      hover:bg-sindoor focus:outline-none focus-visible:ring-2
+      focus-visible:ring-kumkum/50 focus-visible:ring-offset-2
+      focus-visible:ring-offset-rang-paper disabled:cursor-not-allowed
+      disabled:opacity-60;
+  }
+
+  /* Secondary action: hairline outline over the paper. */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border
+      border-sand-border px-6 py-3 font-sans text-sm font-medium text-deep-ink
+      transition-colors hover:border-kumkum hover:text-kumkum focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-kumkum/50 focus-visible:ring-offset-2
+      focus-visible:ring-offset-rang-paper disabled:cursor-not-allowed
+      disabled:opacity-60;
+  }
+
+  /* The quiet third action: a serif line with an arrow, used for "read on". */
+  .btn-link {
+    @apply inline-flex items-center gap-1.5 font-serif text-sm italic
+      text-muted-ink transition-colors hover:text-kumkum;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -10,6 +10,21 @@ module.exports = {
     "./src/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
   ],
+  // ── Design-system primitives ──────────────────────────────────────────
+  // `.btn-primary`, `.btn-outline`, `.btn-link`, `.section`, `.section-tight`
+  // and `.shell` are declared in app/globals.css under @layer components.
+  // Tailwind removes component classes that no template references, so a
+  // primitive only starts shipping the first time a page uses it. Safelisting
+  // them means the layer is available to every page immediately and a screen
+  // can be converted without a missing-style regression in the interim.
+  safelist: [
+    "btn-primary",
+    "btn-outline",
+    "btn-link",
+    "section",
+    "section-tight",
+    "shell",
+  ],
   theme: {
     container: {
       center: true,
@@ -89,6 +104,23 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.6s ease-out both",
         "slide-up": "slide-up 0.5s ease-out both",
+      },
+      // ── Editorial type scale ────────────────────────────────────────────
+      // Pages were reaching for arbitrary values (`text-[42px]`, `text-[28px]`)
+      // and landing on slightly different sizes for the same rank of heading.
+      // These six steps name the sizes the site already uses most, so a section
+      // heading is the same everywhere and can be changed in one place.
+      //
+      // Sizes are deliberately kept as the existing rendered values: this is a
+      // naming pass, not a resizing one.
+      fontSize: {
+        display: ["76px", { lineHeight: "1.05", letterSpacing: "-0.02em" }],
+        h1: ["48px", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
+        h2: ["42px", { lineHeight: "1.15", letterSpacing: "-0.01em" }],
+        h3: ["28px", { lineHeight: "1.25" }],
+        lead: ["18px", { lineHeight: "1.7" }],
+        body: ["15px", { lineHeight: "1.75" }],
+        caption: ["10px", { lineHeight: "1.4", letterSpacing: "0.24em" }],
       },
     },
   },
