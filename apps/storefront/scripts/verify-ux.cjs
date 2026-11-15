@@ -10,7 +10,10 @@
 const { chromium, devices } = require("@playwright/test");
 
 const BASE = process.env.BASE_URL || "http://localhost:3111";
-const PRODUCT = "/products/wearable-art-pendant";
+// A ready-to-ship piece, so the cart and checkout journeys are exercisable.
+// (`gold-leaf-miniature-portrait` is tagged stock:custom_only and deliberately
+// has no Add to Cart — it leads to the commission conversation instead.)
+const PRODUCT = process.env.PRODUCT || "/products/hand-woven-ikat-stole";
 
 const results = [];
 const check = (label, ok, detail = "") => {
@@ -36,24 +39,32 @@ async function verifyProductPage(page, label) {
   await page.waitForTimeout(1500);
 
   check(`[${label}] one h1 on the artwork page`, (await page.locator("h1").count()) === 1);
-  // The sticky buy bar repeats the price on purpose below `lg`, so it is counted
-  // separately from the price in the artwork's own information column.
+  // Scope to the artwork's own information column. The page also shows prices in
+  // the "from the same tradition" rail and in the sticky buy bar (mobile), and
+  // counting those made a correct page look like it printed the price three times.
   const priceInfo = await page.evaluate(() => {
-    const isStickyBar = (node) => {
+    const h1 = document.querySelector("h1");
+    const column = h1?.closest("div[class*='flex-col']")?.parentElement;
+    if (!column) return -1;
+    const fixed = (node) => {
       for (let el = node; el; el = el.parentElement) {
         if (getComputedStyle(el).position === "fixed") return true;
       }
       return false;
     };
-    return [...document.querySelectorAll("*")].filter(
+    return [...column.querySelectorAll("*")].filter(
       (el) =>
         el.children.length === 0 &&
         /^₹[0-9]/.test((el.textContent ?? "").trim()) &&
         el.offsetParent !== null &&
-        !isStickyBar(el)
+        !fixed(el)
     ).length;
   });
-  check(`[${label}] price appears once in the artwork's information`, priceInfo === 1, `${priceInfo}`);
+  check(
+    `[${label}] price appears once in the artwork's information`,
+    priceInfo === 1,
+    `${priceInfo}`
+  );
 
   const art = await page.locator("button img").first().evaluate((el) => ({
     opacity: getComputedStyle(el).opacity,
