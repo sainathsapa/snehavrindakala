@@ -300,6 +300,11 @@ These carry a generated stand-in image and a visible "Representative image"
 note. The note is keyed on the filename (`/generated-`), so replacing the file
 with a real photograph retires the note with no code change.
 
+That round trip has been verified against the running container, not assumed:
+pointing one product at a real image removed the note from the rendered DOM, and
+restoring the generated filename brought it back. `tests/representative-image.test.ts`
+pins the rule, because the DOM check itself needs a live deployment.
+
 ```
 bidriware-silver-inlay-box        hand-marbled-paper-journal
 block-printed-table-runner        hand-thrown-stoneware-bowl
