@@ -823,8 +823,15 @@
       "year": "वर्ष",
       "edition": "संस्करण",
       "dispatch": "प्रेषण",
-      "care": "देखभाल"
-    }
+      "care": "देखभाल",
+      "dispatchReady": "सामान्यतः २–४ कार्यदिवसों में भेजा जाता है",
+      "dispatchMadeToOrder": "सामान्यतः २–३ सप्ताह में भेजा जाता है",
+      "dispatchCustom": "समय-सीमा आपके कोटेशन के साथ तय होगी"
+    },
+    "save": "सहेजें",
+    "saved": "सहेजा गया",
+    "viewFullSize": "पूरा आकार देखें",
+    "swipeCount": "{current} / {count} · देखने के लिए स्वाइप करें"
   },
   "policies": {
     "shippingTitle": "शिपिंग और डिलीवरी",
@@ -953,5 +960,31 @@
     "viewOrder": "ऑर्डर देखें",
     "again": "खरीदारी जारी रखें",
     "privacyNote": "हम ऑर्डर तभी दिखाते हैं जब नंबर और ईमेल दोनों उससे मेल खाते हैं। यह न बताने के लिए कि कौन क्या मँगवा रहा है, ग़लत जानकारी पर हम यह नहीं बताते कि दोनों में से कौन-सा ग़लत था।"
+  },
+  "shopControls": {
+    "worksOne": "कृति",
+    "worksMany": "कृतियाँ",
+    "ofTotal": "कुल {total} में से",
+    "filters": "फ़िल्टर",
+    "hideFilters": "फ़िल्टर छिपाएँ",
+    "updating": "अद्यतन हो रहा है…",
+    "searchWithin": "परिणामों में खोजें",
+    "searchPlaceholder": "शीर्षक, कलाकार या माध्यम",
+    "tradition": "परंपरा",
+    "medium": "माध्यम",
+    "availability": "उपलब्धता",
+    "readyToShip": "तुरंत भेजने योग्य",
+    "madeToOrder": "ऑर्डर पर बनाई गई",
+    "price": "मूल्य (₹)",
+    "minPlaceholder": "न्यूनतम",
+    "maxPlaceholder": "अधिकतम",
+    "minAria": "न्यूनतम मूल्य रुपयों में",
+    "maxAria": "अधिकतम मूल्य रुपयों में",
+    "clearAll": "सभी फ़िल्टर हटाएँ",
+    "sortFeatured": "चुनिंदा",
+    "sortNewest": "नवीनतम",
+    "sortPriceAsc": "मूल्य: कम से अधिक",
+    "sortPriceDesc": "मूल्य: अधिक से कम",
+    "sortLabel": "क्रम"
   }
 }

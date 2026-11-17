@@ -58,7 +58,7 @@ export default async function LearnPage() {
   const t = await getTranslations("learn");
   let forms: { name: string; slug: string; image: string }[] = [];
   try {
-    const rows = await listArtForms();
+    const rows = await listArtForms(locale);
     forms = rows.map((form) => ({
       name: form.name,
       slug: form.slug,

@@ -506,7 +506,11 @@ export default async function ProductDetailPage({
                 {specs.dispatch && (
                   <>
                     <span aria-hidden="true" className="text-sand-border">·</span>
-                    <span className="text-muted-ink">{specs.dispatch}</span>
+                    <span className="text-muted-ink">
+                      {specs.dispatchKey
+                        ? t(`specs.${specs.dispatchKey}`)
+                        : specs.dispatch}
+                    </span>
                   </>
                 )}
               </div>

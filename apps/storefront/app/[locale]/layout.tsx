@@ -142,7 +142,11 @@ export default async function LocaleLayout({
   // The footer closes on a strip of the traditions, so it needs the same rows.
   let navTraditions: { name: string; slug: string; image: string }[] = [];
   try {
-    const forms = await listArtForms();
+    // The locale matters here. `listArtForms` overlays the Hindi columns when it
+    // is given one, and this call did not pass it, so on /hi the nav menu and
+    // the footer gallery — the two most repeated lists on the site — named the
+    // traditions in English while every page around them was in Hindi.
+    const forms = await listArtForms(locale);
     // The nav menu shows each tradition with its image and one line of origin,
     // so the menu is a small gallery rather than a list of words.
     //

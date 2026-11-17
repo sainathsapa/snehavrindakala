@@ -65,4 +65,21 @@ describe("artwork specification labels", () => {
     );
     expect(declared.sort()).toEqual([...KEYS].sort());
   });
+
+  it("translates the dispatch line the catalogue generates", () => {
+    // "Usually ships in 2-3 weeks" was generated in lib/catalogue.ts and printed
+    // verbatim, so the shipping promise was English on every Hindi product page.
+    // Those three lines now carry message keys; editorial dispatch tags are
+    // still shown exactly as written and must not be routed through these.
+    const DISPATCH = ["dispatchReady", "dispatchMadeToOrder", "dispatchCustom"];
+    for (const key of DISPATCH) {
+      expect(en.productDetail.specs[key], `en.${key}`).toBeTruthy();
+      expect(hi.productDetail.specs[key], `hi.${key}`).toBeTruthy();
+      expect(hi.productDetail.specs[key]).not.toBe(en.productDetail.specs[key]);
+    }
+
+    const catalogue = readFileSync(join(root, "lib/catalogue.ts"), "utf8");
+    // The key is only set when no editor tag supplied the line.
+    expect(catalogue).toMatch(/const dispatchKey = dispatchTag\s*\?\s*undefined/);
+  });
 });

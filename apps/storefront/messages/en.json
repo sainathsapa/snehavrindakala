@@ -823,8 +823,15 @@
       "year": "Year",
       "edition": "Edition",
       "dispatch": "Dispatch",
-      "care": "Care"
-    }
+      "care": "Care",
+      "dispatchReady": "Usually dispatches in 2–4 business days",
+      "dispatchMadeToOrder": "Usually ships in 2–3 weeks",
+      "dispatchCustom": "Timeline confirmed with your quote"
+    },
+    "save": "Save",
+    "saved": "Saved",
+    "viewFullSize": "View full size",
+    "swipeCount": "{current} of {count} · swipe to browse"
   },
   "policies": {
     "shippingTitle": "Shipping & delivery",
@@ -953,5 +960,31 @@
     "viewOrder": "View order",
     "again": "Continue browsing",
     "privacyNote": "We show an order only when the number and the email address both match it. So that we do not reveal who has ordered what, a mismatch never says which of the two was wrong."
+  },
+  "shopControls": {
+    "worksOne": "work",
+    "worksMany": "works",
+    "ofTotal": "of {total}",
+    "filters": "Filters",
+    "hideFilters": "Hide filters",
+    "updating": "Updating…",
+    "searchWithin": "Search within results",
+    "searchPlaceholder": "Title, artist or medium",
+    "tradition": "Tradition",
+    "medium": "Medium",
+    "availability": "Availability",
+    "readyToShip": "Ready to ship",
+    "madeToOrder": "Made to order",
+    "price": "Price (₹)",
+    "minPlaceholder": "Min",
+    "maxPlaceholder": "Max",
+    "minAria": "Minimum price in rupees",
+    "maxAria": "Maximum price in rupees",
+    "clearAll": "Clear all filters",
+    "sortFeatured": "Featured",
+    "sortNewest": "Newest",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "sortLabel": "Sort"
   }
 }

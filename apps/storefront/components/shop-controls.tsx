@@ -11,6 +11,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { useState, useTransition, type ReactNode } from "react";
 
 export interface FilterOption {
@@ -28,11 +29,13 @@ export interface ShopControlsProps {
   basePath: string;
 }
 
-const SORT_LABELS: Record<string, string> = {
-  featured: "Featured",
-  newest: "Newest",
-  "price-asc": "Price: low to high",
-  "price-desc": "Price: high to low",
+const SORT_VALUES = ["featured", "newest", "price-asc", "price-desc"] as const;
+
+const SORT_KEYS: Record<string, string> = {
+  featured: "sortFeatured",
+  newest: "sortNewest",
+  "price-asc": "sortPriceAsc",
+  "price-desc": "sortPriceDesc",
 };
 
 export function ShopControls({
@@ -44,6 +47,7 @@ export function ShopControls({
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const t = useTranslations("shopControls");
   const [pending, startTransition] = useTransition();
   const [drawer, setDrawer] = useState(false);
 
@@ -84,12 +88,12 @@ export function ShopControls({
 
   const filterBody = (
     <div className="space-y-6">
-      <FilterGroup label="Search within results">
+      <FilterGroup label={t("searchWithin")}>
         <input
           type="search"
           defaultValue={current("query")}
-          placeholder="Title, artist or medium"
-          aria-label="Search within results"
+          placeholder={t("searchPlaceholder")}
+          aria-label={t("searchWithin")}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               setParam("query", (e.target as HTMLInputElement).value);
@@ -100,7 +104,7 @@ export function ShopControls({
         />
       </FilterGroup>
 
-      <FilterGroup label="Tradition">
+      <FilterGroup label={t("tradition")}>
         <div className="flex flex-wrap gap-2">
           {forms.map((f) => {
             const active = current("form") === f.value;
@@ -127,7 +131,7 @@ export function ShopControls({
       </FilterGroup>
 
       {mediums.length > 0 && (
-        <FilterGroup label="Medium">
+        <FilterGroup label={t("medium")}>
           <div className="flex flex-wrap gap-2">
             {mediums.map((m) => {
               const active = current("medium") === m;
@@ -151,11 +155,11 @@ export function ShopControls({
         </FilterGroup>
       )}
 
-      <FilterGroup label="Availability">
+      <FilterGroup label={t("availability")}>
         <div className="flex flex-wrap gap-2">
           {[
-            { value: "ready", label: "Ready to ship" },
-            { value: "made-to-order", label: "Made to order" },
+            { value: "ready", label: t("readyToShip") },
+            { value: "made-to-order", label: t("madeToOrder") },
           ].map((a) => {
             const active = current("availability") === a.value;
             return (
@@ -177,16 +181,16 @@ export function ShopControls({
         </div>
       </FilterGroup>
 
-      <FilterGroup label="Price (₹)">
+      <FilterGroup label={t("price")}>
         <div className="flex items-center gap-2">
           <input
             type="number"
             inputMode="numeric"
             min={0}
-            placeholder="Min"
+            placeholder={t("minPlaceholder")}
             defaultValue={current("min")}
             onBlur={(e) => setParam("min", e.target.value)}
-            aria-label="Minimum price in rupees"
+            aria-label={t("minAria")}
             className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 font-sans text-sm text-deep-ink focus:outline-none focus:ring-1 focus:ring-sindoor"
           />
           <span className="text-muted-ink">–</span>
@@ -194,10 +198,10 @@ export function ShopControls({
             type="number"
             inputMode="numeric"
             min={0}
-            placeholder="Max"
+            placeholder={t("maxPlaceholder")}
             defaultValue={current("max")}
             onBlur={(e) => setParam("max", e.target.value)}
-            aria-label="Maximum price in rupees"
+            aria-label={t("maxAria")}
             className="w-full rounded-md border border-sand-border bg-surface px-3 py-2 font-sans text-sm text-deep-ink focus:outline-none focus:ring-1 focus:ring-sindoor"
           />
         </div>
@@ -209,7 +213,7 @@ export function ShopControls({
           onClick={clearAll}
           className="font-sans text-xs font-medium text-terracotta hover:text-kumkum"
         >
-          Clear all filters
+          {t("clearAll")}
         </button>
       )}
     </div>
@@ -220,8 +224,8 @@ export function ShopControls({
       {/* Caption-style control line (desktop) */}
       <div className="mb-8 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-sand-border/60 pb-4">
         <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-          {shown} {shown === 1 ? "work" : "works"}
-          {shown !== total ? ` of ${total}` : ""}
+          {shown} {shown === 1 ? t("worksOne") : t("worksMany")}
+          {shown !== total ? ` ${t("ofTotal", { total })}` : ""}
         </span>
 
         <button
@@ -230,7 +234,7 @@ export function ShopControls({
           className="flex items-center gap-1.5 font-serif text-sm italic text-muted-ink transition-colors hover:text-kumkum lg:hidden"
           aria-expanded={drawer}
         >
-          Filters
+          {t("filters")}
           {activeCount > 0 && (
             <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-sindoor px-1 text-[10px] font-sans not-italic text-rang-paper">
               {activeCount}
@@ -246,7 +250,7 @@ export function ShopControls({
           aria-expanded={drawer}
           aria-controls="shop-filters"
         >
-          {drawer ? "Hide filters" : "Filters"}
+          {drawer ? t("hideFilters") : t("filters")}
           {activeCount > 0 && (
             <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-sindoor px-1 text-[10px] font-sans not-italic text-rang-paper">
               {activeCount}
@@ -255,22 +259,22 @@ export function ShopControls({
         </button>
 
         <label className="ml-auto flex items-center gap-2 font-sans text-xs text-muted-ink">
-          Sort
+          {t("sortLabel")}
           <select
             value={sort}
             onChange={(e) => setParam("sort", e.target.value)}
             className="rounded-md border border-sand-border bg-surface px-2 py-1.5 font-sans text-xs text-deep-ink focus:outline-none focus:ring-1 focus:ring-sindoor"
           >
-            {Object.entries(SORT_LABELS).map(([value, label]) => (
+            {SORT_VALUES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t(SORT_KEYS[value])}
               </option>
             ))}
           </select>
         </label>
         {pending && (
           <span className="font-sans text-xs text-muted-ink" role="status">
-            Updating…
+            {t("updating")}
           </span>
         )}
       </div>
@@ -289,7 +293,7 @@ export function ShopControls({
           )}
           {current("availability") && (
             <Chip
-              label={current("availability") === "ready" ? "Ready to ship" : "Made to order"}
+              label={current("availability") === "ready" ? t("readyToShip") : t("madeToOrder")}
               onClear={() => setParam("availability", "")}
             />
           )}

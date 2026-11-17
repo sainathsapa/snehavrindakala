@@ -28,6 +28,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 export interface GalleryImage {
   id?: string;
@@ -47,6 +48,7 @@ export function ProductGallery({
   images: GalleryImage[];
   title: string;
 }) {
+  const t = useTranslations("productDetail");
   const [active, setActive] = useState(0);
   const [ratios, setRatios] = useState<Record<string, number>>({});
   const [lightbox, setLightbox] = useState(false);
@@ -205,13 +207,13 @@ export function ProductGallery({
           )}
 
           <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-deep-ink/65 px-3 py-1 font-sans text-[11px] text-rang-paper opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
-            View full size
+            {t("viewFullSize")}
           </span>
         </button>
 
         {count > 1 && (
           <p className="mt-2 text-center font-sans text-[11px] text-muted-ink lg:hidden">
-            {active + 1} of {count} · swipe to browse
+            {t("swipeCount", { current: active + 1, count })}
           </p>
         )}
       </div>

@@ -352,6 +352,24 @@ interface HindiMaterial {
   usedIn?: string[];
 }
 
+/**
+ * The traditions named on each material card, in Hindi.
+ *
+ * `localiseMaterials` translated the prose but left `usedIn` alone, so the small
+ * chips under every material — PATTACHITRA, KALAMKARI — stayed English on /hi.
+ * These are the established Hindi names, not transliterations.
+ */
+export const USED_IN_HI: Record<string, string> = {
+  Ajrakh: "अजरख",
+  "Block printing": "ब्लॉक छपाई",
+  Kalamkari: "कलमकारी",
+  "Kerala Mural": "केरल भित्तिचित्र",
+  Kolam: "कोलम",
+  Miniature: "लघु चित्र",
+  Pattachitra: "पट्टचित्र",
+  Warli: "वारली",
+};
+
 export const MATERIALS_HI: Record<string, HindiMaterial> = {
   "Rice paste": {
     material: "चावल का लेप",
@@ -466,7 +484,11 @@ export function localiseMaterials(notes: MaterialNote[], locale: string) {
   if (locale !== "hi") return notes;
   return notes.map((note) => {
     const hi = MATERIALS_HI[note.material];
-    return hi ? { ...note, ...hi } : note;
+    return {
+      ...note,
+      ...(hi ?? {}),
+      usedIn: note.usedIn.map((tag) => USED_IN_HI[tag] ?? tag),
+    };
   });
 }
 

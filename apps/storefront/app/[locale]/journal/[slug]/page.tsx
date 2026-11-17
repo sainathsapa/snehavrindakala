@@ -13,6 +13,7 @@ import {
   type JournalListItem,
   type JournalPost,
 } from "@/lib/journal";
+import { listArtForms } from "@/lib/site-content";
 
 // Left dynamic: the root layout reads `headers()` to resolve the locale,
 // which makes every route under it request-scoped, so `revalidate` alone
@@ -129,6 +130,13 @@ export default async function JournalPostPage({
     notFound();
   }
 
+  // The art-form label beside the author was a hard-coded English map, so an
+  // essay read in Hindi still named its tradition in English. The admin-managed
+  // rows already carry both names; read them instead of restating them here.
+  const artFormName = await listArtForms(locale)
+    .then((rows) => rows.find((row) => row.slug === post?.art_form)?.name)
+    .catch(() => undefined);
+
   const published =
     post.published_at ?? post.created_at;
 
@@ -239,16 +247,7 @@ export default async function JournalPostPage({
                       href={`/art-forms/${post.art_form}`}
                       className="text-deep-ink underline decoration-terracotta/40 underline-offset-4 transition-colors hover:text-kumkum"
                     >
-                      {
-                        ({
-                          madhubani: "Madhubani",
-                          warli: "Warli",
-                          pattachitra: "Pattachitra",
-                          gond: "Gond",
-                          kalamkari: "Kalamkari",
-                        } as Record<string, string>)[post.art_form] ??
-                          post.art_form
-                      }
+                      {artFormName ?? post.art_form}
                     </Link>
                   </dd>
                 </div>

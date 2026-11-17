@@ -7,6 +7,7 @@
  * button reflects saved state immediately and toggles in place.
  */
 import { useWishlist } from "@/lib/hooks/use-wishlist";
+import { useTranslations } from "next-intl";
 
 export function WishlistButton({
   handle,
@@ -24,6 +25,7 @@ export function WishlistButton({
   artist?: string;
 }) {
   const { has, toggle, ready } = useWishlist();
+  const t = useTranslations("productDetail");
   const saved = ready && has(handle);
 
   return (
@@ -47,7 +49,7 @@ export function WishlistButton({
           strokeLinejoin="round"
         />
       </svg>
-      {saved ? "Saved" : "Save"}
+      {saved ? t("saved") : t("save")}
     </button>
   );
 }
