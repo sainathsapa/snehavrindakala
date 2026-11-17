@@ -50,24 +50,32 @@ translated. Every other Hindi string differs from its English source.
 
 searched across both message files, which is where all user-visible prose lives.
 
-## 5. Test rows exist, and none of them are buyer-facing
+## 5. Test rows existed, and none were buyer-facing
 
-Three rows in the product table come from testing rather than from the house.
+Three rows in the product table came from testing rather than from the house.
+All three were confirmed never ordered before anything was touched: the join
+from `order_line_item` to `product_variant` was checked against real orders
+first (it found six line items across four real products), so an empty result
+for the test rows meant something.
 
 | handle | status | reachable by a buyer? |
 |---|---|---|
 | `admin-image-probe` | draft | no |
 | `test-delete-product` | draft | no |
-| `test-category-journey` | **published** | no |
+| `test-category-journey` | published | no |
 
-`test-category-journey` is the odd one: it is published, yet its product page
-returns 404, it is absent from `/shop`, from the sitemap and from search results
-— it has no category and no price, so every listing path skips it. That is why
-`/shop` renders 21 cards while 22 products are published; the difference is this
-row, not a lost product.
+All three were already soft-deleted (`deleted_at` set) when this audit began,
+which is why `test-category-journey` returned 404 and appeared in no listing
+despite its `status` being `published`. Their variants were not, so those were
+soft-deleted to match — Medusa's own removal path, reversible, and respected by
+the admin stats and export queries, which both filter `deleted_at IS NULL`.
 
-They are left in place because deleting catalogue rows is the owner's call, not
-a side effect of an audit. They should be deleted before the store opens.
+This also settles a count that had been drifting: `/shop` renders 21 cards while
+an unfiltered `status='published'` query returned 22. The extra row was the
+soft-deleted test product. There was never a lost product.
+
+**Every count in this document now filters `deleted_at IS NULL`.** Earlier
+drafts of it did not, which is how the discrepancy survived this long.
 
 ## 6. What is deliberately unfinished
 
@@ -76,8 +84,8 @@ fabricating something.
 
 | Gap | Size | Why it is not done here |
 |---|---|---|
-| Real photographs | 16 of 22 published | A photograph of a different work is a false claim about a one-of-one object |
-| Dimensions | 22 of 22 published | Nothing may be estimated; a wrong size is a returned order. No dimension data exists anywhere — `product.metadata` holds only `stock_type` and `artist` |
+| Real photographs | 16 of 21 live | A photograph of a different work is a false claim about a one-of-one object |
+| Dimensions | 21 of 21 live | Nothing may be estimated; a wrong size is a returned order. No dimension data exists anywhere — `product.metadata` holds only `stock_type` and `artist` |
 | Product description | 1 (`madhubani-celebration`) | Needs the owner's words |
 | Artist biography | 1 maker | A factual claim about a named living person; needs their text and consent |
 | Hindi review | 1 word (`हरड़`) | Authentic name for the dye nut, but the register needs a native reader |
@@ -85,6 +93,12 @@ fabricating something.
 The single product without a description renders correctly: the section is
 omitted rather than left as an empty heading, and the page still carries the
 tradition prose, the maker, the price and the commission path.
+
+It is worth knowing that `madhubani-celebration` is **not an unsold listing**.
+It appears in three order line items, so buyers have already paid for a work
+whose page says nothing about it. Of everything in this table, that is the
+cheapest and most valuable gap to close: it needs a paragraph, not a
+photographer or a tape measure.
 
 ## 7. Re-running this audit
 
