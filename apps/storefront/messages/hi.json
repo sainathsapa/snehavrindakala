@@ -815,7 +815,16 @@
     "recordTradition": "परंपरा",
     "recordRegion": "क्षेत्र",
     "recordMaker": "शिल्पकार",
-    "representativeImage": "प्रतिनिधि चित्र — इस कृति का फ़ोटो आना शेष है।"
+    "representativeImage": "प्रतिनिधि चित्र — इस कृति का फ़ोटो आना शेष है।",
+    "specs": {
+      "dimensions": "आयाम",
+      "medium": "माध्यम और सामग्री",
+      "framing": "फ़्रेम",
+      "year": "वर्ष",
+      "edition": "संस्करण",
+      "dispatch": "प्रेषण",
+      "care": "देखभाल"
+    }
   },
   "policies": {
     "shippingTitle": "शिपिंग और डिलीवरी",

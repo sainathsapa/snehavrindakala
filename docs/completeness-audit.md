@@ -35,12 +35,21 @@ is what makes the Hindi pages discoverable at all.
 ## 3. Nothing is untranslated
 
 ```
-784 keys in en.json · 784 keys in hi.json · 0 missing · 0 extra
+791 keys in en.json · 791 keys in hi.json · 0 missing · 0 extra
 1 value identical in both: track.emailHint = "you@example.com"
 ```
 
 The single identical value is an email format hint, which should not be
 translated. Every other Hindi string differs from its English source.
+
+This check counts keys, and keys were not the problem. The product page's
+specification block — dimensions, medium, framing, dispatch — had its row labels
+written straight into the component as English strings. The heading above them
+was translated and the rows were not, so `/hi` read "विवरण" over "Dimensions" and
+"Medium & materials". A key-completeness check cannot see a string that was
+never a key. Found by reading the rendered page, fixed by moving the labels into
+both message files, and pinned by `tests/spec-labels.test.ts`, which also fails
+if a Hindi label is left equal to its English source.
 
 ## 4. No placeholder copy reached the page
 
@@ -89,6 +98,26 @@ fabricating something.
 | Product description | 1 (`madhubani-celebration`) | Needs the owner's words |
 | Artist biography | 1 maker | A factual claim about a named living person; needs their text and consent |
 | Hindi review | 1 word (`हरड़`) | Authentic name for the dye nut, but the register needs a native reader |
+
+Dimensions deserve a note, because the plumbing already exists and no code
+change is needed to close that gap. `lib/catalogue.ts` reads a product tag of
+the form `dimensions:30 × 40 cm`, and `components/artwork-specs-panel.tsx`
+renders it as a row labelled "Dimensions" plus a `size` property in the
+`VisualArtwork` JSON-LD. This was verified by adding such a tag to one product,
+confirming the row and the JSON-LD `size` appeared, then removing it — no
+`dimensions:` tag exists on any product today, so the block renders only medium
+and dispatch.
+
+The gap is therefore a tag per product, not a feature. Tags are added in the
+admin product form, or in bulk:
+
+```sql
+-- after inserting the value into product_tag and linking it in product_tags
+SELECT p.handle, t.value FROM product p
+  JOIN product_tags pt ON pt.product_id = p.id
+  JOIN product_tag t ON t.id = pt.product_tag_id
+WHERE t.value LIKE 'dimensions:%' AND p.deleted_at IS NULL;
+```
 
 The single product without a description renders correctly: the section is
 omitted rather than left as an empty heading, and the page still carries the

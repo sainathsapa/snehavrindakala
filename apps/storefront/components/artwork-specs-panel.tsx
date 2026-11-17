@@ -12,20 +12,25 @@
  * as a museum wall label rather than a product listing.
  *
  * Only rows with a real value render. Nothing is invented to fill the grid.
+ *
+ * The row labels are translated. They used to be hard-coded English, which meant
+ * the most factual block on a product page — the one a buyer uses to decide —
+ * stayed in English on /hi while the heading above it read "विवरण".
  */
+import { getTranslations } from "next-intl/server";
 import type { ArtworkSpecs } from "@/lib/catalogue";
 
-const ROWS: { key: keyof ArtworkSpecs; label: string }[] = [
-  { key: "dimensions", label: "Dimensions" },
-  { key: "medium", label: "Medium & materials" },
-  { key: "framing", label: "Framing" },
-  { key: "year", label: "Year" },
-  { key: "edition", label: "Edition" },
-  { key: "dispatch", label: "Dispatch" },
-  { key: "care", label: "Care" },
+const ROWS: { key: keyof ArtworkSpecs }[] = [
+  { key: "dimensions" },
+  { key: "medium" },
+  { key: "framing" },
+  { key: "year" },
+  { key: "edition" },
+  { key: "dispatch" },
+  { key: "care" },
 ];
 
-export function ArtworkSpecsPanel({
+export async function ArtworkSpecsPanel({
   specs,
   title = "Details",
 }: {
@@ -35,6 +40,8 @@ export function ArtworkSpecsPanel({
 }) {
   const rows = ROWS.filter((row) => specs[row.key]);
   if (rows.length === 0) return null;
+
+  const t = await getTranslations("productDetail.specs");
 
   return (
     <section aria-labelledby="artwork-details">
@@ -52,7 +59,7 @@ export function ArtworkSpecsPanel({
             className="grid grid-cols-[100px_1fr] items-baseline gap-4 py-2.5 sm:grid-cols-[150px_1fr]"
           >
             <dt className="font-sans text-[11px] uppercase tracking-[0.12em] text-muted-ink">
-              {row.label}
+              {t(row.key)}
             </dt>
             <dd className="font-sans text-[13.5px] leading-relaxed text-deep-ink">
               {specs[row.key]}
