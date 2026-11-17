@@ -188,6 +188,7 @@ export default async function LocaleLayout({
           platformMode={getPlatformModeFromEnv() === "platform"}
           traditions={navTraditions}
           socials={socials}
+          currency={activeCurrency}
         />
         <script
           id="schema-organization"

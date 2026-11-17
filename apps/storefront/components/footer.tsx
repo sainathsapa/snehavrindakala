@@ -11,6 +11,8 @@ import {
 } from "@/components/indian-motifs";
 import { GLOSSARY } from "@/lib/art-reference";
 import { PaymentMarks } from "@/components/payment-marks";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 
 /**
  * The footer is the facade of the house.
@@ -88,6 +90,7 @@ export function Footer({
   platformMode = false,
   traditions = [],
   socials = [],
+  currency = "inr",
 }: {
   /** The Artists directory only exists in platform mode. */
   platformMode?: boolean;
@@ -98,6 +101,8 @@ export function Footer({
    * environment, so the footer never shows an icon that goes nowhere.
    */
   socials?: { id: string; label: string; href: string }[];
+  /** Active currency, so the switcher shows what is actually being priced. */
+  currency?: string;
 }) {
   const pathname = usePathname();
   const t = useTranslations("footer");
@@ -108,6 +113,31 @@ export function Footer({
 
   return (
     <footer className="relative mt-auto overflow-hidden bg-[#2A120C] text-rang-paper">
+      {/* ═══ 0. THE THRESHOLD ═════════════════════════════════════════════
+          Language and currency sit here, at the head of the footer.
+
+          They spent two revisions in the header and never settled. In the main
+          row they competed with the wordmark, the nav, the search box and three
+          icon targets; lifted onto their own strip above it they became a second
+          navigation bar hanging off the top of every page, which is the "odd"
+          look this replaces. Neither is something a visitor changes often enough
+          to justify permanent space at the top of the viewport.
+
+          The footer is where a preference lives. It is the last thing on the
+          page, it is present on every page, and putting the choice there costs
+          the browsing experience nothing.
+
+          Dark tone: the ground is #2A120C, so these use the light palette.
+          Hidden on mobile, where both switchers are in the menu sheet — there
+          the footer is several screens away and the menu is one tap. */}
+      <div className="hidden border-b border-rang-paper/10 md:block">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-2 px-5 py-2.5 sm:px-8 lg:px-12">
+          <LanguageSwitcher tone="paper" />
+          <span aria-hidden="true" className="h-3 w-px bg-rang-paper/20" />
+          <CurrencySwitcher current={currency} tone="paper" />
+        </div>
+      </div>
+
       {/* ═══ 1. THE GALLERY ═══════════════════════════════════════════════
           Six plates, edge to edge. The last thing on the page is the work. */}
       {traditions.length > 0 && (

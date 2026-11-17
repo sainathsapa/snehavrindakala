@@ -18,12 +18,20 @@ import {
  *
  * The label is the language's own name (हिन्दी, not "Hindi"), which is how
  * people find their own language in a list.
+ *
+ * `tone` exists because the shop puts these on two different grounds: the
+ * parchment body and the dark footer. The original styling hard-coded deep-ink
+ * text, which was invisible on the footer — dark ink on a #2A120C ground. The
+ * options also carry explicit colours: a native dropdown paints its own white
+ * popup, so a light inherited colour would leave the choices unreadable.
  */
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ tone = "ink" }: { tone?: "ink" | "paper" }) {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations("currency");
+
+  const dark = tone === "paper";
 
   return (
     <label className="group relative inline-flex items-center">
@@ -33,7 +41,9 @@ export function LanguageSwitcher() {
       <svg
         aria-hidden="true"
         viewBox="0 0 16 16"
-        className="pointer-events-none absolute left-2 h-3 w-3 text-terracotta/80"
+        className={`pointer-events-none absolute left-2 h-3 w-3 ${
+          dark ? "text-haldi/70" : "text-terracotta/80"
+        }`}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.2"
@@ -49,10 +59,18 @@ export function LanguageSwitcher() {
           // it keeps the visitor on the same page instead of sending them home.
           router.replace(pathname, { locale: next });
         }}
-        className="cursor-pointer appearance-none rounded-sm border border-sand-border/70 bg-transparent py-1 pl-6 pr-6 font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-deep-ink/75 transition-colors hover:border-kumkum hover:text-kumkum focus:outline-none focus:ring-2 focus:ring-sindoor"
+        className={`cursor-pointer appearance-none rounded-sm border bg-transparent py-1 pl-6 pr-6 font-sans text-[11px] font-medium uppercase tracking-[0.12em] transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
+          dark
+            ? "border-rang-paper/30 text-rang-paper/85 hover:border-haldi hover:text-haldi focus:ring-haldi/50"
+            : "border-sand-border/70 text-deep-ink/75 hover:border-kumkum hover:text-kumkum focus:ring-sindoor"
+        }`}
       >
         {routing.locales.map((code) => (
-          <option key={code} value={code}>
+          <option
+            key={code}
+            value={code}
+            className="bg-rang-paper text-deep-ink"
+          >
             {LOCALE_LABELS[code]}
           </option>
         ))}
@@ -60,7 +78,11 @@ export function LanguageSwitcher() {
       <svg
         aria-hidden="true"
         viewBox="0 0 10 6"
-        className="pointer-events-none absolute right-1.5 h-1.5 w-2.5 text-deep-ink/45 transition-colors group-hover:text-kumkum"
+        className={`pointer-events-none absolute right-1.5 h-1.5 w-2.5 transition-colors ${
+          dark
+            ? "text-rang-paper/45 group-hover:text-haldi"
+            : "text-deep-ink/45 group-hover:text-kumkum"
+        }`}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.4"
