@@ -294,7 +294,7 @@ Recorded plainly so the result is not overclaimed:
 Generated from the live database so this list is auditable, not remembered.
 Re-run the two queries below to refresh it.
 
-### 10a. Real photographs — 16 of 24 products
+### 10a. Real photographs — 16 of 22 published products
 
 These carry a generated stand-in image and a visible "Representative image"
 note. The note is keyed on the filename (`/generated-`), so replacing the file
@@ -325,7 +325,7 @@ SELECT handle FROM product
 WHERE thumbnail LIKE '%generated-%' ORDER BY handle;
 ```
 
-### 10b. Dimensions — 22 of 24 products state no size
+### 10b. Dimensions — 22 of 22 published products state no size
 
 Verified by scanning every description for `cm`, `mm` or `inch`. A tape measure
 is the only way to fill this; nothing here may be estimated, because a wrong
