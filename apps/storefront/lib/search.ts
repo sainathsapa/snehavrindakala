@@ -8,8 +8,20 @@
 import { getProductPrice, medusa } from "./medusa";
 import { slugify } from "./slugs";
 import { GLOSSARY } from "./art-reference";
-import { listArtForms } from "./site-content";
+import { listArtForms, productTranslationsFor } from "./site-content";
 import { listJournalPosts } from "./journal";
+import { listCatalogue } from "./catalogue";
+import { getPlatformModeFromEnv } from "./settings";
+import {
+  type SearchResult,
+  TYPE_RANK,
+  tokens,
+  matchesAll,
+  scoreFor,
+} from "./search-match";
+
+// Re-exported so importers that reached for the type here keep working.
+export type { SearchResult } from "./search-match";
 
 /**
  * Pages searchable by title, with the words a visitor is likely to type.
@@ -64,8 +76,20 @@ const STATIC_PAGES: { title: string; url: string; keywords: string[]; descriptio
   {
     title: "Our story",
     url: "/about",
-    keywords: ["about", "story", "artist", "sneha", "bikaner", "studio"],
+    // The maker's own name belongs here. Searching "sainath" or "sapa" found
+    // nothing at all, which is a poor answer for the one person the house is
+    // named after.
+    keywords: [
+      "about", "story", "artist", "sneha", "sainath", "sapa",
+      "sneha sainath sapa", "bikaner", "studio", "founder",
+    ],
     description: "The house, the artist and where the work is made.",
+  },
+  {
+    title: "The makers",
+    url: "/makers",
+    keywords: ["makers", "maker", "artists", "hands", "who made", "sneha", "sainath", "sapa"],
+    description: "Every hand whose work is available here, and what they made.",
   },
   {
     title: "Commission a piece",
@@ -81,22 +105,60 @@ const STATIC_PAGES: { title: string; url: string; keywords: string[]; descriptio
   },
 ];
 
-export interface SearchResult {
-  // `art-form`, `journal`, `glossary` and `page` cover the editorial side of
-  // the site. Without them, searching "madhubani" found paintings but not the
-  // tradition page or the essay explaining it, which is exactly what a visitor
-  // looking an unfamiliar term up wants.
-  type: "product" | "category" | "artist" | "art-form" | "journal" | "glossary" | "page";
-  id: string;
-  title: string;
-  subtitle?: string | null;
-  description?: string | null;
-  image?: string | null;
-  price?: number | null;
-  currency?: string;
-  handle?: string | null;
-  url: string;
-  matchScore: number;
+
+/**
+ * Makers, read off the catalogue rather than a people table.
+ *
+ * In single-brand mode there is no artist directory to search — `/artists`
+ * 404s by design — so the name behind every work was reachable only by finding
+ * a product first. Searching "sainath" or "sapa" returned nothing at all,
+ * which is a poor answer for the person the house is named after.
+ *
+ * Names come from the published records (`item.artist`), the same source the
+ * makers page uses, so nothing is invented: a maker appears here because a
+ * work in the catalogue names them.
+ */
+async function makersMatching(
+  needles: string[],
+  limit: number
+): Promise<SearchResult[]> {
+  try {
+    // In platform mode there is a real artist directory, already searched above,
+    // and `/makers` 404s by design — emitting a maker result here would put a
+    // dead link in the results. Single-brand mode has no artist module, which
+    // is exactly why this fallback exists.
+    if (getPlatformModeFromEnv() !== "single-brand") return [];
+
+    let items: { artist?: string | null; handle: string; title: string }[] = [];
+    try {
+      items = await listCatalogue();
+    } catch {
+      return [];
+    }
+
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      const maker = item.artist?.trim();
+      if (!maker) continue;
+      counts.set(maker, (counts.get(maker) ?? 0) + 1);
+    }
+
+    return [...counts.entries()]
+      .map(([maker, works]): SearchResult => ({
+        type: "maker",
+        id: `maker-${slugify(maker)}`,
+        title: maker,
+        description: `${works} ${works === 1 ? "work" : "works"} in the collection`,
+        handle: slugify(maker),
+        url: `/makers#${slugify(maker)}`,
+        matchScore: scoreFor(maker, "", needles),
+      }))
+      .filter((r) => r.matchScore > 0)
+      .slice(0, limit);
+  } catch {
+    // Search must not fail because one optional source did.
+    return [];
+  }
 }
 
 export async function universalSearch(
@@ -108,7 +170,17 @@ export async function universalSearch(
     return { results: [], count: 0, query: "" };
   }
 
-  const needle = query.toLowerCase();
+  const needles = tokens(query);
+  /**
+   * Slug of the query, used only to match category handles.
+   *
+   * `slugify` strips everything that is not a-z0-9, so a Devanagari query
+   * became an empty string — and `handle.includes("")` is true for every
+   * handle in the shop. Searching "मधुबनी" returned all six categories as if
+   * they had matched, which buried the real answer. An empty slug must mean
+   * "do not compare handles", not "compare against everything".
+   */
+  const needleSlug = slugify(query);
   const results: SearchResult[] = [];
 
   // The three lookups are independent, so they run together rather than one
@@ -137,7 +209,11 @@ export async function universalSearch(
             currency,
             handle: product.handle,
             url: `/products/${product.handle}`,
-            matchScore: product.title.toLowerCase().includes(needle) ? 2 : 1,
+            matchScore: scoreFor(
+              product.title,
+              `${product.subtitle ?? ""} ${product.description ?? ""}`,
+              needles
+            ),
           };
         })
       )
@@ -152,9 +228,12 @@ export async function universalSearch(
       .then(({ product_categories }) =>
         (product_categories || [])
           .filter((category: any) => {
-            const name = String(category.name || "").toLowerCase();
-            const handle = String(category.handle || "").toLowerCase();
-            return name.includes(needle) || handle.includes(slugify(query));
+            const name = String(category.name || "");
+            const handle = String(category.handle || "");
+            return (
+              matchesAll(name, needles) ||
+              (needleSlug !== "" && handle.includes(needleSlug))
+            );
           })
           .slice(0, limit)
           .map(
@@ -165,11 +244,7 @@ export async function universalSearch(
               description: category.description,
               handle: category.handle,
               url: `/shop/${category.handle}`,
-              matchScore: String(category.name || "")
-                .toLowerCase()
-                .includes(needle)
-                ? 2
-                : 1,
+              matchScore: matchesAll(String(category.name || ""), needles) ? 2 : 1,
             })
           )
       )
@@ -190,9 +265,11 @@ export async function universalSearch(
             description: artist.bio,
             image: artist.portrait_media_id,
             url: `/artists/${artist.slug}`,
-            matchScore: artist.display_name.toLowerCase().includes(needle)
-              ? 2
-              : 1,
+            matchScore: scoreFor(
+              artist.display_name,
+              artist.bio ?? "",
+              needles
+            ),
           })
         )
       )
@@ -201,29 +278,53 @@ export async function universalSearch(
         return [] as SearchResult[];
       }),
 
-    // Art forms — the tradition pages behind the paintings.
+    // Art forms — the tradition pages behind the paintings. The Hindi columns
+    // are searched too: the catalogue carries a Hindi name for all eleven, and
+    // a visitor typing मधुबनी should reach the Madhubani page.
     listArtForms()
       .then((forms) =>
         forms
           .filter((form) => {
-            const haystack = [form.name, form.description, form.origin]
+            const f = form as typeof form & {
+              name_hi?: string;
+              description_hi?: string;
+              origin_hi?: string;
+            };
+            const haystack = [
+              form.name, form.description, form.origin,
+              f.name_hi, f.description_hi, f.origin_hi,
+            ]
               .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
-            return haystack.includes(needle);
+              .join(" ");
+            return matchesAll(haystack, needles);
           })
           .slice(0, limit)
           .map(
-            (form): SearchResult => ({
-              type: "art-form",
-              id: form.slug,
-              title: form.name,
-              description: form.description,
-              image: form.image,
-              handle: form.slug,
-              url: `/art-forms/${form.slug}`,
-              matchScore: form.name.toLowerCase().includes(needle) ? 2 : 1,
-            })
+            (form): SearchResult => {
+              const f = form as typeof form & {
+                name_hi?: string;
+                description_hi?: string;
+                origin_hi?: string;
+              };
+              // Scored on both languages, or a Hindi hit arrives with a score of
+              // 0 — matched, yet ranked below everything as if it had not.
+              return {
+                type: "art-form",
+                id: form.slug,
+                title: form.name,
+                description: form.description,
+                image: form.image,
+                handle: form.slug,
+                url: `/art-forms/${form.slug}`,
+                matchScore: scoreFor(
+                  [form.name, f.name_hi].filter(Boolean).join(" "),
+                  [form.description, f.description_hi, form.origin, f.origin_hi]
+                    .filter(Boolean)
+                    .join(" "),
+                  needles
+                ),
+              };
+            }
           )
       )
       .catch((err) => {
@@ -231,31 +332,41 @@ export async function universalSearch(
         return [] as SearchResult[];
       }),
 
-    // Journal essays.
-    listJournalPosts(100)
-      .then((posts) =>
-        posts
+    // Journal essays. Read in both languages so a Hindi query finds the essay
+    // even though the listing is projected per locale.
+    Promise.all([listJournalPosts(100, "en"), listJournalPosts(100, "hi")])
+      .then(([en, hi]) => {
+        const hiById = new Map(hi.map((p) => [p.id, p]));
+        return en
           .filter((post) => {
-            const haystack = [post.title, post.excerpt]
+            const h = hiById.get(post.id);
+            const haystack = [post.title, post.excerpt, h?.title, h?.excerpt]
               .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
-            return haystack.includes(needle);
+              .join(" ");
+            return matchesAll(haystack, needles);
           })
           .slice(0, limit)
           .map(
-            (post): SearchResult => ({
-              type: "journal",
-              id: post.id,
-              title: post.title,
-              description: post.excerpt,
-              image: post.cover_image,
-              handle: post.slug,
-              url: `/journal/${post.slug}`,
-              matchScore: post.title.toLowerCase().includes(needle) ? 2 : 1,
-            })
-          )
-      )
+            (post): SearchResult => {
+              const h = hiById.get(post.id);
+              return {
+                type: "journal",
+                id: post.id,
+                title: post.title,
+                description: post.excerpt,
+                image: post.cover_image,
+                handle: post.slug,
+                url: `/journal/${post.slug}`,
+                // Same reason as art forms: score the language that matched.
+                matchScore: scoreFor(
+                  [post.title, h?.title].filter(Boolean).join(" "),
+                  [post.excerpt, h?.excerpt].filter(Boolean).join(" "),
+                  needles
+                ),
+              };
+            }
+          );
+      })
       .catch((err) => {
         console.error("Journal search failed:", err);
         return [] as SearchResult[];
@@ -265,41 +376,90 @@ export async function universalSearch(
   results.push(...productHits, ...categoryHits, ...artistHits);
   results.push(...artFormHits, ...journalHits);
 
+  // Products found by their Hindi title.
+  //
+  // Medusa only searches the English catalogue, so "मधुबनी" reached the
+  // tradition page but none of the paintings. The translations already exist in
+  // product_translation; this resolves the ones that match back to real
+  // products so Hindi shoppers get something they can buy, not just an essay.
+  const seenHandles = new Set(productHits.map((p) => p.handle));
+  if (needles.some((n) => /[^\x00-\x7F]/.test(n))) {
+    try {
+      const hi = await productTranslationsFor("hi");
+      const hits = [...hi.entries()].filter(([handle, tr]) =>
+        !seenHandles.has(handle) &&
+        matchesAll(`${tr.title} ${tr.description ?? ""}`, needles)
+      );
+      for (const [handle] of hits.slice(0, limit)) {
+        try {
+          const { product } = await medusa.getProduct(handle);
+          results.push({
+            type: "product",
+            id: product.id,
+            title: product.title,
+            subtitle: product.subtitle,
+            description: product.description,
+            image: product.thumbnail,
+            price: getProductPrice(product),
+            currency:
+              product.variants?.[0]?.calculated_price?.currency_code || "inr",
+            handle: product.handle,
+            url: `/products/${product.handle}`,
+            // Found through its translation, so it is a real hit rather than a
+            // body-only match.
+            matchScore: 2,
+          });
+        } catch {
+          // A translation pointing at a delisted handle is not an error here.
+        }
+      }
+    } catch {
+      // Translation lookup is best-effort; the rest of the results still stand.
+    }
+  }
+
+  results.push(...(await makersMatching(needles, limit)));
+
   // Glossary terms and the fixed pages are local, so they are matched here
   // rather than fetched. They cost nothing and make search feel complete:
   // "bidri" should find the term even if no work is listed under it.
   for (const term of GLOSSARY) {
     const haystack = [term.term, term.meaning, term.language]
       .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-    if (!haystack.includes(needle)) continue;
+      .join(" ");
+    const score = scoreFor(term.term, `${term.meaning ?? ""} ${term.language ?? ""}`, needles);
+    if (score === 0) continue;
     results.push({
       type: "glossary",
       id: `glossary-${slugify(term.term)}`,
       title: term.term,
       description: term.meaning,
       url: `/learn#glossary`,
-      matchScore: term.term.toLowerCase().includes(needle) ? 2 : 1,
+      matchScore: score,
     });
   }
 
   for (const page of STATIC_PAGES) {
-    const haystack = [page.title, page.description, ...page.keywords]
-      .join(" ")
-      .toLowerCase();
-    if (!haystack.includes(needle)) continue;
+    const score = scoreFor(
+      page.title,
+      `${page.description} ${page.keywords.join(" ")}`,
+      needles
+    );
+    if (score === 0) continue;
     results.push({
       type: "page",
       id: `page-${page.url}`,
       title: page.title,
       description: page.description,
       url: page.url,
-      matchScore: page.title.toLowerCase().includes(needle) ? 2 : 1,
+      matchScore: score,
     });
   }
 
-  results.sort((a, b) => b.matchScore - a.matchScore);
+  results.sort(
+    (a, b) =>
+      b.matchScore - a.matchScore || TYPE_RANK[a.type] - TYPE_RANK[b.type]
+  );
   return {
     results: results.slice(0, limit),
     count: Math.min(results.length, limit),
