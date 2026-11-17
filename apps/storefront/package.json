@@ -11,13 +11,15 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "verify:schema": "node scripts/verify-schema.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:verify": "node scripts/verify-schema.mjs"
   },
   "dependencies": {
     "@snehavrinda-kala/types": "workspace:*",
     "@snehavrinda-kala/ui": "workspace:*",
     "next": "15.5.28",
     "next-intl": "^4.15.1",
+    "pg": "^8.23.1",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

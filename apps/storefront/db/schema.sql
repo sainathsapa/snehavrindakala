@@ -32,12 +32,31 @@
 -- predates this file; unifying it would be a migration, not a documentation
 -- change, so it is preserved rather than quietly tidied.
 --
--- HOW TO RUN IT
+-- HOW IT IS RUN
 --
---   psql "$DATABASE_URL" -f apps/storefront/db/schema.sql
+-- The storefront image applies this file before the server starts
+-- (scripts/migrate.mjs, wired into the Dockerfile CMD). The migration runs
+-- under a Postgres advisory lock, inside one transaction, and the container
+-- exits if it fails — a missing table is a failed deploy, not a 500 the first
+-- customer discovers.
+--
+-- It can also be applied by hand, which is useful against a local database:
+--
+--   npm run db:migrate                       # uses $DATABASE_URL
+--   psql "$DATABASE_URL" -f db/schema.sql    # equivalent
 --
 -- Idempotent: every statement is IF NOT EXISTS, so running it against an
 -- existing database is a no-op and running it twice is safe.
+--
+-- WHAT THIS FILE DOES NOT DO
+--
+-- It does not alter existing tables. A database created by an older release
+-- keeps whatever columns it had; the application's own
+-- `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` calls still add the columns
+-- introduced since (the `_hi` translation columns, `journal_posts.art_form`).
+-- This file is the baseline for a fresh database, not a migration history.
+-- Folding those runtime ALTERs in here would be a real migration system, and
+-- is the next step if the schema keeps growing.
 --
 -- SCOPE
 --
@@ -179,6 +198,45 @@ CREATE TABLE IF NOT EXISTS product_translation (
   description text NOT NULL DEFAULT ''::text,
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   PRIMARY KEY (id)
+);
+
+-- Product reviews.
+--
+-- Taken from the code that creates it (app/api/admin/reviews/route.ts), not from
+-- the database, because this table does not exist in production yet: nothing
+-- has posted a review, so nothing ever ran the CREATE. A schema built only from
+-- a live database therefore omitted it, and the first review would have created
+-- its own table at runtime — the behaviour this file exists to stop.
+CREATE TABLE IF NOT EXISTS product_review (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  product_id text NOT NULL,
+  variant_id text,
+  customer_id text,
+  author_name text,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  title text,
+  body text NOT NULL,
+  verified boolean NOT NULL DEFAULT false,
+  verification_order_id text,
+  photos jsonb,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  admin_note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (id)
+);
+
+-- Storefront-owned UI strings. Also absent from production, and also read from
+-- the code (app/api/store/i18n/route.ts) for the same reason as product_review.
+-- The UNIQUE below is what makes its ON CONFLICT (locale, key) upsert work;
+-- without it that insert fails at runtime rather than here.
+CREATE TABLE IF NOT EXISTS translations (
+  id text NOT NULL DEFAULT gen_random_uuid(),
+  locale text NOT NULL,
+  key text NOT NULL,
+  value text NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE (locale, key)
 );
 
 CREATE TABLE IF NOT EXISTS return_requests (
