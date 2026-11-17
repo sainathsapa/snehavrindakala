@@ -286,3 +286,67 @@ Recorded plainly so the result is not overclaimed:
 - Provenance chains, exhibition history and condition reports are not modelled
   at all. They are not required for this storefront, but buyers of original art
   sometimes ask, and there is currently no field to answer with.
+
+---
+
+## 10. Exact outstanding inventory (owner-supplied)
+
+Generated from the live database so this list is auditable, not remembered.
+Re-run the two queries below to refresh it.
+
+### 10a. Real photographs — 16 of 24 products
+
+These carry a generated stand-in image and a visible "Representative image"
+note. The note is keyed on the filename (`/generated-`), so replacing the file
+with a real photograph retires the note with no code change.
+
+```
+bidriware-silver-inlay-box        hand-marbled-paper-journal
+block-printed-table-runner        hand-thrown-stoneware-bowl
+custom-portrait-commission        hand-woven-ikat-stole
+gold-leaf-miniature-portrait      kalamkari-penwork-panel
+gond-tree-of-life                 lacquer-wooden-pen-case
+madhubani-celebration             madhubani-fish-and-lotus
+pattachitra-scroll-panel          phulkari-embroidered-dupatta
+silver-filigree-earrings          warli-harvest-painting
+```
+
+Replace at `apps/storefront/public/images/products/generated-<handle>.jpg`,
+keeping the filename, and update `product.thumbnail` **and** every `image` row —
+the grid reads the thumbnail and the product page reads the gallery.
+
+```sql
+SELECT handle FROM product
+WHERE thumbnail LIKE '%generated-%' ORDER BY handle;
+```
+
+### 10b. Dimensions — 22 of 24 products state no size
+
+Verified by scanning every description for `cm`, `mm` or `inch`. A tape measure
+is the only way to fill this; nothing here may be estimated, because a wrong
+size on a handmade object is a returned order.
+
+```sql
+SELECT handle FROM product
+WHERE description NOT ILIKE '%cm%' AND description NOT ILIKE '%inch%'
+ORDER BY handle;
+```
+
+### 10c. Artist biography — not modelled
+
+No storage exists, deliberately. A biography is a factual claim about a named
+living person; it needs the person's own text and their consent. The footer and
+`/makers` state only what a product record already says.
+
+### 10d. Hindi review — one word flagged
+
+`हरड़` replaces the earlier transliteration `मायरोबालन` (myrobalan) in the
+Kalamkari description. `हरड़` is the everyday Hindi name for the dye nut, but
+the register should be confirmed by a native reader. Every other Hindi string in
+`site_art_form` came from `messages/hi.json` or was written against it.
+
+### 10e. Kalamkari origin — resolved
+
+Now reads "Srikalahasti and Machilipatnam", quoting the essay. `Andhra Pradesh`
+was added from outside knowledge and has been removed from `lib/slugs.ts`, the
+database and the seed script.

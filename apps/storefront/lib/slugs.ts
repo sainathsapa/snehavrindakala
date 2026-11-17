@@ -122,7 +122,11 @@ export const artFormSlugs: ArtFormSlug[] = [
     description:
       "Drawn with a bamboo pen and dyed in myrobalan and madder, washed many times.",
     query: "Kalamkari",
-    origin: "Srikalahasti and Machilipatnam, Andhra Pradesh",
+    // Towns only. The essay names Srikalahasti and Machilipatnam and never the
+    // state; "Andhra Pradesh" was added from outside knowledge and then sat
+    // here contradicting this file's own note. The label should be quotable
+    // against the writing it came from.
+    origin: "Srikalahasti and Machilipatnam",
   },
 ];
 

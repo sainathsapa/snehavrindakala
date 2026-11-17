@@ -95,8 +95,12 @@ const TRADITIONS = {
   },
   kalamkari: {
     name_hi: "कलमकारी",
+    // "मायरोबालन" was a transliteration of the English word, not Hindi. The
+    // dye nut has a Hindi name — हरड़ — which is what a reader of this
+    // description would actually recognise. A native reviewer should still
+    // confirm the register; the alternative was leaving a word nobody says.
     description_hi:
-      "बाँस की क़लम से बनाई और मायरोबालन व मजीठ से रँगी, कई बार धोई जाने वाली कला।",
+      "बाँस की क़लम से बनाई और हरड़ व मजीठ से रँगी, कई बार धोई जाने वाली कला।",
     en: "Drawn with a bamboo pen and dyed in myrobalan and madder, washed many times.",
   },
 };
