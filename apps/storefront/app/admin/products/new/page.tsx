@@ -23,6 +23,16 @@ export default function NewProductPage() {
   const [artist, setArtist] = useState("Sneha Sainath Sapa");
   const [stockType, setStockType] = useState("ready_to_ship");
   const [description, setDescription] = useState("");
+  // The artwork's specifications. Stored as tags and rendered as the Details
+  // block; left blank when unknown rather than guessed.
+  const [specs, setSpecs] = useState({
+    dimensions: "",
+    medium: "",
+    framing: "",
+    year: "",
+    edition: "",
+    care: "",
+  });
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,6 +70,7 @@ export default function NewProductPage() {
           artist,
           stock_type: stockType,
           description,
+          specs,
         }),
       });
       if (res.ok) {
@@ -141,6 +152,45 @@ export default function NewProductPage() {
                   className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
                 />
               </div>
+
+              {/* Specifications. Each renders as its own row on the product page
+                  and only when it has a value, so an empty box means a silent
+                  absence rather than a blank line on the page. */}
+              <fieldset className="rounded-md border border-sand-border p-5">
+                <legend className="px-2 font-sans text-sm font-medium text-deep-ink">
+                  Specifications
+                </legend>
+                <p className="mb-4 font-sans text-xs text-muted-ink">
+                  Shown as the Details block on the product page. Leave a field
+                  empty if it is not known — it is simply omitted, never
+                  guessed.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {([
+                    ["dimensions", "Dimensions", "30 × 40 cm"],
+                    ["medium", "Medium & materials", "Natural pigment on handmade paper"],
+                    ["framing", "Framing", "Unframed, ships rolled"],
+                    ["year", "Year", "2025"],
+                    ["edition", "Edition", "1 of 1"],
+                    ["care", "Care", "Keep out of direct sunlight"],
+                  ] as const).map(([key, label, hint]) => (
+                    <div key={key}>
+                      <label className="block font-sans text-sm font-medium text-deep-ink mb-1">
+                        {label}
+                      </label>
+                      <input
+                        type="text"
+                        value={specs[key]}
+                        placeholder={hint}
+                        onChange={(e) =>
+                          setSpecs((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
+                        className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </fieldset>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
 import { getSystemAdminToken, listAdminProducts, resolveProductTagIds } from "@/lib/admin";
+import { mergeTags } from "@/lib/admin-tags";
 
 async function adminAuthHeader(): Promise<Record<string, string>> {
   const token = await getSystemAdminToken();
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
       artist,
       stock_type,
       description,
+      specs,
     } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const productStatus = validStatuses.includes(status) ? status : "draft";
@@ -71,6 +73,14 @@ export async function POST(req: Request) {
     }
     if (typeof stock_type === "string" && stock_type.trim()) {
       tagValues.push(`stock:${stock_type.trim()}`);
+    }
+    // The artwork's specifications, entered on the create form. Same merge rule
+    // as the edit route, so a new work can be created complete rather than
+    // needing a second pass.
+    if (specs && typeof specs === "object") {
+      tagValues.push(
+        ...mergeTags([], { specs: specs as Record<string, string> })
+      );
     }
     if (tagValues.length > 0) {
       payload.tags = await resolveProductTagIds(tagValues);

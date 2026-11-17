@@ -10,6 +10,7 @@ import {
   getAdminProduct,
   resolveProductTagIds,
 } from "@/lib/admin";
+import { mergeTags, specsFromTags } from "@/lib/admin-tags";
 
 async function adminFetch(
   backendUrl: string,
@@ -60,6 +61,9 @@ export async function GET(
           }
         : null,
       category_id: category?.id || "",
+      // Prefill the specification fields. Without this the form would show empty
+      // boxes over real values and the next save would erase them.
+      specs: specsFromTags(anyProduct.tags ?? []),
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -87,6 +91,7 @@ export async function PATCH(
       artist,
       stock_type,
       description,
+      specs,
     } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const amount = Number(total) || 0;
@@ -97,27 +102,22 @@ export async function PATCH(
     if (validStatuses.includes(status)) update.status = status;
     if (typeof description === "string") update.description = description;
 
-    // Tags carry the maker and availability: the store API exposes tags but not
-    // metadata, so writing metadata alone would never reach the storefront.
-    // Unrelated tags are preserved.
-    if (artist !== undefined || stock_type !== undefined) {
+    // Tags carry the maker, availability and the artwork's specifications: the
+    // store API exposes tags but not metadata, so writing metadata alone would
+    // never reach the storefront.
+    //
+    // The merge rule lives in lib/admin-tags.ts so it can be tested directly:
+    // a request replaces only the keys it submits, and an emptied field drops
+    // its tag rather than storing a blank one.
+    if (artist !== undefined || stock_type !== undefined || specs) {
       const { product: current } = await getAdminProduct(id);
-      const keptValues: string[] = (((current as any)?.tags ?? []) as any[])
+      const currentValues: string[] = (((current as any)?.tags ?? []) as any[])
         .map((t) => (typeof t === "string" ? t : t?.value) ?? "")
-        .filter(
-          (t) =>
-            t && !t.startsWith("artist:") && !t.startsWith("stock:")
-        );
+        .filter(Boolean);
 
-      const wanted = [...keptValues];
-      if (typeof artist === "string" && artist.trim()) {
-        wanted.push(`artist:${artist.trim()}`);
-      }
-      if (typeof stock_type === "string" && stock_type.trim()) {
-        wanted.push(`stock:${stock_type.trim()}`);
-      }
-
-      update.tags = await resolveProductTagIds(wanted);
+      update.tags = await resolveProductTagIds(
+        mergeTags(currentValues, { artist, stock_type, specs })
+      );
     }
     // Image attach on an existing product. `thumbnail` drives the card and the
     // first entry of `images` drives the detail gallery, so both are set from

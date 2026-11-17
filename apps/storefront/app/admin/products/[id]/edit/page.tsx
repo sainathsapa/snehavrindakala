@@ -43,6 +43,17 @@ export default function EditProductPage() {
   const [artist, setArtist] = useState("");
   const [stockType, setStockType] = useState("ready_to_ship");
   const [description, setDescription] = useState("");
+  // The six facts a buyer needs and the storefront already renders. They are
+  // stored as tags, so until now they could only be set by writing SQL — which
+  // is why every product had no size, no framing and no care note.
+  const [specs, setSpecs] = useState({
+    dimensions: "",
+    medium: "",
+    framing: "",
+    year: "",
+    edition: "",
+    care: "",
+  });
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
@@ -97,6 +108,14 @@ export default function EditProductPage() {
             "ready_to_ship"
         );
         setDescription(data.description || "");
+        setSpecs({
+          dimensions: data.specs?.dimensions || "",
+          medium: data.specs?.medium || "",
+          framing: data.specs?.framing || "",
+          year: data.specs?.year || "",
+          edition: data.specs?.edition || "",
+          care: data.specs?.care || "",
+        });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -135,6 +154,7 @@ export default function EditProductPage() {
           artist,
           stock_type: stockType,
           description,
+          specs,
         }),
       });
       if (res.ok) {
@@ -232,6 +252,47 @@ export default function EditProductPage() {
                   className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
                 />
               </div>
+
+              {/* Specifications. Each one renders as its own row on the product
+                  page and only when it has a value, so an empty box here means a
+                  silent absence rather than a blank line on the page. Left empty
+                  on purpose where the fact is not known — an invented size is a
+                  returned order. */}
+              <fieldset className="rounded-md border border-sand-border p-5">
+                <legend className="px-2 font-sans text-sm font-medium text-deep-ink">
+                  Specifications
+                </legend>
+                <p className="mb-4 font-sans text-xs text-muted-ink">
+                  Shown as the Details block on the product page. Leave a field
+                  empty if it is not known — it is simply omitted, never
+                  guessed.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {([
+                    ["dimensions", "Dimensions", "30 × 40 cm"],
+                    ["medium", "Medium & materials", "Natural pigment on handmade paper"],
+                    ["framing", "Framing", "Unframed, ships rolled"],
+                    ["year", "Year", "2025"],
+                    ["edition", "Edition", "1 of 1"],
+                    ["care", "Care", "Keep out of direct sunlight"],
+                  ] as const).map(([key, label, hint]) => (
+                    <div key={key}>
+                      <label className="block font-sans text-sm font-medium text-deep-ink mb-1">
+                        {label}
+                      </label>
+                      <input
+                        type="text"
+                        value={specs[key]}
+                        placeholder={hint}
+                        onChange={(e) =>
+                          setSpecs((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
+                        className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </fieldset>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
