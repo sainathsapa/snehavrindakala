@@ -106,6 +106,7 @@ export function Footer({
 }) {
   const pathname = usePathname();
   const t = useTranslations("footer");
+  const tLang = useTranslations("currency");
 
   if (pathname.startsWith("/admin")) {
     return null;
@@ -128,13 +129,30 @@ export function Footer({
           the browsing experience nothing.
 
           Dark tone: the ground is #2A120C, so these use the light palette.
-          Hidden on mobile, where both switchers are in the menu sheet — there
-          the footer is several screens away and the menu is one tap. */}
-      <div className="hidden border-b border-rang-paper/10 md:block">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-2 px-5 py-2.5 sm:px-8 lg:px-12">
-          <LanguageSwitcher tone="paper" />
-          <span aria-hidden="true" className="h-3 w-px bg-rang-paper/20" />
-          <CurrencySwitcher current={currency} tone="paper" />
+
+          Shown at every width. These were briefly hidden below `md`, with copies
+          inside the menu sheet on the grounds that the menu is one tap and the
+          footer is several screens away — but the navigation is not where anyone
+          looks for a language, and the two ended up visible in neither place a
+          reader expected. The footer is the canonical location now, so the menu
+          duplicates are gone and there is exactly one of each on the page.
+
+          Labels above each control matter for the same reason: two bare
+          dropdowns at the end of a long page read as trim, not as settings. */}
+      <div className="border-b border-rang-paper/10">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-end gap-x-6 gap-y-3 px-5 py-4 sm:px-8 lg:px-12">
+          <div className="flex flex-col gap-1">
+            <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-rang-paper/60">
+              {tLang("language")}
+            </span>
+            <LanguageSwitcher tone="paper" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-rang-paper/60">
+              {tLang("label")}
+            </span>
+            <CurrencySwitcher current={currency} tone="paper" />
+          </div>
         </div>
       </div>
 

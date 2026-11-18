@@ -185,7 +185,6 @@ export default async function LocaleLayout({
         <Header
           platformMode={getPlatformModeFromEnv()}
           artForms={navArtForms}
-          currency={activeCurrency}
         />
         {children}
         <Footer

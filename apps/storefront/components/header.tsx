@@ -11,8 +11,6 @@ import Image from "next/image";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { CurrencySwitcher } from "@/components/currency-switcher";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { Icon } from "@snehavrinda-kala/ui";
 import { formatPrice } from "@/lib/medusa";
 import { nextActiveIndex, activeResult } from "@/lib/search-keyboard";
@@ -58,11 +56,10 @@ const typeIcons: Record<string, string> = {
 export function Header({
   platformMode = "single-brand",
   artForms = [],
-  currency = "inr",
 }: {
   platformMode?: "platform" | "single-brand";
-  /** Active currency, so the switcher shows what is actually being priced. */
-  currency?: string;
+  // The currency switcher lives in the footer now; the header no longer needs
+  // to know which currency is active.
   /** Art traditions, rendered as a small gallery inside the Discover menu. */
   artForms?: {
     label: string;
@@ -75,7 +72,6 @@ export function Header({
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations("nav");
-  const tSettings = useTranslations("currency");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Which dropdown is open. CSS-only hover menus cannot be reached by keyboard
   // or touch, so the menu is explicitly state-driven with click and Escape.
@@ -590,24 +586,12 @@ export function Header({
               </div>
             ))}
 
-            {/* Language and currency, moved here from the header row so a
-                phone has room for the menu, search, account and cart. Side by
-                side with labels, they read as settings rather than as two
-                unlabelled dropdowns competing with the logotype. */}
-            <div className="mt-4 flex items-center gap-4 border-t border-sand-border/60 pt-3 md:hidden">
-              <div className="flex flex-col gap-1">
-                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-ink/70">
-                  {tSettings("language")}
-                </span>
-                <LanguageSwitcher />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-ink/70">
-                  {tSettings("label")}
-                </span>
-                <CurrencySwitcher current={currency} compact />
-              </div>
-            </div>
+            {/* Language and currency live in the footer, where a preference
+                belongs and where one copy serves every screen size. They used to
+                be duplicated here for phones, which put two sets of the same two
+                controls on the page and left neither where a reader looks for a
+                language. The header row stays free for the menu, search, account
+                and cart. */}
           </div>
         )}
       </div>
