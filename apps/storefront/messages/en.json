@@ -22,7 +22,8 @@
   },
   "currency": {
     "label": "Currency",
-    "language": "Language"
+    "language": "Language",
+    "stripHeading": "Choose the language and the currency this house speaks to you in."
   },
   "footer": {
     "look": "Look",

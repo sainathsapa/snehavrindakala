@@ -138,20 +138,33 @@ export function Footer({
           duplicates are gone and there is exactly one of each on the page.
 
           Labels above each control matter for the same reason: two bare
-          dropdowns at the end of a long page read as trim, not as settings. */}
+          dropdowns at the end of a long page read as trim, not as settings.
+
+          The first attempt at this was too timid — 9px labels and 11px
+          uppercase selects, both at partial opacity on a near-black ground. The
+          controls were there and measured non-zero, and were still reported as
+          missing, which is the correct judgement: nothing that small and that
+          quiet is a control you can find. Type is 13px in sentence case now, in
+          full-strength paper white, with a heading that names what the strip is
+          for. */}
       <div className="border-b border-rang-paper/10">
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-end gap-x-6 gap-y-3 px-5 py-4 sm:px-8 lg:px-12">
-          <div className="flex flex-col gap-1">
-            <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-rang-paper/60">
-              {tLang("language")}
-            </span>
-            <LanguageSwitcher tone="paper" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-rang-paper/60">
-              {tLang("label")}
-            </span>
-            <CurrencySwitcher current={currency} tone="paper" />
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-between gap-x-8 gap-y-4 px-5 py-5 sm:px-8 lg:px-12">
+          <p className="max-w-[34ch] font-sans text-[11px] leading-relaxed text-rang-paper/50">
+            {tLang("stripHeading")}
+          </p>
+          <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+            <div className="flex flex-col gap-1.5">
+              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper/70">
+                {tLang("language")}
+              </span>
+              <LanguageSwitcher tone="paper" size="md" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper/70">
+                {tLang("label")}
+              </span>
+              <CurrencySwitcher current={currency} tone="paper" size="md" />
+            </div>
           </div>
         </div>
       </div>

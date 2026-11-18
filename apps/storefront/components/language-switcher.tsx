@@ -25,13 +25,25 @@ import {
  * options also carry explicit colours: a native dropdown paints its own white
  * popup, so a light inherited colour would leave the choices unreadable.
  */
-export function LanguageSwitcher({ tone = "ink" }: { tone?: "ink" | "paper" }) {
+export function LanguageSwitcher({
+  tone = "ink",
+  size = "sm",
+}: {
+  tone?: "ink" | "paper";
+  /**
+   * `md` is for the footer, where these are the only settings on a dark ground.
+   * At 11px uppercase the controls were legible but not findable — they read as
+   * part of the footer's ornament rather than as something you can operate.
+   */
+  size?: "sm" | "md";
+}) {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations("currency");
 
   const dark = tone === "paper";
+  const big = size === "md";
 
   return (
     <label className="group relative inline-flex items-center">
@@ -43,7 +55,7 @@ export function LanguageSwitcher({ tone = "ink" }: { tone?: "ink" | "paper" }) {
         viewBox="0 0 16 16"
         className={`pointer-events-none absolute left-2 h-3 w-3 ${
           dark ? "text-haldi/70" : "text-terracotta/80"
-        }`}
+        } ${big ? "h-3.5 w-3.5" : ""}`}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.2"
@@ -59,9 +71,13 @@ export function LanguageSwitcher({ tone = "ink" }: { tone?: "ink" | "paper" }) {
           // it keeps the visitor on the same page instead of sending them home.
           router.replace(pathname, { locale: next });
         }}
-        className={`cursor-pointer appearance-none rounded-sm border bg-transparent py-1 pl-6 pr-6 font-sans text-[11px] font-medium uppercase tracking-[0.12em] transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
+        className={`cursor-pointer appearance-none rounded-sm border bg-transparent font-sans transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
+          big
+            ? "py-1.5 pl-7 pr-8 text-[13px] font-medium tracking-[0.02em]"
+            : "py-1 pl-6 pr-6 text-[11px] font-medium uppercase tracking-[0.12em]"
+        } ${
           dark
-            ? "border-rang-paper/30 text-rang-paper/85 hover:border-haldi hover:text-haldi focus:ring-haldi/50"
+            ? "border-rang-paper/40 text-rang-paper hover:border-haldi hover:text-haldi focus:ring-haldi/50"
             : "border-sand-border/70 text-deep-ink/75 hover:border-kumkum hover:text-kumkum focus:ring-sindoor"
         }`}
       >
@@ -78,9 +94,9 @@ export function LanguageSwitcher({ tone = "ink" }: { tone?: "ink" | "paper" }) {
       <svg
         aria-hidden="true"
         viewBox="0 0 10 6"
-        className={`pointer-events-none absolute right-1.5 h-1.5 w-2.5 transition-colors ${
+        className={`pointer-events-none absolute right-2 h-1.5 w-2.5 transition-colors ${
           dark
-            ? "text-rang-paper/45 group-hover:text-haldi"
+            ? "text-rang-paper/60 group-hover:text-haldi"
             : "text-deep-ink/45 group-hover:text-kumkum"
         }`}
         fill="none"

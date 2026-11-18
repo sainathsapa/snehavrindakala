@@ -28,6 +28,7 @@ export function CurrencySwitcher({
   current,
   compact = false,
   tone = "ink",
+  size = "sm",
 }: {
   current: string;
   /**
@@ -43,6 +44,12 @@ export function CurrencySwitcher({
    * light-text-on-dark variant.
    */
   tone?: "ink" | "paper";
+  /**
+   * `md` is for the footer, where these are the only settings on a dark ground.
+   * At 11px uppercase the controls were legible but not findable — they read as
+   * part of the footer's ornament rather than as something you can operate.
+   */
+  size?: "sm" | "md";
 }) {
   const [value, setValue] = useState(current);
   const [pending, startTransition] = useTransition();
@@ -51,6 +58,7 @@ export function CurrencySwitcher({
   const locale = useLocale();
 
   const dark = tone === "paper";
+  const big = size === "md";
 
   useEffect(() => setValue(current), [current]);
 
@@ -81,9 +89,13 @@ export function CurrencySwitcher({
         value={value}
         onChange={(e) => change(e.target.value)}
         disabled={pending}
-        className={`cursor-pointer appearance-none rounded-sm border bg-transparent py-1 pl-6 pr-6 font-sans text-[11px] font-medium uppercase tracking-[0.12em] transition-colors focus:outline-none disabled:opacity-60 ${
+        className={`cursor-pointer appearance-none rounded-sm border bg-transparent font-sans transition-colors focus:outline-none disabled:opacity-60 ${
+          big
+            ? "py-1.5 pl-7 pr-8 text-[13px] font-medium tracking-[0.02em]"
+            : "py-1 pl-6 pr-6 text-[11px] font-medium uppercase tracking-[0.12em]"
+        } ${
           dark
-            ? "border-rang-paper/30 text-rang-paper/85 hover:border-haldi hover:text-haldi focus:border-haldi focus:ring-1 focus:ring-haldi/40"
+            ? "border-rang-paper/40 text-rang-paper hover:border-haldi hover:text-haldi focus:border-haldi focus:ring-1 focus:ring-haldi/40"
             : "border-sand-border/70 text-deep-ink/75 hover:border-kumkum hover:text-kumkum focus:border-sindoor focus:ring-1 focus:ring-sindoor/40"
         }`}
       >
