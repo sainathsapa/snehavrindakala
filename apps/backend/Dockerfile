@@ -90,6 +90,7 @@ USER medusa
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:9000/health || exit 1
 
-# Production server (no file watching / HMR). `medusa start` serves the
-# compiled backend from dist/ and the admin UI from dist/public/admin.
-CMD ["sh", "-c", "exec ./node_modules/.bin/medusa start"]
+# Entrypoint waits for Postgres, applies migrations, syncs module links, then
+# execs `medusa start`. A migrated database is the difference between "the
+# containers are up" and "the shop works".
+CMD ["sh", "/app/apps/backend/docker-entrypoint.sh"]

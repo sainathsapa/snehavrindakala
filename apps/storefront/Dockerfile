@@ -87,12 +87,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./ap
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/public ./apps/storefront/public
 COPY --from=builder --chown=nextjs:nodejs /app/docs ./docs
 
-# The schema and its runner ship with the image so a deploy can create the
-# tables before serving. Without these files in the runner stage the app falls
-# back to creating tables lazily on first request, which is the behaviour this
-# migration exists to remove.
+# The schema, its runner and the start-up helpers ship with the image so a
+# deploy can create the tables before serving. Without these files in the runner
+# stage the app falls back to creating tables lazily on first request, which is
+# the behaviour this migration exists to remove.
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/db ./apps/storefront/db
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/scripts/migrate.mjs ./apps/storefront/scripts/migrate.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/scripts ./apps/storefront/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/docker-entrypoint.sh ./apps/storefront/docker-entrypoint.sh
 
 USER nextjs
 
@@ -101,8 +102,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
 
-# Apply the schema, then serve. `&&` rather than `;` on purpose: if the
-# migration fails the container exits and the orchestrator reports a failed
-# deploy, instead of starting a server that will fail on its first content
-# query with an error no one is watching for.
-CMD ["sh", "-c", "node apps/storefront/scripts/migrate.mjs && exec node apps/storefront/server.js"]
+# Migrate, resolve the Medusa identifiers the app cannot know at build time, then
+# serve. The script uses `exec`, so the server is PID 1 and receives signals.
+CMD ["sh", "apps/storefront/docker-entrypoint.sh"]

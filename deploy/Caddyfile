@@ -1,0 +1,32 @@
+# Caddy front door for cloud deployments.
+#
+#   docker compose --profile proxy up -d
+#
+# Two hostnames, not one path prefix. The storefront admin panel already owns
+# /admin/* (pages) while Medusa owns /admin/* (the API the panel calls), so a
+# single hostname cannot route them apart. Separate hosts sidestep the collision
+# and keep the Medusa API off the shop's origin.
+#
+#   STOREFRONT_DOMAIN -> the shop
+#   API_DOMAIN        -> Medusa (admin UI at /app, webhooks, store API)
+#
+# Certificates are obtained and renewed automatically; point both DNS records at
+# this host first, and let 80 and 443 be reachable.
+
+{$STOREFRONT_DOMAIN} {
+	encode zstd gzip
+
+	# Long cache for the immutable Next.js build output.
+	@nextstatic path /_next/static/*
+	header @nextstatic Cache-Control "public, max-age=31536000, immutable"
+
+	reverse_proxy storefront:3000
+}
+
+{$API_DOMAIN} {
+	encode zstd gzip
+
+	# Uploaded media served by Medusa can be large; do not buffer it through the
+	# proxy twice.
+	reverse_proxy backend:9000
+}

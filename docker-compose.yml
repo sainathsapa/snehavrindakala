@@ -1,40 +1,144 @@
-# Local development services for SnehaVrinda Kala
-# Start with: docker compose up -d
-# Requires: .env file populated (copy from .env.example)
+# SnehaVrinda Kala — complete stack in one file.
+#
+#   cp .env.example .env      # fill in the secrets
+#   docker compose up -d --build
+#
+# Then open:
+#   storefront  http://localhost:3000
+#   admin UI    http://localhost:3000/admin    (ADMIN_EMAIL / ADMIN_PASSWORD)
+#   medusa API  http://localhost:9000/health
+#   medusa admin http://localhost:9000/app     (MEDUSA_ADMIN_EMAIL / _PASSWORD)
+#
+# Service order (compose enforces it):
+#   postgres + redis (healthy)
+#     -> backend        migrates the schema on start, then serves :9000
+#     -> seed           one-shot: admin users, region, sales channel,
+#                       publishable key, categories, catalogue, shipping option
+#     -> storefront     reads the publishable key from the backend at start-up,
+#                       applies its own content schema, then serves :3000
+#
+# Nothing has to be seeded by hand: `up -d` on an empty database produces a
+# browsable shop with products, and a working admin login.
+#
+# CLOUD
+#   This same file runs on a VM. Three things differ from local development and
+#   all three are driven by .env, not by editing this file:
+#     * PUBLIC URLS   set NEXT_PUBLIC_STOREFRONT_URL, STORE_CORS, ADMIN_CORS,
+#                     AUTH_CORS and MEDUSA_BACKEND_URL to the real hostnames.
+#     * DATABASE/redis can point at a managed service instead of the containers
+#                     below (DATABASE_URL, REDIS_URL). Managed Postgres needs
+#                     TLS: use `?sslmode=require` there, and never keep the
+#                     `sslmode=disable` used for the local container.
+#     * TLS           `docker compose --profile proxy up -d` adds Caddy on :80/:443
+#                     with automatic certificates. See deploy/Caddyfile.
+#   Postgres and Redis are published on 127.0.0.1 only, never on the public
+#   interface: an unauthenticated Redis on a public port is a remote shell.
+
+name: snehavrinda-kala
+
+# ── Shared settings ──────────────────────────────────────────────────────────
+# Log rotation. Without it the json-file driver grows without limit and a 20 GB
+# VM fills its disk after a few weeks of Medusa request logs.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Everything the Medusa backend and the one-shot seed job need. Values come from
+# .env (copy .env.example) so the same file configures both.
+x-backend-environment: &backend-environment
+  NODE_ENV: production
+  # `sslmode=disable` is not decoration. Medusa enables TLS for any database
+  # host that is not localhost/127.0.0.1 (see getDefaultDriverOptions in
+  # @medusajs/utils), and the Postgres container speaks plain TCP. Without this
+  # parameter every connection attempt fails a TLS handshake and `db:migrate`
+  # waits 60s before reporting "pool is probably full" — the backend never
+  # becomes healthy and nothing downstream starts. Override DATABASE_URL for a
+  # managed database that wants TLS.
+  DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-medusa}:${POSTGRES_PASSWORD:-medusa}@postgres:5432/${POSTGRES_DB:-medusa}?sslmode=disable}
+  REDIS_URL: ${CONTAINER_REDIS_URL:-redis://redis:6379}
+  MEDUSA_BACKEND_URL: ${MEDUSA_BACKEND_URL:-http://localhost:9000}
+  MEDUSA_ADMIN_URL: ${MEDUSA_ADMIN_URL:-http://localhost:9000/app}
+  STORE_CORS: ${STORE_CORS:-http://localhost:3000}
+  ADMIN_CORS: ${ADMIN_CORS:-http://localhost:7000,http://localhost:3000}
+  AUTH_CORS: ${AUTH_CORS:-http://localhost:3000}
+  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
+  COOKIE_SECRET: ${COOKIE_SECRET:?Set COOKIE_SECRET in .env (openssl rand -hex 32)}
+  # Payments / shipping / CMS integrations. Empty values disable the adapter.
+  RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+  RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+  RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+  SHIPROCKET_API_TOKEN: ${SHIPROCKET_API_TOKEN:-}
+  SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}
+  SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
+  # Object storage for product media in production (S3-compatible). Leave empty
+  # to upload nothing: /admin/upload answers 503 "Media uploads not configured"
+  # rather than failing halfway. Names match api/admin/upload/route.ts.
+  AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+  AWS_S3_ACCESS_KEY_ID: ${AWS_S3_ACCESS_KEY_ID:-}
+  AWS_S3_SECRET_ACCESS_KEY: ${AWS_S3_SECRET_ACCESS_KEY:-}
+  MEDIA_DOMAIN: ${MEDIA_DOMAIN:-}
+  AWS_REGION: ${AWS_REGION:-ap-south-1}
+  # Transactional email. Without FROM_EMAIL plus SES credentials the notification
+  # module still runs, but every message is rendered and recorded as `skipped`
+  # instead of sent — order confirmations never leave the server.
+  AWS_SES_REGION: ${AWS_SES_REGION:-ap-south-1}
+  AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID:-}
+  AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY:-}
+  AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
+  FROM_EMAIL: ${FROM_EMAIL:-}
+  FROM_NAME: ${FROM_NAME:-SnehaVrinda Kala}
+  # Where commission requests and internal notices are announced.
+  COMMISSION_INBOX: ${COMMISSION_INBOX:-}
+  CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+  # Realtime admin notifications pushed from the backend to the storefront.
+  # Unset = notifications are skipped silently (nothing else breaks).
+  STOREFRONT_URL: ${STOREFRONT_URL:-http://localhost:3000}
+  INTERNAL_NOTIFY_SECRET: ${INTERNAL_NOTIFY_SECRET:-}
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: snehavrinda-postgres
     environment:
-      POSTGRES_USER: medusa
-      POSTGRES_PASSWORD: medusa
-      POSTGRES_DB: medusa
+      POSTGRES_USER: ${POSTGRES_USER:-medusa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-medusa}
+      POSTGRES_DB: ${POSTGRES_DB:-medusa}
     ports:
-      # Host port 5432 is sometimes occupied by unrelated local tooling;
-      # containers still reach Postgres at postgres:5432 on the compose network.
-      - "5433:5432"
+      # Host 5432 is frequently taken by unrelated tooling; containers always
+      # reach Postgres at postgres:5432 on the compose network. Bound to
+      # loopback so a cloud VM does not expose the database to the internet.
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medusa -d medusa"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medusa} -d ${POSTGRES_DB:-medusa}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
+    restart: unless-stopped
+    logging: *default-logging
     networks:
       - snehavrinda
 
   redis:
     image: redis:7-alpine
     container_name: snehavrinda-redis
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
     ports:
-      - "6379:6379"
+      # Loopback only. Redis here has no password, which is safe on the private
+      # compose network and is a remote shell if it ever reaches a public port.
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
+    restart: unless-stopped
+    logging: *default-logging
     networks:
       - snehavrinda
 
@@ -44,35 +148,60 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile
       target: runtime
-    # Production server (medusa start). The image never runs `develop`.
+    image: snehakala-backend:latest
+    # Waits for Postgres, applies migrations, then serves. `medusa start` is
+    # never used without migrations having run first (see the entrypoint).
     environment:
-      DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa
-      REDIS_URL: redis://redis:6379
-      MEDUSA_BACKEND_URL: http://localhost:9000
-      MEDUSA_ADMIN_URL: http://localhost:9000/app
-      STORE_CORS: http://localhost:3000
-      ADMIN_CORS: http://localhost:7000,http://localhost:3000
-      AUTH_CORS: http://localhost:3000
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
-      COOKIE_SECRET: ${COOKIE_SECRET:?Set COOKIE_SECRET in .env (openssl rand -hex 32)}
-      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
-      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
-      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
-      SHIPROCKET_API_TOKEN: ${SHIPROCKET_API_TOKEN:-}
-      SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}
-      SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
-      SANITY_PROJECT_ID: ${SANITY_PROJECT_ID:-}
-      SANITY_DATASET: ${SANITY_DATASET:-production}
-      SANITY_API_TOKEN: ${SANITY_API_TOKEN:-}
-      AWS_REGION: ${AWS_REGION:-ap-south-1}
-    restart: unless-stopped
+      <<: *backend-environment
     ports:
-      - "9000:9000"
+      # Loopback by default; the proxy profile is the way to serve it publicly.
+      - "127.0.0.1:${BACKEND_PORT:-9000}:9000"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    # Migrations must not be interrupted mid-way on redeploy.
+    stop_grace_period: 30s
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - snehavrinda
+
+  # One-shot provisioning. Idempotent: safe on every `up`.
+  #
+  # Creates the Medusa admin users, the INR region, the sales channel, the
+  # publishable API key the storefront uses, product categories, a starter
+  # catalogue, a stock location and a shipping option so checkout has rates.
+  seed:
+    container_name: snehavrinda-seed
+    image: snehakala-backend:latest
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: ["node", "scripts/bootstrap-store.mjs"]
+    environment:
+      <<: *backend-environment
+      MEDUSA_BACKEND_URL: http://backend:9000
+      # Admin accounts. The Medusa user signs into the storefront admin panel
+      # (it calls the admin API on your behalf); the second pair is optional.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@snehavrindakala.example}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme-admin-password}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      MEDUSA_ADMIN_EMAIL: ${MEDUSA_ADMIN_EMAIL:-}
+      MEDUSA_ADMIN_PASSWORD: ${MEDUSA_ADMIN_PASSWORD:-}
+      # 1 = also create the starter catalogue (products/categories). Set 0 to
+      # provision only the shop wiring.
+      SEED_CATALOGUE: ${SEED_CATALOGUE:-1}
+      PLATFORM_MODE: ${PLATFORM_MODE:-single-brand}
+    restart: "no"
+    logging: *default-logging
     networks:
       - snehavrinda
 
@@ -82,17 +211,34 @@ services:
       context: .
       dockerfile: apps/storefront/Dockerfile
       args:
+        # Baked into the client bundle at build time: set it to the public URL
+        # BEFORE the first build, not after.
         NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-http://localhost:3000}
         NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID:-}
     environment:
       # Server-side calls use the Docker network hostname.
       MEDUSA_BACKEND_URL: http://backend:9000
-      # Browser-facing URL (only used by client components if any).
-      NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://localhost:9000
+      # Fallback for server code that builds browser-facing links.
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${NEXT_PUBLIC_MEDUSA_BACKEND_URL:-http://localhost:9000}
+      # Resolved at container start from the backend (scripts/runtime-env.mjs).
+      # Whatever is set here is only a fallback.
       MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-}
       MEDUSA_REGION_ID: ${MEDUSA_REGION_ID:-}
-      MEDUSA_SALES_CHANNEL_ID: ${MEDUSA_SALES_CHANNEL_ID:-sc_01M6QMMBSV8S75TW9HTZJ6ZQK0}
+      MEDUSA_SALES_CHANNEL_ID: ${MEDUSA_SALES_CHANNEL_ID:-}
       MEDUSA_CURRENCY_CODE: ${MEDUSA_CURRENCY_CODE:-inr}
+      MEDUSA_REQUEST_TIMEOUT_MS: ${MEDUSA_REQUEST_TIMEOUT_MS:-10000}
+      # Some server actions read the NEXT_PUBLIC_ spellings first; without them the
+      # admin panel's product calls fell through to an empty key.
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${MEDUSA_PUBLISHABLE_KEY:-}
+      NEXT_PUBLIC_MEDUSA_SALES_CHANNEL_ID: ${MEDUSA_SALES_CHANNEL_ID:-}
+      # GST: the seller's home state decides CGST+SGST versus IGST, and prices are
+      # treated as tax-inclusive. Both were read by lib/tax-server.ts but never
+      # passed into the container, so the split silently fell back to defaults.
+      SELLER_HOME_STATE: ${SELLER_HOME_STATE:-Karnataka}
+      GST_RATE: ${GST_RATE:-5}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+      # Postgres pool size for the storefront's own tables.
+      PG_POOL_MAX: ${PG_POOL_MAX:-10}
       # Razorpay checkout (server-side order creation + browser SDK key)
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
@@ -109,30 +255,76 @@ services:
       NEXT_PUBLIC_SANITY_PROJECT_ID: ${SANITY_PROJECT_ID:-}
       NEXT_PUBLIC_SANITY_DATASET: ${SANITY_DATASET:-production}
       NEXT_PUBLIC_SANITY_API_VERSION: ${NEXT_PUBLIC_SANITY_API_VERSION:-2026-01-01}
-      # Admin access control
+      # Admin access control (storefront session) and the Medusa system user
+      # the admin panel uses for admin API calls.
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
-      # Dedicated Medusa system user for admin API calls
       MEDUSA_ADMIN_EMAIL: ${MEDUSA_ADMIN_EMAIL:-}
       MEDUSA_ADMIN_PASSWORD: ${MEDUSA_ADMIN_PASSWORD:-}
       # Admin sessions + server-side data access
       COOKIE_SECRET: ${COOKIE_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-}
-      DATABASE_URL: postgresql://medusa:medusa@postgres:5432/medusa
+      # The storefront owns a few tables (admin sessions, translations, review
+      # cache) and applies them itself on start-up.
+      DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-medusa}:${POSTGRES_PASSWORD:-medusa}@postgres:5432/${POSTGRES_DB:-medusa}?sslmode=disable}
       PLATFORM_MODE: ${PLATFORM_MODE:-single-brand}
       # Admin-uploaded media. Written outside `public/` because the standalone
       # build snapshots that folder at compile time, so anything added later
       # would 404. Served by app/uploads/[...path]/route.ts.
       MEDIA_ROOT: /data/uploads
     ports:
-      - "3000:3000"
+      - "127.0.0.1:${STOREFRONT_PORT:-3000}:3000"
     volumes:
       - storefront_media:/data/uploads
     depends_on:
       backend:
         condition: service_healthy
+      # The storefront resolves its publishable key at start-up, so the key has
+      # to exist first. Seeding only creates wiring + demo catalogue; it never
+      # touches uploaded media.
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
     restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - snehavrinda
+
+  # Optional TLS front door for cloud deployments:
+  #   docker compose --profile proxy up -d
+  # Caddy obtains and renews certificates for STOREFRONT_DOMAIN and API_DOMAIN
+  # on its own. Not started by default, so local development stays on :3000.
+  proxy:
+    image: caddy:2-alpine
+    container_name: snehavrinda-proxy
+    profiles: ["proxy"]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      # Defaults keep `docker compose up` working without the proxy profile:
+      # compose interpolates every service even when its profile is off, so a
+      # required (:?) variable here would break plain local starts.
+      STOREFRONT_DOMAIN: ${STOREFRONT_DOMAIN:-shop.example.com}
+      API_DOMAIN: ${API_DOMAIN:-api.example.com}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      storefront:
+        condition: service_started
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    logging: *default-logging
     networks:
       - snehavrinda
 
@@ -140,6 +332,8 @@ volumes:
   postgres_data:
   redis_data:
   storefront_media:
+  caddy_data:
+  caddy_config:
 
 networks:
   snehavrinda:
