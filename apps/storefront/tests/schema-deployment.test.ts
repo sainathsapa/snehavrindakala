@@ -21,30 +21,35 @@ const read = (p: string) => readFileSync(join(root, p), "utf8");
 
 describe("schema deployment", () => {
   const dockerfile = read("Dockerfile");
+  const entrypoint = read("docker-entrypoint.sh");
 
   it("ships the schema and the migration into the runtime image", () => {
     // The builder stage has the source tree via `COPY apps/storefront`, but the
     // runner stage starts from a bare node image and gets only what is copied
     // explicitly. Forgetting either copy leaves the runner unable to migrate.
     expect(dockerfile).toMatch(/COPY[^\n]*apps\/storefront\/db[^\n]*apps\/storefront\/db/);
-    expect(dockerfile).toMatch(/COPY[^\n]*scripts\/migrate\.mjs/);
+    expect(dockerfile).toMatch(/COPY[^\n]*apps\/storefront\/scripts/);
   });
 
   it("migrates before serving, and does not serve when the migration fails", () => {
-    const cmd = dockerfile.match(/^CMD\s+\[(.*)\]$/m);
-    expect(cmd).toBeTruthy();
+    // Start-up lives in the entrypoint script rather than a CMD array: it also
+    // has to resolve the publishable key before the server starts.
+    expect(dockerfile).toMatch(/CMD[^\n]*docker-entrypoint\.sh/);
+    expect(entrypoint).toMatch(/^set -e$/m);
 
-    const parts = cmd![1];
-    const migrateAt = parts.indexOf("migrate.mjs");
-    const serveAt = parts.indexOf("server.js");
+    const migrateAt = entrypoint.indexOf("scripts/migrate.mjs");
+    const serveAt = entrypoint.indexOf("server.js");
 
     expect(migrateAt).toBeGreaterThan(-1);
     expect(serveAt).toBeGreaterThan(migrateAt);
 
-    // `;` would start the server even after a failed migration, turning a
-    // deploy-time error into a runtime one nobody is watching for.
-    expect(parts).toMatch(/migrate\.mjs && (exec )?node/);
-    expect(parts).not.toMatch(/migrate\.mjs;/);
+    // `;` or `|| true` would start the server even after a failed migration,
+    // turning a deploy-time error into a runtime one nobody is watching for.
+    // Only the runtime-env step is allowed to be best effort.
+    const migrateLine = entrypoint
+      .split("\n")
+      .find((line) => line.includes("scripts/migrate.mjs"))!;
+    expect(migrateLine).not.toMatch(/;|\|\|/);
   });
 
   it("is safe to run more than once", () => {

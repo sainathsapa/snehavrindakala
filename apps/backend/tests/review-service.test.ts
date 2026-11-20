@@ -59,14 +59,14 @@ describe("ReviewService.summary", () => {
       review({ rating: 1, status: "pending" }),
       review({ rating: 1, status: "rejected" }),
     ]);
-    const summary = await new ReviewService(mgr).summary("prod_1");
+    const summary = await new ReviewService({ manager: mgr }).summary("prod_1");
     expect(summary.count).toBe(2);
     expect(summary.average).toBe(5);
   });
 
   it("returns null average when there are no approved reviews", async () => {
     const mgr = fakeManager([review({ status: "pending" })]);
-    const summary = await new ReviewService(mgr).summary("prod_1");
+    const summary = await new ReviewService({ manager: mgr }).summary("prod_1");
     expect(summary.count).toBe(0);
     expect(summary.average).toBeNull();
   });
@@ -77,7 +77,7 @@ describe("ReviewService.summary", () => {
       review({ rating: 4 }),
       review({ rating: 4 }),
     ]);
-    const summary = await new ReviewService(mgr).summary("prod_1");
+    const summary = await new ReviewService({ manager: mgr }).summary("prod_1");
     // (5+4+4)/3 = 4.333... -> 4.3
     expect(summary.average).toBe(4.3);
   });
@@ -89,7 +89,7 @@ describe("ReviewService.summary", () => {
       review({ rating: 3 }),
       review({ rating: 1, status: "rejected" }),
     ]);
-    const summary = await new ReviewService(mgr).summary("prod_1");
+    const summary = await new ReviewService({ manager: mgr }).summary("prod_1");
     const byRating = Object.fromEntries(
       summary.distribution.map((d) => [d.rating, d.count])
     );
@@ -107,13 +107,13 @@ describe("ReviewService.listPublic", () => {
       review({ id: "b", status: "pending" }),
       review({ id: "c", product_id: "prod_2", status: "approved" }),
     ]);
-    const list = await new ReviewService(mgr).listPublic("prod_1");
+    const list = await new ReviewService({ manager: mgr }).listPublic("prod_1");
     expect(list.map((r) => r.id)).toEqual(["a"]);
   });
 
   it("falls back to 'A customer' when the author name is empty", async () => {
     const mgr = fakeManager([review({ author_name: null })]);
-    const list = await new ReviewService(mgr).listPublic("prod_1");
+    const list = await new ReviewService({ manager: mgr }).listPublic("prod_1");
     expect(list[0].author_name).toBe("A customer");
   });
 });
@@ -123,13 +123,13 @@ describe("ReviewService.hasReviewed", () => {
     const mgr = fakeManager([
       review({ customer_id: "cus_1", product_id: "prod_1" }),
     ]);
-    expect(await new ReviewService(mgr).hasReviewed("prod_1", "cus_1")).toBe(true);
+    expect(await new ReviewService({ manager: mgr }).hasReviewed("prod_1", "cus_1")).toBe(true);
   });
 
   it("is false for a different product", async () => {
     const mgr = fakeManager([
       review({ customer_id: "cus_1", product_id: "prod_1" }),
     ]);
-    expect(await new ReviewService(mgr).hasReviewed("prod_2", "cus_1")).toBe(false);
+    expect(await new ReviewService({ manager: mgr }).hasReviewed("prod_2", "cus_1")).toBe(false);
   });
 });
