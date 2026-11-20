@@ -1,4 +1,5 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/types";
+import { NOTIFICATION_MODULE } from "../../../../modules/notification";
 import type { NotificationService } from "../../../../modules/notification/service";
 import { hasTemplate } from "../../../../modules/notification/templates";
 
@@ -22,7 +23,7 @@ const STOREFRONT_TEMPLATES = new Set(["order_confirmation"]);
 
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const notificationService = req.scope.resolve(
-    "notification"
+    NOTIFICATION_MODULE
   ) as NotificationService;
 
   const { to, template, data } = (req.body || {}) as {

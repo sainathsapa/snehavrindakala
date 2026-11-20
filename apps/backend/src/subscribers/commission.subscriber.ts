@@ -39,7 +39,7 @@ export default async function commissionSubscriber(args: any): Promise<void> {
   const data = event?.data || {};
   const id = event?.id || "";
 
-  const notificationModuleService = container.resolve("notification");
+  const notificationModuleService = container.resolve("app_notification");
   const ledgerModuleService = container.resolve("ledger");
   const integrationEventService = container.resolve("integration_event");
 

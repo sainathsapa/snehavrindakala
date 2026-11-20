@@ -18,7 +18,18 @@ import type {
 } from "./types";
 
 export class ReviewService {
-  constructor(private readonly manager_: any) {}
+  /**
+   * Medusa constructs a module service with a single object, not positional
+   * arguments. Taking `manager` positionally here meant the service received the
+   * module's container instead, so `this.manager_.find(...)` was read as a
+   * container lookup and every /store/reviews call failed with
+   * "Could not resolve 'find'". Same shape as the other custom modules.
+   */
+  private readonly manager_: any;
+
+  constructor({ manager }: { manager: any }) {
+    this.manager_ = manager;
+  }
 
   async create(input: CreateReviewInput): Promise<any> {
     const review = this.manager_

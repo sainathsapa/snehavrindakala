@@ -11,23 +11,23 @@ export class Migration20261105000007 extends Migration {
 
   async up(): Promise<void> {
     this.addSql(
-      `ALTER TABLE "notification" DROP CONSTRAINT IF EXISTS "notification_status_check";`
+      `ALTER TABLE "app_notification" DROP CONSTRAINT IF EXISTS "notification_status_check";`
     );
     this.addSql(
-      `ALTER TABLE "notification" ADD CONSTRAINT "notification_status_check"
+      `ALTER TABLE "app_notification" ADD CONSTRAINT "notification_status_check"
        CHECK ("status" IN ('pending','sent','delivered','failed','bounced','skipped'));`
     );
   }
 
   async down(): Promise<void> {
     this.addSql(
-      `ALTER TABLE "notification" DROP CONSTRAINT IF EXISTS "notification_status_check";`
+      `ALTER TABLE "app_notification" DROP CONSTRAINT IF EXISTS "notification_status_check";`
     );
     this.addSql(
-      `UPDATE "notification" SET "status" = 'failed' WHERE "status" = 'skipped';`
+      `UPDATE "app_notification" SET "status" = 'failed' WHERE "status" = 'skipped';`
     );
     this.addSql(
-      `ALTER TABLE "notification" ADD CONSTRAINT "notification_status_check"
+      `ALTER TABLE "app_notification" ADD CONSTRAINT "notification_status_check"
        CHECK ("status" IN ('pending','sent','delivered','failed','bounced'));`
     );
   }

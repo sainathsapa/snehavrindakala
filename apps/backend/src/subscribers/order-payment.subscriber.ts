@@ -25,7 +25,7 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
 
   const paymentModuleService = container.resolve("payment");
   const fulfilmentModuleService = container.resolve("fulfillment");
-  const notificationModuleService = container.resolve("notification");
+  const notificationModuleService = container.resolve("app_notification");
   const integrationEventService = container.resolve("integration_event");
 
   const correlationId = id;

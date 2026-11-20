@@ -16,7 +16,11 @@ export type NotificationStatus =
   | "skipped";
 export type NotificationChannel = "email" | "whatsapp" | "sms";
 
-export const Notification = model.define("notification", {
+/**
+ * Own table, not Medusa's `notification` table: two modules may not own the same
+ * table, and Medusa's notification module creates that one itself.
+ */
+export const Notification = model.define("app_notification", {
   id: model.text().primaryKey(),
   recipient: model.text(),
   channel: model.enum(["email", "whatsapp", "sms"]),
