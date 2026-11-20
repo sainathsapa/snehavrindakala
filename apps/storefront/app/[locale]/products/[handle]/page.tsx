@@ -431,28 +431,6 @@ export default async function ProductDetailPage({
               }))}
               title={catalogueTitle}
             />
-
-            {/* Provisional imagery.
-
-                Sixteen works carry an AI-generated image that shows a plausible
-                piece of its kind, not the object being sold. Saying so once, under
-                the gallery, is the difference between a catalogue that is being
-                finished and one that overstates.
-
-                Keyed on the filename, so it retires itself: replace the file with
-                a real photograph and this line disappears with no code change.
-
-                The thumbnail is checked as well as the gallery images. One work
-                has a generated thumbnail but no image row at all, so testing only
-                the gallery left its page silently unlabelled. */}
-            {[
-              ...(images as { url?: string }[]).map((img) => img?.url),
-              (product as { thumbnail?: string }).thumbnail,
-            ].some((url) => url?.includes("/generated-")) && (
-              <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-ink">
-                {t("representativeImage")}
-              </p>
-            )}
           </div>
 
           {/* The label. */}

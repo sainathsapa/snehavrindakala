@@ -60,14 +60,15 @@ export default function TicketDetailPage() {
   async function handleStatusChange(newStatus: string) {
     setSaving(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000"}/api/admin/tickets/${id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      // Relative on purpose: this runs in the browser, and NEXT_PUBLIC_* values
+      // are frozen into the bundle at build time. An absolute URL here would pin
+      // the image to whatever hostname was used at build, so a deploy behind a
+      // different domain would call the wrong origin.
+      const res = await fetch(`/api/admin/tickets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
       if (res.ok) {
         setSaving(false);
         loadTicket(id);
