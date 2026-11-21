@@ -8,6 +8,7 @@ import { verifyOrderToken } from "@/lib/order-token";
 import { OrderNextSteps } from "@/components/order-next-steps";
 import { listCertificatesForOrder } from "@/lib/certificates";
 import { getGiftForOrder } from "@/lib/gift";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function OrderPage({
 }) {
   const { id } = await params;
   const { paid, t } = await searchParams;
+  const t18n = await getTranslations("order");
 
   const token = await getAuthToken();
   // A guest has no session, but completion hands them a signed, expiring token
@@ -74,18 +76,16 @@ export default async function OrderPage({
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-xl border border-sand-border bg-surface p-12 text-center">
             <p className="text-lg text-muted-ink font-sans mb-2">
-              We could not show this order here.
+              {t18n("noAccessTitle")}
             </p>
             <p className="text-sm text-muted-ink font-sans mb-6">
-              If you just paid, open the link in your confirmation email — it
-              takes you straight to this order. Signing in with the address you
-              used at checkout will also show it here.
+              {t18n("noAccessBody")}
             </p>
             <Link
               href="/account/login"
               className="inline-flex items-center gap-2 text-sm font-medium text-sindoor hover:underline"
             >
-              Sign in →
+              {t18n("signIn")}
             </Link>
           </div>
         </div>
@@ -123,13 +123,13 @@ export default async function OrderPage({
             href="/account"
             className="inline-flex items-center gap-2 text-sm font-medium text-sindoor hover:underline mb-4"
           >
-            ← Back to account
+            ← {t18n("backToAccount")}
           </Link>
           <h1 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ink">
-            Order #{order.display_id ?? order.id.slice(-6)}
+            {t18n("title", { ref: String(order.display_id ?? order.id.slice(-6)) })}
           </h1>
           <p className="mt-2 text-muted-ink font-sans">
-            Placed{" "}
+            {t18n("placed")}{" "}
             <time dateTime={order.created_at}>
               {new Date(order.created_at).toLocaleDateString()}
             </time>
@@ -138,7 +138,7 @@ export default async function OrderPage({
 
         {paid && (
           <div className="mb-8 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 font-sans">
-            Payment confirmed — thank you for your order!
+            {t18n("paidBanner")}
           </div>
         )}
 
@@ -150,7 +150,7 @@ export default async function OrderPage({
         <div className="grid lg:grid-cols-3 gap-8">
           <section className="lg:col-span-2 rounded-xl border border-sand-border bg-surface p-8">
             <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
-              Items ({totalItems})
+              {t18n("itemsHeading", { count: totalItems })}
             </h2>
             <div className="space-y-6">
               {items.map((item: any) => (
@@ -160,7 +160,7 @@ export default async function OrderPage({
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-serif text-deep-ink">
-                      {item.product_title || item.title || "Product"}
+                      {item.product_title || item.title || t18n("productFallback")}
                     </p>
                     {item.variant_title && (
                       <p className="text-xs text-muted-ink font-sans">
@@ -192,11 +192,11 @@ export default async function OrderPage({
             {gift && (gift.note || gift.wrap) && (
               <div className="mt-8 border-t border-sand-border pt-6">
                 <h3 className="font-serif text-lg font-semibold text-deep-ink">
-                  Gift
+                  {t18n("giftHeading")}
                 </h3>
                 {gift.wrap && (
                   <p className="mt-1 font-sans text-sm text-muted-ink">
-                    Wrapped as a gift.
+                    {t18n("giftWrapped")}
                   </p>
                 )}
                 {gift.note && (
@@ -210,11 +210,10 @@ export default async function OrderPage({
             {certificates.length > 0 && (
               <div className="mt-8 border-t border-sand-border pt-6">
                 <h3 className="font-serif text-lg font-semibold text-deep-ink">
-                  Certificates of authenticity
+                  {t18n("certHeading")}
                 </h3>
                 <p className="mt-1 mb-4 font-sans text-sm text-muted-ink">
-                  One for each work, stating the maker and the date it was issued.
-                  Print or save it, and use the reference to check a copy at any time.
+                  {t18n("certIntro")}
                 </p>
                 <ul className="space-y-3">
                   {certificates.map((certificate) => (
@@ -223,13 +222,13 @@ export default async function OrderPage({
                       className="flex flex-wrap items-baseline justify-between gap-2"
                     >
                       <span className="font-serif text-deep-ink">
-                        {certificate.title || "Untitled work"}
+                        {certificate.title || t18n("certUntitled")}
                       </span>
                       <Link
                         href={`/verify/${certificate.code}`}
                         className="font-sans text-sm text-sindoor hover:underline"
                       >
-                        View certificate →
+                        {t18n("certView")}
                       </Link>
                     </li>
                   ))}
@@ -240,35 +239,35 @@ export default async function OrderPage({
 
           <section className="rounded-xl border border-sand-border bg-surface p-8">
             <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
-              Order summary
+              {t18n("summaryHeading")}
             </h2>
             <ul className="space-y-4 text-muted-ink font-sans">
               <li className="flex justify-between">
-                <span>Subtotal</span>
+                <span>{t18n("subtotal")}</span>
                 <span>{formatPrice(order.subtotal, order.currency_code)}</span>
               </li>
               {order.shipping_total && order.shipping_total > 0 && (
                 <li className="flex justify-between">
-                  <span>Shipping</span>
+                  <span>{t18n("shipping")}</span>
                   <span>{formatPrice(order.shipping_total, order.currency_code)}</span>
                 </li>
               )}
               {order.tax_total && order.tax_total > 0 && (
                 <li className="flex justify-between">
-                  <span>Tax</span>
+                  <span>{t18n("tax")}</span>
                   <span>{formatPrice(order.tax_total, order.currency_code)}</span>
                 </li>
               )}
               {order.discount_total && order.discount_total > 0 && (
                 <li className="flex justify-between">
-                  <span>Discount</span>
+                  <span>{t18n("discount")}</span>
                   <span className="text-green-700">
                     -{formatPrice(order.discount_total, order.currency_code)}
                   </span>
                 </li>
               )}
               <li className="flex justify-between border-t border-sand-border pt-4 font-serif font-semibold text-deep-ink">
-                <span>Total</span>
+                <span>{t18n("total")}</span>
                 <span>{formatPrice(order.total, order.currency_code)}</span>
               </li>
             </ul>
@@ -276,19 +275,19 @@ export default async function OrderPage({
             <div className="mt-8">
               <dl className="space-y-3 text-sm font-sans">
                 <div className="flex justify-between">
-                  <dt className="text-muted-ink">Status</dt>
+                  <dt className="text-muted-ink">{t18n("statusLabel")}</dt>
                   <dd className="text-deep-ink font-medium">
                     {order.status?.replace(/_/g, " ") || "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-ink">Payment</dt>
+                  <dt className="text-muted-ink">{t18n("paymentLabel")}</dt>
                   <dd className="text-deep-ink font-medium">
                     {order.payment_status?.replace(/_/g, " ") || "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-ink">Currency</dt>
+                  <dt className="text-muted-ink">{t18n("currencyLabel")}</dt>
                   <dd className="text-deep-ink font-medium">
                     {order.currency_code?.toUpperCase() || "INR"}
                   </dd>
@@ -301,17 +300,17 @@ export default async function OrderPage({
         {order.shipping_address && (
           <section className="mt-8 rounded-xl border border-sand-border bg-surface p-8">
             <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
-              Shipping address
+              {t18n("addressHeading")}
             </h2>
             <dl className="space-y-2 text-sm font-sans">
               <div className="flex justify-between">
-                <dt className="text-muted-ink">Name</dt>
+                <dt className="text-muted-ink">{t18n("nameLabel")}</dt>
                 <dd className="text-deep-ink">
                   {`${order.shipping_address.first_name || ""} ${order.shipping_address.last_name || ""}`.trim() || "—"}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-ink">Address</dt>
+                <dt className="text-muted-ink">{t18n("addressLabel")}</dt>
                 <dd className="text-deep-ink">
                   {order.shipping_address.address_1 || "—"}
                   {order.shipping_address.address_2 && (
@@ -322,19 +321,19 @@ export default async function OrderPage({
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-ink">City, State</dt>
+                <dt className="text-muted-ink">{t18n("cityState")}</dt>
                 <dd className="text-deep-ink">
                   {`${order.shipping_address.city || ""}, ${order.shipping_address.province || ""}`.trim() || "—"}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-ink">PIN / Country</dt>
+                <dt className="text-muted-ink">{t18n("pinCountry")}</dt>
                 <dd className="text-deep-ink">
                   {`${order.shipping_address.postal_code || ""} ${order.shipping_address.country_code || "IN"}`.trim() || "—"}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-ink">Phone</dt>
+                <dt className="text-muted-ink">{t18n("phoneLabel")}</dt>
                 <dd className="text-deep-ink">{order.shipping_address.phone || "—"}</dd>
               </div>
             </dl>
@@ -344,7 +343,7 @@ export default async function OrderPage({
         {shipment && (
           <section className="mt-8 rounded-xl border border-sand-border bg-surface p-8">
             <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
-              Shipment
+              {t18n("shipmentHeading")}
             </h2>
             <dl className="space-y-3 text-sm font-sans">
               <div className="flex justify-between">
@@ -355,7 +354,7 @@ export default async function OrderPage({
               </div>
               {shipment.courier_name && (
                 <div className="flex justify-between">
-                  <dt className="text-muted-ink">Courier</dt>
+                  <dt className="text-muted-ink">{t18n("courierLabel")}</dt>
                   <dd className="text-deep-ink">
                     {shipment.courier_name}
                     {shipment.courier_service
@@ -366,7 +365,7 @@ export default async function OrderPage({
               )}
               {shipment.awb_code && (
                 <div className="flex justify-between">
-                  <dt className="text-muted-ink">AWB / Tracking no.</dt>
+                  <dt className="text-muted-ink">{t18n("awbLabel")}</dt>
                   <dd className="text-deep-ink font-mono text-xs">
                     {shipment.awb_code}
                   </dd>
@@ -380,7 +379,7 @@ export default async function OrderPage({
                 rel="noreferrer"
                 className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-sindoor hover:underline"
               >
-                Track your shipment →
+                {t18n("trackShipment")}
               </a>
             )}
           </section>
@@ -391,13 +390,13 @@ export default async function OrderPage({
             href="/shop"
             className="text-sm text-muted-ink font-sans hover:text-sindoor transition-colors"
           >
-            ← Continue shopping
+            ← {t18n("continueShopping")}
           </Link>
           <Link
             href={`/account/returns?order_id=${order.id}`}
             className="text-sm font-medium text-sindoor hover:underline"
           >
-            Need to return something? Request a return →
+            {t18n("requestReturn")}
           </Link>
         </div>
       </div>

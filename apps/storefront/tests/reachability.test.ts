@@ -163,6 +163,29 @@ describe("message bundles", () => {
     }
   });
 
+
+  it("every namespace a page asks for exists in both bundles", () => {
+    const namespaces = new Set<string>();
+    for (const file of sourceFiles) {
+      const source = readFileSync(file, "utf8");
+      for (const match of source.matchAll(/getTranslations\(["']([^"']+)["']\)/g)) {
+        namespaces.add(match[1]);
+      }
+      for (const match of source.matchAll(/useTranslations\(["']([^"']+)["']\)/g)) {
+        namespaces.add(match[1]);
+      }
+    }
+
+    const missing: string[] = [];
+    for (const namespace of namespaces) {
+      const hasIn = (bundle: Map<string, string>) =>
+        [...bundle.keys()].some((key) => key === namespace || key.startsWith(`${namespace}.`));
+      if (!hasIn(en)) missing.push(`${namespace} (en)`);
+      if (!hasIn(hi)) missing.push(`${namespace} (hi)`);
+    }
+    expect(missing, `namespaces with no messages: ${missing.join(", ")}`).toEqual([]);
+  });
+
   it("does not leave English text in the Hindi bundle", () => {
     // Keys whose value is identical to English and contains no Devanagari: brand
     // names and short codes are fine, whole sentences are not.

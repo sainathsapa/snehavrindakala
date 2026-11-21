@@ -29,6 +29,13 @@ export default function robots(): MetadataRoute.Robots {
     "/login",
     "/_next/",
     "/search",
+    // A tracking lookup is a form, not a page: crawling it produces nothing and
+    // fills the logs with invented AWB numbers.
+    "/track",
+    // A certificate code *is* the proof. Indexing one would publish a buyer's
+    // reference to anyone searching for it; the printed certificate carries the
+    // link for the person who owns it.
+    "/verify/",
   ];
 
   return {
