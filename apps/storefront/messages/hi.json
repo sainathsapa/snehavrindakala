@@ -135,7 +135,10 @@
     "browse": "उत्पाद देखें",
     "discount": "छूट",
     "addToCart": "कार्ट में जोड़ें",
-    "adding": "जोड़ा जा रहा है…"
+    "adding": "जोड़ा जा रहा है…",
+    "viewCart": "कार्ट देखें",
+    "commission": "कमीशन",
+    "unavailable": "अभी उपलब्ध नहीं"
   },
   "checkout": {
     "title": "भुगतान",

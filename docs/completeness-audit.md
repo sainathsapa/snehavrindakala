@@ -145,3 +145,45 @@ node -e 'const k=o=>Object.entries(o).flatMap(([a,b])=>typeof b==="object"?k(b).
 const e=k(require("./messages/en.json")),h=k(require("./messages/hi.json"));
 console.log(e.length,h.length,e.filter(x=>!h.includes(x)).length)'
 ```
+
+## 8. What changed since this audit
+
+The audit above measured the storefront as it was. Several of its findings have
+since been closed, and the counts have moved. This section is the delta, kept
+here so the numbers above are not mistaken for current ones.
+
+| Then | Now |
+| --- | --- |
+| 74 internal links checked | 0 broken, 0 missing |
+| 110 URLs, 55 Hindi, 220 hreflang | unchanged; `/authenticity`, `/faq` and `/disclaimer` added to the sitemap |
+| 791 keys in `en.json` / `hi.json` | 923 in each, identical key sets, enforced by `tests/reachability.test.ts` |
+| — | 71 API routes, 75 pages |
+
+Closed:
+
+- the footer signup posted to `/api/newsletter`, which did not exist. There is
+  now a table, an endpoint, an admin list and a CSV export;
+- photographs and dimensions are still owner data, but the pages now omit the
+  row instead of rendering an empty one, and the admin checklist says so;
+- the order page was English-only; it is translated, with the gift note left
+  exactly as the buyer wrote it;
+- new: certificates of authenticity with a public verification page, work
+  alerts, per-work inquiries, provenance and condition fields, saved-not-bought
+  reporting, studio progress photos, gift notes, two-person refund approval,
+  unfinished-checkout reminders, and verified nightly backups.
+
+Still open, and honestly so:
+
+- **art-form `origin`** needs a taxonomy decision from the owner: the six
+  categories are not all traditions, and four straddle several states;
+- **`madhubani-celebration`** still has no description, and it has already been
+  sold three times;
+- **dimensions on 21 works** and **16 stand-in photographs** need the studio;
+- **Hindi art-form prose** (`description_hi`, `story_hi`, `materials_hi`,
+  `quote_hi`) needs a native writer, not a translation tool;
+- **checkout still completes on `pp_system_default`** while the Razorpay
+  provider handles admin-side capture, refunds and webhooks. Switching the
+  storefront path needs a sandbox run, because two order-creation paths exist
+  and removing one blind risks charging twice;
+- **email is a no-op** until `FROM_EMAIL` and the SES credentials are set.
+  `/admin/settings` now says so in the product, not only in `DEPLOY.md`.

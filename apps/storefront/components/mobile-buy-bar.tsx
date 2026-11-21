@@ -14,6 +14,7 @@
  */
 
 import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { useAddToCart } from "@/lib/hooks/use-add-to-cart";
 import { formatPrice } from "@/lib/medusa";
 
@@ -33,6 +34,7 @@ export function MobileBuyBar({
   /** Artwork title, for the truncating label above the price. */
   title?: string;
 }) {
+  const t = useTranslations("cart");
   const { add, isPending, result } = useAddToCart();
 
   return (
@@ -63,14 +65,14 @@ export function MobileBuyBar({
               href="/custom-art"
               className="inline-block rounded-full bg-kumkum px-5 py-3 font-sans text-sm font-semibold text-rang-paper"
             >
-              Commission
+              {t("commission")}
             </Link>
           ) : result?.ok ? (
             <Link
               href="/cart"
               className="inline-block rounded-full bg-leaf px-5 py-3 font-sans text-sm font-semibold text-rang-paper"
             >
-              View cart
+              {t("viewCart")}
             </Link>
           ) : (
             <button
@@ -79,7 +81,11 @@ export function MobileBuyBar({
               onClick={() => add(variantId, 1)}
               className="rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-semibold text-rang-paper transition-colors disabled:opacity-50"
             >
-              {!inStock ? "Unavailable" : isPending ? "Adding…" : "Add to cart"}
+              {!inStock
+                ? t("unavailable")
+                : isPending
+                  ? t("adding")
+                  : t("addToCart")}
             </button>
           )}
         </div>

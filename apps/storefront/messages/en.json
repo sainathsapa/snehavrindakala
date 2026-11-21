@@ -135,7 +135,10 @@
     "browse": "Browse products",
     "discount": "Discount",
     "addToCart": "Add to Cart",
-    "adding": "Adding…"
+    "adding": "Adding…",
+    "viewCart": "View cart",
+    "commission": "Commission",
+    "unavailable": "Unavailable"
   },
   "checkout": {
     "title": "Checkout",
