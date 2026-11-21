@@ -113,6 +113,15 @@ CREATE TABLE IF NOT EXISTS category_translation (
   PRIMARY KEY (id)
 );
 
+-- One reminder per unfinished checkout. The primary key is the rate limit:
+-- a second send for the same cart cannot be recorded, and the endpoint refuses it.
+CREATE TABLE IF NOT EXISTS cart_reminders (
+  cart_id text NOT NULL,
+  status text NOT NULL,
+  sent_at timestamp with time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (cart_id)
+);
+
 CREATE TABLE IF NOT EXISTS certificates (
   id SERIAL NOT NULL,
   code text NOT NULL,

@@ -7,6 +7,8 @@
  */
 
 import { describe, expect, it, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   formatMoney,
   hasTemplate,
@@ -178,5 +180,62 @@ describe("isValidEmail", () => {
     expect(isValidEmail("asha@")).toBe(false);
     expect(isValidEmail("")).toBe(false);
     expect(isValidEmail("asha example.com")).toBe(false);
+  });
+});
+
+/**
+ * The cart reminder is the only unsolicited email the shop sends, so it has one
+ * job: be quiet, say what was left behind, and promise not to repeat itself.
+ */
+describe("cart_reminder", () => {
+  it("is a registered template", () => {
+    expect(hasTemplate("cart_reminder")).toBe(true);
+  });
+
+  it("names the works that were left in the cart, with the total", () => {
+    const email = renderTemplate("cart_reminder", ctx, {
+      currency: "inr",
+      subtotal: 4650000,
+      items: [
+        { title: "Madhubani Celebration", quantity: 1, total: 4500000 },
+        { title: "A small study", quantity: 2, total: 300000 },
+      ],
+    });
+    expect(email.subject).toBe("Your work is still here");
+    expect(email.html).toContain("Madhubani Celebration");
+    expect(email.html).toContain("× 2");
+    expect(email.html).toContain("₹46,500");
+    expect(email.text).toContain("Madhubani Celebration");
+  });
+
+  it("says nothing is charged and that it will not be repeated", () => {
+    const email = renderTemplate("cart_reminder", ctx, { items: [] });
+    expect(email.html).toMatch(/nothing has been charged/i);
+    expect(email.html).toMatch(/only reminder/i);
+    expect(email.text).toMatch(/only reminder/i);
+  });
+
+  it("still renders with no items, because a cart can be emptied and mailed", () => {
+    const email = renderTemplate("cart_reminder", ctx, {});
+    expect(email.subject).toBeTruthy();
+    expect(email.html).toContain("checkout");
+  });
+
+  it("escapes a product title rather than injecting it", () => {
+    const email = renderTemplate("cart_reminder", ctx, {
+      items: [{ title: "<script>alert(1)</script>", quantity: 1, total: 100 }],
+    });
+    expect(email.html).not.toContain("<script>alert(1)</script>");
+    expect(email.html).toContain("&lt;script&gt;");
+  });
+
+  it("is the only new template the storefront may trigger", () => {
+    const route = readFileSync(
+      join(__dirname, "../src/api/store/notifications/send/route.ts"),
+      "utf8"
+    );
+    expect(route).toMatch(
+      /STOREFRONT_TEMPLATES = new Set\(\["order_confirmation", "cart_reminder"\]\)/
+    );
   });
 });

@@ -19,7 +19,7 @@ import { hasTemplate } from "../../../../modules/notification/templates";
  */
 
 /** Templates a storefront caller is permitted to trigger. */
-const STOREFRONT_TEMPLATES = new Set(["order_confirmation"]);
+const STOREFRONT_TEMPLATES = new Set(["order_confirmation", "cart_reminder"]);
 
 async function POST(req: MedusaRequest, res: MedusaResponse) {
   const notificationService = req.scope.resolve(

@@ -500,6 +500,72 @@ function commissionStatusChanged(
 }
 
 /* ------------------------------------------------------------------ *
+ * Cart reminder
+ * ------------------------------------------------------------------ */
+
+/**
+ * One reminder for an unfinished checkout.
+ *
+ * Deliberately quiet. On a shop where each work is unique, the honest thing to
+ * say is "the piece you chose is still here", not "come back and buy". The
+ * email promises it is the only one, so the shop has to keep that promise —
+ * `cart_reminders` allows exactly one send per cart.
+ */
+function cartReminder(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const currency = data.currency_code || data.currency || ctx.currency || "INR";
+  const items: Array<{ title?: string; quantity?: number; total?: number }> =
+    Array.isArray(data.items) ? data.items : [];
+
+  const lines = items
+    .map((item) =>
+      paragraph(
+        `${escapeHtml(item.title || "A work")}${
+          Number(item.quantity) > 1 ? ` × ${Number(item.quantity)}` : ""
+        }${item.total != null ? ` — ${escapeHtml(formatMoney(item.total, currency))}` : ""}`
+      )
+    )
+    .join("");
+
+  const html = layout(
+    ctx,
+    "Your work is still here",
+    paragraph(
+      "You began a checkout and did not finish it. Nothing is reserved and nothing has been charged."
+    ) +
+      lines +
+      (data.subtotal != null
+        ? muted(`Cart total: ${escapeHtml(formatMoney(data.subtotal, currency))}`)
+        : "") +
+      button(ctx, `${ctx.storefrontUrl}/checkout`, "Return to your cart") +
+      muted(
+        "A one-of-one work can be claimed by someone else in the meantime, so do write to us if you would like it held while you decide."
+      ) +
+      muted("This is the only reminder we will send about this cart."),
+    "The piece you chose is still available. Nothing has been charged."
+  );
+
+  return {
+    subject: "Your work is still here",
+    html,
+    text: [
+      "You began a checkout and did not finish it. Nothing is reserved and nothing has been charged.",
+      ...items.map(
+        (item) =>
+          `- ${item.title || "A work"}${
+            Number(item.quantity) > 1 ? ` × ${Number(item.quantity)}` : ""
+          }${item.total != null ? ` (${formatMoney(item.total, currency)})` : ""}`
+      ),
+      `\nReturn to your cart: ${ctx.storefrontUrl}/checkout`,
+      "\nThis is the only reminder we will send about this cart.",
+      `\nQuestions? ${ctx.contactEmail}`,
+    ].join("\n"),
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * Registry
  * ------------------------------------------------------------------ */
 
@@ -517,6 +583,7 @@ const RENDERERS: Record<string, Renderer> = {
   commission_request_received: commissionReceived,
   commission_quote_sent: quoteSent,
   commission_status_changed: commissionStatusChanged,
+  cart_reminder: cartReminder,
 };
 
 export function hasTemplate(template: string): boolean {
