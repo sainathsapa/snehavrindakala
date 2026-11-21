@@ -35,7 +35,13 @@ export interface ArtForm {
   published: boolean;
   /** Long-form editorial explaining the tradition. Rendered on /art-forms/[slug]. */
   story?: string;
-  /** One line of origin, e.g. "Mithila, Bihar · 14th century onward". */
+  /**
+   * One line naming what the form covers — places, traditions, or both. The
+   * values genuinely mix: "Mithila, Warli, Gond…" are traditions, "Kutch,
+   * Rajasthan, Channapatna…" are places. The label in the UI therefore reads
+   * "Regions & traditions covered"; calling it "Origin" turned that mix into a
+   * per-work provenance claim this shop cannot make.
+   */
   origin?: string;
   /** Materials or techniques, as a comma-separated list. */
   materials?: string;
@@ -314,34 +320,46 @@ async function createTables(): Promise<void> {
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote_hi TEXT NOT NULL DEFAULT ''`);
 
-  // Fill the Hindi essays for the six default art forms where they are still
-  // empty.
+  // Fill the essays for the six default art forms where they are still empty —
+  // English first, then Hindi.
   //
-  // The columns have existed for a while and were filled only by hand, so any
-  // database seeded before the Hindi was written shows English essays under
-  // Hindi chrome. Empty is the marker for "not translated yet" — every reader
-  // falls back to English — so this fills only empty values and never touches a
-  // sentence an editor has written.
+  // The English half was lost in a way nobody could see. `site_art_form` was
+  // seeded with a name, a description and an image only; the essays, materials,
+  // region line and quotation lived in `DEFAULT_ART_FORMS` and were never
+  // written, so every one of the six art-form pages rendered a header and then
+  // nothing at all. The Hindi columns were added later and were empty for the
+  // same reason, which made the gap look like a translation problem.
+  //
+  // Empty is the marker for "not written yet" and every reader falls back to
+  // English, so this fills only empty values. A sentence an editor has written in
+  // /admin is never touched by a deploy.
   for (const form of DEFAULT_ART_FORMS) {
     const hindi = ART_FORM_HINDI[form.slug];
-    if (!hindi) continue;
     await query(
       `UPDATE site_art_form
-          SET name_hi        = CASE WHEN name_hi = ''        THEN $2 ELSE name_hi END,
-              description_hi = CASE WHEN description_hi = '' THEN $3 ELSE description_hi END,
-              story_hi       = CASE WHEN story_hi = ''       THEN $4 ELSE story_hi END,
-              origin_hi      = CASE WHEN origin_hi = ''      THEN $5 ELSE origin_hi END,
-              materials_hi   = CASE WHEN materials_hi = ''   THEN $6 ELSE materials_hi END,
-              quote_hi       = CASE WHEN quote_hi = ''       THEN $7 ELSE quote_hi END
+          SET story     = CASE WHEN story = ''     THEN $2 ELSE story END,
+              origin    = CASE WHEN origin = ''    THEN $3 ELSE origin END,
+              materials = CASE WHEN materials = '' THEN $4 ELSE materials END,
+              quote     = CASE WHEN quote = ''     THEN $5 ELSE quote END,
+              name_hi        = CASE WHEN name_hi = ''        THEN $6 ELSE name_hi END,
+              description_hi = CASE WHEN description_hi = '' THEN $7 ELSE description_hi END,
+              story_hi       = CASE WHEN story_hi = ''       THEN $8 ELSE story_hi END,
+              origin_hi      = CASE WHEN origin_hi = ''      THEN $9 ELSE origin_hi END,
+              materials_hi   = CASE WHEN materials_hi = ''   THEN $10 ELSE materials_hi END,
+              quote_hi       = CASE WHEN quote_hi = ''       THEN $11 ELSE quote_hi END
         WHERE slug = $1`,
       [
         form.slug,
-        hindi.name,
-        hindi.description,
-        hindi.story,
-        hindi.origin,
-        hindi.materials,
-        hindi.quote,
+        form.story ?? "",
+        form.origin ?? "",
+        form.materials ?? "",
+        form.quote ?? "",
+        hindi?.name ?? "",
+        hindi?.description ?? "",
+        hindi?.story ?? "",
+        hindi?.origin ?? "",
+        hindi?.materials ?? "",
+        hindi?.quote ?? "",
       ]
     );
   }

@@ -85,3 +85,37 @@ describe("artwork specification labels", () => {
     expect(catalogue).toMatch(/const dispatchKey = dispatchTag\s*\?\s*undefined/);
   });
 });
+
+describe("the art-form marginalia", () => {
+  /**
+   * The `origin` value on an art form mixes places with traditions: one form
+   * lists "Mithila, Warli, Gond…" (traditions), the next "Kutch, Rajasthan,
+   * Channapatna, Bastar" (places). Labelled "Origin" it reads as a claim about
+   * where a given work was made, which is not what the data says and not
+   * something this shop can verify per piece.
+   */
+  it("labels the field for what it actually contains", () => {
+    expect(en.artForm.origin).toBe("Regions & traditions covered");
+    expect(hi.artForm.origin).toBe("क्षेत्र और परंपराएँ");
+  });
+
+  it("no longer calls it Origin", () => {
+    expect(en.artForm.origin).not.toBe("Origin");
+    expect(hi.artForm.origin).not.toBe("क्षेत्र");
+  });
+
+  it("the page reads the label from the message files", () => {
+    const page = readFileSync(
+      join(root, "app/[locale]/art-forms/[slug]/page.tsx"),
+      "utf8"
+    );
+    // A hard-coded English "Origin" here would be the same bug on /hi.
+    expect(page).toMatch(/\{t\("origin"\)\}/);
+    expect(page).not.toMatch(/>Origin</);
+  });
+
+  it("the admin editor uses the same wording as the storefront", () => {
+    const admin = readFileSync(join(root, "app/admin/content/page.tsx"), "utf8");
+    expect(admin).toContain("Regions & traditions covered");
+  });
+});

@@ -127,4 +127,13 @@ describe("wiring", () => {
     expect(siteContent).toMatch(/CASE WHEN name_hi = ''/);
     expect(siteContent).toMatch(/CASE WHEN story_hi = ''/);
   });
+
+  it("the backfill fills the English essay too", () => {
+    // `site_art_form` was seeded with a name, description and image only, so all
+    // six art-form pages rendered a header and then no essay at all — in both
+    // languages. Filling only the Hindi columns would have left /en empty.
+    expect(siteContent).toMatch(/CASE WHEN story = ''/);
+    expect(siteContent).toMatch(/CASE WHEN materials = ''/);
+    expect(siteContent).toMatch(/CASE WHEN quote = ''/);
+  });
 });

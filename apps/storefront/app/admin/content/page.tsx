@@ -136,7 +136,7 @@ export default async function AdminContentPage() {
               <Field label="Description" name="description" value={form.description} />
               <ImageField label="Image" name="image" value={form.image} />
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Origin" name="origin" value={form.origin ?? ""} />
+                <Field label="Regions & traditions covered" name="origin" value={form.origin ?? ""} />
                 <Field label="Materials" name="materials" value={form.materials ?? ""} />
               </div>
               <Field label="Pull quote" name="quote" value={form.quote ?? ""} />
@@ -174,7 +174,7 @@ export default async function AdminContentPage() {
           <Field label="Description" name="description" value="" />
           <ImageField label="Image" name="image" value="/images/artforms/painting.jpg" />
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Origin" name="origin" value="" />
+            <Field label="Regions & traditions covered" name="origin" value="" />
             <Field label="Materials" name="materials" value="" />
           </div>
           <Field label="Pull quote" name="quote" value="" />
