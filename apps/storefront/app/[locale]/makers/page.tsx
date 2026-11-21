@@ -1,10 +1,11 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { localeAlternates } from "@/lib/seo";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { ProductCard } from "@/components/product-card";
 import { listCatalogue } from "@/lib/catalogue";
+import { listArtists } from "@/lib/site-content";
 import { slugify } from "@/lib/slugs";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { notFound } from "next/navigation";
@@ -45,6 +46,7 @@ export default async function MakersPage() {
   if (getPlatformModeFromEnv() === "platform") notFound();
 
   const t = await getTranslations("makers");
+  const locale = await getLocale();
 
   let items: Awaited<ReturnType<typeof listCatalogue>> = [];
   try {
@@ -52,6 +54,11 @@ export default async function MakersPage() {
   } catch (error) {
     console.error("Failed to load catalogue for the makers page", error);
   }
+
+  // Biographies are optional. A maker with no row still gets name and works;
+  // a row only ever adds what the maker supplied. Never a drafted biography.
+  const artistRows = await listArtists(locale);
+  const artistsBySlug = new Map(artistRows.map((a) => [a.slug, a]));
 
   // Group by maker as recorded on the product. The key is the artist string
   // itself so two spellings stay separate rather than being merged into a
@@ -82,12 +89,15 @@ export default async function MakersPage() {
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           {makers.length > 0 ? (
             <div className="space-y-20">
-              {makers.map(([maker, works]) => (
+              {makers.map(([maker, works]) => {
+                const artist = artistsBySlug.get(slugify(maker));
+                return (
                 <article key={maker} id={slugify(maker)} className="scroll-mt-28">
-                  {/* A maker entry is a caption, not a card: name, count, then
-                      the actual works. There is no biography here because none
-                      has been written — inventing one would be the single
-                      fastest way to lose a buyer's trust on an art site. */}
+                  {/* A maker entry is a caption, then the works.
+
+                      A biography appears only when the maker wrote one: it is
+                      a factual claim about a living person, so an empty row is
+                      correct and a drafted one would be a lie. */}
                   <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-sand-border/60 pb-4">
                     <h2 className="font-serif text-2xl font-semibold leading-tight text-deep-ink sm:text-3xl">
                       {maker}
@@ -96,6 +106,33 @@ export default async function MakersPage() {
                       {t("worksCount", { count: works.length })}
                     </p>
                   </header>
+
+                  {artist && (artist.bio || artist.region || artist.portrait) && (
+                    <div className="mt-6 grid gap-6 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-8">
+                      {artist.portrait && (
+                        <img
+                          src={artist.portrait}
+                          alt=""
+                          aria-hidden="true"
+                          className="h-40 w-32 object-cover grayscale-[15%]"
+                        />
+                      )}
+                      <div className={artist.portrait ? "" : "sm:col-span-2"}>
+                        {(artist.region || artist.years_active) && (
+                          <p className="font-sans text-[11px] uppercase tracking-[0.18em] text-terracotta">
+                            {[artist.region, artist.years_active]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        )}
+                        {artist.bio && (
+                          <p className="mt-2 max-w-2xl whitespace-pre-line font-serif text-[17px] leading-relaxed text-muted-ink">
+                            {artist.bio}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Every work, not a preview of four.
 
@@ -124,7 +161,8 @@ export default async function MakersPage() {
                     ))}
                   </div>
                 </article>
-              ))}
+                );
+              })}
               <p className="max-w-2xl border-t border-sand-border/60 pt-6 font-sans text-[12px] leading-relaxed text-muted-ink/80">
                 {t("indexNote")}
               </p>

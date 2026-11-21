@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS commission_payouts (
   PRIMARY KEY (id)
 );
 
+
 CREATE TABLE IF NOT EXISTS discount_codes (
   id text NOT NULL DEFAULT gen_random_uuid(),
   code text NOT NULL,
@@ -271,6 +272,23 @@ CREATE TABLE IF NOT EXISTS site_art_form (
   origin_hi text NOT NULL DEFAULT ''::text,
   materials_hi text NOT NULL DEFAULT ''::text,
   quote_hi text NOT NULL DEFAULT ''::text,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS site_artist (
+  id SERIAL NOT NULL,
+  position integer NOT NULL DEFAULT 0,
+  slug text NOT NULL,
+  name text NOT NULL,
+  bio text NOT NULL DEFAULT ''::text,
+  portrait text NOT NULL DEFAULT ''::text,
+  region text NOT NULL DEFAULT ''::text,
+  years_active text NOT NULL DEFAULT ''::text,
+  published boolean NOT NULL DEFAULT true,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  name_hi text NOT NULL DEFAULT ''::text,
+  bio_hi text NOT NULL DEFAULT ''::text,
+  region_hi text NOT NULL DEFAULT ''::text,
   PRIMARY KEY (id)
 );
 

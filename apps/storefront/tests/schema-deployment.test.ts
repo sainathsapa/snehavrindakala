@@ -90,7 +90,8 @@ describe("schema deployment", () => {
       "admin_users", "app_notifications", "audit_log", "category_translation",
       "commission_payouts", "discount_codes", "journal_posts", "order_refunds",
       "order_shipments", "product_review", "product_translation", "return_requests",
-      "site_art_form", "site_featured_category", "site_hero_slide", "site_settings",
+      "site_artist", "site_art_form", "site_featured_category", "site_hero_slide",
+      "site_settings",
       "site_testimonial", "support_tickets", "ticket_replies", "translations",
     ]);
 

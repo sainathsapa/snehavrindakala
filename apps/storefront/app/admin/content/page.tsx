@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/app/admin/actions";
-import { listAllHeroSlides, listAllArtForms, listAllFeaturedCategories, listAllTestimonials } from "@/lib/site-content";
+import { listAllHeroSlides, listAllArtForms, listAllFeaturedCategories, listAllTestimonials, listAllArtists } from "@/lib/site-content";
 import {
   saveHeroSlideAction,
   deleteHeroSlideAction,
@@ -9,10 +9,13 @@ import {
   deleteFeaturedCategoryAction,
   saveTestimonialAction,
   deleteTestimonialAction,
+  saveArtistAction,
+  deleteArtistAction,
   reorderContentAction,
 } from "@/app/admin/actions";
 import { Icon } from "@snehavrinda-kala/ui";
 import { ImageFieldInput } from "./image-field-input";
+import { getPlatformModeFromEnv } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -32,11 +35,16 @@ export default async function AdminContentPage() {
     );
   }
 
-  const [slides, artForms, categories, testimonials] = await Promise.all([
+  // In platform mode makers come from the Medusa artists module, so a second
+  // editorial directory here would be the duplication the split exists to avoid.
+  const showMakers = getPlatformModeFromEnv() !== "platform";
+
+  const [slides, artForms, categories, testimonials, artists] = await Promise.all([
     listAllHeroSlides(),
     listAllArtForms(),
     listAllFeaturedCategories(),
     listAllTestimonials(),
+    showMakers ? listAllArtists() : Promise.resolve([]),
   ]);
 
   return (
@@ -294,6 +302,82 @@ export default async function AdminContentPage() {
           </div>
         </form>
       </Section>
+
+      {/* ── Makers ───────────────────────────────────────────────────────── */}
+      {showMakers && (
+      <Section
+        title="Makers"
+        hint="A biography, portrait and region for the people whose work is listed. Leave anything blank that the maker has not written or approved — an empty field simply does not appear on /makers. The slug must match the artist name on the product, lowercased with hyphens (e.g. “Sneha Sainath Sapa” → sneha-sainath-sapa)."
+        count={artists.length}
+      >
+        {artists.map((artist, index) => (
+          <Row
+            key={artist.id}
+            table="site_artist"
+            id={artist.id}
+            index={index}
+            total={artists.length}
+            published={artist.published}
+          >
+            <form action={saveArtistAction} className="grid gap-3">
+              <input type="hidden" name="id" value={artist.id} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Name" name="name" value={artist.name} required />
+                <Field label="Slug" name="slug" value={artist.slug} required />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Region" name="region" value={artist.region} />
+                <Field
+                  label="Years active"
+                  name="years_active"
+                  value={artist.years_active}
+                />
+              </div>
+              <Field label="Portrait path" name="portrait" value={artist.portrait} />
+              <TextArea
+                label="Biography"
+                name="bio"
+                value={artist.bio}
+                rows={8}
+                hint="The maker’s own words, or text they have approved. Do not draft a biography for someone."
+              />
+              <div className="flex flex-wrap items-center gap-4">
+                <Toggle name="published" checked={artist.published} />
+                <SaveButton />
+                <a
+                  href={`/makers#${artist.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-sans text-[11px] uppercase tracking-wider text-terracotta underline-offset-2 hover:underline"
+                >
+                  View page
+                </a>
+              </div>
+            </form>
+          </Row>
+        ))}
+
+        <form action={saveArtistAction} className="grid gap-3 rounded-lg border border-dashed border-sand-border p-4">
+          <p className="font-sans text-xs font-semibold uppercase tracking-wider text-terracotta">
+            Add a maker
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Name" name="name" value="" required />
+            <Field label="Slug" name="slug" value="" required />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Region" name="region" value="" />
+            <Field label="Years active" name="years_active" value="" />
+          </div>
+          <Field label="Portrait path" name="portrait" value="" />
+          <TextArea label="Biography" name="bio" value="" rows={8} />
+          <div className="flex flex-wrap items-center gap-4">
+            <Toggle name="published" checked />
+            <SaveButton label="Add maker" />
+          </div>
+        </form>
+      </Section>
+      )}
     </div>
   );
 }
@@ -369,6 +453,7 @@ function Row({
 function deleteActionFor(table: string) {
   if (table === "site_hero_slide") return deleteHeroSlideAction;
   if (table === "site_art_form") return deleteArtFormAction;
+  if (table === "site_artist") return deleteArtistAction;
   return deleteFeaturedCategoryAction;
 }
 

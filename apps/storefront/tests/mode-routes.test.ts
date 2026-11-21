@@ -55,6 +55,9 @@ const ALLOWED = [
   "app/[locale]/artists/[slug]/page.tsx",
   "components/header.tsx",
   "components/footer.tsx",
+  // The storefront content editor owns the maker biographies that only
+  // /makers renders, and it hides that section when the mode is platform.
+  "app/admin/content/page.tsx",
 ];
 
 /** Playwright specs drive the UI and may name any route, in any mode. */

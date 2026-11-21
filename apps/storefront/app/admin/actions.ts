@@ -18,6 +18,9 @@ import {
   createTestimonial,
   updateTestimonial,
   deleteTestimonial,
+  createArtist as createSiteArtist,
+  updateArtist as updateSiteArtist,
+  deleteArtist as deleteSiteArtist,
   reorder,
 } from "@/lib/site-content";
 import { medusa } from "@/lib/medusa";
@@ -354,6 +357,46 @@ export async function deleteArtFormAction(formData: FormData) {
   revalidatePath("/admin/content");
 }
 
+/**
+ * A maker's biography, portrait and region.
+ *
+ * The slug is not free-form: it has to equal slugify(product.artist) or the
+ * maker link on every product page misses this row. It is normalised here and
+ * the failure mode is visible — the page keeps showing name and works.
+ */
+export async function saveArtistAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  const id = Number(formData.get("id") || 0);
+  const name = String(formData.get("name") || "").trim();
+  const input = {
+    slug: String(formData.get("slug") || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-"),
+    name,
+    bio: String(formData.get("bio") || "").trim(),
+    portrait: String(formData.get("portrait") || "").trim(),
+    region: String(formData.get("region") || "").trim(),
+    years_active: String(formData.get("years_active") || "").trim(),
+    published: formData.get("published") === "on",
+  };
+  if (!input.slug || !input.name) {
+    throw new Error("A maker needs a name and a slug.");
+  }
+
+  if (id) await updateSiteArtist(id, input);
+  else await createSiteArtist(input);
+  revalidatePath("/makers");
+  revalidatePath("/admin/content");
+}
+
+export async function deleteArtistAction(formData: FormData) {
+  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  await deleteSiteArtist(Number(formData.get("id")));
+  revalidatePath("/makers");
+  revalidatePath("/admin/content");
+}
+
 export async function saveFeaturedCategoryAction(formData: FormData) {
   if (!(await requireAdmin())) throw new Error("Not authorised.");
   const id = Number(formData.get("id") || 0);
@@ -413,7 +456,8 @@ export async function reorderContentAction(formData: FormData) {
     | "site_hero_slide"
     | "site_art_form"
     | "site_featured_category"
-    | "site_testimonial";
+    | "site_testimonial"
+    | "site_artist";
   const id = Number(formData.get("id"));
   const direction = String(formData.get("direction")) === "up" ? "up" : "down";
   if (
@@ -422,6 +466,7 @@ export async function reorderContentAction(formData: FormData) {
       "site_art_form",
       "site_featured_category",
       "site_testimonial",
+      "site_artist",
     ].includes(table)
   ) {
     throw new Error("Unknown list.");

@@ -42,6 +42,20 @@ export interface ArtForm {
   quote?: string;
 }
 
+/** A maker's own words, portrait and region. Empty fields render nothing. */
+export interface SiteArtist {
+  id: number;
+  position: number;
+  /** Must equal slugify(product.artist) so the PDP maker link resolves. */
+  slug: string;
+  name: string;
+  bio: string;
+  portrait: string;
+  region: string;
+  years_active: string;
+  published: boolean;
+}
+
 export interface FeaturedCategory {
   id: number;
   position: number;
@@ -290,6 +304,33 @@ async function createTables(): Promise<void> {
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS origin_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote_hi TEXT NOT NULL DEFAULT ''`);
+
+  // Maker biographies.
+  //
+  // /makers derives its entries from product.artist, so this table is optional
+  // by design: a maker with no row still appears with a name and a work count.
+  // What it adds is the part that cannot be derived — a biography, a portrait, a
+  // region — and only where the maker supplied them. `slug` must equal
+  // slugify(product.artist) so the PDP maker link lands on the right entry
+  // without a second mapping. Single-brand only: in platform mode the artists
+  // module is the directory, and a second one would compete with it.
+  await query(`
+    CREATE TABLE IF NOT EXISTS site_artist (
+      id SERIAL PRIMARY KEY,
+      position INTEGER NOT NULL DEFAULT 0,
+      slug TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      bio TEXT NOT NULL DEFAULT '',
+      portrait TEXT NOT NULL DEFAULT '',
+      region TEXT NOT NULL DEFAULT '',
+      years_active TEXT NOT NULL DEFAULT '',
+      published BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await query(`ALTER TABLE site_artist ADD COLUMN IF NOT EXISTS name_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_artist ADD COLUMN IF NOT EXISTS bio_hi TEXT NOT NULL DEFAULT ''`);
+  await query(`ALTER TABLE site_artist ADD COLUMN IF NOT EXISTS region_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS title_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS excerpt_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS content_hi TEXT NOT NULL DEFAULT ''`);
@@ -756,6 +797,74 @@ export async function deleteArtForm(id: number): Promise<void> {
   await query("DELETE FROM site_art_form WHERE id=$1", [id]);
 }
 
+/* --------------------------------- artists -------------------------------- */
+
+/**
+ * Published makers, keyed for the /makers page.
+ *
+ * Returns an empty array rather than throwing when the table is unreachable:
+ * the page derives its entries from the catalogue, so a missing biography must
+ * never take the whole directory down.
+ */
+export async function listArtists(locale = "en"): Promise<SiteArtist[]> {
+  const rows = await safeRows<SiteArtist>(
+    "SELECT * FROM site_artist WHERE published ORDER BY position, id"
+  );
+  return withHindi(rows, locale, ["name", "bio", "region"]);
+}
+
+export async function listAllArtists(): Promise<SiteArtist[]> {
+  return safeRows<SiteArtist>("SELECT * FROM site_artist ORDER BY position, id");
+}
+
+export async function createArtist(input: Writable<SiteArtist>): Promise<void> {
+  await ensureSeeded();
+  await query(
+    `INSERT INTO site_artist
+       (position, slug, name, bio, portrait, region, years_active, published)
+     VALUES
+       (COALESCE((SELECT MAX(position) + 1 FROM site_artist), 0),
+        $1,$2,$3,$4,$5,$6,$7)`,
+    [
+      input.slug,
+      input.name,
+      input.bio,
+      input.portrait,
+      input.region,
+      input.years_active,
+      input.published,
+    ]
+  );
+}
+
+export async function updateArtist(
+  id: number,
+  input: Writable<SiteArtist>
+): Promise<void> {
+  await ensureSeeded();
+  await query(
+    `UPDATE site_artist SET
+       slug=$2, name=$3, bio=$4, portrait=$5, region=$6,
+       years_active=$7, published=$8, updated_at=NOW()
+     WHERE id=$1`,
+    [
+      id,
+      input.slug,
+      input.name,
+      input.bio,
+      input.portrait,
+      input.region,
+      input.years_active,
+      input.published,
+    ]
+  );
+}
+
+export async function deleteArtist(id: number): Promise<void> {
+  await ensureSeeded();
+  await query("DELETE FROM site_artist WHERE id=$1", [id]);
+}
+
 export async function createTestimonial(
   input: Writable<Testimonial>
 ): Promise<void> {
@@ -825,7 +934,8 @@ export async function reorder(
     | "site_hero_slide"
     | "site_art_form"
     | "site_featured_category"
-    | "site_testimonial",
+    | "site_testimonial"
+    | "site_artist",
   id: number,
   direction: "up" | "down"
 ): Promise<void> {
