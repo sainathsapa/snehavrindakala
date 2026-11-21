@@ -21,10 +21,27 @@ import path from "path";
 import crypto from "crypto";
 import { MEDIA_ROOT } from "@/lib/media";
 import { validateCommissionFile } from "@/lib/commission-upload";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 const PRIVATE_SUBDIR = "commission-private";
 
 export async function POST(req: Request) {
+  // This writes a file to disk and needs no session, so the size cap alone is
+  // not enough: one loop could fill the volume. Ten an hour still allows a
+  // buyer to attach several references to one brief.
+  const limit = await checkRateLimit({
+    route: "commission-upload",
+    ip: clientIp(req.headers),
+    limit: 10,
+    windowSeconds: 3600,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many uploads from this connection. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get("file");

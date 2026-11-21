@@ -1,11 +1,21 @@
 /**
- * POST /api/store/shipping/shipment - Create a Shiprocket shipment after order placement
+ * POST /api/store/shipping/shipment - Create a Shiprocket shipment after order placement.
+ *
+ * Admin-only. This books a real courier pickup against the studio's account:
+ * left public, anyone who found it could open shipments and burn shipping
+ * credit from the shop's wallet. The admin order screen books through
+ * /api/admin/orders/[id]/shipment; this is the lower-level passthrough.
  */
 
 import { NextResponse } from "next/server";
 import { createShipment } from "@/lib/shipping/shiprocket";
+import { requireAdmin } from "@/app/admin/actions";
 
 export async function POST(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const {

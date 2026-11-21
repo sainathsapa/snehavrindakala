@@ -1,9 +1,15 @@
 /**
- * GET /api/tickets/[id] - Get ticket detail with replies
+ * GET /api/tickets/[id] - Get ticket detail with replies.
+ *
+ * Admin-only. This route was public: a ticket id is enough to read the sender's
+ * email address, their message and the whole reply thread. Ticket ids are short
+ * (`ticket_` + 8 hex characters), so "unguessable" was not a defence — this is
+ * someone else's correspondence.
  */
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { requireAdmin } from "@/app/admin/actions";
 
 
 
@@ -11,6 +17,10 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
 
