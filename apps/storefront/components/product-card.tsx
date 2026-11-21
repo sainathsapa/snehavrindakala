@@ -34,6 +34,12 @@ interface ProductCardProps {
    * name, which is what a wall label wants — no id, no handle.
    */
   collection?: string;
+  /**
+   * Already sold. Every work here is one of one, so a grid that does not say so
+   * quietly promises something the shop no longer has: the card still links to a
+   * page whose button says Sold.
+   */
+  sold?: boolean;
 }
 
 /**
@@ -63,6 +69,7 @@ export function ProductCard({
   medium,
   dimensions,
   collection,
+  sold = false,
 }: ProductCardProps) {
   const hasImage = Boolean(image);
   const t = useTranslations("product");
@@ -76,7 +83,6 @@ export function ProductCard({
   const availability = availabilityKey[stockType]
     ? t(availabilityKey[stockType])
     : stockType.replace(/_/g, " ");
-
   return (
     <article className="group">
       <Link href={`/products/${handle}`} className="block focus:outline-none">
@@ -157,7 +163,9 @@ export function ProductCard({
             </p>
           )}
           <p className="mt-2 flex items-baseline justify-between gap-3 font-sans text-xs">
-            <span className="text-muted-ink">{availability}</span>
+            <span className={sold ? "text-terracotta" : "text-muted-ink"}>
+              {sold ? t("sold") : availability}
+            </span>
             <span className="font-medium text-deep-ink">{formatPrice(price, currency.toUpperCase())}</span>
           </p>
         </div>

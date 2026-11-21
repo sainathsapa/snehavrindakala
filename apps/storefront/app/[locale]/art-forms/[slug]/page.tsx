@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, KalamBorder, MandalaField } from "@/components/ornaments";
 import { ButiField, PaperGrain } from "@/components/grounds";
 import { medusa } from "@/lib/medusa";
+import { soldHandles } from "@/lib/sold-works";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +113,8 @@ export default async function ArtFormPage({ params }: PageProps) {
   const items = await listCatalogueFor([slug, raw.name, raw.slug]).catch(
     () => []
   );
+  // Works already sold stay in the record of the tradition, marked as sold.
+  const sold = await soldHandles();
 
   const others = forms.filter((f) => f.slug !== slug).slice(0, 3);
 
@@ -236,6 +239,7 @@ export default async function ArtFormPage({ params }: PageProps) {
                 <ProductCard
                   key={item.handle}
                   handle={item.handle}
+                  sold={sold.has(item.handle)}
                   title={item.title}
                   artist={item.artist}
                   price={item.price}

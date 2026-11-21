@@ -1,5 +1,6 @@
 import { medusa } from "@/lib/medusa";
 import { listCatalogue } from "@/lib/catalogue";
+import { soldHandles } from "@/lib/sold-works";
 import { ProductCard } from "@/components/product-card";
 import { BotanicalRule } from "@/components/ornaments";
 import { Link } from "@/i18n/routing";
@@ -74,6 +75,7 @@ export default async function ArtistProfilePage({
   // does not expose a product-by-artist query, and the catalogue is small, so
   // filtering in memory is both correct and cheap.
   const catalogue = await listCatalogue().catch(() => []);
+  const sold = await soldHandles();
   const schema = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -220,6 +222,7 @@ export default async function ArtistProfilePage({
                 <ProductCard
                   key={item.handle}
                   handle={item.handle}
+                  sold={sold.has(item.handle)}
                   title={item.title}
                   artist={item.artist}
                   price={item.price}

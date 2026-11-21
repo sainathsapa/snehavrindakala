@@ -89,7 +89,8 @@
     "customOnly": "Commission only",
     "careNote": "Care note",
     "certificate": "Signed certificate included",
-    "viewPlate": "View plate →"
+    "viewPlate": "View plate →",
+    "sold": "Sold"
   },
   "shop": {
     "title": "The Collection",

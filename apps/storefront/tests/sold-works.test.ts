@@ -111,6 +111,21 @@ describe("where the guard is enforced", () => {
     }
   });
 
+
+  it("every grid that shows a work marks the sold ones", () => {
+    for (const file of [
+      "app/[locale]/shop/page.tsx",
+      "app/[locale]/shop/[category]/page.tsx",
+      "app/[locale]/art-forms/[slug]/page.tsx",
+      "app/[locale]/artists/[slug]/page.tsx",
+      "app/[locale]/makers/page.tsx",
+    ]) {
+      const source = read(file);
+      expect(source, file).toMatch(/soldHandles\(\)/);
+      expect(source, file).toMatch(/sold=\{sold\.has\(item\.handle\)\}/);
+    }
+  });
+
   it("the sold copy does not promise editions that do not exist", () => {
     const options = read("components/product-options.tsx");
     // The phrase may survive in a comment explaining why it was wrong; it must

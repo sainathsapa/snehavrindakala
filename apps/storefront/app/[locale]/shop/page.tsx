@@ -12,6 +12,7 @@ import { localeRedirect } from "@/lib/locale-redirect";
 import { getArtFormByQuery } from "@/lib/slugs";
 import { getTranslations, getLocale } from "next-intl/server";
 import { categoryTranslationsFor } from "@/lib/site-content";
+import { soldHandles } from "@/lib/sold-works";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,7 @@ export default async function ShopPage({
   // Live catalogue, falling back to the seed set when Medusa is empty, so the
   // shop never renders blank while the backend is only partly populated.
   const items = await listCatalogue();
+  const sold = await soldHandles();
   const t = await getTranslations("shop");
   const locale = await getLocale();
 
@@ -197,6 +199,7 @@ export default async function ShopPage({
                 <ProductCard
                   key={item.handle}
                   handle={item.handle}
+                  sold={sold.has(item.handle)}
                   title={item.title}
                   artist={item.artist}
                   price={item.price}

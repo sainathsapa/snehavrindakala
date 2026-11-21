@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { ProductCard } from "@/components/product-card";
 import { listCatalogue } from "@/lib/catalogue";
+import { soldHandles } from "@/lib/sold-works";
 import { listArtists } from "@/lib/site-content";
 import { slugify } from "@/lib/slugs";
 import { getPlatformModeFromEnv } from "@/lib/settings";
@@ -54,6 +55,8 @@ export default async function MakersPage() {
   } catch (error) {
     console.error("Failed to load catalogue for the makers page", error);
   }
+
+  const sold = await soldHandles();
 
   // Biographies are optional. A maker with no row still gets name and works;
   // a row only ever adds what the maker supplied. Never a drafted biography.
@@ -147,6 +150,7 @@ export default async function MakersPage() {
                       <ProductCard
                         key={item.handle}
                         handle={item.handle}
+                        sold={sold.has(item.handle)}
                         title={item.title}
                         artist={item.artist}
                         price={item.price}

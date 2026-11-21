@@ -10,6 +10,7 @@ import { ShopControls } from "@/components/shop-controls";
 import { applyShopFilters, availableMediums } from "@/lib/shop-filters";
 import { getTranslations, getLocale } from "next-intl/server";
 import { categoryTranslationsFor } from "@/lib/site-content";
+import { soldHandles } from "@/lib/sold-works";
 
 export const dynamic = "force-dynamic";
 
@@ -184,6 +185,10 @@ export default async function ShopCategoryPage({
     console.error("Failed to load products for category", err);
   }
 
+  // A grid that does not mark a sold work quietly promises something the shop no
+  // longer has: every card links to a page whose button says Sold.
+  const sold = await soldHandles();
+
   const num = (v?: string) => {
     const n = v != null && v !== "" ? Number(v) : NaN;
     return Number.isFinite(n) ? n : undefined;
@@ -309,6 +314,7 @@ export default async function ShopCategoryPage({
                 <ProductCard
                   key={item.handle}
                   handle={item.handle}
+                  sold={sold.has(item.handle)}
                   title={item.title}
                   artist={item.artist}
                   price={item.price}
