@@ -19,6 +19,14 @@ interface Analytics {
   status_distribution: { status: string; count: string }[];
 }
 
+interface WishlistInsight {
+  handle: string;
+  title: string;
+  price: number | null;
+  saves: number;
+  last_saved: string | null;
+}
+
 function money(value: string | number) {
   const amount = Number(value || 0) / 100;
   return `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
@@ -32,6 +40,11 @@ function monthLabel(value: string) {
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null);
+  const [wishlist, setWishlist] = useState<{
+    waiting: WishlistInsight[];
+    purchased: WishlistInsight[];
+    total_saves: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,6 +55,13 @@ export default function AnalyticsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    // The saved list has been collected since it was written and read nowhere.
+    // It is cheap to load beside the dashboard's own numbers.
+    fetch("/api/admin/analytics/wishlist", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((w: any) => setWishlist(w))
+      .catch(() => setWishlist(null));
   }, []);
 
   if (loading) {
@@ -189,6 +209,63 @@ export default function AnalyticsPage() {
             </div>
           )}
         </section>
+
+        {wishlist && wishlist.waiting.length > 0 && (
+          <section className="mt-6 rounded-xl border border-sand-border bg-surface overflow-hidden">
+            <h2 className="px-6 py-4 font-serif font-semibold text-deep-ink border-b border-sand-border">
+              Saved, not bought
+            </h2>
+            <p className="px-6 pt-4 text-sm text-muted-ink font-sans">
+              Works visitors put in their list and have not purchased. On a shop
+              where each piece is made once, this is the shortest list of things
+              worth looking at again — a price, a photograph, a word of
+              description.
+            </p>
+            <table className="mt-4 w-full text-sm font-sans">
+              <thead>
+                <tr className="border-b border-sand-border text-left text-[11px] uppercase tracking-wider text-muted-ink">
+                  <th className="px-6 py-2">Work</th>
+                  <th className="px-6 py-2 text-right">Saves</th>
+                  <th className="px-6 py-2 text-right">Price</th>
+                  <th className="px-6 py-2 text-right">Last saved</th>
+                </tr>
+              </thead>
+              <tbody>
+                {wishlist.waiting.map((row) => (
+                  <tr key={row.handle} className="border-b border-sand-border/60 last:border-0">
+                    <td className="px-6 py-3">
+                      <Link
+                        href={`/products/${row.handle}`}
+                        className="text-deep-ink hover:text-terracotta hover:underline"
+                      >
+                        {row.title}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-3 text-right font-semibold">{row.saves}</td>
+                    <td className="px-6 py-3 text-right text-muted-ink">
+                      {row.price === null ? "—" : money(row.price)}
+                    </td>
+                    <td className="px-6 py-3 text-right text-muted-ink">
+                      {row.last_saved
+                        ? new Date(row.last_saved).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                          })
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {wishlist.purchased.length > 0 && (
+              <p className="px-6 py-3 text-xs text-muted-ink font-sans border-t border-sand-border">
+                {wishlist.purchased.length} saved work
+                {wishlist.purchased.length === 1 ? "" : "s"} have since sold and
+                are not listed here.
+              </p>
+            )}
+          </section>
+        )}
       </div>
     </main>
   );
