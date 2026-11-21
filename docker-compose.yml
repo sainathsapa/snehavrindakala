@@ -328,6 +328,61 @@ services:
     networks:
       - snehavrinda
 
+  # ── Nightly database backups ───────────────────────────────────────────────
+  # `docs/DEPLOY.md` told operators to take backups; nothing took them. This is
+  # the thing that does: a daily pg_dump into ./backups, verified (the archive
+  # must decompress and contain the shop's tables) before it is renamed into
+  # place, with dumps older than BACKUP_RETENTION_DAYS removed.
+  #
+  # Behind the `ops` profile so a plain `docker compose up -d` on a laptop does
+  # not quietly start writing database dumps to the developer's disk:
+  #   docker compose --profile ops up -d backup
+  #
+  # Restore is not automated on purpose. A dump nobody has restored is a hope.
+  # Run `scripts/restore-drill.sh <file>` monthly; it restores into a scratch
+  # database and counts rows, leaving the live shop untouched.
+  backup:
+    image: postgres:16-alpine
+    profiles: ["ops"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-medusa}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-medusa}
+      PGDATABASE: ${POSTGRES_DB:-medusa}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ./backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    # `$$` escapes compose interpolation; the shell inside the container expands
+    # these. Each dump is written to a partial name and renamed only after it
+    # passes `gunzip -t`, so a truncated file never looks like a usable backup.
+    command:
+      - |
+        while true; do
+          ts=$$(date -u +%Y%m%dT%H%M%SZ)
+          f=/backups/$${PGDATABASE}-$${ts}.sql.gz
+          pg_dump --no-owner --no-privileges --clean --if-exists \
+            | gzip -9 > "$${f}.partial"
+          if gunzip -t "$${f}.partial" 2>/dev/null \
+             && [ "$$(gzip -dc "$${f}.partial" | grep -c '^CREATE TABLE')" -ge 20 ]; then
+            mv "$${f}.partial" "$${f}"
+            echo "backup ok: $${f}"
+          else
+            echo "backup FAILED, left for inspection: $${f}.partial" >&2
+            rm -f "$${f}.partial"
+          fi
+          find /backups -maxdepth 1 -name "$${PGDATABASE}-*.sql.gz" \
+            -mtime +$${BACKUP_RETENTION_DAYS} -print -delete
+          sleep 86400
+        done
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - snehavrinda
+
 volumes:
   postgres_data:
   redis_data:

@@ -101,10 +101,21 @@ Two things hold state:
 | Admin-uploaded media | `storefront_media` volume |
 
 ```bash
-docker exec snehavrinda-postgres pg_dump -U medusa medusa | gzip > backup.sql.gz
-docker run --rm -v snehavrinda-kala_storefront_media:/data -v "$PWD":/out \
-  alpine tar czf /out/media.tar.gz -C /data .
+# Database. Verified dump, dated, retention applied — see docs/BACKUPS.md.
+./scripts/backup-db.sh
+
+# Or let the compose service do it nightly (dumps land in ./backups):
+docker compose --profile ops up -d backup
+
+# Media, which is a Docker volume and not in the dump at all.
+docker run --rm -v snehavrinda-kala_storefront_media:/data -v "$PWD/backups":/out \
+  alpine tar czf /out/media-$(date -u +%Y%m%dT%H%M%SZ).tar.gz -C /data .
 ```
+
+A dump is unproven until it has been restored. `./scripts/restore-drill.sh
+<file>` restores into a scratch database and counts rows; run it monthly. The
+drill, the failure modes and what is still not covered (off-site copies,
+point-in-time recovery) are in [BACKUPS.md](BACKUPS.md).
 
 Redis holds cache, workflow state and the event bus. Losing it costs in-flight
 workflows, not orders.

@@ -77,3 +77,6 @@ __pycache__/
 .tmp-review/
 *.tmp-review/
 .ux-shots/
+
+# Database dumps from scripts/backup-db.sh — never commit the shop's data.
+backups/
