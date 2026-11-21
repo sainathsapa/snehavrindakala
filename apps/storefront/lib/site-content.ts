@@ -1,4 +1,5 @@
 import { query, queryResult } from "@/lib/db";
+import { ART_FORM_HINDI } from "@/lib/art-form-hindi";
 
 /**
  * Admin-managed storefront content.
@@ -313,6 +314,38 @@ async function createTables(): Promise<void> {
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials_hi TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote_hi TEXT NOT NULL DEFAULT ''`);
 
+  // Fill the Hindi essays for the six default art forms where they are still
+  // empty.
+  //
+  // The columns have existed for a while and were filled only by hand, so any
+  // database seeded before the Hindi was written shows English essays under
+  // Hindi chrome. Empty is the marker for "not translated yet" — every reader
+  // falls back to English — so this fills only empty values and never touches a
+  // sentence an editor has written.
+  for (const form of DEFAULT_ART_FORMS) {
+    const hindi = ART_FORM_HINDI[form.slug];
+    if (!hindi) continue;
+    await query(
+      `UPDATE site_art_form
+          SET name_hi        = CASE WHEN name_hi = ''        THEN $2 ELSE name_hi END,
+              description_hi = CASE WHEN description_hi = '' THEN $3 ELSE description_hi END,
+              story_hi       = CASE WHEN story_hi = ''       THEN $4 ELSE story_hi END,
+              origin_hi      = CASE WHEN origin_hi = ''      THEN $5 ELSE origin_hi END,
+              materials_hi   = CASE WHEN materials_hi = ''   THEN $6 ELSE materials_hi END,
+              quote_hi       = CASE WHEN quote_hi = ''       THEN $7 ELSE quote_hi END
+        WHERE slug = $1`,
+      [
+        form.slug,
+        hindi.name,
+        hindi.description,
+        hindi.story,
+        hindi.origin,
+        hindi.materials,
+        hindi.quote,
+      ]
+    );
+  }
+
   // Maker biographies.
   //
   // /makers derives its entries from product.artist, so this table is optional
@@ -426,11 +459,33 @@ async function createTables(): Promise<void> {
   );
   if (forms.rows[0]?.count === "0") {
     for (const [index, form] of DEFAULT_ART_FORMS.entries()) {
+      // Seed both languages. The Hindi columns existed and were filled by
+      // hand-mode only, so a fresh install produced a Hindi storefront whose
+      // essays were English — the reader had no way to tell.
+      const hindi = ART_FORM_HINDI[form.slug];
       await query(
         `INSERT INTO site_art_form
-           (position, slug, name, description, image)
-         VALUES ($1,$2,$3,$4,$5)`,
-        [index, form.slug, form.name, form.description, form.image]
+           (position, slug, name, description, image, story, origin, materials, quote,
+            name_hi, description_hi, story_hi, origin_hi, materials_hi, quote_hi)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         ON CONFLICT (slug) DO NOTHING`,
+        [
+          index,
+          form.slug,
+          form.name,
+          form.description,
+          form.image,
+          form.story ?? "",
+          form.origin ?? "",
+          form.materials ?? "",
+          form.quote ?? "",
+          hindi?.name ?? "",
+          hindi?.description ?? "",
+          hindi?.story ?? "",
+          hindi?.origin ?? "",
+          hindi?.materials ?? "",
+          hindi?.quote ?? "",
+        ]
       );
     }
   }
