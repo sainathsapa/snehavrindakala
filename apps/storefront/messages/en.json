@@ -1004,5 +1004,27 @@
     "already": "You are already waiting for this tradition.",
     "invalid": "That email address does not look complete.",
     "failed": "We could not save that just now. Please try again."
+  },
+  "certificate": {
+    "eyebrow": "SnehaVrinda Kala · Bikaner",
+    "title": "Certificate of authenticity",
+    "print": "Print or save",
+    "work": "Work",
+    "untitled": "Untitled",
+    "maker": "Maker",
+    "makerUnrecorded": "Maker recorded in the shop's register",
+    "tradition": "Tradition",
+    "dimensions": "Dimensions",
+    "edition": "Edition",
+    "issued": "Issued",
+    "reference": "Reference",
+    "verified": "This certificate is genuine. The reference matches a work sold by SnehaVrinda Kala, and the details above are as recorded on the day of sale.",
+    "revoked": "This reference was withdrawn. The certificate is no longer valid — please contact the art house before relying on it.",
+    "footnote": "Each work sold here is made once and is not reproduced. The certificate records the work, the maker and the date of sale; it does not replace the invoice, and it carries no valuation.",
+    "viewWork": "See the work",
+    "browseWork": "Browse the collection",
+    "notFoundTitle": "No certificate with that reference",
+    "notFoundBody": "We could not find {code} in the register. Check the characters — letters I, L, O and U never appear in a reference. If it still does not resolve, write to us and we will look it up.",
+    "howWeCertify": "How we certify a work"
   }
 }

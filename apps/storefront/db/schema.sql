@@ -113,6 +113,24 @@ CREATE TABLE IF NOT EXISTS category_translation (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS certificates (
+  id SERIAL NOT NULL,
+  code text NOT NULL,
+  order_id text NOT NULL,
+  order_item_id text NOT NULL,
+  handle text NOT NULL DEFAULT ''::text,
+  title text NOT NULL DEFAULT ''::text,
+  artist text NOT NULL DEFAULT ''::text,
+  art_form text NOT NULL DEFAULT ''::text,
+  dimensions text NOT NULL DEFAULT ''::text,
+  edition text NOT NULL DEFAULT '1/1'::text,
+  issued_at timestamp with time zone NOT NULL DEFAULT now(),
+  revoked_at timestamp with time zone,
+  PRIMARY KEY (id),
+  UNIQUE (code),
+  UNIQUE (order_item_id)
+);
+
 CREATE TABLE IF NOT EXISTS commission_payouts (
   id text NOT NULL DEFAULT gen_random_uuid(),
   artist_id text NOT NULL,

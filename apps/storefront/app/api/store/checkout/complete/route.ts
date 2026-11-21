@@ -19,6 +19,7 @@ import { CART_COOKIE } from "@/lib/cart";
 import { getAdminOrder } from "@/lib/admin";
 import { createShipmentForOrder } from "@/lib/shipping/create-order-shipment";
 import { issueOrderToken } from "@/lib/order-token";
+import { issueCertificatesForOrder } from "@/lib/certificates";
 import { sendOrderConfirmation } from "@/lib/email";
 
 const RAZORPAY_KEY_ID =
@@ -168,6 +169,16 @@ export async function POST(req: Request) {
           : "Shipment could not be created. You can retry from the admin panel.";
     }
 
+    // Certificates of authenticity. Non-fatal on purpose: the sale is already
+    // complete, and a paperwork failure must not turn a paid order into an
+    // error page. Reissued from the order if it fails here.
+    let certificates: Awaited<ReturnType<typeof issueCertificatesForOrder>> = [];
+    try {
+      certificates = await issueCertificatesForOrder(fullOrder as never);
+    } catch (err) {
+      console.error("Could not issue certificates of authenticity:", err);
+    }
+
     // Send the confirmation from here as well as from the Medusa subscriber.
     // Guest checkout is the common path and must not depend on an event that
     // may fire later, or not at all if the order was already marked paid.
@@ -207,6 +218,11 @@ export async function POST(req: Request) {
       status: order.status,
       payment_status: order.payment_status,
       order_token: orderToken,
+      certificates: certificates.map((certificate) => ({
+        code: certificate.code,
+        title: certificate.title,
+        url: `/verify/${certificate.code}`,
+      })),
       confirmation_email_sent: confirmationSent,
       shipment,
       shipping_error: shippingError,

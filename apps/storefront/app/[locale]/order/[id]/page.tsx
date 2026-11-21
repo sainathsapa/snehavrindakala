@@ -6,6 +6,7 @@ import { getOrderShipment } from "@/lib/shipping/store";
 import { getAdminOrder } from "@/lib/admin";
 import { verifyOrderToken } from "@/lib/order-token";
 import { OrderNextSteps } from "@/components/order-next-steps";
+import { listCertificatesForOrder } from "@/lib/certificates";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +95,16 @@ export default async function OrderPage({
   const items = order.items ?? [];
   const totalItems = items.reduce((sum: number, i: any) => sum + (i.quantity ?? 0), 0);
 
+  // One certificate per work, issued at checkout. Absent for orders placed
+  // before certificates existed, and for a guest opening a stale link — an
+  // empty list simply renders nothing rather than an apology.
+  let certificates: Awaited<ReturnType<typeof listCertificatesForOrder>> = [];
+  try {
+    certificates = await listCertificatesForOrder(order.id);
+  } catch (error) {
+    console.error("Could not load certificates for the order", error);
+  }
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -167,6 +178,36 @@ export default async function OrderPage({
                 </div>
               ))}
             </div>
+
+            {certificates.length > 0 && (
+              <div className="mt-8 border-t border-sand-border pt-6">
+                <h3 className="font-serif text-lg font-semibold text-deep-ink">
+                  Certificates of authenticity
+                </h3>
+                <p className="mt-1 mb-4 font-sans text-sm text-muted-ink">
+                  One for each work, stating the maker and the date it was issued.
+                  Print or save it, and use the reference to check a copy at any time.
+                </p>
+                <ul className="space-y-3">
+                  {certificates.map((certificate) => (
+                    <li
+                      key={certificate.code}
+                      className="flex flex-wrap items-baseline justify-between gap-2"
+                    >
+                      <span className="font-serif text-deep-ink">
+                        {certificate.title || "Untitled work"}
+                      </span>
+                      <Link
+                        href={`/verify/${certificate.code}`}
+                        className="font-sans text-sm text-sindoor hover:underline"
+                      >
+                        View certificate →
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
 
           <section className="rounded-xl border border-sand-border bg-surface p-8">
