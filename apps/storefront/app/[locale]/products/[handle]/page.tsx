@@ -18,6 +18,7 @@ import { WorkInquiryForm } from "@/components/work-inquiry-form";
 import { ProductReviews } from "@/components/product-reviews";
 import { MobileBuyBar } from "@/components/mobile-buy-bar";
 import { getCurrentCustomer } from "@/lib/auth";
+import { isSold, isUniqueWork, soldVariantIds } from "@/lib/sold-works";
 import { RecentlyViewed, RecordRecentlyViewed } from "@/components/recently-viewed";
 import {
   findCatalogueItem,
@@ -282,17 +283,31 @@ export default async function ProductDetailPage({
     }
   }
 
-  const availability =
-    stockType === "ready_to_ship"
+  // Sold first, stock second. Stock levels are empty across this catalogue, so
+  // `inventory_quantity` was null for every work and every product page offered
+  // "Add to Cart" on pieces that had already been paid for.
+  const soldIds = await soldVariantIds();
+  const soldHere =
+    isUniqueWork(stockType) &&
+    variants.some((variant: { id: string }) => isSold(soldIds, variant.id));
+
+  const inStock =
+    !soldHere &&
+    (variants[0]?.inventory_quantity == null ||
+      (variants[0]?.inventory_quantity ?? 0) > 0);
+
+  // A sold piece was still labelled "Ready to ship", next to the terracotta dot
+  // that marks it as unavailable: the badge contradicted itself. Stock comes
+  // first here, because it is the fact a visitor needs before anything else.
+  const availability = !inStock
+    ? t("availability.sold")
+    : stockType === "ready_to_ship"
       ? t("availability.ready")
       : stockType === "custom_only"
         ? t("availability.commission")
         : stockType === "made_to_order"
           ? t("availability.madeToOrder")
           : t("availability.enquire");
-
-  const inStock =
-    variants[0]?.inventory_quantity == null || (variants[0]?.inventory_quantity ?? 0) > 0;
 
   const productUrl = `${SITE_ORIGIN}/products/${product.handle}`;
 
@@ -503,6 +518,7 @@ export default async function ProductDetailPage({
               stockType={stockType}
               isCustomOnly={isCustomOnly}
               handle={handle}
+              sold={soldHere}
             />
 
             {/* Secondary actions, quieter by design. */}

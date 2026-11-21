@@ -15,6 +15,7 @@ import { medusa } from "@/lib/medusa";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { selectShippingRate } from "@/lib/shipping/select-rate";
 import { checkoutIsPossible } from "@/lib/config-status";
+import { isSold, soldVariantIds } from "@/lib/sold-works";
 
 const PICKUP_POSTCODE = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
 
@@ -52,6 +53,24 @@ export async function POST(req: Request) {
     const cart = await medusa.getCart(cart_id);
     if (!cart || cart.items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+    }
+
+    // A work sold between adding it and paying for it. Refused here as well as in
+    // the add action, because a cart can sit for days and the second sale is the
+    // one that hurts.
+    const sold = await soldVariantIds();
+    const soldItem = cart.items.find((item: any) =>
+      isSold(sold, item?.variant_id ?? item?.variant?.id)
+    );
+    if (soldItem) {
+      return NextResponse.json(
+        {
+          error:
+            "One of these works has already found its home. Nothing has been charged — please remove it and write to the studio if you would like something similar.",
+          code: "work_already_sold",
+        },
+        { status: 409 }
+      );
     }
 
     // Medusa needs a payment session before the cart can be completed.

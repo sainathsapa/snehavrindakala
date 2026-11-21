@@ -22,6 +22,7 @@ import { issueOrderToken } from "@/lib/order-token";
 import { issueCertificatesForOrder } from "@/lib/certificates";
 import { saveGiftForOrder } from "@/lib/gift";
 import { sendOrderConfirmation } from "@/lib/email";
+import { isSold, soldVariantIds } from "@/lib/sold-works";
 
 const RAZORPAY_KEY_ID =
   process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "";
@@ -80,6 +81,27 @@ export async function POST(req: Request) {
     const cart = await medusa.getCart(cart_id);
     if (!cart || !cart.items || cart.items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+    }
+
+    // Last line of defence, after the money has moved but before the order is
+    // created. If a second buyer paid for a work that was already sold, the right
+    // thing is a refund and a conversation, not two certificates for one piece —
+    // so this refuses, and the buyer is told nothing has been charged *for this
+    // order* and to write to the studio.
+    const soldElsewhere = await soldVariantIds();
+    const clash = cart.items.find((item: any) =>
+      isSold(soldElsewhere, item?.variant_id ?? item?.variant?.id)
+    );
+    if (clash) {
+      return NextResponse.json(
+        {
+          error:
+            "This work was sold a moment before your payment. Please write to the studio with your payment ID — a refund is raised and we will find you something comparable.",
+          code: "work_already_sold",
+          payment_id: paymentId,
+        },
+        { status: 409 }
+      );
     }
 
     if (razorpay_order_id && razorpay_signature) {

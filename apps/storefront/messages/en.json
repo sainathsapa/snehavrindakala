@@ -138,7 +138,11 @@
     "adding": "Adding…",
     "viewCart": "View cart",
     "commission": "Commission",
-    "unavailable": "Unavailable"
+    "soldButton": "Sold",
+    "soldNote": "This piece has found its home.",
+    "soldNoteLink": "Ask the studio for a work in the same spirit",
+    "soldNoteEnd": "— a commission is how most of these begin.",
+    "selectedOption": "Selected option:"
   },
   "checkout": {
     "title": "Checkout",
@@ -807,7 +811,8 @@
       "ready": "Ready to ship",
       "commission": "Commission only",
       "madeToOrder": "Made to order",
-      "enquire": "Enquire"
+      "enquire": "Enquire",
+      "sold": "Sold"
     },
     "doors": {
       "tradition": "The tradition",

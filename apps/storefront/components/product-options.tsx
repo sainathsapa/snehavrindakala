@@ -38,6 +38,8 @@ interface ProductOptionsProps {
   stockType: string;
   isCustomOnly: boolean;
   handle: string;
+  /** Already paid for. A one-of-one work cannot be bought twice. */
+  sold?: boolean;
 }
 
 export function ProductOptions({
@@ -45,6 +47,7 @@ export function ProductOptions({
   price,
   currency,
   isCustomOnly,
+  sold = false,
 }: ProductOptionsProps) {
   const t = useTranslations("cart");
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
@@ -125,7 +128,7 @@ export function ProductOptions({
 
       {variants.length > 1 && variantPrice != null && selectedVariantId !== variants[0]?.id && (
         <p className="font-sans text-sm text-muted-ink">
-          Selected version:{" "}
+          {t("selectedOption")}{" "}
           <span className="font-medium text-deep-ink">
             {formatPrice(variantPrice, currency)}
           </span>
@@ -135,11 +138,15 @@ export function ProductOptions({
       {/* One primary action. */}
       <button
         type="button"
-        disabled={disabled || !inStock || isPendingAdd}
+        disabled={disabled || !inStock || sold || isPendingAdd}
         onClick={() => add(selectedVariantId, 1)}
         className="w-full rounded-full bg-kumkum px-6 py-4 font-sans text-sm font-semibold tracking-wide text-rang-paper transition-colors hover:bg-sindoor focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isPendingAdd ? t("adding") : inStock ? t("addToCart") : "Currently unavailable"}
+        {isPendingAdd
+          ? t("adding")
+          : sold || !inStock
+            ? t("soldButton")
+            : t("addToCart")}
       </button>
 
       {result && (
@@ -154,19 +161,22 @@ export function ProductOptions({
           {result.message}{" "}
           {result.ok && (
             <Link href="/cart" className="font-medium underline underline-offset-4">
-              View cart
+              {t("viewCart")}
             </Link>
           )}
         </p>
       )}
 
-      {!inStock && (
+      {(sold || !inStock) && (
+        // "Between editions" was wrong twice over: these are one-of-one works,
+        // so there are no editions, and a sold piece is sold rather than
+        // temporarily away. What a visitor needs is where to go next.
         <p className="font-sans text-xs leading-relaxed text-muted-ink">
-          This work is between editions.{" "}
+          {t("soldNote")}{" "}
           <Link href="/custom-art" className="text-terracotta underline underline-offset-4">
-            Commission something like it
+            {t("soldNoteLink")}
           </Link>{" "}
-          and we will make one for you.
+          {t("soldNoteEnd")}
         </p>
       )}
     </div>

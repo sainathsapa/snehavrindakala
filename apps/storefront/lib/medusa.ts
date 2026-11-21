@@ -25,6 +25,12 @@ const REGION_ID = process.env.MEDUSA_REGION_ID || undefined;
 const regionCache = new Map<string, string>();
 
 /**
+ * Whether the configured `MEDUSA_REGION_ID` exists in this Medusa instance.
+ * Resolved once per process; see `configuredRegionId`.
+ */
+let regionChecked: Promise<string | null> | null = null;
+
+/**
  * The publishable key may be linked to more than one sales channel, in which
  * case Medusa refuses to create a cart unless we name the channel explicitly.
  * Keep a known-good channel id as a fallback so the storefront keeps selling.
@@ -237,7 +243,7 @@ class MedusaClient {
     return (await response.json()) as T;
   }
 
-  private productQuery(params: {
+  private async productQuery(params: {
     limit?: number;
     offset?: number;
     category?: string;
@@ -245,12 +251,15 @@ class MedusaClient {
     handle?: string;
     order?: string;
     regionId?: string;
-  }): string {
+  }): Promise<string> {
     const searchParams = new URLSearchParams();
     searchParams.set("limit", String(params.limit ?? 50));
     searchParams.set("offset", String(params.offset ?? 0));
     searchParams.set("order", params.order ?? "-created_at");
-    const region = params.regionId || REGION_ID;
+    // Checked, not trusted: a stale region id here turned every product page
+    // into a 400 from Medusa and a 404 for the reader, with nothing in the page
+    // to say why.
+    const region = params.regionId || (await this.configuredRegionId()) || undefined;
     if (region) searchParams.set("region_id", region);
     // Store API hides categories by default; request them so product cards,
     // breadcrumbs, and category filters can show real catalog data.
@@ -279,7 +288,7 @@ class MedusaClient {
       count: number;
       limit: number;
       offset: number;
-    }>(`/store/products?${this.productQuery(params ?? {})}`);
+    }>(`/store/products?${await this.productQuery(params ?? {})}`);
 
     // Medusa returns `categories`; expose the first one as `category` so the
     // existing UI (product cards, detail page, breadcrumbs) keeps working.
@@ -542,7 +551,8 @@ class MedusaClient {
   }
 
   private async resolveRegionId(): Promise<string> {
-    if (REGION_ID) return REGION_ID;
+    const configured = await this.configuredRegionId();
+    if (configured) return configured;
     const { regions } = await this.listRegions();
     const region = regions.find(
       (r) =>
@@ -559,6 +569,38 @@ class MedusaClient {
   }
 
   /**
+   * The configured region id, if this Medusa instance actually has it.
+   *
+   * `MEDUSA_REGION_ID` was trusted blindly. A copy of the storefront pointed at
+   * a freshly seeded backend then failed every product query with a 400 naming
+   * a region that no longer existed, and the reader saw "Page not found" on
+   * every work in the shop — the least debuggable failure this app can produce.
+   *
+   * Checked once per process. If the lookup itself fails (backend restarting),
+   * the configured id is kept rather than replaced, so a blip cannot silently
+   * switch the shop to a different region's prices.
+   */
+  private async configuredRegionId(): Promise<string | null> {
+    if (!REGION_ID) return null;
+    if (!regionChecked) {
+      regionChecked = this.listRegions()
+        .then(({ regions }) => {
+          if ((regions ?? []).some((region) => region.id === REGION_ID)) {
+            return REGION_ID;
+          }
+          console.error(
+            `[medusa] MEDUSA_REGION_ID=${REGION_ID} does not exist in this Medusa instance. ` +
+              `Falling back to the region for ${DEFAULT_CURRENCY}. Update the environment ` +
+              `or the shop will keep using a region you did not choose.`
+          );
+          return null;
+        })
+        .catch(() => REGION_ID);
+    }
+    return regionChecked;
+  }
+
+  /**
    * The Medusa region id for a currency, memoised for the process.
    *
    * Prices are calculated per region, so choosing a currency means choosing a
@@ -568,7 +610,10 @@ class MedusaClient {
   async regionIdForCurrency(code: string): Promise<string | undefined> {
     const wanted = String(code || "").toLowerCase();
     if (!wanted) return undefined;
-    if (wanted === DEFAULT_CURRENCY && REGION_ID) return REGION_ID;
+    if (wanted === DEFAULT_CURRENCY) {
+      const configured = await this.configuredRegionId();
+      if (configured) return configured;
+    }
     if (regionCache.has(wanted)) return regionCache.get(wanted);
 
     try {

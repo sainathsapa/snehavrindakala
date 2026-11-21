@@ -82,7 +82,7 @@ export function MobileBuyBar({
               className="rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-semibold text-rang-paper transition-colors disabled:opacity-50"
             >
               {!inStock
-                ? t("unavailable")
+                ? t("soldButton")
                 : isPending
                   ? t("adding")
                   : t("addToCart")}

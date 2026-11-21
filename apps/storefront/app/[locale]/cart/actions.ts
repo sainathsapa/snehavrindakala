@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ensureCart, getCart } from "@/lib/cart";
 import { medusa } from "@/lib/medusa";
+import { isSold, soldVariantIds } from "@/lib/sold-works";
 
 export interface CartActionResult {
   ok: boolean;
@@ -25,6 +26,18 @@ export async function addToCartAction(
   }
 
   try {
+    // The product page already hides the button on a sold work, but the button is
+    // not the guard: a stale tab, the wishlist's add button and a re-posted server
+    // action all reach Medusa the same way. Every work here is one of one, so a
+    // second sale is not a duplicate order, it is a promise the shop cannot keep.
+    const sold = await soldVariantIds();
+    if (isSold(sold, variantId)) {
+      return {
+        ok: false,
+        message: "This work has found its home. Ask the studio about a commission.",
+      };
+    }
+
     const cart = await ensureCart();
     await medusa.addToCart(cart.id, { variant_id: variantId, quantity });
     revalidatePath("/cart");
