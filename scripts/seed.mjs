@@ -85,21 +85,61 @@ async function post(path, payload) {
   return { status, body };
 }
 
+/**
+ * Which payment providers the region should accept.
+ *
+ * These are Medusa provider ids, not brand names. The old seed wrote
+ * `["razorpay"]`, which is not an id any module registers, so Medusa silently
+ * created a region with no payment provider at all — checkout worked only
+ * because the storefront asks for `pp_system_default` by name.
+ *
+ * The Razorpay provider is registered by medusa-config.ts only when its keys
+ * are set, so the region is only told about it under the same condition.
+ */
+function desiredPaymentProviders() {
+  const providers = ["pp_system_default"];
+  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    providers.push("pp_razorpay_razorpay");
+  }
+  return providers;
+}
+
 async function ensureRegion() {
   // Medusa v2: list regions, create INR if missing.
   const regions = await getList("/admin/regions");
   const inr = regions.find(
     (r) => String(r.currency_code || "").toUpperCase() === "INR"
   );
+
+  const desired = desiredPaymentProviders();
+
   if (inr) {
-    console.log(`✓ Region INR exists (${inr.id})`);
+    // Reconcile, do not just return. The seed is re-run on every deploy, and a
+    // region that predates the Razorpay provider would otherwise never gain it.
+    const current = (inr.payment_providers || []).map((p) =>
+      typeof p === "string" ? p : p?.id
+    );
+    const missing = desired.filter((p) => !current.includes(p));
+    if (missing.length) {
+      const { status, body } = await post(`/admin/regions/${inr.id}`, {
+        payment_providers: desired,
+      });
+      if (status !== 200 && status !== 201) {
+        throw new Error(
+          `Enable payment providers on the region failed (${status}): ${JSON.stringify(body)}`
+        );
+      }
+      console.log(`✓ Region INR now accepts ${desired.join(", ")}`);
+    } else {
+      console.log(`✓ Region INR exists (${inr.id})`);
+    }
     return inr.id;
   }
+
   const { status, body } = await post("/admin/regions", {
     currency_code: "inr",
     name: "India",
-    payment_providers: ["razorpay"],
-    fulfillment_providers: ["shiprocket", "manual"],
+    payment_providers: desired,
   });
   if (status !== 200 && status !== 201) {
     throw new Error(`Create region failed (${status}): ${JSON.stringify(body)}`);
