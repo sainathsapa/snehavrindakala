@@ -5,6 +5,7 @@ import { CheckoutClient } from "@/components/checkout-client";
 import { TrustStrip } from "@/components/trust-strip";
 import type { SavedAddress } from "@/components/address-form";
 import { taxForAmount } from "@/lib/tax-server";
+import { checkoutIsPossible } from "@/lib/config-status";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { countryByCode } from "@/lib/location";
 import { getTranslations } from "next-intl/server";
@@ -209,6 +210,7 @@ export default async function CheckoutPage() {
           currency={currency}
           giftNote={(cart?.metadata?.gift_note as string) || ""}
           giftWrap={cart?.metadata?.gift_wrap === "true"}
+          paymentsAvailable={checkoutIsPossible()}
           subtotal={subtotal}
           lines={(items ?? []).map((item) => ({
             id: item.id,

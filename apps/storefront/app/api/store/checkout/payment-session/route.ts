@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { medusa } from "@/lib/medusa";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { selectShippingRate } from "@/lib/shipping/select-rate";
+import { checkoutIsPossible } from "@/lib/config-status";
 
 const PICKUP_POSTCODE = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
 
@@ -32,6 +33,20 @@ export async function POST(req: Request) {
 
     if (!cart_id) {
       return NextResponse.json({ error: "Cart ID required" }, { status: 400 });
+    }
+
+    // Refuse before touching the cart, and say what is wrong. A 500 with a
+    // generic message at the last step is how a buyer concludes the shop is
+    // broken rather than not yet set up.
+    if (!checkoutIsPossible()) {
+      return NextResponse.json(
+        {
+          error:
+            "This shop cannot take online payments yet. Nothing has been charged — please write to the studio and we will arrange payment directly.",
+          code: "payments_unconfigured",
+        },
+        { status: 503 }
+      );
     }
 
     const cart = await medusa.getCart(cart_id);
@@ -81,9 +96,15 @@ export async function POST(req: Request) {
     const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      // Belt and braces: `checkoutIsPossible` already refused above, but this
+      // route is reachable directly and must not create a half-session.
       return NextResponse.json(
-        { error: "Razorpay not configured" },
-        { status: 500 }
+        {
+          error:
+            "This shop cannot take online payments yet. Nothing has been charged — please write to the studio and we will arrange payment directly.",
+          code: "payments_unconfigured",
+        },
+        { status: 503 }
       );
     }
 

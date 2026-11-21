@@ -112,6 +112,8 @@ interface CheckoutClientProps {
   /** A note already saved on the cart, so a refresh does not lose it. */
   giftNote?: string;
   giftWrap?: boolean;
+  /** False when no payment provider is configured; hides the pay button. */
+  paymentsAvailable?: boolean;
 }
 
 const rateKey = (rate: ShippingRate) =>
@@ -144,6 +146,7 @@ export function CheckoutClient({
   lockedEmail = null,
   giftNote: savedGiftNote = "",
   giftWrap: savedGiftWrap = false,
+  paymentsAvailable = true,
 }: CheckoutClientProps) {
   const router = useRouter();
   const t = useTranslations("checkout");
@@ -584,7 +587,16 @@ export function CheckoutClient({
                 </details>
 
                 {/* ── The single primary action ───────────────────── */}
-                {addressStepComplete ? (
+                {!paymentsAvailable ? (
+                  <div className="mt-6 border-l-2 border-terracotta bg-terracotta/5 px-4 py-3">
+                    <p className="font-sans text-sm text-deep-ink">
+                      {t("paymentsUnavailable")}
+                    </p>
+                    <p className="mt-1 font-sans text-xs text-muted-ink">
+                      {t("paymentsUnavailableDetail")}
+                    </p>
+                  </div>
+                ) : addressStepComplete ? (
                   <div className="mt-6">
                     <RazorpayPayButton
                       amount={grandTotal}

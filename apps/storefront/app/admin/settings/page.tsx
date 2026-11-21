@@ -8,6 +8,21 @@ interface Setting {
   description: string;
 }
 
+interface ConfigItem {
+  id: string;
+  label: string;
+  level: "ready" | "partial" | "missing";
+  detail: string;
+  impact?: string;
+  keys?: string[];
+}
+
+const LEVEL_STYLE: Record<ConfigItem["level"], string> = {
+  ready: "bg-leaf/10 text-leaf border-leaf/20",
+  partial: "bg-terracotta/10 text-terracotta border-terracotta/20",
+  missing: "bg-sindoor/10 text-sindoor border-sindoor/20",
+};
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [mode, setMode] = useState("single-brand");
@@ -16,6 +31,7 @@ export default function SettingsPage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [config, setConfig] = useState<ConfigItem[]>([]);
 
   const loadSettings = useCallback(() => {
     fetch("/api/admin/settings", { cache: "no-store" })
@@ -37,6 +53,15 @@ export default function SettingsPage() {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  useEffect(() => {
+    // Presence-only: the endpoint reports whether variables are set, never their
+    // values.
+    fetch("/api/admin/config-status", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data: any) => setConfig(data.items || []))
+      .catch(() => setConfig([]));
+  }, []);
 
   function updateValue(key: string, value: string) {
     setSettings((current) =>
@@ -125,6 +150,56 @@ export default function SettingsPage() {
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-sans text-sm text-red-700">
             {error}
           </div>
+        )}
+
+        {/* What this deployment can actually do. Every gap in DEPLOY.md was
+            invisible from inside the shop: payments looked wired because
+            checkout rendered, email looked wired because orders completed. */}
+        {config.length > 0 && (
+          <section
+            aria-labelledby="configuration-heading"
+            className="mb-6 rounded-xl border border-sand-border bg-surface p-6"
+          >
+            <h2
+              id="configuration-heading"
+              className="mb-1 text-lg font-serif font-semibold text-deep-ink"
+            >
+              What this shop can do
+            </h2>
+            <p className="mb-4 font-sans text-sm text-muted-ink">
+              Presence of configuration, not proof it works. Nothing here shows a
+              secret value.
+            </p>
+            <ul className="space-y-3">
+              {config.map((item) => (
+                <li key={item.id} className="border-b border-sand-border/60 pb-3 last:border-0 last:pb-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-sans text-sm font-medium text-deep-ink">
+                      {item.label}
+                    </span>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 font-sans text-[10px] uppercase tracking-[0.14em] ${
+                        LEVEL_STYLE[item.level]
+                      }`}
+                    >
+                      {item.level}
+                    </span>
+                  </div>
+                  <p className="mt-1 font-sans text-sm text-muted-ink">{item.detail}</p>
+                  {item.impact && (
+                    <p className="mt-1 font-sans text-xs text-muted-ink/80">
+                      {item.impact}
+                    </p>
+                  )}
+                  {item.keys && item.keys.length > 0 && item.level !== "ready" && (
+                    <p className="mt-1 font-mono text-[11px] text-muted-ink/70">
+                      {item.keys.join(", ")}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         <form

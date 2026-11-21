@@ -247,7 +247,9 @@
     "giftSave": "Save note",
     "giftSaved": "Saved — this will go in the box.",
     "giftFailed": "The note could not be saved. You can mention it to us after ordering.",
-    "giftHint": "Optional. Up to 300 characters."
+    "giftHint": "Optional. Up to 300 characters.",
+    "paymentsUnavailable": "Online payment is not open on this shop yet.",
+    "paymentsUnavailableDetail": "Nothing has been charged. Write to the studio and we will arrange payment directly — the work stays available until then."
   },
   "artForm": {
     "pageTitle": "Indian Art Forms",
