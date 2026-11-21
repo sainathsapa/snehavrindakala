@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Icon } from "@snehavrinda-kala/ui";
 
 interface Commission {
@@ -258,7 +259,13 @@ export default function CommissionsPage() {
               Commissions
             </h1>
             <p className="text-muted-ink font-sans">
-              Manage artist commissions and payouts.
+              Manage artist commissions and payouts.{" "}
+              <Link
+                href="/admin/commissions/requests"
+                className="text-sindoor underline-offset-2 hover:underline"
+              >
+                Buyer requests and studio updates →
+              </Link>
             </p>
           </div>
           <button

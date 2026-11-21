@@ -9,6 +9,7 @@
 import { medusa } from "@/lib/medusa";
 import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
+import { listMilestones } from "@/lib/commission-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -161,6 +162,16 @@ export default async function CommissionStatusPage({
   const status = commission.status as string;
   const currentStep = STATUS_STEP[status];
   const terminal = TERMINAL[status];
+
+  // Studio updates. Present since the commission module was written and never
+  // read, which is why a commission that takes weeks looked stalled. Only what
+  // the studio published appears; nothing is generated.
+  let progress: Awaited<ReturnType<typeof listMilestones>> = [];
+  try {
+    progress = await listMilestones(commission.id);
+  } catch (error) {
+    console.error("Could not load studio updates for the commission", error);
+  }
 
   return (
     <main className="py-10">
@@ -336,6 +347,58 @@ export default async function CommissionStatusPage({
             </div>
           </dl>
         </section>
+
+        {/* Studio updates — what has actually happened, in the studio's words. */}
+        {progress.length > 0 && (
+          <section className="mt-8" aria-labelledby="studio-updates">
+            <h2
+              id="studio-updates"
+              className="text-lg font-serif font-semibold text-deep-ink mb-4"
+            >
+              From the studio
+            </h2>
+            <ol className="space-y-6">
+              {progress.map((update) => (
+                <li
+                  key={update.id}
+                  className="rounded-xl border border-sand-border bg-surface p-5"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 className="font-serif text-base font-semibold text-deep-ink">
+                      {update.name}
+                    </h3>
+                    <time
+                      dateTime={update.created_at}
+                      className="font-sans text-xs text-muted-ink"
+                    >
+                      {new Date(update.created_at).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </time>
+                  </div>
+                  {update.description && (
+                    <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
+                      {update.description}
+                    </p>
+                  )}
+                  {update.proof_url && (
+                    // Rendered as a plain image rather than next/image: these are
+                    // workspace files of unknown dimensions, uploaded after the
+                    // build, and the optimiser would need them at build time.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={update.proof_url}
+                      alt={update.name}
+                      className="mt-4 w-full rounded-lg border border-sand-border object-cover"
+                    />
+                  )}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
         {/* Help */}
         <section className="mt-8 rounded-xl border border-sand-border bg-rang-paper p-6">
