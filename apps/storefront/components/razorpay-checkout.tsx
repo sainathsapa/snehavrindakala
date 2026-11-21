@@ -108,7 +108,10 @@ export function RazorpayPayButton({
               }),
             });
             const verifyBody = await verifyRes.json();
-            if (verifyBody.paid) {
+            // `signature_valid`, not `paid`: the check above proves Razorpay
+            // signed this handshake, and the completion request is what records
+            // the payment and creates the order.
+            if (verifyBody.signature_valid) {
               setStatus("success");
               onSuccess({
                 paymentId: razorpay_payment_id,
