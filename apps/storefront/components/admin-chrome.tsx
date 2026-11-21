@@ -83,6 +83,9 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
     icon: "users",
     role: "manager",
   },
+  // Everything the shop tried to send and could not. Skipped messages used to be
+  // recorded where no screen looked, so a customer quietly received nothing.
+  { href: "/admin/outbox", label: "Outbox", icon: "mail", role: "manager" },
 
   { href: "/admin/discounts", label: "Discounts", icon: "discounts", role: "manager" },
   {
