@@ -131,6 +131,25 @@ docker compose up -d
 Migrations run on backend start, before the server listens. The seed job is
 idempotent, so it re-runs harmlessly and picks up new catalogue entries.
 
+## Scheduled jobs
+
+The only recurring job is the unfinished-checkout reminder:
+
+```bash
+# cron, hourly. The secret is in .env on the server.
+0 * * * * curl -fsS -H "Authorization: Bearer $(CRON_SECRET)" \
+  https://shop.example.com/api/cron/cart-reminders >/dev/null
+```
+
+It obeys the same rules as `/admin/carts`: a cart is eligible after
+`ABANDONED_CART_HOURS` of quiet, and each cart is reminded once, ever. Up to 25
+per run. Without `CRON_SECRET` the route answers 503 and sends nothing — it is
+disabled rather than open. Each run reports `sent` / `skipped` / `failed`, and
+`skipped` means no mail transport is configured, not that it worked.
+
+Nightly backups are a compose service rather than cron: see
+[BACKUPS.md](BACKUPS.md).
+
 ## Known gaps
 
 * **The providers load, but checkout still completes on the system provider.**
