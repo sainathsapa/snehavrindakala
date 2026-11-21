@@ -63,6 +63,16 @@ export interface ArtworkSpecs {
   provenance?: string;
   /** The object's actual state, in the owner's words. */
   condition?: string;
+  /**
+   * Whether anyone has actually put a tape on the work.
+   *
+   * `dimensions` may come from a seed script or a shipping estimate, and a
+   * certificate of authenticity that prints an unmeasured size is a document
+   * asserting a fact nobody checked. Only a product tagged `measured:yes` — a
+   * deliberate act by the studio — may have its size certified. The page still
+   * *shows* the stated size; only the signed document refuses to repeat it.
+   */
+  dimensionsMeasured?: boolean;
 }
 
 const STOCK_TYPES = new Set(["ready_to_ship", "made_to_order", "custom_only"]);
@@ -184,6 +194,7 @@ export function specsFromProduct(product: any, stockType: string): ArtworkSpecs 
 
   const specs: ArtworkSpecs = {
     dimensions: tag("dimensions"),
+    dimensionsMeasured: (tag("measured") || "").toLowerCase() === "yes",
     medium: tag("medium"),
     framing: tag("framing"),
     year: tag("year"),

@@ -832,6 +832,7 @@
     "continueLabel": "Continue exploring",
     "details": "Details",
     "artistLabel": "Artist",
+    "standInPhoto": "The photograph of this work is still being taken. What you see is a studio illustration of the piece — the size, materials and maker above are accurate, the picture is not. Write to us and we will send photographs before you order.",
     "shippingNote": "Packed by the studio · certificate of authenticity · tracked courier",
     "commissionSecondary": "Commission a similar piece",
     "saveToWishlist": "Save to wishlist",
@@ -851,7 +852,8 @@
       "condition": "Condition",
       "dispatchReady": "Usually dispatches in 2–4 business days",
       "dispatchMadeToOrder": "Usually ships in 2–3 weeks",
-      "dispatchCustom": "Timeline confirmed with your quote"
+      "dispatchCustom": "Timeline confirmed with your quote",
+        "dimensionsStated": "as stated by the studio, not yet measured"
     },
     "save": "Save",
     "saved": "Saved",

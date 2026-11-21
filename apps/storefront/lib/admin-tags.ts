@@ -33,6 +33,15 @@ export interface TagEdit {
   artist?: string;
   stock_type?: string;
   specs?: SpecInput;
+  /**
+   * "Somebody put a tape on this work."
+   *
+   * Written as the tag `measured:yes` and read by `lib/catalogue.ts`. It is the
+   * one thing that allows a size to be printed on a certificate of
+   * authenticity; without it the dimensions are still shown on the product page
+   * as the studio's statement, but they are not certified.
+   */
+  measured?: boolean;
 }
 
 /** Read one `key:value` tag. The value may itself contain colons. */
@@ -64,6 +73,7 @@ export function mergeTags(currentValues: string[], edit: TagEdit): string[] {
   const editedKeys = new Set<string>();
   if (edit.artist !== undefined) editedKeys.add("artist");
   if (edit.stock_type !== undefined) editedKeys.add("stock");
+  if (edit.measured !== undefined) editedKeys.add("measured");
   if (edit.specs) {
     for (const key of SPEC_KEYS) {
       // Only a key the request actually mentions is replaced. A partial update
@@ -82,6 +92,10 @@ export function mergeTags(currentValues: string[], edit: TagEdit): string[] {
   if (typeof edit.stock_type === "string" && edit.stock_type.trim()) {
     wanted.push(`stock:${edit.stock_type.trim()}`);
   }
+  if (edit.measured === true) {
+    wanted.push("measured:yes");
+  }
+
   if (edit.specs) {
     for (const key of SPEC_KEYS) {
       const value = edit.specs[key];

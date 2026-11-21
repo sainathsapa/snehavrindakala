@@ -10,7 +10,7 @@ import {
   getAdminProduct,
   resolveProductTagIds,
 } from "@/lib/admin";
-import { mergeTags, specsFromTags } from "@/lib/admin-tags";
+import { mergeTags, specsFromTags, tagValue } from "@/lib/admin-tags";
 
 async function adminFetch(
   backendUrl: string,
@@ -64,6 +64,8 @@ export async function GET(
       // Prefill the specification fields. Without this the form would show empty
       // boxes over real values and the next save would erase them.
       specs: specsFromTags(anyProduct.tags ?? []),
+      // Whether the studio has measured this work: drives the certificate gate.
+      measured: tagValue(anyProduct.tags ?? [], "measured") === "yes",
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -92,6 +94,7 @@ export async function PATCH(
       stock_type,
       description,
       specs,
+      measured,
     } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const amount = Number(total) || 0;
@@ -109,14 +112,19 @@ export async function PATCH(
     // The merge rule lives in lib/admin-tags.ts so it can be tested directly:
     // a request replaces only the keys it submits, and an emptied field drops
     // its tag rather than storing a blank one.
-    if (artist !== undefined || stock_type !== undefined || specs) {
+    if (
+      artist !== undefined ||
+      stock_type !== undefined ||
+      specs ||
+      measured !== undefined
+    ) {
       const { product: current } = await getAdminProduct(id);
       const currentValues: string[] = (((current as any)?.tags ?? []) as any[])
         .map((t) => (typeof t === "string" ? t : t?.value) ?? "")
         .filter(Boolean);
 
       update.tags = await resolveProductTagIds(
-        mergeTags(currentValues, { artist, stock_type, specs })
+        mergeTags(currentValues, { artist, stock_type, specs, measured: measured === true })
       );
     }
     // Image attach on an existing product. `thumbnail` drives the card and the

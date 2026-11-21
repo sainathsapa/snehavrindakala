@@ -72,6 +72,13 @@ export async function ArtworkSpecsPanel({
             </dt>
             <dd className="font-sans text-[13.5px] leading-relaxed text-deep-ink">
               {valueFor(row)}
+              {/* A size nobody has measured is still worth showing — it is what
+                  the studio says — but it is said as such, because the same
+                  number is not what the certificate will carry until someone
+                  confirms it. */}
+              {row.key === "dimensions" && !specs.dimensionsMeasured && (
+                <span className="text-muted-ink"> · {t("dimensionsStated")}</span>
+              )}
             </dd>
           </div>
         ))}

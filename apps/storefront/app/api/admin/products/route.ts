@@ -7,6 +7,7 @@ import { requireAdmin } from "@/app/admin/actions";
 import { getSystemAdminToken, listAdminProducts, resolveProductTagIds } from "@/lib/admin";
 import { mergeTags } from "@/lib/admin-tags";
 import { soldHandles } from "@/lib/sold-works";
+import { isStandInImage } from "@/lib/product-media";
 
 async function adminAuthHeader(): Promise<Record<string, string>> {
   const token = await getSystemAdminToken();
@@ -41,10 +42,30 @@ export async function GET(req: Request) {
       console.error("[admin/products] could not read sold works", error);
     }
 
-    const products = (data.products ?? []).map((product: any) => ({
-      ...product,
-      sold: sold.has(product?.handle ?? ""),
-    }));
+    const products = (data.products ?? []).map((product: any) => {
+      // `measured:yes` is written by the studio after putting a tape on the
+      // work; only then may its size be certified. The list shows which works
+      // still need that five minutes, because otherwise nobody ever does it.
+      const tags: any[] = product?.tags ?? [];
+      const measured = tags.some((tag) => {
+        const value = typeof tag === "string" ? tag : tag?.value;
+        return value === "measured:yes";
+      });
+      const hasDimensions = tags.some((tag) => {
+        const value = typeof tag === "string" ? tag : tag?.value;
+        return typeof value === "string" && value.startsWith("dimensions:") && value.length > "dimensions:".length;
+      });
+      return {
+        ...product,
+        sold: sold.has(product?.handle ?? ""),
+        measured,
+        // Only a work that states a size can be waiting to have it confirmed.
+        needsMeasuring: hasDimensions && !measured,
+        // A generated image in place of a photograph. The product page says so;
+        // the studio needs to see which ones are still outstanding.
+        standInPhoto: isStandInImage(product?.thumbnail),
+      };
+    });
 
     return NextResponse.json({ ...data, products });
   } catch (err: any) {
@@ -70,6 +91,7 @@ export async function POST(req: Request) {
       stock_type,
       description,
       specs,
+      measured,
     } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const productStatus = validStatuses.includes(status) ? status : "draft";
@@ -98,6 +120,11 @@ export async function POST(req: Request) {
       tagValues.push(
         ...mergeTags([], { specs: specs as Record<string, string> })
       );
+    }
+    // Somebody measured it, or nobody did. A certificate may only carry a size
+    // the studio confirmed with a tape, so the flag is written with the product.
+    if (measured === true) {
+      tagValues.push("measured:yes");
     }
     if (tagValues.length > 0) {
       payload.tags = await resolveProductTagIds(tagValues);

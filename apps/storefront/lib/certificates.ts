@@ -119,6 +119,21 @@ function firstString(...values: unknown[]): string {
  * A failure here is logged by the caller and never fails the order — the sale
  * happened, the paperwork can be reissued.
  */
+/**
+ * Whether the size on this order item may be certified.
+ *
+ * The flag has to be explicit: `measured: yes` written by the studio, or the
+ * boolean `dimensions_measured` on the item. A dimension string alone is not
+ * consent to certify it.
+ */
+export function isMeasured(metadata: Record<string, unknown> | undefined): boolean {
+  const fromTag = metadata?.measured;
+  if (typeof fromTag === "string" && fromTag.trim().toLowerCase() === "yes") return true;
+  if (fromTag === true) return true;
+  const explicit = metadata?.dimensions_measured ?? metadata?.dimensionsMeasured;
+  return explicit === true || (typeof explicit === "string" && explicit.trim().toLowerCase() === "yes");
+}
+
 export async function issueCertificatesForOrder(order: OrderLike): Promise<Certificate[]> {
   if (!order?.id || !Array.isArray(order.items)) return [];
   await ensureCertificatesTable();
@@ -139,7 +154,12 @@ export async function issueCertificatesForOrder(order: OrderLike): Promise<Certi
         firstString(item.product_title, item.title),
         firstString(metadata.artist, metadata.maker),
         firstString(metadata.art_form, metadata.artForm),
-        firstString(metadata.dimensions),
+        // Only a size the studio has actually measured is certified. Seeded or
+        // estimated dimensions still appear on the product page, where they are
+        // the studio's statement; a signed certificate is a different kind of
+        // document, and printing a number nobody put a tape on would make it
+        // wrong in the one place the shop promises accuracy.
+        isMeasured(metadata) ? firstString(metadata.dimensions) : "",
       ]
     );
   }

@@ -14,6 +14,12 @@ interface Product {
   created_at: string;
   /** Already paid for: derived from order line items, not a flag on the product. */
   sold?: boolean;
+  /** The studio has confirmed the size with a tape; only then is it certified. */
+  measured?: boolean;
+  /** States a size nobody has confirmed: the certificate will omit it. */
+  needsMeasuring?: boolean;
+  /** The listing image is a generated illustration, not a photograph of the work. */
+  standInPhoto?: boolean;
   category?: { id: string; name: string };
 }
 
@@ -54,6 +60,9 @@ export default function ProductsPage() {
                 "inr",
               created_at: p.created_at || "",
               sold: Boolean(p.sold),
+              measured: Boolean(p.measured),
+              needsMeasuring: Boolean(p.needsMeasuring),
+              standInPhoto: Boolean(p.standInPhoto),
               category: p.category
                 ? { id: p.category.id, name: p.category.name }
                 : null,
@@ -120,6 +129,27 @@ export default function ProductsPage() {
                 // should not have to open an order to discover that.
                 <span className="ml-2 inline-flex rounded-full bg-terracotta/10 px-2 py-1 text-xs font-medium text-terracotta">
                   Sold
+                </span>
+              )}
+              {p.needsMeasuring && (
+                // A size on the listing that nobody has measured. The work is
+                // still sellable; what it cannot have is a certificate carrying
+                // an unconfirmed number. This is the queue to fix that.
+                <span
+                  className="ml-2 inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900"
+                  title="This work states a size. Ticking “I have measured this work” on its edit page allows the certificate to print it."
+                >
+                  Size unmeasured
+                </span>
+              )}
+              {p.standInPhoto && (
+                // The product page tells the buyer this is an illustration. It
+                // should not be the buyer who notices first.
+                <span
+                  className="ml-2 inline-flex rounded-full bg-paper px-2 py-1 text-xs font-medium text-muted-ink"
+                  title="The photo is a generated illustration. Upload a photograph to replace it; the disclosure on the product page disappears with it."
+                >
+                  Stand-in photo
                 </span>
               )}
             </td>

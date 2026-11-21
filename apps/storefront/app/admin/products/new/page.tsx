@@ -23,6 +23,8 @@ export default function NewProductPage() {
   const [artist, setArtist] = useState("Sneha Sainath Sapa");
   const [stockType, setStockType] = useState("ready_to_ship");
   const [description, setDescription] = useState("");
+  // Whether the studio measured the work. Gates the certificate, not the page.
+  const [measured, setMeasured] = useState(false);
   // The artwork's specifications. Stored as tags and rendered as the Details
   // block; left blank when unknown rather than guessed.
   const [specs, setSpecs] = useState({
@@ -73,6 +75,7 @@ export default function NewProductPage() {
           stock_type: stockType,
           description,
           specs,
+          measured,
         }),
       });
       if (res.ok) {
@@ -202,6 +205,26 @@ export default function NewProductPage() {
                     </div>
                   ))}
                 </div>
+                {/* A certificate may only print a size somebody measured. The
+                    checkbox is the whole distinction: ticked, the number is
+                    certified; unticked, the page still shows it as "stated by
+                    the studio" and the certificate leaves the row out. */}
+                <label className="mt-4 flex items-start gap-3 font-sans text-sm text-deep-ink">
+                  <input
+                    type="checkbox"
+                    checked={measured}
+                    onChange={(e) => setMeasured(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    I have measured this work
+                    <span className="block font-sans text-xs text-muted-ink">
+                      Ticked, the dimensions are printed on the certificate of
+                      authenticity. Left unticked, they are shown on the product
+                      page as stated but are not certified.
+                    </span>
+                  </span>
+                </label>
               </fieldset>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

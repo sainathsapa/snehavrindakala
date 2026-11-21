@@ -9,6 +9,7 @@ import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
 import { ProductGallery } from "@/components/product-gallery";
+import { isStandInImage } from "@/lib/product-media";
 import { ArtworkSpecsPanel } from "@/components/artwork-specs-panel";
 import { ArtworkRecord } from "@/components/artwork-record";
 import { TrustStrip } from "@/components/trust-strip";
@@ -447,6 +448,15 @@ export default async function ProductDetailPage({
               }))}
               title={catalogueTitle}
             />
+            {/* A stand-in picture says so, where the picture is. On a one-of-one
+                shop the photograph is the work; a generated image standing in
+                for it is a fact the buyer is entitled to before they order. The
+                note disappears the moment a real photograph replaces the file. */}
+            {isStandInImage(images[0]?.url) && (
+              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 font-sans text-xs leading-relaxed text-amber-900">
+                {t("standInPhoto")}
+              </p>
+            )}
           </div>
 
           {/* The label. */}

@@ -46,6 +46,8 @@ export default function EditProductPage() {
   // The six facts a buyer needs and the storefront already renders. They are
   // stored as tags, so until now they could only be set by writing SQL — which
   // is why every product had no size, no framing and no care note.
+  // Whether the studio has put a tape on the work. Gates the certificate.
+  const [measured, setMeasured] = useState(false);
   const [specs, setSpecs] = useState({
     dimensions: "",
     medium: "",
@@ -120,6 +122,7 @@ export default function EditProductPage() {
           provenance: data.specs?.provenance || "",
           condition: data.specs?.condition || "",
         });
+        setMeasured(Boolean(data.measured));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -159,6 +162,7 @@ export default function EditProductPage() {
           stock_type: stockType,
           description,
           specs,
+          measured,
         }),
       });
       if (res.ok) {
@@ -306,6 +310,26 @@ export default function EditProductPage() {
                     </div>
                   ))}
                 </div>
+                {/* A certificate may only print a size somebody measured. The
+                    checkbox is the whole distinction: ticked, the number is
+                    certified; unticked, the page still shows it as "stated by
+                    the studio" and the certificate leaves the row out. */}
+                <label className="mt-4 flex items-start gap-3 font-sans text-sm text-deep-ink">
+                  <input
+                    type="checkbox"
+                    checked={measured}
+                    onChange={(e) => setMeasured(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    I have measured this work
+                    <span className="block font-sans text-xs text-muted-ink">
+                      Ticked, the dimensions are printed on the certificate of
+                      authenticity. Left unticked, they are shown on the product
+                      page as stated but are not certified.
+                    </span>
+                  </span>
+                </label>
               </fieldset>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
