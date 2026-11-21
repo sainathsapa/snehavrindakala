@@ -340,6 +340,29 @@ describe("webhooks", () => {
     expect(result.data?.amount.numeric).toBe(1250.5);
   });
 
+  it("ignores even a correctly signed event when no secret is configured", async () => {
+    // Fail closed. A deployment that never pasted the dashboard secret must not
+    // act on webhooks, or the "verification" is a comment.
+    const unconfigured = new RazorpayPaymentProvider(
+      { logger: { warn() {}, error() {} } },
+      { key_id: KEY_ID, key_secret: KEY_SECRET }
+    );
+    const signature = createHmac("sha256", "").update(raw).digest("hex");
+
+    for (const headers of [
+      { "x-razorpay-signature": signature },
+      { "x-razorpay-signature": createHmac("sha256", WEBHOOK_SECRET).update(raw).digest("hex") },
+      {},
+    ]) {
+      const result = await unconfigured.getWebhookActionAndData({
+        data: JSON.parse(raw),
+        rawData: Buffer.from(raw),
+        headers: headers as Record<string, string>,
+      });
+      expect(result.action).toBe("not_supported");
+    }
+  });
+
   it("ignores a payload whose signature does not match", async () => {
     const result = await provider().getWebhookActionAndData({
       data: JSON.parse(raw),

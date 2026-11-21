@@ -69,9 +69,33 @@ x-backend-environment: &backend-environment
   RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
   RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
   RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+  # Refunds at or above this many rupees need a second admin. If this value does
+  # not reach the storefront container the threshold silently falls back to 5000
+  # and the operator's setting is a decoration.
+  REFUND_APPROVAL_THRESHOLD: ${REFUND_APPROVAL_THRESHOLD:-5000}
+  # How long a cart must be quiet before it counts as unfinished.
+  ABANDONED_CART_HOURS: ${ABANDONED_CART_HOURS:-6}
+  # Which surface this deployment is: a single studio ("platform") or a
+  # multi-maker marketplace. Read at runtime by lib/settings.ts.
+  PLATFORM_MODE: ${PLATFORM_MODE:-single-brand}
+  NEXT_PUBLIC_PLATFORM_MODE: ${NEXT_PUBLIC_PLATFORM_MODE:-single-brand}
+  # Base URLs, so a service can tell another where to reach it.
+  STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://storefront:3000}
+  SHIPROCKET_BASE_URL: ${SHIPROCKET_BASE_URL:-https://apiv2.shiprocket.in/v1/external}
+  # Read by the backend's notification service and Shiprocket provider. Absent
+  # from the container, the mail templates fall back to placeholder links.
+  NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-http://localhost:3000}
+  NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-hello@snehavrindakala.example}
+  MEDUSA_CURRENCY_CODE: ${MEDUSA_CURRENCY_CODE:-inr}
+  SHIPROCKET_PICKUP_LOCATION: ${SHIPROCKET_PICKUP_LOCATION:-Primary}
   SHIPROCKET_API_TOKEN: ${SHIPROCKET_API_TOKEN:-}
   SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}
   SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
+  # Used to reject forged tracking callbacks. It has to be passed into the
+  # container as well as set in .env, or the provider boots with an empty token
+  # and ignores every delivery update — the same silent split that once left
+  # SELLER_HOME_STATE at its default.
+  SHIPROCKET_WEBHOOK_TOKEN: ${SHIPROCKET_WEBHOOK_TOKEN:-}
   # Object storage for product media in production (S3-compatible). Leave empty
   # to upload nothing: /admin/upload answers 503 "Media uploads not configured"
   # rather than failing halfway. Names match api/admin/upload/route.ts.
@@ -239,6 +263,29 @@ services:
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
       # Postgres pool size for the storefront's own tables.
       PG_POOL_MAX: ${PG_POOL_MAX:-10}
+      # These four are read by storefront code and reached no container at all:
+      # the refund threshold fell back to 5000, "unfinished" to 6 hours, and the
+      # makers section stayed on because the mode flag was never set.
+      REFUND_APPROVAL_THRESHOLD: ${REFUND_APPROVAL_THRESHOLD:-5000}
+      ABANDONED_CART_HOURS: ${ABANDONED_CART_HOURS:-6}
+      NEXT_PUBLIC_PLATFORM_MODE: ${NEXT_PUBLIC_PLATFORM_MODE:-single-brand}
+      # Where this deployment can be reached, for links in mail and the admin UI.
+      STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://storefront:3000}
+      SITE_CONTENT_QUIET: ${SITE_CONTENT_QUIET:-}
+      # Transactional email sent by the storefront itself (letters, cart
+      # reminders, order confirmations). Without these the storefront records
+      # every message as `skipped` even when SES works for the backend.
+      FROM_EMAIL: ${FROM_EMAIL:-}
+      AWS_SES_REGION: ${AWS_SES_REGION:-ap-south-1}
+      AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID:-}
+      AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY:-}
+      AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
+      # The reminder job's shared secret. The cron container sends it; this side
+      # verifies it. Missing here, every scheduled run answers 503 and the job
+      # does nothing while looking healthy.
+      CRON_SECRET: ${CRON_SECRET:-}
+      # Shiprocket quoting base URL (pointed at a stub in tests).
+      SHIPROCKET_BASE_URL: ${SHIPROCKET_BASE_URL:-https://apiv2.shiprocket.in/v1/external}
       # Razorpay checkout (server-side order creation + browser SDK key)
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
@@ -247,6 +294,7 @@ services:
       # Shiprocket rates + shipment creation
       SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}
       SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
+      SHIPROCKET_WEBHOOK_TOKEN: ${SHIPROCKET_WEBHOOK_TOKEN:-}
       SHIPROCKET_PICKUP_LOCATION: ${SHIPROCKET_PICKUP_LOCATION:-Primary}
       SHIPROCKET_PICKUP_POSTCODE: ${SHIPROCKET_PICKUP_POSTCODE:-560001}
       NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-http://localhost:3000}

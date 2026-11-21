@@ -215,6 +215,34 @@ Nightly backups are a compose service rather than cron: see
 * **The single-node Redis is not highly available.** Fine for one server; a
   restart drops cached sessions and in-flight workflow state.
 
+## Webhooks
+
+Two callbacks matter, and both fail closed: with no secret configured the handler
+returns `not_supported` and acts on nothing, so a forged request cannot mark an
+order paid. That also means silence, not an error, when the secret is missing —
+which is why `/admin/settings` shows Payments as *partial* until it is set.
+
+**Razorpay.** Set `RAZORPAY_WEBHOOK_SECRET` to a value you also paste into the
+Razorpay dashboard, and register:
+
+```
+https://api.<your-domain>/hooks/payment/pp_razorpay_razorpay
+```
+
+Subscribe to `payment.captured`, `payment.authorized`, `payment.failed`,
+`payment.pending` and `order.paid`. Generate the secret once with
+`openssl rand -hex 32`; Razorpay will not show you the value afterwards. Until
+this is done, an order only becomes paid if the buyer's browser returns to the
+confirmation page — a payment captured from the Razorpay app or dashboard is not
+recorded by the shop on its own.
+
+**Shiprocket.** `SHIPROCKET_WEBHOOK_TOKEN` is compared in constant time against
+the token sent with tracking callbacks. Unset means callbacks are refused, so
+delivery status stays whatever the last admin action set.
+
+Both secrets are read at provider construction, so a backend restart is needed
+after changing them.
+
 ## Refunds
 
 Refunds at or above `REFUND_APPROVAL_THRESHOLD` (rupees, default 5000) need two
