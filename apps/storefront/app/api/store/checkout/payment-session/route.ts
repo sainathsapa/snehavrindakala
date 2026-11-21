@@ -16,6 +16,7 @@ import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { selectShippingRate } from "@/lib/shipping/select-rate";
 import { checkoutIsPossible } from "@/lib/config-status";
 import { isSold, soldVariantIds } from "@/lib/sold-works";
+import { RAZORPAY_PROVIDER, checkoutProvider } from "@/lib/payment-provider";
 
 const PICKUP_POSTCODE = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
 
@@ -73,8 +74,43 @@ export async function POST(req: Request) {
       );
     }
 
-    // Medusa needs a payment session before the cart can be completed.
-    await medusa.ensurePaymentSession(cart_id);
+    // Medusa needs a payment session before the cart can be completed. Which
+    // provider owns that session decides who creates the Razorpay order: this
+    // route (system default) or the payment module (Razorpay provider, behind
+    // CHECKOUT_RAZORPAY_PROVIDER=1). Never both — that is two orders for one cart.
+    const provider = checkoutProvider();
+    if (provider.reason === "flag-set-but-incomplete") {
+      // Say it out loud. A silent fallback makes the flag look like it works.
+      console.warn(
+        "[checkout] CHECKOUT_RAZORPAY_PROVIDER is set but not usable; missing:",
+        provider.missing.join(", ")
+      );
+    }
+    let session = await medusa.ensurePaymentSession(cart_id, provider.providerId);
+
+    if (provider.providerId === RAZORPAY_PROVIDER) {
+      // The provider created the Razorpay order when the session was initiated.
+      // Its data carries the order id; nothing else is created here.
+      const razorpaySession = (session?.payment_sessions || []).find(
+        (s: any) => s.provider_id === RAZORPAY_PROVIDER
+      );
+      const orderId = razorpaySession?.data?.razorpay_order_id || razorpaySession?.data?.id;
+      if (!orderId) {
+        return NextResponse.json(
+          { error: "Payment could not be started. Please try again." },
+          { status: 502 }
+        );
+      }
+      return NextResponse.json({
+        razorpay_order_id: orderId,
+        amount: Number(razorpaySession?.amount ?? 0),
+        currency: String(razorpaySession?.currency_code || "inr").toUpperCase(),
+        status: "created",
+        shipping_amount: 0,
+        shipping: null,
+        provider: RAZORPAY_PROVIDER,
+      });
+    }
 
     // Quote shipping for the delivery PIN. Failure here should not block
     // checkout — fall back to free shipping and let the admin reconcile.
@@ -180,6 +216,7 @@ export async function POST(req: Request) {
       status: orderData.status,
       shipping_amount: shippingAmount,
       shipping: shippingQuote,
+      provider: provider.providerId,
     });
   } catch (err) {
     return NextResponse.json(

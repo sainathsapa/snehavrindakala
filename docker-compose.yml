@@ -290,6 +290,9 @@ services:
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      # "1" lets the payment module own checkout; off by default, and ignored
+      # unless the keys above are all present.
+      CHECKOUT_RAZORPAY_PROVIDER: ${CHECKOUT_RAZORPAY_PROVIDER:-0}
       NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID:-}
       # Shiprocket rates + shipment creation
       SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}

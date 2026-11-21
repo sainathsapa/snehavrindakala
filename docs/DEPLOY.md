@@ -201,6 +201,22 @@ Nightly backups are a compose service rather than cron: see
   for capture, refund and webhook handling, and the storefront path is the one
   that takes the money.
 
+  **The switch is built and off.** `CHECKOUT_RAZORPAY_PROVIDER=1` makes the
+  payment module own the checkout session (`pp_razorpay_razorpay`): the provider
+  creates the Razorpay order and `authorizePayment` reads it back during cart
+  completion. It refuses to switch on unless `RAZORPAY_KEY_ID`,
+  `RAZORPAY_KEY_SECRET` *and* `RAZORPAY_WEBHOOK_SECRET` are all set — on that
+  path the webhook is how a captured payment is learnt, not an optional extra —
+  and it logs a warning and falls back to `pp_system_default` when the flag is
+  set but the setup is incomplete. The flag is deliberately literal: only `1`
+  opts in. "The keys are set" is not evidence that the flow has been run.
+
+  Do not turn it on until one sandbox purchase has been completed end to end on
+  it, including a payment captured from the Razorpay dashboard rather than the
+  browser. Both paths create a Razorpay order; the failure this protects against
+  is one cart producing two, which is invisible until a customer is charged
+  twice.
+
   Fulfilment behaves the same way: the Shiprocket provider is registered and
   usable for admin-created fulfilments, while order shipments are still created
   by `lib/shipping/create-order-shipment.ts` in the storefront.

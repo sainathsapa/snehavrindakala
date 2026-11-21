@@ -23,6 +23,7 @@ import { issueCertificatesForOrder } from "@/lib/certificates";
 import { saveGiftForOrder } from "@/lib/gift";
 import { sendOrderConfirmation } from "@/lib/email";
 import { isSold, soldVariantIds } from "@/lib/sold-works";
+import { checkoutProvider } from "@/lib/payment-provider";
 
 const RAZORPAY_KEY_ID =
   process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "";
@@ -168,9 +169,13 @@ export async function POST(req: Request) {
     }
 
     // Make completion resilient: if the payment session was not created for
-    // any reason, initialise it now so Medusa can convert the cart.
+    // any reason, initialise it now so Medusa can convert the cart. The same
+    // provider id as the session route is used, otherwise this would add a
+    // second session on the other provider and completion would pick the wrong
+    // one — the kind of mistake that only shows up as a duplicate charge.
+    const provider = checkoutProvider();
     try {
-      await medusa.ensurePaymentSession(cart_id);
+      await medusa.ensurePaymentSession(cart_id, provider.providerId);
     } catch (err) {
       console.error("Failed to ensure payment session:", err);
     }
