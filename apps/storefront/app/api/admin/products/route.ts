@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
 import { getSystemAdminToken, listAdminProducts, resolveProductTagIds } from "@/lib/admin";
 import { mergeTags } from "@/lib/admin-tags";
+import { soldHandles } from "@/lib/sold-works";
 
 async function adminAuthHeader(): Promise<Record<string, string>> {
   const token = await getSystemAdminToken();
@@ -29,7 +30,23 @@ export async function GET(req: Request) {
         undefined,
       status: searchParams.get("status") || undefined,
     });
-    return NextResponse.json(data);
+
+    // Which of these have already been paid for. Derived from the same order
+    // line items the storefront uses, so the studio sees what the shop sees —
+    // otherwise the list quietly offers an add button for a work that is gone.
+    let sold: Set<string> = new Set();
+    try {
+      sold = await soldHandles();
+    } catch (error) {
+      console.error("[admin/products] could not read sold works", error);
+    }
+
+    const products = (data.products ?? []).map((product: any) => ({
+      ...product,
+      sold: sold.has(product?.handle ?? ""),
+    }));
+
+    return NextResponse.json({ ...data, products });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

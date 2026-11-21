@@ -12,6 +12,8 @@ interface Product {
   price: number;
   currency_code: string;
   created_at: string;
+  /** Already paid for: derived from order line items, not a flag on the product. */
+  sold?: boolean;
   category?: { id: string; name: string };
 }
 
@@ -51,6 +53,7 @@ export default function ProductsPage() {
                 p.currency_code ||
                 "inr",
               created_at: p.created_at || "",
+              sold: Boolean(p.sold),
               category: p.category
                 ? { id: p.category.id, name: p.category.name }
                 : null,
@@ -112,6 +115,13 @@ export default function ProductsPage() {
               >
                 {p.status}
               </span>
+              {p.sold && (
+                // The shop has already stopped offering this work. The studio
+                // should not have to open an order to discover that.
+                <span className="ml-2 inline-flex rounded-full bg-terracotta/10 px-2 py-1 text-xs font-medium text-terracotta">
+                  Sold
+                </span>
+              )}
             </td>
             <td className="px-6 py-4 font-sans text-sm text-deep-ink text-right">
               {(p.price / 100).toFixed(2)}

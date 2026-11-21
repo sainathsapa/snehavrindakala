@@ -112,6 +112,14 @@ describe("where the guard is enforced", () => {
   });
 
 
+it("the admin product list says which works are gone", () => {
+    const api = read("app/api/admin/products/route.ts");
+    expect(api).toMatch(/soldHandles/);
+    expect(api).toMatch(/sold: sold\.has/);
+    const page = read("app/admin/products/page.tsx");
+    expect(page).toMatch(/p\.sold/);
+  });
+
   it("every grid that shows a work marks the sold ones", () => {
     for (const file of [
       "app/[locale]/shop/page.tsx",
