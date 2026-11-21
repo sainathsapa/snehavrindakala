@@ -147,19 +147,37 @@ like the proxy.
 
 ## Scheduled jobs
 
-The only recurring job is the unfinished-checkout reminder:
+The only recurring job is the unfinished-checkout reminder, and it now has a
+caller built into this repository — otherwise the endpoint exists and nobody ever
+calls it, which is how the reminder would silently never be sent.
 
 ```bash
-# cron, hourly. The secret is in .env on the server.
+docker compose --profile ops up -d cron
+```
+
+That service (`docker-compose.yml`) POSTs the endpoint every
+`CRON_INTERVAL_SECONDS` (default 21600, six hours) from inside the compose
+network, sending `CRON_SECRET` as a bearer header so the secret stays out of
+proxy logs. It refuses to start with an empty secret rather than looping on 503s.
+
+On a host that already runs cron and would rather not run another container, this
+is the equivalent line:
+
+```bash
+# hourly. The secret is in .env on the server.
 0 * * * * curl -fsS -H "Authorization: Bearer $(CRON_SECRET)" \
   https://shop.example.com/api/cron/cart-reminders >/dev/null
 ```
 
 It obeys the same rules as `/admin/carts`: a cart is eligible after
-`ABANDONED_CART_HOURS` of quiet, and each cart is reminded once, ever. Up to 25
-per run. Without `CRON_SECRET` the route answers 503 and sends nothing — it is
-disabled rather than open. Each run reports `sent` / `skipped` / `failed`, and
-`skipped` means no mail transport is configured, not that it worked.
+`ABANDONED_CART_HOURS` of quiet, each cart is reminded once, ever, carts holding a
+work that has since sold are skipped, and up to 25 are handled per run. Without
+`CRON_SECRET` the route answers 503 and sends nothing — it is disabled rather than
+open. Each run reports `sent` / `skipped` / `failed`, and `skipped` means no mail
+transport is configured, not that it worked.
+
+Generate the secret once with `openssl rand -hex 32` and put the same value in
+`.env`; a reminder run with an unset secret is a no-op by design.
 
 Nightly backups are a compose service rather than cron: see
 [BACKUPS.md](BACKUPS.md).

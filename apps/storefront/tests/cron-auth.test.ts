@@ -85,3 +85,28 @@ describe("cart reminder cron route", () => {
     expect(deploy).toMatch(/CRON_SECRET/);
   });
 });
+
+describe("the job has a caller", () => {
+  const compose = readFileSync(join(root, "..", "..", "docker-compose.yml"), "utf8");
+
+  it("a compose service runs the reminder endpoint on a schedule", () => {
+    expect(compose).toMatch(/^\s{2}cron:/m);
+    expect(compose).toMatch(/api\/cron\/cart-reminders/);
+    expect(compose).toMatch(/CRON_INTERVAL_SECONDS/);
+    // Beared in a header, not the query string: query strings land in logs.
+    expect(compose).toMatch(/Authorization: Bearer/);
+  });
+
+  it("refuses to start without a secret instead of looping on 503s", () => {
+    expect(compose).toMatch(/CRON_SECRET is empty/);
+  });
+
+  it("is behind the ops profile, so a laptop does not start it", () => {
+    expect(compose).toMatch(/profiles: \["ops"\]/);
+  });
+
+  it("the deployment doc points at the service", () => {
+    const docs = readFileSync(join(root, "..", "..", "docs", "DEPLOY.md"), "utf8");
+    expect(docs).toMatch(/docker compose --profile ops up -d cron/);
+  });
+});

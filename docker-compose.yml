@@ -383,6 +383,48 @@ services:
     networks:
       - snehavrinda
 
+  # ── Scheduled cart reminders ──────────────────────────────────────────────
+  # The endpoint exists and is guarded by CRON_SECRET; nothing called it, so no
+  # reminder was ever sent. This is the caller: a tiny curl loop on the `ops`
+  # profile that runs the job every CRON_INTERVAL_SECONDS (default: six hours,
+  # because a cart becomes "unfinished" six hours after its last activity).
+  #
+  # It lives inside the compose network so the call never leaves the host, and it
+  # sends the secret in a header rather than the query string so it stays out of
+  # proxy logs. The endpoint decides for itself who to write to and refuses a
+  # second reminder for the same cart, so running it more often is harmless.
+  #
+  #   docker compose --profile ops up -d cron
+  cron:
+    image: curlimages/curl:8.11.1
+    profiles: ["ops"]
+    depends_on:
+      - storefront
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+      CRON_INTERVAL_SECONDS: ${CRON_INTERVAL_SECONDS:-21600}
+      # Overridable so the same container can be pointed at a host dev server (or
+      # at a storefront outside this compose project) while testing the job.
+      CRON_TARGET: ${CRON_TARGET:-http://storefront:3000/api/cron/cart-reminders}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$${CRON_SECRET}" ]; then
+          echo "CRON_SECRET is empty: the reminder endpoint will refuse every call." >&2
+          echo "Generate one with: openssl rand -hex 32" >&2
+          exit 1
+        fi
+        while true; do
+          curl -sS -m 60 -X POST -H "Authorization: Bearer $${CRON_SECRET}" \
+            "$${CRON_TARGET}" || true
+          echo
+          sleep "$${CRON_INTERVAL_SECONDS}"
+        done
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - snehavrinda
+
 volumes:
   postgres_data:
   redis_data:
