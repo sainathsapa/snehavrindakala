@@ -79,26 +79,59 @@ const redisModules: any[] = redisUrl
   : [];
 
 /**
- * Payment and fulfilment providers: NOT ENABLED — they are Medusa v1 adapters.
+ * Payment and fulfilment providers.
  *
- * `src/providers/payment/razorpay` and `src/providers/fulfilment/shiprocket` are
- * plain classes with a v1 factory (`export default function ({container, options})`)
- * and v1 method names (`createPayment`, `createFulfillment`). Medusa v2 loads a
- * provider module by iterating the module's exported services and registering each
- * one by its static `identifier`, and it requires the class to extend
- * `AbstractPaymentProvider` / `AbstractFulfillmentProviderService` with v2 method
- * names (`initiatePayment`, `authorizePayment`, `getFulfillmentOptions`, ...).
+ * Both adapters used to be Medusa v1 shapes: a plain class with a
+ * `({container, options})` factory and v1 method names (`createPayment`,
+ * `createFulfillment`). Medusa v2 loads providers through
+ * `ModuleProvider(Modules.PAYMENT | Modules.FULFILLMENT, { services })` and
+ * identifies each by its static `identifier`; a v1 adapter fails to register with
+ * "moduleProviderServices is not iterable".
  *
- * Registering them makes the backend crash on boot with
- * "TypeError: moduleProviderServices is not iterable". Leaving the old top-level
- * `payment_providers` key in place is equally wrong: v2 rejects that key entirely,
- * so the providers were never loaded and checkout silently fell back to Medusa's
- * system (manual) provider.
- *
- * Until the adapters are ported to v2, checkout uses `pp_system_default` and
- * fulfilment uses `manual_manual`. Both are registered by the seed script, so the
- * store is fully orderable as shipped.
+ * They are now v2 providers, but each is registered ONLY when its credentials
+ * are present. A shop without Razorpay keys must still boot — previously the
+ * half-configured provider was the reason the whole backend refused to start.
+ * When a provider is absent, checkout falls back to `pp_system_default` and
+ * fulfilment to `manual_manual`, which the seed registers, so the store stays
+ * orderable.
  */
+
+function razorpayProvider(): any[] {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) return [];
+  return [
+    {
+      resolve: "./src/providers/payment/razorpay",
+      id: "razorpay",
+      options: {
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+        webhook_secret: process.env.RAZORPAY_WEBHOOK_SECRET,
+        auto_capture: process.env.RAZORPAY_AUTO_CAPTURE !== "false",
+      },
+    },
+  ];
+}
+
+function shiprocketProvider(): any[] {
+  const hasToken = Boolean(process.env.SHIPROCKET_API_TOKEN);
+  const hasPassword = Boolean(
+    process.env.SHIPROCKET_EMAIL && process.env.SHIPROCKET_PASSWORD
+  );
+  if (!hasToken && !hasPassword) return [];
+  return [
+    {
+      resolve: "./src/providers/fulfilment/shiprocket",
+      id: "shiprocket",
+      options: {
+        email: process.env.SHIPROCKET_EMAIL,
+        password: process.env.SHIPROCKET_PASSWORD,
+        api_token: process.env.SHIPROCKET_API_TOKEN,
+        pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION,
+        webhook_token: process.env.SHIPROCKET_WEBHOOK_TOKEN,
+      },
+    },
+  ];
+}
 
 /**
  * `any[]` on purpose: the declaration type for a module array only accepts a
@@ -122,6 +155,23 @@ const modules: any[] = [
     key: "app_notification",
   },
   { resolve: "./src/modules/review" },
+
+  // Providers are registered *inside* their module, not as top-level modules.
+  // A top-level entry would go through define-config's plugin path, which
+  // expects a `default.service.__joinerConfig` and crashes on a
+  // `ModuleProvider(...)` export ("Cannot read properties of undefined
+  // (reading 'prototype')").
+  ...(razorpayProvider().length
+    ? [{ resolve: "@medusajs/medusa/payment", options: { providers: razorpayProvider() } }]
+    : []),
+  ...(shiprocketProvider().length
+    ? [
+        {
+          resolve: "@medusajs/medusa/fulfillment",
+          options: { providers: shiprocketProvider() },
+        },
+      ]
+    : []),
 
   ...redisModules,
 ];
