@@ -12,6 +12,7 @@ import {
 } from "@/components/indian-motifs";
 import { GLOSSARY } from "@/lib/art-reference";
 import { PaymentMarks } from "@/components/payment-marks";
+import { STUDIO_EMAIL } from "@/lib/studio";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CurrencySwitcher } from "@/components/currency-switcher";
 
@@ -432,7 +433,7 @@ export function Footer({
                   once a real profile URL is configured. */}
               <div className="mt-5 flex flex-col gap-5 border-t border-rang-paper/12 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <PaymentMarks />
-                {socials.length > 0 && (
+                {socials.length > 0 ? (
                   <ul aria-label="Social" className="flex flex-wrap items-center gap-x-4 gap-y-2">
                     {socials.map((social) => (
                       <li key={social.id}>
@@ -447,6 +448,16 @@ export function Footer({
                       </li>
                     ))}
                   </ul>
+                ) : (
+                  // No profile is configured, so the honest thing is an address
+                  // rather than an empty plinth. Inventing a handle would send
+                  // buyers to a stranger's account.
+                  <a
+                    href={`mailto:${STUDIO_EMAIL}`}
+                    className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper/55 transition-colors hover:text-haldi"
+                  >
+                    {t("writeToUs")}
+                  </a>
                 )}
               </div>
             </div>

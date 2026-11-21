@@ -78,10 +78,12 @@ export interface Testimonial {
 }
 
 /**
- * The address the studio answers at. One constant so a page that offers to be
- * written to and the footer do not drift apart.
+ * The address the studio answers at. Defined in `lib/studio.ts` so a client
+ * component can use it without dragging this module's database client into the
+ * browser bundle; re-exported here for the pages that already import it from
+ * this module.
  */
-export const STUDIO_EMAIL = "hello@snehavrinda.in";
+export { STUDIO_EMAIL } from "@/lib/studio";
 
 export const DEFAULT_HERO_SLIDES = [
   {

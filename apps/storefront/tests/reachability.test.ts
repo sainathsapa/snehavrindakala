@@ -186,6 +186,32 @@ describe("message bundles", () => {
     expect(missing, `namespaces with no messages: ${missing.join(", ")}`).toEqual([]);
   });
 
+it("no client component imports a module that talks to the database", () => {
+    // Importing STUDIO_EMAIL from `lib/site-content` in the footer pulled `pg`
+    // into the browser bundle and the whole site returned 500 with "Module not
+    // found: Can't resolve 'fs'". Server-only modules get a tiny standalone
+    // sibling instead (lib/studio.ts).
+    const dbTouching = ["@/lib/site-content", "@/lib/db", "@/lib/catalogue", "@/lib/sold-works"];
+    const offenders: string[] = [];
+
+    for (const file of sourceFiles) {
+      const source = readFileSync(file, "utf8");
+      if (!source.startsWith('"use client"')) continue;
+      for (const module of dbTouching) {
+        // `import type` is erased at compile time, so it is safe.
+        if (
+          source.includes(`from "${module}"`) &&
+          !source.includes(`import type { } from "${module}"`) &&
+          !new RegExp(`import type [^;]+ from "${module.replace("/", "\\/")}"`).test(source)
+        ) {
+          offenders.push(`${relative(root, file)} -> ${module}`);
+        }
+      }
+    }
+
+    expect(offenders, `client components importing server-only modules: ${offenders.join(", ")}`).toEqual([]);
+  });
+
   it("does not leave English text in the Hindi bundle", () => {
     // Keys whose value is identical to English and contains no Devanagari: brand
     // names and short codes are fine, whole sentences are not.
