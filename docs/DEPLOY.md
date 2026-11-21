@@ -131,6 +131,20 @@ docker compose up -d
 Migrations run on backend start, before the server listens. The seed job is
 idempotent, so it re-runs harmlessly and picks up new catalogue entries.
 
+## Abuse limits
+
+The three public forms are rate limited per client address, in Postgres, with a
+fixed window: newsletter signup 5/hour, work alerts 10/hour, the enquiry form
+5/hour. Over the limit answers `429` with `Retry-After` (JSON for the enhanced
+forms, a redirect for a plain form post — the limit is never a silent loss).
+
+`rate_limit_hits` is pruned as it goes. The limiter **fails open**: if Postgres
+is briefly unavailable a signup is still accepted, because losing a real
+customer to guard against a hypothetical script is the wrong trade at this size.
+Behind the Caddy profile the client address comes from `x-forwarded-for`; if you
+put another proxy in front, make sure it sets that header or every visitor looks
+like the proxy.
+
 ## Scheduled jobs
 
 The only recurring job is the unfinished-checkout reminder:

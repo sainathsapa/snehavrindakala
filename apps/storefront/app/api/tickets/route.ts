@@ -5,6 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
  * A ticket can carry the work it is about.
@@ -60,6 +61,21 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    // An enquiry form is the easiest thing on a shop to flood, and every reply
+    // costs the studio's time. Five an hour per connection.
+    const limit = await checkRateLimit({
+      route: "tickets",
+      ip: clientIp(req.headers),
+      limit: 5,
+      windowSeconds: 3600,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Too many messages from this connection. Please write to us directly if this is urgent." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+      );
+    }
+
     const body = await req.json();
     const {
       subject,

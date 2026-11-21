@@ -115,6 +115,15 @@ CREATE TABLE IF NOT EXISTS category_translation (
 
 -- One reminder per unfinished checkout. The primary key is the rate limit:
 -- a second send for the same cart cannot be recorded, and the endpoint refuses it.
+-- Fixed-window counters for the public forms. Postgres rather than memory, so
+-- the limit does not multiply by the number of running processes.
+CREATE TABLE IF NOT EXISTS rate_limit_hits (
+  key text NOT NULL,
+  window_start timestamp with time zone NOT NULL,
+  count integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (key, window_start)
+);
+
 CREATE TABLE IF NOT EXISTS cart_reminders (
   cart_id text NOT NULL,
   status text NOT NULL,

@@ -7,6 +7,7 @@
 
 import { NextResponse } from "next/server";
 import { createWorkAlert } from "@/lib/work-alerts";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +26,28 @@ function backTo(req: Request): string {
 }
 
 export async function POST(req: Request) {
+  // Ten an hour: enough for someone genuinely interested in several traditions,
+  // not enough for a script to fill the table.
+  const limit = await checkRateLimit({
+    route: "work-alerts",
+    ip: clientIp(req.headers),
+    limit: 10,
+    windowSeconds: 3600,
+  });
+
   const wantsJson =
     (req.headers.get("accept") || "").includes("application/json") ||
     req.headers.get("x-requested-with") === "fetch";
+
+  if (!limit.allowed) {
+    if (wantsJson) {
+      return NextResponse.json(
+        { ok: false, error: "Too many requests from this connection. Please try later." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+      );
+    }
+    return NextResponse.redirect(backTo(req), 303);
+  }
 
   let payload: Record<string, unknown> = {};
   const contentType = req.headers.get("content-type") || "";

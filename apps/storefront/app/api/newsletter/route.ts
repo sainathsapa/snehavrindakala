@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 import { subscribeEmail } from "@/lib/newsletter";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ const MESSAGES: Record<string, string> = {
   already: "You are already on the list.",
   resubscribed: "Welcome back. The letters will resume.",
   invalid: "That email address does not look complete.",
+  rate_limited: "Too many signups from this connection. Please try again later.",
 };
 
 /** Same-origin only: a redirect target from a form must never leave the site. */
@@ -38,6 +40,16 @@ function backTo(req: Request): string {
 }
 
 export async function POST(req: Request) {
+  // A public form with no limit fills the list with junk from one script. Five
+  // an hour per address is far more than a person needs and far less than a
+  // loop needs to be worth running.
+  const limit = await checkRateLimit({
+    route: "newsletter",
+    ip: clientIp(req.headers),
+    limit: 5,
+    windowSeconds: 3600,
+  });
+
   const wantsJson =
     (req.headers.get("accept") || "").includes("application/json") ||
     req.headers.get("x-requested-with") === "fetch";
@@ -46,6 +58,16 @@ export async function POST(req: Request) {
   let locale: string | undefined;
   let source: string | undefined;
   let consent: unknown = "on";
+
+  if (!limit.allowed) {
+    if (wantsJson) {
+      return NextResponse.json(
+        { ok: false, reason: "rate_limited", message: MESSAGES.rate_limited },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+      );
+    }
+    return NextResponse.redirect(backTo(req), 303);
+  }
 
   const contentType = req.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
