@@ -75,6 +75,15 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
   // The footer signup wrote nowhere for a long time; the list lives beside the
   // analytics it feeds.
   { href: "/admin/newsletter", label: "Letters", icon: "mail", role: "manager" },
+  // A reset request used to vanish into a stub that claimed a link had been
+  // sent. Now it is recorded, and this is where someone sees it.
+  {
+    href: "/admin/password-resets",
+    label: "Password resets",
+    icon: "users",
+    role: "manager",
+  },
+
   { href: "/admin/discounts", label: "Discounts", icon: "discounts", role: "manager" },
   {
     href: "/admin/commissions",

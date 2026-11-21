@@ -1,22 +1,77 @@
 /**
- * POST /api/account/forgot-password - Send a password reset link (placeholder)
+ * POST /api/account/forgot-password
+ *
+ * Records a reset request so the studio can act on it, and answers the same way
+ * whether or not the address belongs to an account — anything else would let
+ * someone use this form to test which emails are customers.
+ *
+ * The answer tells the truth about what will happen next: on a deployment with
+ * no email transport, no link is coming, and saying otherwise is how the
+ * previous placeholder wasted a customer's afternoon.
  */
 
 import { NextResponse } from "next/server";
+import { recordResetRequest } from "@/lib/password-reset";
+import { emailStatus } from "@/lib/config-status";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { email } = body;
+  const wantsJson =
+    (req.headers.get("accept") || "").includes("application/json") ||
+    req.headers.get("x-requested-with") === "fetch";
 
-    if (!email) {
-      return NextResponse.json({ error: "Email required" }, { status: 400 });
-    }
-
-    // Placeholder: In production, integrate with SES/SMTP to send a reset link.
-    // For now, always return success to avoid email enumeration.
-    return NextResponse.json({ ok: true, message: "Reset link sent if account exists" });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  const limit = await checkRateLimit({
+    route: "forgot-password",
+    ip: clientIp(req.headers),
+    limit: 5,
+    windowSeconds: 3600,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "Too many attempts from this connection. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
   }
+
+  let email: unknown;
+  const contentType = req.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    email = body.email;
+  } else {
+    const form = await req.formData().catch(() => null);
+    email = form?.get("email");
+  }
+
+  const emailConfigured = emailStatus().level === "ready";
+
+  try {
+    // Recorded even if the address is not a customer: the row is harmless, and
+    // checking first would turn this endpoint into an account oracle.
+    await recordResetRequest(typeof email === "string" ? email : "");
+  } catch (error) {
+    console.error("[forgot-password] could not record the request", error);
+    if (wantsJson) {
+      return NextResponse.json(
+        { ok: false, error: "Something went wrong. Please write to the studio directly." },
+        { status: 500 }
+      );
+    }
+    const origin = new URL(req.url).origin;
+    return NextResponse.redirect(`${origin}/en/account/forgot-password?error=failed`, 303);
+  }
+
+  if (wantsJson) {
+    return NextResponse.json({
+      ok: true,
+      // Which of the two honest answers to give. Not a signal about the account.
+      outcome: emailConfigured ? "sent" : "studio",
+    });
+  }
+
+  const origin = new URL(req.url).origin;
+  const query = emailConfigured ? "sent=1" : "sent=studio";
+  return NextResponse.redirect(`${origin}/en/account/forgot-password?${query}`, 303);
 }

@@ -115,6 +115,19 @@ CREATE TABLE IF NOT EXISTS category_translation (
 
 -- One reminder per unfinished checkout. The primary key is the rate limit:
 -- a second send for the same cart cannot be recorded, and the endpoint refuses it.
+-- Password reset requests. Recorded rather than emailed, because the shop has
+-- no mail transport yet; the studio resets by hand and marks the row done.
+CREATE TABLE IF NOT EXISTS password_reset_requests (
+  id serial PRIMARY KEY,
+  email text NOT NULL,
+  requested_at timestamp with time zone NOT NULL DEFAULT now(),
+  handled_at timestamp with time zone,
+  handled_by text
+);
+CREATE UNIQUE INDEX IF NOT EXISTS password_reset_requests_open_email
+  ON password_reset_requests (lower(email))
+  WHERE handled_at IS NULL;
+
 -- Fixed-window counters for the public forms. Postgres rather than memory, so
 -- the limit does not multiply by the number of running processes.
 CREATE TABLE IF NOT EXISTS rate_limit_hits (

@@ -77,6 +77,12 @@ export interface Testimonial {
   published: boolean;
 }
 
+/**
+ * The address the studio answers at. One constant so a page that offers to be
+ * written to and the footer do not drift apart.
+ */
+export const STUDIO_EMAIL = "hello@snehavrinda.in";
+
 export const DEFAULT_HERO_SLIDES = [
   {
     eyebrow: "New arrivals & curated collections",

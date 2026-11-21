@@ -905,7 +905,14 @@
     "forgotIntro": "Enter your email and we’ll send a link to reset your password.",
     "sendReset": "Send reset link",
     "remembered": "Remember your password?",
-    "registerFailed": "We could not create your account. The email may already be in use."
+    "registerFailed": "We could not create your account. The email may already be in use.",
+    "resetSentTitle": "Request received",
+    "resetSentBody": "If an account exists for that email, a reset link is on its way. It is good for one hour.",
+    "resetStudioBody": "Email is not switched on for this shop yet, so no link will arrive. Your request has reached the studio and we will reset your password and write to you — usually the same day.",
+    "backToSignIn": "Back to sign in",
+    "forgotIntroOffline": "Tell us the email on your account. Email sending is not switched on yet, so the studio resets passwords by hand — write to us if you would rather do that now.",
+    "requestReset": "Ask the studio to reset it",
+    "resetFailed": "We could not record that request. Please write to the studio directly."
   },
   "searchPage": {
     "backToShop": "← Back to shop",
