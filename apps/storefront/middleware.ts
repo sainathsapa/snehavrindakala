@@ -168,10 +168,10 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // A Medusa OAuth callback is likewise a signed-out entry point.
-    if (pathname === "/api/admin/auth/callback") {
-      return NextResponse.next();
-    }
+    // A Medusa OAuth callback is likewise a signed-out entry point — but only
+    // if one is deployed. There is no `app/api/admin/auth/callback` route, so
+    // this exception used to whitelist a path that does not exist. If an OAuth
+    // flow is added later, add its callback here *with* the route.
 
     const sessionToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
     const hasSession = await verifyAdminSession(sessionToken);
