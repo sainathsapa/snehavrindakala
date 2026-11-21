@@ -32,6 +32,8 @@ const KEYS = [
   "edition",
   "dispatch",
   "care",
+  "provenance",
+  "condition",
 ] as const;
 
 describe("artwork specification labels", () => {

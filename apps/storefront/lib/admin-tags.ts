@@ -19,6 +19,11 @@ export const SPEC_KEYS = [
   "year",
   "edition",
   "care",
+  // Provenance and condition are what make "one of one" checkable rather than
+  // asserted. Written by the owner from what they know about the object, and
+  // left out entirely when unknown.
+  "provenance",
+  "condition",
 ] as const;
 
 export type SpecKey = (typeof SPEC_KEYS)[number];

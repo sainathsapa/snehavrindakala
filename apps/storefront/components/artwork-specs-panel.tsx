@@ -28,6 +28,8 @@ const ROWS: { key: keyof ArtworkSpecs }[] = [
   { key: "edition" },
   { key: "dispatch" },
   { key: "care" },
+  { key: "provenance" },
+  { key: "condition" },
 ];
 
 export async function ArtworkSpecsPanel({

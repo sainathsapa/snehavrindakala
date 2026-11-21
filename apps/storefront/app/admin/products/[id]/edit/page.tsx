@@ -53,6 +53,8 @@ export default function EditProductPage() {
     year: "",
     edition: "",
     care: "",
+    provenance: "",
+    condition: "",
   });
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -115,6 +117,8 @@ export default function EditProductPage() {
           year: data.specs?.year || "",
           edition: data.specs?.edition || "",
           care: data.specs?.care || "",
+          provenance: data.specs?.provenance || "",
+          condition: data.specs?.condition || "",
         });
         setLoading(false);
       })
@@ -275,6 +279,16 @@ export default function EditProductPage() {
                     ["year", "Year", "2025"],
                     ["edition", "Edition", "1 of 1"],
                     ["care", "Care", "Keep out of direct sunlight"],
+                    [
+                      "provenance",
+                      "Provenance",
+                      "From the artist's studio, 2025",
+                    ],
+                    [
+                      "condition",
+                      "Condition",
+                      "Excellent; a faint mark on the reverse",
+                    ],
                   ] as const).map(([key, label, hint]) => (
                     <div key={key}>
                       <label className="block font-sans text-sm font-medium text-deep-ink mb-1">

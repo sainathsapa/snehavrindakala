@@ -32,6 +32,8 @@ export default function NewProductPage() {
     year: "",
     edition: "",
     care: "",
+    provenance: "",
+    condition: "",
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
@@ -173,6 +175,16 @@ export default function NewProductPage() {
                     ["year", "Year", "2025"],
                     ["edition", "Edition", "1 of 1"],
                     ["care", "Care", "Keep out of direct sunlight"],
+                    [
+                      "provenance",
+                      "Provenance",
+                      "From the artist's studio, 2025",
+                    ],
+                    [
+                      "condition",
+                      "Condition",
+                      "Excellent; a faint mark on the reverse",
+                    ],
                   ] as const).map(([key, label, hint]) => (
                     <div key={key}>
                       <label className="block font-sans text-sm font-medium text-deep-ink mb-1">

@@ -59,6 +59,10 @@ export interface ArtworkSpecs {
    */
   dispatchKey?: string;
   care?: string;
+  /** Where the work has been, stated by the owner. Never inferred. */
+  provenance?: string;
+  /** The object's actual state, in the owner's words. */
+  condition?: string;
 }
 
 const STOCK_TYPES = new Set(["ready_to_ship", "made_to_order", "custom_only"]);
@@ -187,6 +191,8 @@ export function specsFromProduct(product: any, stockType: string): ArtworkSpecs 
     dispatch,
     dispatchKey,
     care: tag("care"),
+    provenance: tag("provenance"),
+    condition: tag("condition"),
   };
 
   // Drop empty fields so callers can test presence cheaply.

@@ -828,6 +828,8 @@
       "edition": "संस्करण",
       "dispatch": "प्रेषण",
       "care": "देखभाल",
+      "provenance": "उद्गम",
+      "condition": "स्थिति",
       "dispatchReady": "सामान्यतः २–४ कार्यदिवसों में भेजा जाता है",
       "dispatchMadeToOrder": "सामान्यतः २–३ सप्ताह में भेजा जाता है",
       "dispatchCustom": "समय-सीमा आपके कोटेशन के साथ तय होगी"

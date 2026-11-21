@@ -84,4 +84,26 @@ describe("product tag merge", () => {
     expect(specs.dimensions).toBe("12 × 18 cm");
     expect(specs.year).toBe("2024");
   });
+
+  it("carries provenance and condition through a save that does not touch them", () => {
+    // These are the two fields that make "one of one" checkable. They are long
+    // prose the owner types once, so losing them to a price edit would mean
+    // retyping a record that cannot be reconstructed from anywhere else.
+    const withRecord = [
+      ...existing,
+      "provenance:From the artist's studio, 2024",
+      "condition:Excellent; a faint mark on the reverse",
+    ];
+
+    const after = mergeTags(withRecord, { specs: { dimensions: "32 × 42 cm" } });
+    expect(after).toContain("provenance:From the artist's studio, 2024");
+    expect(after).toContain("condition:Excellent; a faint mark on the reverse");
+    expect(after).toContain("dimensions:32 × 42 cm");
+    expect(after).not.toContain("dimensions:30 × 40 cm");
+
+    // Clearing one removes its tag rather than storing `condition:` with no
+    // value, which would render as an empty row on the product page.
+    const cleared = mergeTags(withRecord, { specs: { condition: "" } });
+    expect(cleared.some((tag) => tag.startsWith("condition:"))).toBe(false);
+  });
 });
