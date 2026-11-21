@@ -392,8 +392,16 @@ export const MATERIALS_HI: Record<string, HindiMaterial> = {
     why: "यह कपड़े पर बैठता नहीं, रेशे से बँध जाता है और बीस धुलाइयाँ झेल जाता है।",
   },
   Myrobalan: {
-    material: "हरड़",
-    what: "सूखे हरड़ फल का पाउडर, चित्र बनाने से पहले सूती कपड़े पर लगाया जाता है।",
+    // Terminalia chebula. Hindi has two common spellings in circulation — the
+    // standard हरड़ (harad) and the craft-writing transliteration हरदा (harda) —
+    // and readers who know the dye from block-printing or ajrakh texts usually
+    // know it as "harda". Both are given, with the botanical name, so nobody has
+    // to guess whether these are the same nut. Sources: the Hindi name हरड़ is the
+    // one used in Ayurvedic and botanical references (Terminalia chebula, Haritaki/
+    // Harad); "harda" is the spelling used in textile-craft writing on ajrakh and
+    // kalamkari (Impart, "Harda").
+    material: "हरड़ (हरदा)",
+    what: "हरीतकी यानी हरड़ (Terminalia chebula) के सूखे फल का पाउडर, चित्र बनाने से पहले सूती कपड़े पर लगाया जाता है।",
     why: "यह टैनिन की तल बनाता है जिसे रंग पकड़ता है। इसके बिना रेखा फैल जाती है और कपड़ा बर्बाद।",
   },
   "Buffalo milk": {
@@ -412,7 +420,7 @@ export const MATERIALS_HI: Record<string, HindiMaterial> = {
     why: "वारली उसी दीवार पर बनती थी जिसके बारे में वह थी। सतह ही इमारत है।",
   },
   "Myrobalan black + indigo": {
-    material: "हरड़ का काला + नील",
+    material: "हरड़ का काला (हरदा) + नील",
     what: "अजरख में दो-चरणी रोक: लोहे से काला, नील से नीला, और कीचड़ को रोक के रूप में।",
     why: "चौदह चरणों की प्रक्रिया जिसमें कीचड़ ढाल है और नदी धुलाई।",
   },

@@ -345,12 +345,23 @@ No storage exists, deliberately. A biography is a factual claim about a named
 living person; it needs the person's own text and their consent. The footer and
 `/makers` state only what a product record already says.
 
-### 10d. Hindi review — one word flagged
+### 10d. Hindi review — `हरड़` confirmed
 
 `हरड़` replaces the earlier transliteration `मायरोबालन` (myrobalan) in the
-Kalamkari description. `हरड़` is the everyday Hindi name for the dye nut, but
-the register should be confirmed by a native reader. Every other Hindi string in
-`site_art_form` came from `messages/hi.json` or was written against it.
+Kalamkari description. The spelling is now settled rather than flagged:
+`हरड़` (harad) is the standard Hindi name for *Terminalia chebula*, the dye nut
+also called chebulic myrobalan and haritaki, and `हरदा` (harda) is the spelling
+used in the textile-craft literature on ajrakh and kalamkari. The material card
+now gives both, with the botanical name, so a reader who knows the dye as
+"harda" does not have to wonder whether the two are the same fruit.
+
+Sources checked: botanical/Ayurvedic references giving Hindi `हरड़` for
+*Terminalia chebula* (Haritaki/Harad), the PROSEA handbook entry for the species
+(dye and tannin uses), and Impart's craft glossary entry "Harda" describing its
+use in ajrakh, balotra and as a mordant aid in kalamkari.
+
+Every other Hindi string in `site_art_form` came from `messages/hi.json` or was
+written against it.
 
 ### 10e. Kalamkari origin — resolved
 

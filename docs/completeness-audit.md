@@ -93,11 +93,11 @@ fabricating something.
 
 | Gap | Size | Why it is not done here |
 |---|---|---|
-| Real photographs | 16 of 21 live | A photograph of a different work is a false claim about a one-of-one object |
-| Dimensions | 21 of 21 live | Nothing may be estimated; a wrong size is a returned order. No dimension data exists anywhere — `product.metadata` holds only `stock_type` and `artist` |
+| Real photographs | 4 of 19 works have one | 15 listings carry a generated illustration; the product page now says so and `/admin/products` flags them — `docs/PHOTO-AND-MEASUREMENT-BRIEF.md` |
+| Dimensions | 19 of 19 stated, 0 measured | Values came from the seed script, not a tape. Shown as "stated by the studio"; withheld from certificates until measured — see `docs/PHOTO-AND-MEASUREMENT-BRIEF.md` |
 | Product description | 1 (`madhubani-celebration`) | Needs the owner's words |
 | Artist biography | 1 maker | A factual claim about a named living person; needs their text and consent |
-| Hindi review | 1 word (`हरड़`) | Authentic name for the dye nut, but the register needs a native reader |
+| Hindi review | settled | `हरड़` confirmed as the standard Hindi name for Terminalia chebula, with `हरदा` given alongside it as the craft-writing spelling |
 
 Dimensions deserve a note, because the plumbing already exists and no code
 change is needed to close that gap. `lib/catalogue.ts` reads a product tag of

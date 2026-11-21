@@ -132,3 +132,22 @@ describe("the brief exists so this is actionable", () => {
     expect(brief).toMatch(/Stand-in photo/);
   });
 });
+
+describe("the dye nut's name is settled, not flagged", () => {
+  const reference = read("lib/art-reference.ts");
+
+  it("gives both spellings with the botanical name", () => {
+    expect(reference).toContain("हरड़ (हरदा)");
+    expect(reference).toContain("Terminalia chebula");
+  });
+
+  it("keeps the black variant findable too", () => {
+    expect(reference).toContain("हरड़ का काला (हरदा)");
+  });
+
+  it("the audit no longer lists it as an open review item", () => {
+    const audit = readFileSync(join(root, "..", "..", "docs", "completeness-audit.md"), "utf8");
+    expect(audit).toMatch(/हरड़` confirmed|settled/);
+    expect(audit).not.toMatch(/Hindi review \| 1 word/);
+  });
+});
