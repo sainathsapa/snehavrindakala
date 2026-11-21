@@ -1026,5 +1026,21 @@
     "notFoundTitle": "No certificate with that reference",
     "notFoundBody": "We could not find {code} in the register. Check the characters — letters I, L, O and U never appear in a reference. If it still does not resolve, write to us and we will look it up.",
     "howWeCertify": "How we certify a work"
+  },
+  "inquiry": {
+    "open": "Ask about this work",
+    "promise": "A person answers, usually within a day.",
+    "heading": "Your question",
+    "name": "Name",
+    "email": "Email",
+    "question": "What would you like to know?",
+    "placeholder": "What would you like to know about {title}?",
+    "send": "Send question",
+    "cancel": "Cancel",
+    "sent": "Thank you — your question is with the art house and a person will reply.",
+    "close": "Close",
+    "invalid": "Please add an email address we can reply to.",
+    "failed": "The question could not be sent. Please try again, or write to us directly.",
+    "replyTime": "We reply to every question about a work, usually within a day."
   }
 }

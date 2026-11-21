@@ -14,6 +14,7 @@ import { ArtworkRecord } from "@/components/artwork-record";
 import { TrustStrip } from "@/components/trust-strip";
 import { RelativeArtworks } from "@/components/relative-artworks";
 import { WishlistButton } from "@/components/wishlist-button";
+import { WorkInquiryForm } from "@/components/work-inquiry-form";
 import { ProductReviews } from "@/components/product-reviews";
 import { MobileBuyBar } from "@/components/mobile-buy-bar";
 import { getCurrentCustomer } from "@/lib/auth";
@@ -573,6 +574,14 @@ export default async function ProductDetailPage({
                 region: t("recordRegion"),
                 maker: t("recordMaker"),
               }}
+            />
+
+            {/* 4c — A question before a decision. Buying a one-of-one object
+                is not a tap, and the only form on the site was the commission
+                brief, which is a different thing entirely. */}
+            <WorkInquiryForm
+              handle={product.handle ?? medusaHandle}
+              title={catalogueTitle}
             />
 
             {/* 5 — Why to trust the purchase, right next to the decision. */}

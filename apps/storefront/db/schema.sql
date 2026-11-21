@@ -408,6 +408,7 @@ CREATE TABLE IF NOT EXISTS support_tickets (
   status text NOT NULL DEFAULT 'open'::text,
   priority text NOT NULL DEFAULT 'medium'::text,
   assigned_to text,
+  product_handle text NOT NULL DEFAULT ''::text,
   created_at timestamp without time zone NOT NULL DEFAULT now(),
   updated_at timestamp without time zone NOT NULL DEFAULT now(),
   PRIMARY KEY (id)
