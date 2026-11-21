@@ -310,8 +310,14 @@ async function ensureFulfillment(channelId) {
   const providers = await dbColumn(
     "SELECT id FROM fulfillment_provider WHERE is_enabled = true"
   );
+  // The shipping option below is the zero-priced one Medusa uses to complete a
+  // cart; the real courier charge is quoted from Shiprocket at checkout. So the
+  // option is created against a manual provider when there is one. Provider ids
+  // are plain registered ids (`manual_manual`, `shiprocket_shiprocket`), not the
+  // `fp_`-prefixed strings older Medusa versions used, which is why this matches
+  // on the word rather than on a prefix.
   const providerId =
-    providers.find((p) => p.startsWith("fp_manual")) ?? providers[0] ?? "manual";
+    providers.find((p) => p.includes("manual")) ?? providers[0] ?? "manual";
 
   const locations = await listAll("/admin/stock-locations");
   let location = locations.find((l) => l.name === "SnehaVrinda Kala Studio");
@@ -345,12 +351,32 @@ async function ensureFulfillment(channelId) {
   // it. Shipping options are created against one of those providers, so without
   // this the API answers "Providers (x) are not enabled for the service
   // location" and checkout has no shipping method at all.
-  const linkProvider = await api(
-    `/admin/stock-locations/${location.id}/fulfillment-providers`,
-    { method: "POST", body: { add: [providerId] } }
+  //
+  // Every enabled provider is linked, not just the first. This used to link one:
+  // with Shiprocket registered, `manual_manual` won and Shiprocket stayed
+  // enabled at provider level and unusable at location level, so an admin could
+  // never create a Shiprocket fulfilment by hand. Linking is idempotent, so the
+  // seed can be re-run on an existing shop.
+  const linkedRes = await api(
+    `/admin/stock-locations/${location.id}?fields=*fulfillment_providers`
   );
-  if (!linkProvider.ok) {
-    warn(`could not enable fulfillment provider ${providerId} on the location (${linkProvider.status})`);
+  const linked = new Set(
+    (linkedRes.ok ? linkedRes.body.stock_location?.fulfillment_providers ?? [] : []).map(
+      (p) => p.id ?? p
+    )
+  );
+  const missing = providers.filter((id) => !linked.has(id));
+
+  if (missing.length) {
+    const linkProvider = await api(
+      `/admin/stock-locations/${location.id}/fulfillment-providers`,
+      { method: "POST", body: { add: missing } }
+    );
+    if (!linkProvider.ok) {
+      warn(`could not enable fulfillment providers ${missing.join(", ")} on the location (${linkProvider.status})`);
+    } else {
+      ok(`fulfillment providers linked to the studio: ${missing.join(", ")}`);
+    }
   }
 
   location = (await refetchLocation(location.id)) ?? location;
