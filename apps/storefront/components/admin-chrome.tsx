@@ -66,6 +66,9 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
   { href: "/admin/users", label: "Users & Roles", icon: "users", role: "super_admin" },
   { href: "/admin/settings", label: "Settings", icon: "settings", role: "super_admin" },
   { href: "/admin/analytics", label: "Analytics", icon: "analytics", role: "viewer" },
+  // The footer signup wrote nowhere for a long time; the list lives beside the
+  // analytics it feeds.
+  { href: "/admin/newsletter", label: "Letters", icon: "mail", role: "manager" },
   { href: "/admin/discounts", label: "Discounts", icon: "discounts", role: "manager" },
   {
     href: "/admin/commissions",

@@ -4,6 +4,7 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { LetterForm } from "@/components/letter-form";
 import {
   LotusRosette,
   DiyaMotif,
@@ -316,39 +317,7 @@ export function Footer({
 
             {/* The letter. An underline, not a pill: correspondence, not a
                 checkout field. */}
-            <form action="/api/newsletter" method="POST" className="mt-8 max-w-sm">
-              <label
-                htmlFor="footer-email"
-                className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-haldi/70"
-              >
-                {t("lettersHeading")}
-              </label>
-              <div className="mt-2.5 flex items-center gap-3 border-b border-rang-paper/25 pb-2 focus-within:border-haldi/70">
-                <input
-                  id="footer-email"
-                  name="email"
-                  type="email"
-                  placeholder={t("emailPlaceholder")}
-                  required
-                  className="min-w-0 flex-1 bg-transparent font-sans text-sm text-rang-paper placeholder:text-rang-paper/30 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="shrink-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-haldi transition-colors hover:text-rang-paper"
-                >
-                  Send
-                </button>
-              </div>
-              <label className="mt-2.5 flex items-start gap-2 font-sans text-[10px] leading-snug text-rang-paper/65">
-                <input
-                  name="consent"
-                  type="checkbox"
-                  required
-                  className="mt-0.5 h-3 w-3 shrink-0 cursor-pointer appearance-none border border-rang-paper/40 bg-transparent transition-colors checked:border-haldi checked:bg-haldi"
-                />
-                <span>{t("consent")}</span>
-              </label>
-            </form>
+            <LetterForm />
           </div>
 
           {/* ── The jharokha galleries ──

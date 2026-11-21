@@ -55,7 +55,11 @@
     "moreGlossary": "More in the glossary →",
     "place": "Bikaner · Rajasthan",
     "shippingWorldwide": "Shipping worldwide",
-    "secure": "Secure"
+    "secure": "Secure",
+    "letterThanks": "Thank you — your first letter will find you.",
+    "letterAlready": "You are already on the list.",
+    "letterInvalid": "That email address does not look complete.",
+    "letterFailed": "We could not save that just now. Please try again."
   },
   "common": {
     "priceOnRequest": "Price on request",

@@ -175,6 +175,18 @@ CREATE TABLE IF NOT EXISTS journal_posts (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id SERIAL NOT NULL,
+  email text NOT NULL,
+  locale text NOT NULL DEFAULT 'en'::text,
+  source text NOT NULL DEFAULT 'footer'::text,
+  consent_at timestamp with time zone NOT NULL DEFAULT now(),
+  unsubscribed_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (id),
+  UNIQUE (email)
+);
+
 CREATE TABLE IF NOT EXISTS order_refunds (
   id text NOT NULL DEFAULT gen_random_uuid(),
   order_id text NOT NULL,

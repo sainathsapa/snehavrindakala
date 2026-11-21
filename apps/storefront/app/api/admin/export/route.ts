@@ -37,7 +37,15 @@ export async function GET(req: Request) {
     let rows: any[] = [];
     let filename = "export";
 
-    if (type === "orders") {
+    if (type === "newsletter") {
+      filename = "newsletter-subscribers";
+      rows = await query(`
+        SELECT email, locale, source, consent_at, created_at
+        FROM newsletter_subscribers
+        WHERE unsubscribed_at IS NULL
+        ORDER BY created_at DESC
+      `);
+    } else if (type === "orders") {
       filename = "orders";
       rows = await query(`
         SELECT o.id, o.status, o.email AS customer_email, o.currency_code,
