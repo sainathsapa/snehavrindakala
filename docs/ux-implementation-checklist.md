@@ -49,11 +49,11 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 - Full-screen lightbox gallery (keyboard: Esc, ←/→), thumbnail rail, spec panel, trust strip, dispatch line, "commission a similar piece".
 - Files: `components/product-gallery.tsx`, `components/trust-strip.tsx`, `app/[locale]/products/[handle]/page.tsx`.
 - Status: **Completed** (build + typecheck verified).
-### 2.3 Wishlist (persistence, merge after login, page, empty state) — **Completed (guest localStorage; login merge not implemented)**
+### 2.3 Wishlist (persistence, merge after login, page, empty state) — **Completed**
 - Persistent in localStorage for guests and signed-in users on the same browser; header count; `/wishlist` page with empty state and add-to-cart.
 - Files: `lib/wishlist-store.ts`, `lib/hooks/use-wishlist.ts`, `components/wishlist-button.tsx`, `components/wishlist-link.tsx`, `app/[locale]/wishlist/page.tsx`, `app/api/store/product-variant/route.ts`.
 - Tests: 13 passing in `wishlist-store.test.ts`.
-- Limitation: no server-side merge across devices after login (would need a wishlist table + sync).
+- Signed-in customers also get a server copy (`customer_wishlist`, keyed by Medusa customer id) so the list follows them across devices. Merging is a union on mount — a stale tab cannot delete what was saved elsewhere — and guests are never written to the server. Removals are explicit and replace the stored list. Covered by `tests/wishlist-store.test.ts`.
 ### 2.4 Verified-purchaser reviews (submit, moderation, accurate counts) — **Completed**
 - Backend `review` module: DML entity + migration + service (public list, approved-only summary, duplicate guard, moderation). Store API `GET/POST /store/reviews` verifies purchase against the order module (fail-closed) and queues every review as `pending`.
 - Storefront: PDP review section (rating summary + list + sign-in-gated form via server action), `StarRating`, `/api/admin/reviews` moderation routes, `/admin/reviews` queue, nav entry.

@@ -176,11 +176,16 @@ the homepage and the PDP alike.
 
 ## 5. Maker biography — the one real schema change
 
-There is no artist table the storefront reads. `/makers` derives its entries
-from `product.artist` and shows only a name and a count. A biography, a
-portrait and a region cannot be stored anywhere yet.
+**Status: built.** `site_artist` exists, `/makers` renders a biography,
+portrait and region when supplied, and `/admin/content` has a Makers section
+with create/edit/reorder/delete. Every field is optional by design: a maker
+with no row still appears with their name and work count, and an empty field
+renders nothing rather than placeholder copy.
 
-### Proposed table
+What remains is the content itself — see "Content needed" below. Nothing has
+been drafted on anyone's behalf.
+
+### The table (as built)
 
 ```sql
 CREATE TABLE IF NOT EXISTS site_artist (

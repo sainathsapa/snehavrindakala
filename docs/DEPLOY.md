@@ -122,16 +122,33 @@ idempotent, so it re-runs harmlessly and picks up new catalogue entries.
 
 ## Known gaps
 
-* **Razorpay and Shiprocket are not active.** The adapters in
-  `apps/backend/src/providers/` are Medusa v1 shape (a plain class plus a
-  `({container, options})` factory) and v2 refuses to load them; registering them
-  crashes the backend with `moduleProviderServices is not iterable`. Checkout
-  therefore runs on `pp_system_default` and fulfilment on `manual_manual`, both
-  provisioned by the seed. Porting means extending `AbstractPaymentProvider` /
-  `AbstractFulfillmentProviderService` with the v2 method names
-  (`initiatePayment`, `authorizePayment`, `getFulfillmentOptions`, ...).
+* **The providers load, but checkout still completes on the system provider.**
+  Both adapters were Medusa v1 shapes and could not register at all; they are
+  now v2 providers (`AbstractPaymentProvider`, `AbstractFulfillmentProviderService`),
+  registered only when their credentials are set. That is verified on a running
+  backend: `pp_razorpay_razorpay` and `shiprocket_shiprocket` both resolve, and
+  the seed now attaches the Razorpay id to the INR region.
+
+  What is *not* switched over is the checkout session itself. The storefront
+  creates the Razorpay order from `/api/store/checkout/payment-session` and
+  completes the cart with `pp_system_default`, verifying the signature and the
+  captured payment server-side in `complete/route.ts`. Moving that to
+  `pp_razorpay_razorpay` means one of the two order-creation paths has to go,
+  and doing it without a sandbox run risks charging twice or not at all. It is a
+  separate, testable change. Until then the provider is available to the admin
+  for capture, refund and webhook handling, and the storefront path is the one
+  that takes the money.
+
+  Fulfilment behaves the same way: the Shiprocket provider is registered and
+  usable for admin-created fulfilments, while order shipments are still created
+  by `lib/shipping/create-order-shipment.ts` in the storefront.
 * **Email is a no-op until SES is configured.** `FROM_EMAIL` plus
   `AWS_SES_*` credentials make it real; without them messages are rendered,
   recorded as `skipped`, and nothing is sent.
+* **Backend → storefront notifications need a matching secret.** The backend
+  posts to the storefront's `/api/internal/notifications` with
+  `INTERNAL_NOTIFY_SECRET`; the storefront rejects a request without it and the
+  backend logs `skipped`. Set the same value on both services or order emails
+  never leave the backend.
 * **The single-node Redis is not highly available.** Fine for one server; a
   restart drops cached sessions and in-flight workflow state.
