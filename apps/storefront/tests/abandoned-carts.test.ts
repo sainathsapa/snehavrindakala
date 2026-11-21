@@ -57,6 +57,14 @@ describe("isAbandoned", () => {
   });
 });
 
+it("leaves out carts holding a work that has since sold", () => {
+    // "The piece you chose is still here" would be false, and one-of-one means
+    // there is nothing to come back for.
+    const sql = read("lib/abandoned-carts.ts");
+    expect(sql).toMatch(/oli\.variant_id = li\.variant_id/);
+    expect(sql).toMatch(/status NOT IN \('canceled'\)/);
+  });
+
 describe("abandonedAfterHours", () => {
   it("defaults to six hours and ignores nonsense", async () => {
     const { abandonedAfterHours } = await import("../lib/abandoned-carts");

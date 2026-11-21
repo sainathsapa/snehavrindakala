@@ -76,6 +76,10 @@ export default async function AbandonedCartsPage() {
           </p>
         )}
 
+        <p className="mb-4 font-sans text-xs text-muted-ink">
+          One reminder per cart, and carts whose work has sold are not listed.
+        </p>
+
         {failed ? (
           <p className="border-l-2 border-sindoor bg-sindoor/5 px-3 py-2 font-sans text-sm text-sindoor">
             The carts could not be read. Nothing was lost — this list is derived
@@ -88,7 +92,9 @@ export default async function AbandonedCartsPage() {
             </p>
             <p className="mt-1 font-sans text-xs text-muted-ink">
               Carts appear here {abandonedAfterHours()} hours after the last
-              activity, and only if they have an email address.
+              activity, and only if they have an email address. Carts holding a
+              work that has since sold are left out — there is nothing to come
+              back to.
             </p>
           </div>
         ) : (

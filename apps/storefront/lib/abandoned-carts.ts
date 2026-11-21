@@ -128,6 +128,18 @@ export async function listAbandonedCarts(
         AND c.email <> ''
         AND c.updated_at < now() - make_interval(hours => $1)
         AND NOT EXISTS (SELECT 1 FROM order_cart oc WHERE oc.cart_id = c.id)
+        -- A cart holding a work that has since sold is not unfinished business,
+        -- it is a wish: "the piece you chose is still here" would be false, and
+        -- one-of-one means there is nothing to come back for.
+        AND NOT EXISTS (
+          SELECT 1
+            FROM order_line_item oli
+            JOIN order_item oi ON oi.item_id = oli.id AND oi.deleted_at IS NULL
+            JOIN "order" o ON o.id = oi.order_id AND o.deleted_at IS NULL
+           WHERE oli.deleted_at IS NULL
+             AND o.status NOT IN ('canceled')
+             AND oli.variant_id = li.variant_id
+        )
       GROUP BY c.id, c.email, c.currency_code, c.updated_at, r.sent_at, r.status
       ORDER BY c.updated_at DESC
       LIMIT $2`,
