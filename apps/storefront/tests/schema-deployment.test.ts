@@ -88,6 +88,7 @@ describe("schema deployment", () => {
     // nothing at all.
     const owned = new Set([
       "admin_users", "app_notifications", "audit_log", "category_translation",
+      "customer_wishlist",
       "commission_payouts", "discount_codes", "journal_posts", "order_refunds",
       "order_shipments", "product_review", "product_translation", "return_requests",
       "site_artist", "site_art_form", "site_featured_category", "site_hero_slide",

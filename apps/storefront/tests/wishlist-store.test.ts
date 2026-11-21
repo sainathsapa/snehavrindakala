@@ -6,6 +6,7 @@ import {
   toggleWishlist,
   removeFromWishlist,
   isWishlisted,
+  mergeWishlists,
   WISHLIST_KEY,
   type StorageLike,
   type WishlistEntry,
@@ -106,5 +107,30 @@ describe("removeFromWishlist / isWishlisted", () => {
     const list = [entry("a")];
     expect(isWishlisted(list, "a")).toBe(true);
     expect(isWishlisted(list, "b")).toBe(false);
+  });
+});
+
+describe("mergeWishlists", () => {
+  it("keeps everything from both sides, local order first", () => {
+    const merged = mergeWishlists([entry("a"), entry("b")], [entry("c"), entry("a")]);
+    expect(merged.map((e) => e.handle)).toEqual(["a", "b", "c"]);
+  });
+
+  it("never drops a work because the other list is stale", () => {
+    const merged = mergeWishlists([entry("local")], [entry("phone"), entry("old")]);
+    expect(merged.map((e) => e.handle)).toEqual(["local", "phone", "old"]);
+  });
+
+  it("ignores malformed entries instead of writing them", () => {
+    const merged = mergeWishlists(
+      [{ handle: "", title: "x" } as any, { title: "no handle" } as any],
+      [entry("ok")]
+    );
+    expect(merged.map((e) => e.handle)).toEqual(["ok"]);
+  });
+
+  it("caps the list so one merge cannot grow it without bound", () => {
+    const many = Array.from({ length: 250 }, (_, i) => entry(`h${i}`));
+    expect(mergeWishlists([], many)).toHaveLength(200);
   });
 });

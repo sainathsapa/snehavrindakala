@@ -67,6 +67,30 @@ export function removeFromWishlist(
   return entries.filter((e) => e.handle !== handle);
 }
 
+/**
+ * Union of two lists, first list's order winning.
+ *
+ * Used when a signed-in customer's browser list meets the list stored on the
+ * server: nothing is dropped, so a stale tab cannot delete what was saved
+ * elsewhere, and the order stays recognisable to the person looking at it.
+ */
+export function mergeWishlists(
+  primary: WishlistEntry[],
+  secondary: WishlistEntry[],
+  limit = 200
+): WishlistEntry[] {
+  const seen = new Set<string>();
+  const out: WishlistEntry[] = [];
+  for (const entry of [...primary, ...secondary]) {
+    if (!entry || typeof entry.handle !== "string" || !entry.handle) continue;
+    if (seen.has(entry.handle)) continue;
+    seen.add(entry.handle);
+    out.push(entry);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 export function isWishlisted(
   entries: WishlistEntry[],
   handle: string

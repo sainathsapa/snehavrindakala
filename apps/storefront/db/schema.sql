@@ -126,6 +126,19 @@ CREATE TABLE IF NOT EXISTS commission_payouts (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS customer_wishlist (
+  id SERIAL NOT NULL,
+  customer_id text NOT NULL,
+  handle text NOT NULL,
+  title text NOT NULL DEFAULT ''::text,
+  image text NOT NULL DEFAULT ''::text,
+  price numeric,
+  currency text NOT NULL DEFAULT ''::text,
+  artist text NOT NULL DEFAULT ''::text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (id),
+  UNIQUE (customer_id, handle)
+);
 
 CREATE TABLE IF NOT EXISTS discount_codes (
   id text NOT NULL DEFAULT gen_random_uuid(),
