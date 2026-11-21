@@ -99,17 +99,18 @@ fabricating something.
 | Artist biography | 1 maker | A factual claim about a named living person; needs their text and consent |
 | Hindi review | settled | `हरड़` confirmed as the standard Hindi name for Terminalia chebula, with `हरदा` given alongside it as the craft-writing spelling |
 
-Dimensions deserve a note, because the plumbing already exists and no code
-change is needed to close that gap. `lib/catalogue.ts` reads a product tag of
-the form `dimensions:30 × 40 cm`, and `components/artwork-specs-panel.tsx`
-renders it as a row labelled "Dimensions" plus a `size` property in the
-`VisualArtwork` JSON-LD. This was verified by adding such a tag to one product,
-confirming the row and the JSON-LD `size` appeared, then removing it — no
-`dimensions:` tag exists on any product today, so the block renders only medium
-and dispatch.
+Dimensions deserve a note, because the plumbing exists and the remaining gap is a
+measurement, not code. `lib/catalogue.ts` reads a product tag of the form
+`dimensions:30 × 40 cm`, and `components/artwork-specs-panel.tsx` renders it as a
+row labelled "Dimensions" plus a `size` property in the `VisualArtwork` JSON-LD.
+All 19 live products now carry such a tag — every value came from the seed
+script, so the shop displays them as *stated by the studio, not yet measured*.
+A separate `measured:yes` tag is what allows a size onto a signed certificate
+(`lib/certificates.ts` `isMeasured`, ticked with "I have measured this work" in
+the admin product form). The distinction matters: showing a size helps a buyer,
+certifying one asserts a fact about a specific object.
 
-The gap is therefore a tag per product, not a feature. Tags are added in the
-admin product form, or in bulk:
+Tags are added in the admin product form, or in bulk:
 
 ```sql
 -- after inserting the value into product_tag and linking it in product_tags
@@ -174,16 +175,33 @@ Closed:
 
 Still open, and honestly so:
 
-- **art-form `origin`** needs a taxonomy decision from the owner: the six
-  categories are not all traditions, and four straddle several states;
-- **`madhubani-celebration`** still has no description, and it has already been
-  sold three times;
-- **dimensions on 21 works** and **16 stand-in photographs** need the studio;
-- **Hindi art-form prose** (`description_hi`, `story_hi`, `materials_hi`,
-  `quote_hi`) needs a native writer, not a translation tool;
-- **checkout still completes on `pp_system_default`** while the Razorpay
-  provider handles admin-side capture, refunds and webhooks. Switching the
-  storefront path needs a sandbox run, because two order-creation paths exist
-  and removing one blind risks charging twice;
-- **email is a no-op** until `FROM_EMAIL` and the SES credentials are set.
-  `/admin/settings` now says so in the product, not only in `DEPLOY.md`.
+- **Owner data.** Real photographs (15 of 19 listings show a generated
+  illustration), measured dimensions (0 of 19 are marked `measured:yes`),
+  a description for `madhubani-celebration`, and maker biographies. None of
+  these can be written by code without inventing a claim about a one-of-one
+  object or a named living person. What changed is that the shop no longer
+  pretends: the product page says the picture is a stand-in and the size is
+  unmeasured, and `docs/PHOTO-AND-MEASUREMENT-BRIEF.md` lists every work with
+  what is still needed.
+- **Checkout still completes on `pp_system_default`.** The switch to
+  `pp_razorpay_razorpay` now exists behind `CHECKOUT_RAZORPAY_PROVIDER=1`,
+  refuses to enable without keys *and* the webhook secret, and is documented in
+  `docs/DEPLOY.md`. It stays off until one sandbox purchase has been completed
+  end to end on it — both paths create a Razorpay order, and the failure mode is
+  charging twice.
+- **Email is a no-op** until `FROM_EMAIL` and the SES credentials are set.
+  `/admin/settings` says so, `/admin/outbox` shows every letter that was
+  recorded instead of sent, and the reason for each.
+- **The sold-work guard is a check, not a reservation.** Two payments for the
+  same work in the same second can both pass it; the order page and a refund
+  conversation are the fallback. Inventory reservations at add-to-cart are the
+  real fix.
+- **Static rendering** (ADR-0005) is deferred with a measurable trigger rather
+  than dropped.
+- **Admin uploads write to local disk.** `app/api/admin/upload/route.ts` says so;
+  object storage is an infrastructure step.
+
+Previously listed here and now closed: the art-form `origin` taxonomy (the field
+is labelled "Regions & traditions covered", because it mixes places and
+traditions); Hindi art-form prose (all six essays, 1191–1635 characters each, with
+the English columns filled too); and the `हरड़` spelling review.
