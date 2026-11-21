@@ -7,6 +7,7 @@ import { getAdminOrder } from "@/lib/admin";
 import { verifyOrderToken } from "@/lib/order-token";
 import { OrderNextSteps } from "@/components/order-next-steps";
 import { listCertificatesForOrder } from "@/lib/certificates";
+import { getGiftForOrder } from "@/lib/gift";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,15 @@ export default async function OrderPage({
     console.error("Could not load certificates for the order", error);
   }
 
+  // The gift note is shown back to the buyer so they can see it was recorded,
+  // and because a note written weeks ago is worth being able to re-read.
+  let gift: Awaited<ReturnType<typeof getGiftForOrder>> = null;
+  try {
+    gift = await getGiftForOrder(order.id);
+  } catch (error) {
+    console.error("Could not load the gift note for the order", error);
+  }
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -178,6 +188,24 @@ export default async function OrderPage({
                 </div>
               ))}
             </div>
+
+            {gift && (gift.note || gift.wrap) && (
+              <div className="mt-8 border-t border-sand-border pt-6">
+                <h3 className="font-serif text-lg font-semibold text-deep-ink">
+                  Gift
+                </h3>
+                {gift.wrap && (
+                  <p className="mt-1 font-sans text-sm text-muted-ink">
+                    Wrapped as a gift.
+                  </p>
+                )}
+                {gift.note && (
+                  <p className="mt-2 whitespace-pre-wrap border-l-2 border-sand-border pl-3 font-sans text-sm italic text-deep-ink">
+                    {gift.note}
+                  </p>
+                )}
+              </div>
+            )}
 
             {certificates.length > 0 && (
               <div className="mt-8 border-t border-sand-border pt-6">

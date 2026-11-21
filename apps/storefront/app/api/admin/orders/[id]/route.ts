@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
 import { getSystemAdminToken } from "@/lib/admin";
+import { getGiftForOrder } from "@/lib/gift";
 
 async function adminFetch(
   backendUrl: string,
@@ -55,7 +56,18 @@ export async function GET(
     }
 
     const data = await res.json();
-    return NextResponse.json(data.order ?? data);
+    const order = data.order ?? data;
+
+    // The packing bench needs to know whether to wrap the work and what card to
+    // put in the box. Non-fatal: a missing note must not stop the order page.
+    let gift = null;
+    try {
+      gift = await getGiftForOrder(order?.id ?? id);
+    } catch (err) {
+      console.error("Could not read the gift note", err);
+    }
+
+    return NextResponse.json({ ...order, gift });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

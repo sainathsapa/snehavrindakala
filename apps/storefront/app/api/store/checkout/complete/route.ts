@@ -20,6 +20,7 @@ import { getAdminOrder } from "@/lib/admin";
 import { createShipmentForOrder } from "@/lib/shipping/create-order-shipment";
 import { issueOrderToken } from "@/lib/order-token";
 import { issueCertificatesForOrder } from "@/lib/certificates";
+import { saveGiftForOrder } from "@/lib/gift";
 import { sendOrderConfirmation } from "@/lib/email";
 
 const RAZORPAY_KEY_ID =
@@ -177,6 +178,18 @@ export async function POST(req: Request) {
       certificates = await issueCertificatesForOrder(fullOrder as never);
     } catch (err) {
       console.error("Could not issue certificates of authenticity:", err);
+    }
+
+    // The gift note was written onto the cart before payment, so it survives a
+    // closed tab. Copying it onto the order is what the packing bench reads.
+    try {
+      await saveGiftForOrder(
+        order.id,
+        cart.metadata?.gift_note,
+        cart.metadata?.gift_wrap
+      );
+    } catch (err) {
+      console.error("Could not record the gift note:", err);
     }
 
     // Send the confirmation from here as well as from the Medusa subscriber.

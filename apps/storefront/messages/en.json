@@ -239,7 +239,15 @@
     "assureCertificate": "Certificate of authenticity with every work",
     "assurePacked": "Packed by the studio, insured in transit",
     "assureReturns": "Returns as set out in our published policy",
-    "formBillElsewhereHint": "Optional — leave unticked if the invoice goes to the same address."
+    "formBillElsewhereHint": "Optional — leave unticked if the invoice goes to the same address.",
+    "giftHeading": "Add a gift note",
+    "giftNoteLabel": "For the person receiving it",
+    "giftPlaceholder": "A line to go inside the box…",
+    "giftWrapLabel": "Wrap it as a gift, if wrapping is available for this work.",
+    "giftSave": "Save note",
+    "giftSaved": "Saved — this will go in the box.",
+    "giftFailed": "The note could not be saved. You can mention it to us after ordering.",
+    "giftHint": "Optional. Up to 300 characters."
   },
   "artForm": {
     "pageTitle": "Indian Art Forms",

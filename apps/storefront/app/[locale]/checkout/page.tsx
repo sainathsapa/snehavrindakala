@@ -207,6 +207,8 @@ export default async function CheckoutPage() {
         <CheckoutClient
           cartId={cart?.id ?? ""}
           currency={currency}
+          giftNote={(cart?.metadata?.gift_note as string) || ""}
+          giftWrap={cart?.metadata?.gift_wrap === "true"}
           subtotal={subtotal}
           lines={(items ?? []).map((item) => ({
             id: item.id,

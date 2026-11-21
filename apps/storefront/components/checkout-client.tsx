@@ -109,6 +109,9 @@ interface CheckoutClientProps {
   lockedEmail?: string | null;
   /** Rendered placeholder while a refresh is in flight. */
   children?: ReactNode;
+  /** A note already saved on the cart, so a refresh does not lose it. */
+  giftNote?: string;
+  giftWrap?: boolean;
 }
 
 const rateKey = (rate: ShippingRate) =>
@@ -139,6 +142,8 @@ export function CheckoutClient({
   saveAddressToBook,
   canSaveToAccount = false,
   lockedEmail = null,
+  giftNote: savedGiftNote = "",
+  giftWrap: savedGiftWrap = false,
 }: CheckoutClientProps) {
   const router = useRouter();
   const t = useTranslations("checkout");
@@ -175,6 +180,14 @@ export function CheckoutClient({
   }, [shippingRates]);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Gift note. Saved onto the cart rather than kept in state, so a refresh at
+  // the payment step does not lose words someone took time over.
+  const [giftNote, setGiftNote] = useState(savedGiftNote);
+  const [giftWrap, setGiftWrap] = useState(savedGiftWrap);
+  const [giftState, setGiftState] = useState<"idle" | "saving" | "saved" | "failed">(
+    "idle"
+  );
 
   const selectedRate = useMemo(
     () => shippingRates.find((rate) => rateKey(rate) === selectedRateKey),
@@ -503,6 +516,72 @@ export function CheckoutClient({
                     {error}
                   </p>
                 )}
+
+                {/* A note for whoever opens the box. Closed by default so it
+                    never competes with the payment button, and saved onto the
+                    cart so it survives a refresh at this step. */}
+                <details className="mt-5 border-t border-sand-border/60 pt-4">
+                  <summary className="cursor-pointer font-sans text-sm text-terracotta underline-offset-4 hover:text-kumkum hover:underline">
+                    {t("giftHeading")}
+                  </summary>
+                  <div className="mt-3 grid gap-3">
+                    <label className="grid gap-1">
+                      <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-ink/70">
+                        {t("giftNoteLabel")}
+                      </span>
+                      <textarea
+                        rows={3}
+                        maxLength={300}
+                        value={giftNote}
+                        onChange={(event) => setGiftNote(event.target.value)}
+                        placeholder={t("giftPlaceholder")}
+                        className="resize-y border-b border-sand-border bg-transparent py-2 font-sans text-sm text-deep-ink focus:border-terracotta focus:outline-none"
+                      />
+                    </label>
+                    <label className="flex items-start gap-2 font-sans text-sm text-muted-ink">
+                      <input
+                        type="checkbox"
+                        checked={giftWrap}
+                        onChange={(event) => setGiftWrap(event.target.checked)}
+                        className="mt-0.5 h-4 w-4"
+                      />
+                      <span>{t("giftWrapLabel")}</span>
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={giftState === "saving"}
+                        onClick={async () => {
+                          setGiftState("saving");
+                          try {
+                            const res = await fetch("/api/store/checkout/gift", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                cart_id: cartId,
+                                note: giftNote,
+                                wrap: giftWrap,
+                              }),
+                            });
+                            setGiftState(res.ok ? "saved" : "failed");
+                          } catch {
+                            setGiftState("failed");
+                          }
+                        }}
+                        className="border border-ink/20 px-3 py-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-ink transition-colors hover:border-terracotta hover:text-terracotta disabled:opacity-60"
+                      >
+                        {t("giftSave")}
+                      </button>
+                      <p role="status" aria-live="polite" className="font-sans text-xs text-muted-ink">
+                        {giftState === "saved"
+                          ? t("giftSaved")
+                          : giftState === "failed"
+                            ? t("giftFailed")
+                            : t("giftHint")}
+                      </p>
+                    </div>
+                  </div>
+                </details>
 
                 {/* ── The single primary action ───────────────────── */}
                 {addressStepComplete ? (

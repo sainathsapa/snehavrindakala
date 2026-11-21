@@ -219,6 +219,14 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   UNIQUE (email)
 );
 
+CREATE TABLE IF NOT EXISTS order_gift_notes (
+  order_id text NOT NULL,
+  note text NOT NULL DEFAULT ''::text,
+  wrap boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (order_id)
+);
+
 CREATE TABLE IF NOT EXISTS order_refunds (
   id text NOT NULL DEFAULT gen_random_uuid(),
   order_id text NOT NULL,

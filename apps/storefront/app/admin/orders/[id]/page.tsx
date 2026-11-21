@@ -50,6 +50,8 @@ interface Order {
   payment_collections?: any[];
   fulfillments?: any[];
   items: OrderLineItem[];
+  /** Written by the buyer at checkout; read on the packing bench. */
+  gift?: { note: string; wrap: boolean } | null;
 }
 
 export default function OrderDetailPage() {
@@ -88,6 +90,7 @@ export default function OrderDetailPage() {
             billing_address: data.billing_address,
             payment_collections: data.payment_collections || [],
             fulfillments: data.fulfillments || [],
+            gift: data.gift ?? null,
             items: (data.items || []).map((item: any) => ({
               id: item.id || "",
               title: item.product_title || item.title || "Product",
@@ -390,6 +393,26 @@ export default function OrderDetailPage() {
                   </div>
                 )}
             </div>
+
+            {(order.gift?.note || order.gift?.wrap) && (
+              <div className="rounded-xl border border-sand-border bg-surface p-6">
+                <h3 className="text-sm font-sans font-semibold text-muted-ink uppercase tracking-wider mb-3">
+                  Gift
+                </h3>
+                {order.gift?.wrap && (
+                  <p className="font-sans text-sm text-deep-ink">Wrap this work.</p>
+                )}
+                {order.gift?.note && (
+                  <p className="mt-2 whitespace-pre-wrap border-l-2 border-sand-border pl-3 font-sans text-sm italic text-deep-ink">
+                    {order.gift.note}
+                  </p>
+                )}
+                <p className="mt-3 font-sans text-xs text-muted-ink">
+                  Written by the buyer at checkout. Copy it onto the card exactly as
+                  it appears — do not edit someone&rsquo;s words.
+                </p>
+              </div>
+            )}
 
             <div className="rounded-xl border border-sand-border bg-surface p-6">
               <h3 className="text-sm font-sans font-semibold text-muted-ink uppercase tracking-wider mb-4">

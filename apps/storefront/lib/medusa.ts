@@ -112,6 +112,12 @@ export interface MedusaCart {
   billing_address?: any;
   /** Amount saved by promotion codes and automatic promotions, in major units. */
   discount_total?: number;
+  /**
+   * Free-form cart metadata. Holds the gift note (`gift_note`, `gift_wrap`)
+   * between checkout and completion, which is what makes it survive a refresh
+   * at the payment step.
+   */
+  metadata?: Record<string, unknown> | null;
   /** Amount before any discount, in major units. */
   original_total?: number;
   /** Codes currently applied. Medusa returns these once they take effect. */
@@ -392,6 +398,8 @@ class MedusaClient {
       email?: string;
       shipping_address?: Record<string, unknown>;
       billing_address?: Record<string, unknown>;
+      /** Cart metadata carries the gift note to the order. */
+      metadata?: Record<string, unknown>;
     }
   ): Promise<MedusaCart> {
     return this.request<{ cart: MedusaCart }>(
