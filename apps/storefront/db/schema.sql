@@ -175,6 +175,20 @@ CREATE TABLE IF NOT EXISTS journal_posts (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS work_alerts (
+  id SERIAL NOT NULL,
+  email text NOT NULL,
+  art_form text NOT NULL DEFAULT ''::text,
+  price_max numeric,
+  locale text NOT NULL DEFAULT 'en'::text,
+  source text NOT NULL DEFAULT 'art-form'::text,
+  consent_at timestamp with time zone NOT NULL DEFAULT now(),
+  notified_at timestamp with time zone,
+  unsubscribed_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   id SERIAL NOT NULL,
   email text NOT NULL,

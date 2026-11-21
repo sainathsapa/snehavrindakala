@@ -13,7 +13,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/app/admin/actions";
 import { countSubscribers, listSubscribers } from "@/lib/newsletter";
-import { deleteSubscriberAction, unsubscribeSubscriberAction } from "./actions";
+import { listWorkAlerts, matchesWork } from "@/lib/work-alerts";
+import { listCatalogue } from "@/lib/catalogue";
+import { listAllArtForms } from "@/lib/site-content";
+import {
+  deleteAlertAction,
+  deleteSubscriberAction,
+  markAlertNotifiedAction,
+  unsubscribeSubscriberAction,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +47,31 @@ export default async function NewsletterPage() {
   } catch (error) {
     console.error("Could not read the letter list", error);
     failed = true;
+  }
+
+  // "Tell me when the next one arrives" is a different list: it has a
+  // tradition and a budget, so it is shown with the works that would satisfy
+  // it rather than as an undifferentiated email column.
+  let alerts: Awaited<ReturnType<typeof listWorkAlerts>> = [];
+  let works: Awaited<ReturnType<typeof listCatalogue>> = [];
+  try {
+    alerts = await listWorkAlerts();
+  } catch (error) {
+    console.error("Could not read the work alerts", error);
+  }
+  try {
+    works = await listCatalogue();
+  } catch (error) {
+    console.error("Could not read the catalogue for work alerts", error);
+  }
+
+  const artFormNames = new Map<string, string>();
+  try {
+    for (const form of await listAllArtForms()) {
+      artFormNames.set(form.slug, form.name);
+    }
+  } catch (error) {
+    console.error("Could not read the art forms for work alerts", error);
   }
 
   return (
@@ -143,6 +176,96 @@ export default async function NewsletterPage() {
           </table>
         </div>
       )}
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-serif text-xl text-ink">Waiting for a work</h2>
+          <p className="mt-1 max-w-2xl font-sans text-sm text-ink/60">
+            Visitors who asked to hear about the next work in a tradition, with the
+            budget they gave. The works listed beside each one already fit, so this is
+            a list to write from — nothing is sent automatically.
+          </p>
+        </div>
+
+        {alerts.length === 0 ? (
+          <p className="rounded border border-dashed border-sand-border p-6 font-sans text-sm text-ink/60">
+            No one is waiting yet. The form sits on each tradition page, under
+            “The next…”
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {alerts.map((alert) => {
+              const priceMax = alert.price_max === null ? null : Number(alert.price_max);
+              const fits = works
+                .filter((work) =>
+                  matchesWork({ art_form: alert.art_form, price_max: priceMax }, work)
+                )
+                .slice(0, 4);
+              return (
+                <li
+                  key={alert.id}
+                  className="rounded border border-sand-border bg-white/60 p-4"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                      <p className="font-sans text-sm text-ink">{alert.email}</p>
+                      <p className="mt-0.5 font-sans text-xs text-ink/55">
+                        {alert.art_form
+                          ? artFormNames.get(alert.art_form) ?? alert.art_form
+                          : "Any tradition"}
+                        {priceMax !== null
+                          ? ` · up to ₹${priceMax.toLocaleString("en-IN")}`
+                          : " · no budget limit"}
+                        {` · waiting since ${when(alert.created_at)}`}
+                        {alert.notified_at ? ` · written to ${when(alert.notified_at)}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <form action={markAlertNotifiedAction}>
+                        <input type="hidden" name="id" value={alert.id} />
+                        <button
+                          type="submit"
+                          className="font-sans text-[11px] uppercase tracking-wider text-ink/50 underline-offset-2 hover:text-terracotta hover:underline"
+                        >
+                          Mark written
+                        </button>
+                      </form>
+                      <form action={deleteAlertAction}>
+                        <input type="hidden" name="id" value={alert.id} />
+                        <button
+                          type="submit"
+                          className="font-sans text-[11px] uppercase tracking-wider text-ink/40 underline-offset-2 hover:text-[#8a2c14] hover:underline"
+                        >
+                          Erase
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {fits.length > 0 ? (
+                    <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                      {fits.map((work) => (
+                        <li key={work.handle}>
+                          <Link
+                            href={`/products/${work.handle}`}
+                            className="font-sans text-xs text-terracotta underline-offset-2 hover:underline"
+                          >
+                            {work.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 font-sans text-xs text-ink/45">
+                      Nothing in the catalogue fits yet.
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <p className="font-sans text-xs text-ink/50">
         Signups are stored, not mailed: outbound mail stays a no-op until SES is

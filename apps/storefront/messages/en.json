@@ -990,5 +990,19 @@
     "sortPriceAsc": "Price: low to high",
     "sortPriceDesc": "Price: high to low",
     "sortLabel": "Sort"
+  },
+  "workAlert": {
+    "alertHeading": "The next {name} work",
+    "alertBody": "Every work here is made once. We cannot restock a piece that has sold — but we can write to you when another work in this tradition arrives. Tell us what you would like to spend and we will only write when something fits.",
+    "emailLabel": "Your email",
+    "emailPlaceholder": "you@example.com",
+    "budgetLabel": "Up to",
+    "anyBudget": "No limit",
+    "submit": "Notify me",
+    "hint": "We write when the next {name} work arrives. Unsubscribe anytime.",
+    "thanks": "Thank you — we will write when the next {name} work arrives.",
+    "already": "You are already waiting for this tradition.",
+    "invalid": "That email address does not look complete.",
+    "failed": "We could not save that just now. Please try again."
   }
 }

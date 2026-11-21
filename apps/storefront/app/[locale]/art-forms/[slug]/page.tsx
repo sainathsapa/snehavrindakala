@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { listArtForms, translateArtForms } from "@/lib/site-content";
 import { getTranslations, getLocale } from "next-intl/server";
 import { listCatalogueFor } from "@/lib/catalogue";
+import { WorkAlertForm } from "@/components/work-alert-form";
 import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, KalamBorder, MandalaField } from "@/components/ornaments";
@@ -284,6 +285,25 @@ export default async function ArtFormPage({ params }: PageProps) {
           </div>
         </section>
       )}
+
+      {/* ── The next one ───────────────────────────────────────────────────
+          A tradition page is where someone decides they want this kind of
+          work. Every piece is one of one, so there is nothing to restock —
+          what can be promised is the next piece. This section exists for that
+          one sentence, and shows no counts or urgency. */}
+      <section className="border-t border-sand-border/60 bg-surface/40">
+        <div className="mx-auto max-w-3xl px-5 py-14 sm:px-8">
+          <h2 className="font-serif text-xl font-semibold text-deep-ink">
+            {t("alertHeading", { name: form.name })}
+          </h2>
+          <p className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-muted-ink">
+            {t("alertBody")}
+          </p>
+          <div className="mt-6">
+            <WorkAlertForm artForm={form.slug} artFormName={form.name} />
+          </div>
+        </div>
+      </section>
 
       {/* ── Continue exploring ─────────────────────────────────────────────
           An exhibition ends with a room map, not a wall. This walks the
