@@ -163,3 +163,16 @@ idempotent, so it re-runs harmlessly and picks up new catalogue entries.
   never leave the backend.
 * **The single-node Redis is not highly available.** Fine for one server; a
   restart drops cached sessions and in-flight workflow state.
+
+## Refunds
+
+Refunds at or above `REFUND_APPROVAL_THRESHOLD` (rupees, default 5000) need two
+admins. The requester cannot approve their own refund: `/admin/refunds` lists
+what is waiting, and the POST endpoint refuses it with a 403 even if the button
+were clicked. Below the threshold the refund is approved on the spot and the row
+says so.
+
+The storefront records and approves refunds; it does **not** move money. The
+decision is released from the Razorpay dashboard and the row says "release the
+money" until someone marks it. This is why `order_refunds.status` has an
+`approved` state separate from `completed`.

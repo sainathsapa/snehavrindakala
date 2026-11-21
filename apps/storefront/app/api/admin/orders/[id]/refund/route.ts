@@ -5,8 +5,13 @@
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { requireAdmin } from "@/app/admin/actions";
+import { getAdminIdentity, requireAdmin } from "@/app/admin/actions";
 import { getSystemAdminToken } from "@/lib/admin";
+import {
+  createRefundRequest,
+  listRefundsForOrder,
+  refundApprovalThreshold,
+} from "@/lib/refund-approvals";
 
 
 
@@ -31,6 +36,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Who asked matters as much as what was asked for: the same person cannot
+  // both request and release a large refund.
+  const identity = await getAdminIdentity();
+  if (!identity) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -86,7 +97,9 @@ export async function POST(
     `);
 
     const existing = await query(
-      "SELECT COALESCE(SUM(amount), 0) as total FROM order_refunds WHERE order_id = $1 AND status IN ('pending', 'completed')",
+      // Approved (awaiting release) and completed both still hold money, so
+      // both count against the refundable total. Rejected rows do not.
+      "SELECT COALESCE(SUM(amount), 0) as total FROM order_refunds WHERE order_id = $1 AND status IN ('pending', 'approved', 'completed')",
       [id]
     );
     const alreadyRefunded = Number(existing[0]?.total ?? 0);
@@ -105,17 +118,26 @@ export async function POST(
       );
     }
 
-    const { v4: uuidv4 } = require("uuid");
-    const refundId = `refund_${uuidv4().slice(0, 8)}`;
+    // One gate for every refund, large or small. Below the threshold it is
+    // approved on the spot and says so; at or above it waits for a second
+    // admin. Either way the row records who asked.
+    const created = await createRefundRequest({
+      orderId: id,
+      amount,
+      reason: reason || "",
+      actor: identity.email,
+    });
 
-    const rows = await query(
-      `INSERT INTO order_refunds (id, order_id, amount, reason, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, 'pending', now(), now())
-       RETURNING *`,
-      [refundId, id, amount, reason || ""]
+    return NextResponse.json(
+      {
+        ...created,
+        // The storefront cannot issue money yet; saying nothing here is how
+        // "refund created" gets read as "money is on its way".
+        note: "Recorded. The refund is released from the payments dashboard.",
+        threshold: refundApprovalThreshold(),
+      },
+      { status: 201 }
     );
-
-    return NextResponse.json({ refund: rows[0] }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -131,24 +153,8 @@ export async function GET(
   try {
     const { id } = await params;
 
-    await query(`
-      CREATE TABLE IF NOT EXISTS order_refunds (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        order_id TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        reason TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
-    const rows = await query(
-      "SELECT * FROM order_refunds WHERE order_id = $1 ORDER BY created_at DESC",
-      [id]
-    );
-
-    return NextResponse.json({ refunds: rows });
+    const refunds = await listRefundsForOrder(id);
+    return NextResponse.json({ refunds });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

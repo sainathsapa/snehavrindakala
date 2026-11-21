@@ -233,6 +233,13 @@ CREATE TABLE IF NOT EXISTS order_refunds (
   amount integer NOT NULL,
   reason text,
   status text NOT NULL DEFAULT 'pending'::text,
+  -- Two-person approval: who asked, who decided, and why. Rows created before
+  -- approvals existed have all three NULL, which read as "decided before the
+  -- rule".
+  requested_by text,
+  approved_by text,
+  decided_at timestamp with time zone,
+  decision_note text,
   created_at timestamp without time zone NOT NULL DEFAULT now(),
   updated_at timestamp without time zone NOT NULL DEFAULT now(),
   PRIMARY KEY (id)

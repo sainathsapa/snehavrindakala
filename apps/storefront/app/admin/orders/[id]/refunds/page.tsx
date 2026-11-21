@@ -11,8 +11,22 @@ interface Refund {
   amount: number;
   reason: string;
   status: string;
+  requested_by?: string | null;
+  approved_by?: string | null;
+  decision_note?: string | null;
   created_at: string;
 }
+
+/**
+ * What each status means, in the words a shopkeeper would use, so nobody reads
+ * "approved" as "the customer has their money back".
+ */
+const STATUS_LABEL: Record<string, string> = {
+  pending: "waiting for a second admin",
+  approved: "approved — release the money",
+  rejected: "rejected",
+  completed: "money returned",
+};
 
 export default function OrderRefundsPage() {
   const params = useParams();
@@ -54,7 +68,13 @@ export default function OrderRefundsPage() {
         body: JSON.stringify({ amount: parseInt(form.amount) || 0, reason: form.reason }),
       });
       if (res.ok) {
-        setMessage({ ok: true, text: "Refund created." });
+        const data = await res.json();
+        setMessage({
+          ok: true,
+          text: data.needs_approval
+            ? "Recorded. This amount needs a second admin to approve it before anything is released."
+            : data.note || "Refund recorded.",
+        });
         setForm({ amount: "", reason: "" });
         loadRefunds(id);
       } else {
@@ -150,8 +170,25 @@ export default function OrderRefundsPage() {
                     <td className="px-6 py-4 font-sans text-sm text-muted-ink">{r.reason}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-sans ${
-                        r.status === "completed" ? "bg-leaf/10 text-leaf border border-leaf/20" : "bg-terracotta/10 text-terracotta border border-terracotta/20"
-                      }`}>{r.status}</span>
+                        r.status === "completed" || r.status === "approved"
+                          ? "bg-leaf/10 text-leaf border border-leaf/20"
+                          : r.status === "rejected"
+                            ? "bg-surface text-muted-ink border border-sand-border"
+                            : "bg-terracotta/10 text-terracotta border border-terracotta/20"
+                      }`}>{STATUS_LABEL[r.status] ?? r.status}</span>
+                      {r.requested_by && (
+                        <p className="mt-1 font-sans text-xs text-muted-ink">
+                          asked by {r.requested_by}
+                          {r.approved_by && r.approved_by !== r.requested_by
+                            ? ` · decided by ${r.approved_by}`
+                            : ""}
+                        </p>
+                      )}
+                      {r.decision_note && (
+                        <p className="mt-1 font-sans text-xs italic text-muted-ink">
+                          {r.decision_note}
+                        </p>
+                      )}
                     </td>
                     <td className="px-6 py-4 font-sans text-sm text-muted-ink">{new Date(r.created_at).toLocaleDateString()}</td>
                   </tr>
