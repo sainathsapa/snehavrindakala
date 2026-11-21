@@ -41,9 +41,30 @@ docker compose logs -f backup        # expect "backup ok: /backups/medusa-…sql
 `backups/` is in `.gitignore`. The shop's data must never be committed.
 
 **Copy dumps off the machine.** A dump on the same disk as the database is not a
-backup against disk loss or a deleted VM. Point `BACKUP_DIR` at a mounted volume
-and sync it (S3, rsync, restic) — that step is infrastructure, so it is named here
-rather than pretended.
+backup against disk loss or a deleted VM. `scripts/offsite-push.sh` is the hook:
+
+```bash
+# anywhere rsync understands
+BACKUP_OFFSITE_TARGET=backup-host:/srv/snehakala ./scripts/offsite-push.sh
+# or object storage, when the AWS CLI is installed
+BACKUP_OFFSITE_TARGET=s3://bucket/snehakala ./scripts/offsite-push.sh --require
+```
+
+Set `BACKUP_OFFSITE_TARGET` in `.env` and the nightly `backup` service calls the
+same script after every successful dump. What the script guarantees:
+
+- it verifies each dump with `gzip -t` **before** copying, because a truncated
+  file shipped off-site is the copy someone will trust after the disk is gone;
+- it never deletes at the destination (`rsync --ignore-existing`, `cp -n`), so a
+  good earlier copy cannot be replaced by a later broken one;
+- with no target it prints `offsite: not configured` and exits 0, so the nightly
+  job keeps running — and the log does not read like a successful copy;
+- `--require` makes a missing target an error, which is what the nightly job
+  should use once a target is supposed to exist.
+
+The destination itself is still infrastructure: an rsync host or a bucket has to
+exist, with credentials, before any of this runs. What changed is that the gap
+now has a caller instead of a paragraph.
 
 ## The drill
 
@@ -105,7 +126,9 @@ is not complete until the media volume is restored too.
 
 ## What is still not covered
 
-- **No off-site copy** until the operator configures one (see above).
+- **Off-site copy needs a destination and credentials.** The script and the
+  nightly call exist; nothing is copied until `BACKUP_OFFSITE_TARGET` points at
+  storage that accepts writes.
 - **No point-in-time recovery.** These are logical dumps, so the worst case is a
   day of orders. Continuous WAL archiving is a managed-Postgres feature; if the
   shop outgrows nightly dumps, that is the step.

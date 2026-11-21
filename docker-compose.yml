@@ -404,8 +404,12 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD:-medusa}
       PGDATABASE: ${POSTGRES_DB:-medusa}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_OFFSITE_TARGET: ${BACKUP_OFFSITE_TARGET:-}
     volumes:
       - ./backups:/backups
+      # The dump script stays in the repo and runs in the container, so the
+      # nightly job and the documented manual command are the same code.
+      - ./scripts/offsite-push.sh:/scripts/offsite-push.sh:ro
     entrypoint: ["/bin/sh", "-c"]
     # `$$` escapes compose interpolation; the shell inside the container expands
     # these. Each dump is written to a partial name and renamed only after it
@@ -427,6 +431,17 @@ services:
           fi
           find /backups -maxdepth 1 -name "$${PGDATABASE}-*.sql.gz" \
             -mtime +$${BACKUP_RETENTION_DAYS} -print -delete
+          # Off-site copy, if a target is configured. Empty target prints
+          # "not configured" and exits 0 — a nightly job must not fail because
+          # the operator has not set up remote storage yet, but the log line
+          # must not read like a successful copy either.
+          if [ -n "$${BACKUP_OFFSITE_TARGET:-}" ]; then
+            BACKUP_OFFSITE_TARGET="$${BACKUP_OFFSITE_TARGET}" \
+              sh /scripts/offsite-push.sh /backups \
+              || echo "offsite copy FAILED — dumps exist only on this machine" >&2
+          else
+            echo "offsite: not configured — dumps exist only on this machine"
+          fi
           sleep 86400
         done
     restart: unless-stopped

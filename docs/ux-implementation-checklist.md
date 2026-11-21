@@ -103,9 +103,54 @@ Living document. Update as work progresses. Statuses: **Not started**, **Complet
 - Contrast verified against tokens: muted-ink 6.07:1, deep-ink 13.16:1, terracotta 4.58:1, kumkum 9.28:1 on rang-paper — all meet WCAG AA (terracotta at the 4.5 line for normal text).
 - Existing `aria-pressed` toggles (wishlist, filters) and `aria-expanded`/`aria-controls` drawer already correct.
 ### 6.3 Regression: typecheck, lint, tests, build — **Completed**
-- Storefront typecheck ✓, 97 tests pass (4 skipped), build ✓. Backend typecheck ✓, 49 tests pass.
+- Storefront typecheck ✓, **423 tests pass (4 skipped) across 44 files**, build ✓. Backend typecheck ✓, 90 tests pass. (Counts corrected: this line read 97/49 for several months after both suites grew, which is the kind of stale number that makes a green run look reassuring when nothing has been checked.)
 ### 6.4 Production readiness notes — **Completed**
 - Reviews fail closed (unverified when order module absent; never fabricated). Ratings render only from approved reviews. Search degrades to an empty list on backend error; PDP reviews render nothing if the fetch fails.
+
+
+### 6.5 Honesty pass: things the site claimed without evidence — **Completed**
+- **The picture is not always the work.** 15 of 19 listings carried a generated
+  illustration. The PDP now says so and `/admin/products` marks `Stand-in photo`;
+  replacing the file removes the disclosure automatically.
+- **The size was never measured.** Dimensions came from the seed script and were
+  copied onto certificates. Certificates now print a size only when the order
+  item carries `measured:yes`; the PDP labels it "as stated by the studio, not yet
+  measured". `docs/PHOTO-AND-MEASUREMENT-BRIEF.md` lists all 19 works.
+- **Honest empty states.** `/admin/outbox` shows messages that never left, with
+  the reason (`no-transport`, `transport-error`), read-only by design.
+- **The art-form essays existed only in the header.** `story`, `origin`,
+  `materials`, `quote` were 0 characters in all six rows in both languages; the
+  seed now writes them and the backfill fills existing rows. "Origin" renamed
+  "Regions & traditions covered", because the field mixes places and traditions.
+- **One dye, two names.** `हरड़` (harad) settled with `हरदा` (harda) given
+  alongside and the botanical name *Terminalia chebula*.
+- **The scheduled job has a caller.** A `cron` compose service posts to
+  `/api/cron/cart-reminders` with `CRON_SECRET` in a header; a crontab line in a
+  doc was a step that got skipped.
+- **Settings that never reached a container.** The storefront service block was
+  missing `CRON_SECRET`, `FROM_EMAIL`, `AWS_SES_*`, `SHIPROCKET_BASE_URL`,
+  `REFUND_APPROVAL_THRESHOLD`, `ABANDONED_CART_HOURS`, `PLATFORM_MODE`,
+  `STOREFRONT_BASE_URL` and the generated webhook secrets; each fell back to a
+  default while looking configured. `tests/deployment-env.test.ts` walks every
+  `process.env` read and requires it in the service block whose code reads it.
+- **The Razorpay provider switch is built and off.** `CHECKOUT_RAZORPAY_PROVIDER=1`
+  opts in, needs keys *and* the webhook secret, and logs a fallback when it is set
+  but incomplete. Both checkout routes now agree on one provider, so no cart can
+  get a second payment session.
+- **Off-site backups have a hook.** `scripts/offsite-push.sh` verifies gzip,
+  never overwrites at the destination, and says "not configured" out loud; the
+  nightly `backup` service calls it. The destination is still infrastructure.
+
+### 6.6 Known limits, stated rather than scheduled away — **Open, by design**
+- Static rendering (ADR-0005) is deferred with a measurable trigger, not dropped.
+- Checkout still runs on `pp_system_default`; the Razorpay provider path needs one
+  sandbox purchase before the flag goes on.
+- The sold-work guard is a check, not a reservation: two simultaneous payers can
+  both pass it. Inventory reservations at add-to-cart are the fix.
+- Shipping falls back to ₹0 when the Shiprocket quote fails.
+- Admin uploads write to local disk (`app/api/admin/upload/route.ts` says so).
+- Real photographs, dimensions, maker bios, SES credentials and the Razorpay
+  webhook secret are owner/ops input. No code can supply them.
 
 ---
 

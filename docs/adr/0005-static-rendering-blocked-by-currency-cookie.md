@@ -1,6 +1,6 @@
 # 0005 — Static rendering is blocked by the currency cookie, not the locale header
 
-- **Status:** open, not adopted
+- **Status:** open, not adopted — deferred with a stated trigger (see *Current state*)
 - **Date:** recorded after an attempt that was reverted
 
 ## Context
@@ -85,3 +85,30 @@ locale explicitly is dynamic by construction.
 Reverted. The site renders per request, as it did before. This note exists so
 the next attempt starts from the real cause — the currency cookie and the
 middleware — rather than the locale header, which is only a symptom.
+
+## Current state — deferred, trigger named
+
+Status stays open rather than becoming "won't do", because the reason is
+measurable rather than aesthetic:
+
+- **What is true now.** Every page renders per request. `listCatalogue()` is
+  wrapped in `unstable_cache` with a 60s revalidate, so database work is bounded
+  per minute rather than per visit; there is no measured latency problem to fix.
+- **Trigger to revisit.** Either (a) p95 server response for a catalogue page
+  rises above ~400 ms in `docs/DEPLOY.md`'s monitoring, or (b) traffic reaches
+  the point where per-request rendering is the top cost on the bill. Until one of
+  those happens, adopting ISR trades a hydration risk around currency for a
+  problem nobody has observed.
+- **The work, when triggered.** In order, and each independently valuable:
+  1. Move `getPreferredCurrency()` out of `app/[locale]/layout.tsx` into the
+     components that show a price, so the layout stops reading `cookies()`.
+  2. Narrow the middleware matcher to the paths that actually need `x-pathname`
+     and `x-locale`, instead of every page route.
+  3. Prerender the static set (`/about`, `/faq`, `/disclaimer`, policy pages)
+     first, then the catalogue shell with `revalidate`.
+  4. Pass `locale` explicitly to `listCatalogue()` everywhere, so the
+     `localeFromRequest()` fallback is unused on prerendered paths.
+- **Not the answer.** `next/root-params` alone. It was tried, it broke
+  `app/not-found.tsx`, and the try/catch that fixed the build silently emitted
+  `<html lang="en">` on `/hi`. A downgraded `lang` attribute is a real
+  accessibility and SEO regression, and it was invisible in the build output.
