@@ -19,40 +19,9 @@ import type {
   FulfilmentStatus,
 } from "@/lib/fulfilment/types";
 import OrderActions from "./order-actions";
+import { fulfilmentTimeline, statusLabel } from "@/lib/partner/order-view";
 
 export const dynamic = "force-dynamic";
-
-/** Forward progress path; rejected/cancelled are terminal branches, not steps. */
-const TIMELINE: FulfilmentStatus[] = [
-  "assigned",
-  "accepted",
-  "packing",
-  "ready_for_dispatch",
-  "dispatched",
-  "delivered",
-];
-
-const STATUS_LABELS: Record<FulfilmentStatus, string> = {
-  assigned: "Awaiting acceptance",
-  accepted: "Accepted",
-  packing: "Packing",
-  ready_for_dispatch: "Ready for dispatch",
-  dispatched: "Dispatched",
-  delivered: "Delivered",
-  rejected: "Rejected",
-  cancelled: "Cancelled",
-};
-
-export function statusLabel(status: FulfilmentStatus): string {
-  return STATUS_LABELS[status] ?? String(status).replace(/_/g, " ");
-}
-
-/** Timeline entries up to and including the group's current status. */
-export function fulfilmentTimeline(status: FulfilmentStatus): FulfilmentStatus[] {
-  if (status === "rejected" || status === "cancelled") return ["assigned", status];
-  const index = TIMELINE.indexOf(status);
-  return index === -1 ? [] : TIMELINE.slice(0, index + 1);
-}
 
 function formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return "—";

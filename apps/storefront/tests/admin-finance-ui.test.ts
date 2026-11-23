@@ -9,7 +9,7 @@ import {
   whenLabel,
   sandboxPaymentConfig,
   REFUND_EXECUTION_STATUS_LABEL,
-} from "@/app/api/admin/marketplace/finance/route";
+} from "@/lib/admin/finance-view";
 
 const root = join(__dirname, "..");
 const read = (path: string) => readFileSync(join(root, path), "utf8");

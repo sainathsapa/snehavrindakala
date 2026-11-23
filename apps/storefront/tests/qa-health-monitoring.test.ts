@@ -84,8 +84,11 @@ describe("FINAL GO health: docker-compose healthchecks", () => {
     expect(serviceBlock("backend")).toMatch(/postgres:[\s\S]*condition: service_healthy/);
     expect(serviceBlock("backend")).toMatch(/redis:[\s\S]*condition: service_healthy/);
     expect(serviceBlock("storefront")).toMatch(/backend:[\s\S]*condition: service_healthy/);
-    // The seed job must not run against an un-migrated database.
-    expect(serviceBlock("seed")).toMatch(/backend:[\s\S]*condition: service_healthy/);
+    // The former one-shot seed job is now folded into the backend entrypoint.
+    // Backend health must imply migrations + provisioning are done, so the
+    // storefront never starts against an un-migrated or unprovisioned database.
+    expect(serviceBlock("backend")).toMatch(/\/tmp\/store-provisioned/);
+    expect(serviceBlock("seed")).toBe("");
   });
 
   it("uses a slow-start allowance and bounded log rotation (observability)", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { formatAuditActionLabel } from "@/app/partner/audit/page";
+import { formatAuditActionLabel } from "@/lib/partner-audit/labels";
 
 const root = join(__dirname, "..");
 const read = (path: string) => readFileSync(join(root, path), "utf8");

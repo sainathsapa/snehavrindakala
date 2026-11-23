@@ -17,7 +17,7 @@ import {
   sandboxPaymentConfig,
   whenLabel,
   type ReconciliationIssueRow,
-} from "../../../api/admin/marketplace/finance/route";
+} from "@/lib/admin/finance-view";
 
 export const dynamic = "force-dynamic";
 

@@ -1,45 +1,13 @@
 import { redirect } from "next/navigation";
 import { requirePartnerPermission } from "@/lib/partner/context";
 import { listPartnerAudit, type PartnerAuditRow } from "@/lib/partner-audit/audit";
+import { formatAuditActionLabel } from "@/lib/partner-audit/labels";
 
 export const metadata = {
   title: "Audit trail — Partner portal — SnehaVrinda Kala",
 };
 
 export const dynamic = "force-dynamic";
-
-/**
- * Human-readable labels for the canonical partner audit actions (A77). This is
- * a pure presentation mapping — it has no DB, cookie or clock dependencies.
- * Keys are the stable upper-snake action codes stored in `partner_audit_log`.
- */
-const ACTION_LABELS: Record<string, string> = {
-  MEMBER_INVITED: "Member invited",
-  MEMBER_ROLE_CHANGED: "Member role changed",
-  MEMBER_SUSPENDED: "Member suspended",
-  SESSIONS_REVOKED: "Sessions revoked",
-  PROFILE_UPDATED: "Business profile updated",
-  PRODUCT_SUBMITTED: "Product submitted",
-  ORDER_ACCEPTED: "Order accepted",
-  ORDER_REJECTED: "Order rejected",
-  ORDER_FULFILLED: "Order fulfilled",
-  SETTLEMENT_VIEWED: "Settlement viewed",
-};
-
-/**
- * Pure: turn a raw audit action code into a display label. Known actions get a
- * friendly label; unknown/custom actions are humanised (never blanked) so a
- * newly introduced action is still visible in the trail.
- */
-export function formatAuditActionLabel(action: string): string {
-  const code = (action ?? "").trim();
-  if (ACTION_LABELS[code]) return ACTION_LABELS[code];
-  if (!code) return "Unknown action";
-  return code
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 function formatTime(value: string | Date): string {
   const date = new Date(value);

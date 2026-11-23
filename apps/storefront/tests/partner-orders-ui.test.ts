@@ -18,8 +18,10 @@ const read = (path: string) => readFileSync(join(root, path), "utf8");
 const LIST_PAGE = "app/partner/orders/page.tsx";
 const DETAIL_PAGE = "app/partner/orders/[id]/page.tsx";
 const ACTIONS = "app/partner/orders/[id]/order-actions.tsx";
+const VIEW_HELPERS = "lib/partner/order-view.ts";
 
 const listSource = read(LIST_PAGE);
+const viewSource = read(VIEW_HELPERS);
 const detailSource = read(DETAIL_PAGE);
 const actionsSource = read(ACTIONS);
 
@@ -84,6 +86,7 @@ describe("partner orders pages call ONLY the tenant-scoped store functions", () 
     "@/lib/partner/rbac",
     "@/lib/fulfilment/store",
     "@/lib/fulfilment/types",
+    "@/lib/partner/order-view",
     "./order-actions",
   ]);
 
@@ -199,7 +202,9 @@ describe("no partner id reaches the client; no financial fields are displayed", 
 });
 
 describe("status labels are explicit and cover every status", () => {
-  it("list and detail pages define human-readable labels for all eight statuses", () => {
+  // The helpers live in lib/partner/order-view.ts: Next.js forbids arbitrary
+  // named exports from Page modules, so they cannot be defined in the pages.
+  it("the shared helper defines human-readable labels for all eight statuses", () => {
     const labels = [
       "Awaiting acceptance",
       "Accepted",
@@ -211,27 +216,24 @@ describe("status labels are explicit and cover every status", () => {
       "Cancelled",
     ];
     for (const label of labels) {
-      expect(listSource, `list page missing label "${label}"`).toContain(label);
-      expect(detailSource, `detail page missing label "${label}"`).toContain(label);
+      expect(viewSource, `view helper missing label "${label}"`).toContain(label);
     }
+    expect(listSource).toContain('from "@/lib/partner/order-view"');
+    expect(detailSource).toContain('from "@/lib/partner/order-view"');
   });
 
   it("statusLabel falls back to a spaced label for unknown statuses", () => {
-    expect(listSource).toContain('replace(/_/g, " ")');
-    expect(detailSource).toContain('replace(/_/g, " ")');
+    expect(viewSource).toContain('replace(/_/g, " ")');
   });
 
-  it("the list page buckets by every status and the detail timeline follows the status machine", () => {
+  it("the shared helper buckets by every status and follows the status machine", () => {
     for (const status of [
       "assigned", "accepted", "packing", "ready_for_dispatch",
       "dispatched", "delivered", "rejected", "cancelled",
     ]) {
-      expect(listSource, `list page missing bucket ${status}`).toContain(`"${status}"`);
+      expect(viewSource, `view helper missing bucket ${status}`).toContain(`"${status}"`);
     }
-    for (const status of [
-      "assigned", "accepted", "packing", "ready_for_dispatch", "dispatched", "delivered",
-    ]) {
-      expect(detailSource, `detail timeline missing ${status}`).toContain(`"${status}"`);
-    }
+    expect(listSource).toContain("STATUS_ORDER");
+    expect(detailSource).toContain("fulfilmentTimeline");
   });
 });
