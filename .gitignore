@@ -80,3 +80,4 @@ __pycache__/
 
 # Database dumps from scripts/backup-db.sh — never commit the shop's data.
 backups/
+opencode.json
