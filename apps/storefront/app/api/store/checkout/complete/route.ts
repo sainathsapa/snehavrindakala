@@ -23,6 +23,10 @@ import { issueCertificatesForOrder } from "@/lib/certificates";
 import { saveGiftForOrder } from "@/lib/gift";
 import { sendOrderConfirmation } from "@/lib/email";
 import { isSold, soldVariantIds } from "@/lib/sold-works";
+import {
+  consumeReservation,
+  linkReservationsToOrder,
+} from "@/lib/inventory";
 import { checkoutProvider } from "@/lib/payment-provider";
 
 const RAZORPAY_KEY_ID =
@@ -159,6 +163,37 @@ export async function POST(req: Request) {
       );
     }
 
+    // Payment is verified: now, and only now, convert the holds into sales inside
+    // the same row lock that guards stock. For a legacy cart with no hold,
+    // consumeReservation reserves-and-consumes atomically, so two concurrent
+    // completions of a one-of-one work cannot both succeed. Untracked variants
+    // return `tracked:false` and keep the previous behaviour.
+    const consumedReservationIds: string[] = [];
+    for (const item of cart.items) {
+      const line = item as Record<string, any>;
+      const variantId = line?.variant_id ?? line?.variant?.id;
+      if (!variantId) continue;
+      const quantity = Math.max(1, Number(item?.quantity ?? 1) || 1);
+      const consumed = await consumeReservation({
+        variantId,
+        cartId: cart_id,
+        orderId: `pending:${paymentId}`,
+        quantity,
+      });
+      if (!consumed.ok) {
+        return NextResponse.json(
+          {
+            error:
+              "This work was bought by another customer while you were paying. Your payment has NOT been used for an order — please contact the studio with your payment ID for a refund.",
+            code: "work_already_sold",
+            payment_id: paymentId,
+          },
+          { status: 409 }
+        );
+      }
+      if (consumed.reservationId) consumedReservationIds.push(consumed.reservationId);
+    }
+
     // Medusa refuses to complete a cart with shippable items and no shipping
     // method. Checkout charges a Shiprocket quote but never registered a method,
     // so every paid order failed here after the money was taken.
@@ -181,6 +216,9 @@ export async function POST(req: Request) {
     }
 
     const order = await medusa.completeOrder(cart_id);
+    await linkReservationsToOrder(consumedReservationIds, order.id).catch((err) =>
+      console.error("Could not link stock reservations to order", order.id, err)
+    );
 
     let shipment: any = null;
     let shippingError: string | null = null;

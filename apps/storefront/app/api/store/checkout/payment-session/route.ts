@@ -16,6 +16,7 @@ import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { selectShippingRate } from "@/lib/shipping/select-rate";
 import { checkoutIsPossible } from "@/lib/config-status";
 import { isSold, soldVariantIds } from "@/lib/sold-works";
+import { reserveStock } from "@/lib/inventory";
 import { RAZORPAY_PROVIDER, checkoutProvider } from "@/lib/payment-provider";
 
 const PICKUP_POSTCODE = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
@@ -72,6 +73,28 @@ export async function POST(req: Request) {
         },
         { status: 409 }
       );
+    }
+
+    // Atomic reservation. For owner-initialised (tracked) variants this is the
+    // first half of the double-sale fix: two buyers asking for a one-of-one at
+    // the same instant are serialised by a row lock and only one gets a hold.
+    // Untracked variants are left to the legacy sold-works guard above.
+    for (const item of cart.items) {
+      const line = item as Record<string, any>;
+      const variantId = line?.variant_id ?? line?.variant?.id;
+      if (!variantId) continue;
+      const quantity = Math.max(1, Number(item?.quantity ?? 1) || 1);
+      const held = await reserveStock({ variantId, cartId: cart_id, quantity });
+      if (!held.ok) {
+        return NextResponse.json(
+          {
+            error:
+              "This work was reserved by another buyer just now. Nothing has been charged — please refresh and choose another piece.",
+            code: "work_already_sold",
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Medusa needs a payment session before the cart can be completed. Which

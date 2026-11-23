@@ -3,14 +3,16 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/app/admin/actions";
+import { getAdminIdentity, requireAdmin, requirePermission } from "@/app/admin/actions";
 import { getSystemAdminToken } from "@/lib/admin";
+import { restoreSoldForOrder } from "@/lib/inventory";
+import { recordAdminAction } from "@/lib/audit";
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("orders:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -42,6 +44,21 @@ export async function POST(
         { error: text || "Failed to cancel order" },
         { status: res.status }
       );
+    }
+
+    // Put a tracked work back into stock when its order is cancelled.
+    await restoreSoldForOrder(id).catch((err) =>
+      console.error("Could not restore stock for cancelled order", id, err)
+    );
+    const actor = await getAdminIdentity();
+    if (actor) {
+      await recordAdminAction({
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        action: "order.cancel",
+        entityType: "order",
+        entityId: id,
+      });
     }
 
     return NextResponse.json(text ? JSON.parse(text) : {});

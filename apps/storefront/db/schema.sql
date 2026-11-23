@@ -489,3 +489,37 @@ CREATE UNIQUE INDEX IF NOT EXISTS site_art_form_slug_key ON public.site_art_form
 ALTER TABLE IF EXISTS public.app_notification ADD COLUMN IF NOT EXISTS event_key text;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_app_notification_event_key
   ON public.app_notification USING btree (event_key);
+
+-- INV-01 — atomic stock reservations.
+-- A variant becomes "tracked" only when the owner initialises it here with an
+-- explicit on_hand count; no quantity is ever inferred or invented. Untracked
+-- variants keep the previous sold-works guard behaviour.
+CREATE TABLE IF NOT EXISTS variant_stock (
+  variant_id text NOT NULL,
+  on_hand integer NOT NULL CHECK (on_hand >= 0),
+  reserved integer NOT NULL DEFAULT 0 CHECK (reserved >= 0),
+  sold integer NOT NULL DEFAULT 0 CHECK (sold >= 0),
+  created_at timestamp without time zone NOT NULL DEFAULT now(),
+  updated_at timestamp without time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (variant_id)
+);
+
+CREATE TABLE IF NOT EXISTS stock_reservation (
+  id text NOT NULL DEFAULT gen_random_uuid(),
+  variant_id text NOT NULL REFERENCES variant_stock (variant_id) ON DELETE CASCADE,
+  cart_id text NOT NULL,
+  quantity integer NOT NULL CHECK (quantity > 0),
+  status text NOT NULL DEFAULT 'active'
+    CHECK (status IN ('active','consumed','released','expired')),
+  order_id text,
+  expires_at timestamp without time zone NOT NULL,
+  created_at timestamp without time zone NOT NULL DEFAULT now(),
+  updated_at timestamp without time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_stock_reservation_active
+  ON stock_reservation USING btree (variant_id, status, expires_at);
+CREATE INDEX IF NOT EXISTS idx_stock_reservation_cart
+  ON stock_reservation USING btree (cart_id, status);
+CREATE INDEX IF NOT EXISTS idx_stock_reservation_order
+  ON stock_reservation USING btree (order_id);
