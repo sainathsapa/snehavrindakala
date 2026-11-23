@@ -1,22 +1,24 @@
 # Deploying SnehaVrinda Kala
 
-One compose file starts everything: storefront, Medusa backend, Postgres, Redis,
-and a one-shot seed job. The same file runs on a laptop and on a server; what
-changes is `.env`, not the file.
+One compose file starts everything: storefront, Medusa backend, Postgres and
+Redis. The same file runs on a laptop and on a server; what changes is `.env`,
+not the file.
 
 ## What "up" does
 
 ```
 postgres + redis  (healthy)
-  └─ backend      waits for Postgres, runs migrations, then serves :9000
-       ├─ seed    one-shot: admin users, region, sales channel, publishable
-       │          key, categories, starter catalogue, shipping option
-       └─ storefront  resolves the publishable key from the backend, applies its
-                      own tables, then serves :3000
+  └─ backend      waits for Postgres, runs migrations, provisions the shop once
+                  (admin users, region, sales channel, publishable key,
+                  categories, starter catalogue, shipping option), then serves :9000
+       └─ storefront  waits for backend healthy, resolves the publishable key,
+                      applies its own tables, then serves :3000
 ```
 
-`storefront` waits for `seed` to exit 0, so a shop that is missing its
-publishable key never comes up half-configured.
+`storefront` waits for the backend's healthcheck, which only turns green after
+provisioning completed, so a shop missing its publishable key never comes up
+half-configured. Provisioning is idempotent and the DB lives in a named volume,
+so later updates (`up -d --build`) keep existing data instead of starting fresh.
 
 ## First run (anywhere)
 

@@ -11,14 +11,16 @@
 #
 # Service order (compose enforces it):
 #   postgres + redis (healthy)
-#     -> backend        migrates the schema on start, then serves :9000
-#     -> seed           one-shot: admin users, region, sales channel,
-#                       publishable key, categories, catalogue, shipping option
-#     -> storefront     reads the publishable key from the backend at start-up,
-#                       applies its own content schema, then serves :3000
+#     -> backend        migrates the schema, provisions the shop once
+#                       (admin user, region, sales channel, publishable key,
+#                       categories, catalogue, shipping option), then serves :9000
+#     -> storefront     waits for backend healthy, reads the publishable key
+#                       from the backend at start-up, then serves :3000
 #
 # Nothing has to be seeded by hand: `up -d` on an empty database produces a
-# browsable shop with products, and a working admin login.
+# browsable shop with products, and a working admin login. Provisioning is
+# idempotent and the database lives in a named volume, so later updates
+# (`up -d --build`) keep all existing data instead of starting from fresh.
 #
 # CLOUD
 #   This same file runs on a VM. Three things differ from local development and
@@ -45,8 +47,8 @@ x-logging: &default-logging
     max-size: "10m"
     max-file: "3"
 
-# Everything the Medusa backend and the one-shot seed job need. Values come from
-# .env (copy .env.example) so the same file configures both.
+# Everything the Medusa backend needs. Values come from .env (copy .env.example)
+# so the same file configures local runs and the cloud deployment alike.
 x-backend-environment: &backend-environment
   NODE_ENV: production
   # `sslmode=disable` is not decoration. Medusa enables TLS for any database
@@ -183,6 +185,15 @@ services:
     # never used without migrations having run first (see the entrypoint).
     environment:
       <<: *backend-environment
+      # One-time shop provisioning now runs in this container's entrypoint.
+      # These were previously passed to the `seed` service. The script only
+      # creates what is missing, so updates/restarts keep all existing data.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@snehavrindakala.example}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme-admin-password}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      MEDUSA_ADMIN_EMAIL: ${MEDUSA_ADMIN_EMAIL:-}
+      MEDUSA_ADMIN_PASSWORD: ${MEDUSA_ADMIN_PASSWORD:-}
+      SEED_CATALOGUE: ${SEED_CATALOGUE:-1}
     ports:
       # Loopback by default; the proxy profile is the way to serve it publicly.
       - "127.0.0.1:${BACKEND_PORT:-9000}:9000"
@@ -192,7 +203,10 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9000/health || exit 1"]
+      # The entrypoint writes the marker only after migrations + provisioning
+      # have completed. Health must imply the storefront has a publishable key
+      # to read, otherwise it starts before the shop exists and fails.
+      test: ["CMD-SHELL", "test -f /tmp/store-provisioned && wget -q --spider http://127.0.0.1:9000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -200,37 +214,6 @@ services:
     # Migrations must not be interrupted mid-way on redeploy.
     stop_grace_period: 30s
     restart: unless-stopped
-    logging: *default-logging
-    networks:
-      - snehavrinda
-
-  # One-shot provisioning. Idempotent: safe on every `up`.
-  #
-  # Creates the Medusa admin users, the INR region, the sales channel, the
-  # publishable API key the storefront uses, product categories, a starter
-  # catalogue, a stock location and a shipping option so checkout has rates.
-  seed:
-    container_name: snehavrinda-seed
-    image: snehakala-backend:latest
-    depends_on:
-      backend:
-        condition: service_healthy
-    command: ["node", "scripts/bootstrap-store.mjs"]
-    environment:
-      <<: *backend-environment
-      MEDUSA_BACKEND_URL: http://backend:9000
-      # Admin accounts. The Medusa user signs into the storefront admin panel
-      # (it calls the admin API on your behalf); the second pair is optional.
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@snehavrindakala.example}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme-admin-password}
-      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
-      MEDUSA_ADMIN_EMAIL: ${MEDUSA_ADMIN_EMAIL:-}
-      MEDUSA_ADMIN_PASSWORD: ${MEDUSA_ADMIN_PASSWORD:-}
-      # 1 = also create the starter catalogue (products/categories). Set 0 to
-      # provision only the shop wiring.
-      SEED_CATALOGUE: ${SEED_CATALOGUE:-1}
-      PLATFORM_MODE: ${PLATFORM_MODE:-single-brand}
-    restart: "no"
     logging: *default-logging
     networks:
       - snehavrinda
@@ -356,13 +339,11 @@ services:
     volumes:
       - storefront_media:/data/uploads
     depends_on:
+      # The backend's healthcheck only turns green after its entrypoint has
+      # provisioned the shop (region, publishable key, channel). Waiting for
+      # healthy therefore guarantees the storefront has a key to read at start.
       backend:
         condition: service_healthy
-      # The storefront resolves its publishable key at start-up, so the key has
-      # to exist first. Seeding only creates wiring + demo catalogue; it never
-      # touches uploaded media.
-      seed:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/ || exit 1"]
       interval: 15s

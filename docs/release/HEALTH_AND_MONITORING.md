@@ -21,8 +21,10 @@ shop is being monitored in production.
   `postgres` (`pg_isready`), `redis` (`redis-cli ping`), `backend` (`/health`),
   `storefront` (`wget` of `/`). Each has `interval`, `timeout` and `retries`.
 - **Health-gated startup order**, not plain container start: `backend` waits for
-  `postgres`/`redis` healthy; `seed` waits for `backend` healthy; `storefront`
-  waits for `backend` healthy. This prevents serving against an un-migrated DB.
+  `postgres`/`redis` healthy; `storefront` waits for `backend` healthy. The
+  backend healthcheck only passes after its entrypoint finished migrations and
+  idempotent provisioning (marker file `/tmp/store-provisioned`), so nothing
+  serves against an un-migrated or unprovisioned DB.
 - **Slow-start allowance** (`start_period`) on `backend` and `storefront` so a
   first boot doing migrations / publishable-key resolution is not killed early.
 - **Bounded logs** via `x-logging`: `json-file`, `max-size: 10m`, `max-file: 3`,

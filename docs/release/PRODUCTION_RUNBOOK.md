@@ -15,9 +15,9 @@
   (two hostnames — `STOREFRONT_DOMAIN` → storefront:3000, `API_DOMAIN` →
   backend:9000; automatic TLS). See `docs/DEPLOY.md`.
 - Services and enforced start order (`docker-compose.yml`):
-  `postgres` + `redis` (healthy) → `backend` (migrates, then serves :9000) →
-  `seed` (one-shot provisioning) → `storefront` (applies its own tables, reads
-  the publishable key at start, then serves :3000).
+  `postgres` + `redis` (healthy) → `backend` (migrates, provisions the shop
+  idempotently, then serves :9000) → `storefront` (waits for backend healthy,
+  applies its own tables, reads the publishable key at start, then serves :3000).
 - Postgres, Redis, backend and storefront are published on `127.0.0.1` only;
   only the Caddy `proxy` profile binds :80/:443. Never expose Redis publicly.
 - Secrets live in `.env` (gitignored) or an external secrets manager — never in
@@ -57,11 +57,13 @@
 ## 3. Health checks (what to watch)
 
 - Backend: `curl -s localhost:9000/health` → `{"status":"ok"}`; container
-  healthcheck is `wget http://127.0.0.1:9000/health`.
+  healthcheck requires both `/tmp/store-provisioned` (written after migrations
+  and idempotent provisioning) and `wget http://127.0.0.1:9000/health`.
 - Storefront: `curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/`; health
   check hits `/`.
-- Compose: `docker compose ps` — postgres/redis/backend/storefront healthy,
-  `seed` exited 0. `docker compose logs -f <service>` for failures.
+- Compose: `docker compose ps` — postgres/redis/backend/storefront healthy.
+  `docker compose logs -f <service>` for failures; provisioning messages are
+  prefixed `[seed]` inside the backend logs.
 - Notifications/outbox: `apps/storefront/app/admin/outbox/page.tsx` and
   `.../notifications/page.tsx`. Without `FROM_EMAIL` + `AWS_SES_*`, messages are
   recorded as `skipped` and nothing is sent — an empty outbox is not proof.
@@ -73,7 +75,10 @@
 - **Automatic path (single container, default):** `apps/backend/docker-entrypoint.sh`
   waits for Postgres (up to 120s), verifies `DATABASE_URL`, then runs
   `medusa db:migrate`, then `medusa db:sync-links` (idempotent, may be skipped),
-  then `medusa start`. Migrations are recorded in the migrations table, so a
+  then starts Medusa in the background. Once `/health` answers it runs
+  `node scripts/bootstrap-store.mjs` (the former one-shot `seed` service), which
+  is idempotent and keeps existing data, then writes `/tmp/store-provisioned`
+  and waits on Medusa. Migrations are recorded in the migrations table, so a
   restart on an already-migrated DB is a no-op. `stop_grace_period: 30s` prevents
   a redeploy from interrupting a migration mid-way.
 - Manual equivalents (do **not** run pnpm-wide commands): from `apps/backend`,
@@ -81,8 +86,8 @@
   `pnpm migrations:run` (`pnpm --filter @snehavrinda-kala/backend migrations:run`)
   and `pnpm db:setup`.
 - Storefront owns a few tables (admin sessions, translations, review cache, plus
-  its own schema) and applies them at start-up; it waits for `seed` to complete
-  successfully before serving.
+  its own schema) and applies them at start-up; it waits for `backend` healthy
+  (which implies provisioning finished) before serving.
 - **Rule:** additive, backward-compatible migrations only; never destroy
   customer/business data. A multi-replica deployment must move migrations to a
   dedicated release step rather than the entrypoint (note in
