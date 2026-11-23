@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { medusa } from "@/lib/medusa";
+import { localeAlternates } from "@/lib/seo";
 import { artFormSlugs } from "@/lib/slugs";
 import { listArtForms, translateArtForms } from "@/lib/site-content";
 import { getTranslations, getLocale } from "next-intl/server";
@@ -18,6 +20,22 @@ import { JaaliField, PaperGrain } from "@/components/grounds";
 // `revalidate` and assuming it took effect: verify with the build output,
 // where an ISR route prints ● and a dynamic one prints ƒ.
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const [{ locale }, t] = await Promise.all([
+    params,
+    getTranslations("artForm"),
+  ]);
+  return {
+    title: t("pageTitle"),
+    description: t("pageTagline"),
+    alternates: localeAlternates("/art-forms", locale),
+  };
+}
 
 interface ArtFormCard {
   key: string;

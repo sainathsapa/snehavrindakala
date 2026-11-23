@@ -15,6 +15,8 @@ import { PaymentMarks } from "@/components/payment-marks";
 import { STUDIO_EMAIL } from "@/lib/studio";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CurrencySwitcher } from "@/components/currency-switcher";
+import { CookieSettingsButton } from "@/components/analytics-consent";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 
 /**
  * The footer is the facade of the house.
@@ -81,6 +83,7 @@ const LINK_GROUPS = [
       { key: "disclaimer", href: "/disclaimer" },
       { key: "privacy", href: "/policies/privacy" },
       { key: "terms", href: "/policies/terms" },
+      { key: "cookie", href: "/policies/cookie" },
     ],
   },
 ];
@@ -478,9 +481,14 @@ export function Footer({
             © {new Date().getFullYear()} SnehaVrinda Kala · Made with care by{" "}
             <span className="font-medium text-haldi">Sneha Sainath Sapa</span>
           </p>
-          <p className="font-serif text-[12px] italic tracking-wide text-rang-paper/55">
-            Every work here was made by a hand that learned the form from someone.
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            {GA_MEASUREMENT_ID && (
+              <CookieSettingsButton className="font-sans text-[11px] tracking-[0.02em] text-rang-paper/60 underline underline-offset-2 transition-colors hover:text-haldi" />
+            )}
+            <p className="font-serif text-[12px] italic tracking-wide text-rang-paper/55">
+              Every work here was made by a hand that learned the form from someone.
+            </p>
+          </div>
         </div>
       </div>
 

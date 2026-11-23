@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/product-card";
 import { BotanicalRule } from "@/components/ornaments";
 import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
+import { localeAlternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale?: string }>;
 }) {
   // Next 15 can call this from a client MetadataOutlet with no params; guard
   // rather than throwing and taking the route down.
-  const slug = (await params)?.slug ?? "";
+  const { slug = "", locale } = (await params) ?? {};
   if (!slug) return { title: "SnehaVrinda Kala" };
   let artist: any = null;
   try {
@@ -39,9 +40,9 @@ export async function generateMetadata({
     description:
       artist.bio ||
       `${artist.display_name} is an artist featured on SnehaVrinda Kala.`,
-    alternates: {
-      canonical: `/artists/${artist.slug}`,
-    },
+    // localeAlternates keeps the hreflang map that a bare `canonical` would
+    // silently drop, and self-canonicalises a /hi artist page to its Hindi URL.
+    alternates: localeAlternates(`/artists/${artist.slug}`, locale),
     openGraph: {
       title: artist.display_name,
       description: artist.bio || undefined,

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 
 /**
- * Alternates for one page: the canonical English URL plus an hreflang entry for
- * every locale.
+ * Alternates for one page: a self-referencing canonical plus an hreflang entry
+ * for every locale.
  *
  * Next replaces `alternates` wholesale rather than merging, so a page that sets
  * only `canonical` silently drops the layout's `languages`. That is how the
@@ -11,22 +11,29 @@ import { routing } from "@/i18n/routing";
  * and without hreflang Google treats `/hi/shop` as an unrelated duplicate and
  * may index only one of the two.
  *
- * `path` is the locale-independent path, e.g. `/shop`.
+ * `path` is the locale-independent path, e.g. `/shop`. Pass `locale` whenever
+ * the page knows it: a Hindi page must canonicalise to `/hi/...`, never to the
+ * English URL, or it is treated as a duplicate of the English page and dropped
+ * from the index. The optional argument keeps older callers (which only want
+ * the hreflang map) unchanged.
  */
-export function localeAlternates(path: string): Metadata["alternates"] {
+export function localeAlternates(
+  path: string,
+  locale?: string
+): Metadata["alternates"] {
   const normalised = path === "/" ? "" : path.replace(/\/$/, "");
 
   const languages: Record<string, string> = {};
-  for (const locale of routing.locales) {
+  for (const code of routing.locales) {
     // English lives on the bare URL; every other locale is prefixed.
-    languages[locale] =
-      locale === routing.defaultLocale ? normalised || "/" : `/${locale}${normalised}`;
+    languages[code] =
+      code === routing.defaultLocale ? normalised || "/" : `/${code}${normalised}`;
   }
   // x-default tells Google which version to serve when no language matches.
   languages["x-default"] = normalised || "/";
 
   return {
-    canonical: normalised || "/",
+    canonical: locale ? canonicalFor(path, locale) : normalised || "/",
     languages,
   };
 }

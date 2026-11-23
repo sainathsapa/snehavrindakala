@@ -11,6 +11,7 @@ import { applyShopFilters, availableMediums } from "@/lib/shop-filters";
 import { getTranslations, getLocale } from "next-intl/server";
 import { categoryTranslationsFor } from "@/lib/site-content";
 import { soldHandles } from "@/lib/sold-works";
+import { localeAlternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -112,12 +113,12 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ category: string }>;
+  params: Promise<{ category: string; locale?: string }>;
 }) {
   // Next 15 may invoke this from a client-side MetadataOutlet with no params,
   // which throws "Cannot destructure property 'category' of undefined" and
   // takes the whole route down with a client exception.
-  const category = (await params)?.category ?? "";
+  const { category = "", locale } = (await params) ?? {};
   const resolved = category ? await resolveCategory(category) : null;
   return {
     // The root layout appends "| SnehaVrinda Kala"; including it here doubled it
@@ -126,9 +127,12 @@ export async function generateMetadata({
     description: resolved
       ? resolved.description
       : "Browse curated collections by art form at SnehaVrinda Kala.",
-    alternates: {
-      canonical: resolved ? `/shop/${resolved.handle}` : `/shop/${category}`,
-    },
+    // A bare canonical here used to discard the layout's hreflang map, leaving
+    // /hi/shop/<cat> with no language alternates at all.
+    alternates: localeAlternates(
+      resolved ? `/shop/${resolved.handle}` : `/shop/${category}`,
+      locale
+    ),
     openGraph: {
       title: resolved ? resolved.name : undefined,
       description: resolved ? resolved.description : undefined,

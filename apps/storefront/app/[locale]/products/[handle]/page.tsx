@@ -65,11 +65,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ handle: string }>;
+  params: Promise<{ handle: string; locale?: string }>;
 }) {
   // Next 15 can call this from a client MetadataOutlet with no params; guard
   // rather than throwing and taking the route down.
-  const handle = (await params)?.handle ?? "";
+  const { handle = "", locale } = (await params) ?? {};
   if (!handle) return { title: "SnehaVrinda Kala" };
   let product: Awaited<ReturnType<typeof medusa.getProduct>>["product"] | null = null;
   try {
@@ -89,7 +89,7 @@ export async function generateMetadata({
       description: `${seeded.title} — a handmade work by ${seeded.artist}${
         seeded.collection ? `, ${seeded.collection.toLowerCase()}` : ""
       }. ${seeded.price ? formatPrice(seeded.price) + ". " : ""}Original Indian artwork from SnehaVrinda Kala.`,
-      alternates: localeAlternates(`/products/${seeded.handle}`),
+      alternates: localeAlternates(`/products/${seeded.handle}`, locale),
       openGraph: {
         title: `${seeded.title} by ${seeded.artist}`,
         description: `Original handmade Indian artwork by ${seeded.artist}.`,
@@ -111,7 +111,9 @@ export async function generateMetadata({
     description:
       product.description ||
       `${catalogueTitle} — ${formatPrice(price, currency)} by SnehaVrinda Kala.`,
-    alternates: { canonical: `/products/${product.handle}` },
+    // The seeded branch above already used localeAlternates; this live-Medusa
+    // branch did not, so every real product lost its hreflang map.
+    alternates: localeAlternates(`/products/${product.handle}`, locale),
     openGraph: {
       title: catalogueTitle,
       description: product.description || undefined,
@@ -314,6 +316,23 @@ export default async function ProductDetailPage({
 
   return (
     <main className="pb-32 lg:pb-20">
+      {/* Consent-gated GA4 reads this payload to fire view_item on arrival and
+          add_to_cart when the shared cart hook confirms an add. It is data, not
+          a tracking script: nothing is sent until the visitor opts in. */}
+      <script
+        id="svk-ga4-product"
+        type="application/json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            handle: product.handle ?? medusaHandle,
+            title: catalogueTitle,
+            price: price != null ? price / 100 : 0,
+            currency: currency.toUpperCase(),
+            artist: artist ?? undefined,
+            image: images[0]?.url ?? undefined,
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <script
         id="schema-product"
         type="application/ld+json"

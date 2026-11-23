@@ -480,3 +480,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS order_shipments_order_id_key ON public.order_s
 CREATE UNIQUE INDEX IF NOT EXISTS product_translation_handle_locale_key ON public.product_translation USING btree (handle, locale);
 CREATE INDEX IF NOT EXISTS product_translation_locale_idx ON public.product_translation USING btree (locale);
 CREATE UNIQUE INDEX IF NOT EXISTS site_art_form_slug_key ON public.site_art_form USING btree (slug);
+-- NOT-01 — idempotency guard for transactional notifications.
+-- app_notification is written by the backend module; this idempotent statement
+-- makes the dedupe key/index exist even in a deployment where only the
+-- storefront's schema migration has run. Both are additive: existing rows keep
+-- a NULL key and are untouched. Not a partial index: ON CONFLICT (event_key)
+-- must be able to infer it. Mirrors the backend module's own migration.
+ALTER TABLE IF EXISTS public.app_notification ADD COLUMN IF NOT EXISTS event_key text;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_app_notification_event_key
+  ON public.app_notification USING btree (event_key);

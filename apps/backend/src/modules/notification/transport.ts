@@ -14,6 +14,33 @@ import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 
 export type SendOutcome = "sent" | "skipped";
 
+/**
+ * Delivery states the SES transport can report.
+ *
+ * BLOCKER: there is no SES event webhook / configuration-set destination wired
+ * up yet, so `delivered` and `bounced` are declared but never written by this
+ * code. They are kept here (and in the notification entity's status enum) so a
+ * webhook can record them later without a schema change. Do not read a `sent`
+ * row as proof of delivery until that webhook exists.
+ */
+export const NOTIFICATION_STATUS = {
+  PENDING: "pending",
+  SENT: "sent",
+  DELIVERED: "delivered",
+  FAILED: "failed",
+  BOUNCED: "bounced",
+  SKIPPED: "skipped",
+} as const;
+
+export const DELIVERY_CONFIRMATION_STATUSES = ["delivered", "bounced"] as const;
+
+/** What a transport call returned, including the provider's own receipt id. */
+export interface SendReceipt {
+  status: SendOutcome;
+  /** SES `MessageId`. Stored on the notification row for support/debugging. */
+  messageId?: string | null;
+}
+
 export interface EmailPayload {
   to: string;
   subject: string;
@@ -77,10 +104,17 @@ function getClient(region: string): SESv2Client {
   return client;
 }
 
-export async function sendEmail(
+/**
+ * Send and return the provider receipt as well as the coarse outcome.
+ *
+ * `sendEmail` below keeps its historical `"sent" | "skipped"` return value for
+ * existing callers; the notification service uses this richer form so it can
+ * persist the SES `MessageId`.
+ */
+export async function sendEmailWithReceipt(
   payload: EmailPayload,
   env: NodeJS.ProcessEnv = process.env
-): Promise<SendOutcome> {
+): Promise<SendReceipt> {
   const config = readTransportConfig(env);
 
   if (!config || !hasCredentials(env)) {
@@ -88,7 +122,7 @@ export async function sendEmail(
     console.log(
       `\n[email:skipped] to=${payload.to} subject="${payload.subject}"\n${payload.text}\n`
     );
-    return "skipped";
+    return { status: "skipped", messageId: null };
   }
 
   if (!isValidEmail(payload.to)) {
@@ -112,8 +146,16 @@ export async function sendEmail(
     },
   });
 
-  await getClient(config.region).send(command);
-  return "sent";
+  const result = await getClient(config.region).send(command);
+  return { status: "sent", messageId: result.MessageId || null };
+}
+
+/** Backwards-compatible wrapper: the coarse outcome existing callers expect. */
+export async function sendEmail(
+  payload: EmailPayload,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<SendOutcome> {
+  return (await sendEmailWithReceipt(payload, env)).status;
 }
 
 /** Reset the cached client — used by tests. */

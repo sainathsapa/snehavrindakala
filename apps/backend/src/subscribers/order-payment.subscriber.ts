@@ -77,6 +77,10 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
         await notificationModuleService.sendNotification?.({
           to: order?.email || data?.customer_email,
           template: "order_confirmation",
+          // NOT-01: checkout-complete also sends this email. Both paths must
+          // derive the same key so the second call is a no-op at the
+          // notification layer, regardless of which one fires first.
+          eventKey: `order_confirmation:${order_id}`,
           data: {
             order_id,
             amount,
@@ -146,6 +150,7 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
         await notificationModuleService.sendNotification?.({
           to: data?.customer_email || data?.email,
           template: "refund_processed",
+          eventKey: `refund_processed:${order_id}`,
           data: { order_id, amount, reason },
         });
       } catch (err) {
@@ -192,6 +197,7 @@ export default async function orderPaymentSubscriber(args: any): Promise<void> {
         await notificationModuleService.sendNotification?.({
           to: data?.customer_email || shipmentOrder?.email,
           template: "shipment_confirmed",
+          eventKey: `shipment_confirmed:${order_id}`,
           data: {
             order_id,
             tracking_number,

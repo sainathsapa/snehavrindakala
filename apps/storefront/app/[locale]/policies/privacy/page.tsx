@@ -1,4 +1,22 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { localeAlternates } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const [{ locale }, t] = await Promise.all([
+    params,
+    getTranslations("policies"),
+  ]);
+  return {
+    title: t("privacyTitle"),
+    description: t("privacyP1"),
+    alternates: localeAlternates("/policies/privacy", locale),
+  };
+}
 
 export default async function PrivacyPolicyPage() {
   const t = await getTranslations("policies");

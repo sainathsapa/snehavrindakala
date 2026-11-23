@@ -8,6 +8,8 @@ import { socialLinks, socialUrls } from "@/lib/social";
 import { artFormSlugs } from "@/lib/slugs";
 import { NextIntlClientProvider } from "next-intl";
 import { listArtForms } from "@/lib/site-content";
+import { localeAlternates } from "@/lib/seo";
+import { AnalyticsConsent } from "@/components/analytics-consent";
 
 // Absolute origin for structured data. Schema.org requires fully-qualified
 // URLs, and a relative one silently invalidates the whole graph.
@@ -46,14 +48,12 @@ export async function generateMetadata({
   description:
     "A home for art in all its forms—ready-to-ship artwork, made-to-order pieces, custom commissions, artist stories, and creative kits.",
   metadataBase: new URL(base),
-  alternates: {
-    canonical: "/",
-    languages: {
-      en: "/",
-      hi: "/hi",
-      "x-default": "/",
-    },
-  },
+  // Fallback only. The public content pages declare their own alternates with
+  // `localeAlternates()`; this keeps utility routes (cart, account…)
+  // on a locale-correct home canonical instead of the old hard-coded "/" that
+  // sent a Hindi visitor to the English home page. Pages that set their own
+  // `alternates` replace this wholesale — that is exactly how Next works.
+  alternates: localeAlternates("/", locale),
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -275,20 +275,31 @@ export default async function LocaleLayout({
         />
         {gaMeasurementId && (
           <>
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
-            />
+            {/* Consent Mode must be denied BEFORE the config call, otherwise
+                GA sets analytics/storage cookies on the first page view. The
+                banner (or a returning visitor's stored choice) grants it. */}
             <script
               dangerouslySetInnerHTML={{
                 __html: `
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
+                  gtag('consent', 'default', {
+                    analytics_storage: 'denied',
+                    ad_storage: 'denied',
+                    ad_user_data: 'denied',
+                    ad_personalization: 'denied',
+                    wait_for_update: 500
+                  });
                   gtag('js', new Date());
                   gtag('config', '${gaMeasurementId}');
                 `,
               }}
             />
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            />
+            <AnalyticsConsent />
           </>
         )}
       </>

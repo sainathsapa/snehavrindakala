@@ -1,8 +1,24 @@
+import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { SectionHeading, Card, CardContent } from "@snehavrinda-kala/ui";
 import { Badge } from "@snehavrinda-kala/ui";
 import { getPlatformModeFromEnv } from "@/lib/settings";
+import { localeAlternates } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    title: "Sell with SnehaVrinda Kala",
+    description:
+      "A curated home for handmade, made-to-order and commissioned work by Indian makers.",
+    alternates: localeAlternates("/sell", locale),
+  };
+}
 
 export default function SellPage() {
   // Only meaningful in marketplace mode: in single-brand mode there is nobody

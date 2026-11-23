@@ -212,3 +212,264 @@ export async function countUndelivered(): Promise<number> {
     return 0;
   }
 }
+
+/* ── NOT-02: retry / delivery status ─────────────────────────────────────── */
+
+/**
+ * Statuses assigned by a delivery event rather than by the send call itself.
+ *
+ * BLOCKER: no SES webhook (configuration-set event destination) is wired up,
+ * so nothing at present writes `delivered` or `bounced`. They are declared here
+ * so an operator's dashboard and a future webhook agree on the vocabulary, and
+ * so nobody mistakes a `sent` row for a confirmed delivery.
+ */
+export const NOTIFICATION_STATUS = {
+  PENDING: "pending",
+  SENT: "sent",
+  DELIVERED: "delivered",
+  FAILED: "failed",
+  BOUNCED: "bounced",
+  SKIPPED: "skipped",
+} as const;
+
+export const DELIVERY_CONFIRMATION_STATUSES = ["delivered", "bounced"] as const;
+
+/** Only a message that will not deliver itself may be retried manually. */
+export function canRetry(status: string): boolean {
+  return (UNDELIVERED_STATUSES as readonly string[]).includes(status);
+}
+
+/**
+ * Pure state transition for one retry attempt. Kept separate from I/O so the
+ * rules can be tested without a database or a mail transport.
+ */
+export function retryTransition(outcome: {
+  status: string;
+  error?: string | null;
+  provider_message_id?: string | null;
+}): {
+  status: string;
+  error_message: string | null;
+  provider_message_id: string | null;
+  ok: boolean;
+} {
+  if (outcome.status === "sent" || outcome.status === "delivered") {
+    return {
+      status: NOTIFICATION_STATUS.SENT,
+      error_message: null,
+      provider_message_id: outcome.provider_message_id ?? null,
+      ok: true,
+    };
+  }
+  if (outcome.status === "skipped") {
+    return {
+      status: NOTIFICATION_STATUS.SKIPPED,
+      error_message: null,
+      provider_message_id: outcome.provider_message_id ?? null,
+      ok: false,
+    };
+  }
+  return {
+    status: NOTIFICATION_STATUS.FAILED,
+    error_message: outcome.error || "Retry failed without an error message",
+    provider_message_id: outcome.provider_message_id ?? null,
+    ok: false,
+  };
+}
+
+export interface RetrySendPayload {
+  to: string;
+  template: string;
+  data: Record<string, any>;
+}
+
+export interface RetrySendResult {
+  id: string;
+  status: string;
+  error?: string | null;
+}
+
+/** Dependencies are injectable so the retry can be tested without I/O. */
+export interface RetryDeps {
+  query?: <T extends Record<string, any> = any>(
+    sql: string,
+    params?: any[]
+  ) => Promise<T[]>;
+  send?: (payload: RetrySendPayload) => Promise<RetrySendResult>;
+}
+
+export interface RetryOutcome {
+  id: string;
+  ok: boolean;
+  status: string;
+  detail: string;
+  provider_message_id?: string | null;
+}
+
+/**
+ * Ask the backend notification module to re-send one undelivered message.
+ *
+ * We intentionally do not mark the row sent locally and hope: the send goes
+ * through the same backend path as the original (same templates, same SES
+ * transport), under a fresh retry key so NOT-01's idempotency guard does not
+ * treat it as a duplicate. The original row is then updated with the real
+ * outcome, including the provider message id when SES supplied one.
+ *
+ * Limitation: the backend's store send endpoint only accepts
+ * `order_confirmation` and `cart_reminder`. Other templates are recorded as a
+ * failed retry with that reason rather than being silently reported as sent.
+ */
+async function sendRetryViaBackend(
+  payload: RetrySendPayload
+): Promise<RetrySendResult> {
+  const backendUrl = (
+    process.env.MEDUSA_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+    "http://localhost:9000"
+  ).replace(/\/+$/, "");
+  const publishableKey =
+    process.env.MEDUSA_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
+    "";
+
+  const res = await fetch(`${backendUrl}/store/notifications/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-publishable-api-key": publishableKey,
+    },
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
+    body: JSON.stringify(payload),
+  });
+  const text = await res.text().catch(() => "");
+  if (!res.ok) {
+    throw new Error(`Notification service returned ${res.status}: ${text.slice(0, 300)}`);
+  }
+  return JSON.parse(text || "{}") as RetrySendResult;
+}
+
+export async function retryUndeliveredNotification(
+  id: string,
+  deps: RetryDeps = {}
+): Promise<RetryOutcome> {
+  const db = (deps.query || (query as any)) as NonNullable<RetryDeps["query"]>;
+  const send = deps.send || sendRetryViaBackend;
+
+  const rows = await db<{
+    id: string;
+    recipient: string | null;
+    template: string;
+    data: unknown;
+    status: string;
+    event_key: string | null;
+  }>(
+    `SELECT id, recipient, template, data, status, event_key
+       FROM app_notification
+      WHERE id = $1 AND deleted_at IS NULL
+      LIMIT 1`,
+    [id]
+  );
+  const original = rows[0];
+  if (!original) throw new Error("Notification not found");
+
+  if (!canRetry(original.status)) {
+    return {
+      id,
+      ok: false,
+      status: original.status,
+      detail: `Not retried: status is "${original.status}", which is not an undelivered state.`,
+    };
+  }
+
+  const mark = async (
+    transition: ReturnType<typeof retryTransition>
+  ): Promise<void> => {
+    await db(
+      `UPDATE app_notification
+          SET status = $1, error_message = $2,
+              provider_message_id = $3, updated_at = now()
+        WHERE id = $4`,
+      [
+        transition.status,
+        transition.error_message,
+        transition.provider_message_id,
+        id,
+      ]
+    );
+  };
+
+  if (!original.recipient) {
+    const transition = retryTransition({
+      status: "failed",
+      error: "The original notification has no recipient address",
+    });
+    await mark(transition);
+    return {
+      id,
+      ok: false,
+      status: transition.status,
+      detail: transition.error_message || "Retry failed",
+    };
+  }
+
+  const data = (original.data || {}) as Record<string, any>;
+  const base = original.event_key || `${original.template}:${original.id}`;
+  // One minute-scale token plus a random suffix: a retry is a new event, so it
+  // must not be swallowed by the dedupe key of the send it is replacing.
+  const retryKey = `${base}:retry:${Date.now()}:${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+
+  try {
+    const result = await send({
+      to: original.recipient,
+      template: original.template,
+      data: { ...data, eventKey: retryKey },
+    });
+
+    const sentRows = await db<{
+      status: string;
+      provider_message_id: string | null;
+      error_message: string | null;
+    }>(
+      `SELECT status, provider_message_id, error_message
+         FROM app_notification WHERE id = $1 LIMIT 1`,
+      [result.id]
+    );
+    const sent = sentRows[0] || ({} as any);
+    const transition = retryTransition({
+      status: result.status || sent.status || "failed",
+      error: result.error || sent.error_message,
+      provider_message_id: sent.provider_message_id ?? null,
+    });
+    await mark(transition);
+    return {
+      id,
+      ok: transition.ok,
+      status: transition.status,
+      detail: transition.ok
+        ? `Retried and handed to the transport${
+            transition.provider_message_id
+              ? ` (provider id ${transition.provider_message_id})`
+              : ""
+          }.`
+        : `Retry did not deliver (${transition.status})${
+            transition.error_message ? `: ${transition.error_message}` : "."
+          }`,
+      provider_message_id: transition.provider_message_id,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const transition = retryTransition({ status: "failed", error: message });
+    // The failure is the useful record; losing it would put the row straight
+    // back into the queue with no explanation.
+    await mark(transition).catch(() => {});
+    return {
+      id,
+      ok: false,
+      status: transition.status,
+      detail: `Retry failed: ${message}`,
+    };
+  }
+}

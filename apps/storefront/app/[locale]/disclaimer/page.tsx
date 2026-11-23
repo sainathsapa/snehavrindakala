@@ -2,10 +2,22 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
+import { localeAlternates } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("disclaimer");
-  return { title: t("title"), description: t("intro") };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const [{ locale }, t] = await Promise.all([
+    params,
+    getTranslations("disclaimer"),
+  ]);
+  return {
+    title: t("title"),
+    description: t("intro"),
+    alternates: localeAlternates("/disclaimer", locale),
+  };
 }
 
 /**

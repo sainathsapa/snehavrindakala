@@ -1,8 +1,25 @@
+import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { requireCustomer, getAuthToken } from "@/lib/auth";
 import { applySellerAction } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@snehavrinda-kala/ui";
 import { Badge } from "@snehavrinda-kala/ui";
+import { localeAlternates } from "@/lib/seo";
+
+// The dashboard is private, but declaring its alternates keeps it from
+// inheriting the layout's home canonical when a crawler does reach it.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    title: "Creator studio",
+    robots: { index: false, follow: false },
+    alternates: localeAlternates("/seller", locale),
+  };
+}
 
 export default async function SellerDashboardPage() {
   const customer = await requireCustomer();

@@ -4,10 +4,19 @@ import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { PaymentMarks } from "@/components/payment-marks";
+import { localeAlternates } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("faq");
-  return { title: t("title"), description: t("intro") };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const [{ locale }, t] = await Promise.all([params, getTranslations("faq")]);
+  return {
+    title: t("title"),
+    description: t("intro"),
+    alternates: localeAlternates("/faq", locale),
+  };
 }
 
 /**

@@ -37,6 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/policies/returns`, changeFrequency: "yearly", priority: 0.3, lastModified: now },
     { url: `${baseUrl}/policies/privacy`, changeFrequency: "yearly", priority: 0.3, lastModified: now },
     { url: `${baseUrl}/policies/terms`, changeFrequency: "yearly", priority: 0.3, lastModified: now },
+    { url: `${baseUrl}/policies/cookie`, changeFrequency: "yearly", priority: 0.3, lastModified: now },
     { url: `${baseUrl}/authenticity`, changeFrequency: "monthly", priority: 0.5, lastModified: now },
     { url: `${baseUrl}/faq`, changeFrequency: "yearly", priority: 0.4, lastModified: now },
     { url: `${baseUrl}/disclaimer`, changeFrequency: "yearly", priority: 0.2, lastModified: now },
@@ -158,11 +159,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   //
   // Built from the finished list rather than alongside each push above, so a
   // route added later cannot be listed in English and forgotten in Hindi.
+  // hreflang in a sitemap must be a fully-qualified URL, just like <loc>.
+  // Relative values ("/", "/hi") are ignored by Google, which left every Hindi
+  // page invisible to a crawler starting here. Mirror the absolute <loc>
+  // values built above by prefixing the same base URL.
   const withAlternates = (entry: MetadataRoute.Sitemap[number]) => {
     const path = entry.url.slice(baseUrl.length) || "/";
     const en = path === "/" ? "/" : path;
     const hi = path === "/" ? "/hi" : `/hi${path}`;
-    return { ...entry, alternates: { languages: { en, hi } } };
+    return {
+      ...entry,
+      alternates: {
+        languages: {
+          en: `${baseUrl}${en}`,
+          hi: `${baseUrl}${hi}`,
+          "x-default": `${baseUrl}${en}`,
+        },
+      },
+    };
   };
 
   const english = entries.map(withAlternates);
@@ -173,7 +187,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return {
       ...entry,
       url: `${baseUrl}${hi}`,
-      alternates: { languages: { en, hi } },
+      alternates: {
+        languages: {
+          en: `${baseUrl}${en}`,
+          hi: `${baseUrl}${hi}`,
+          "x-default": `${baseUrl}${en}`,
+        },
+      },
     };
   });
 

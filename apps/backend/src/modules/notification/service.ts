@@ -3,17 +3,63 @@
  *
  * DML entities are registered with MikroORM via
  * MedusaServiceModelObjectsSymbol.
+ *
+ * NOT-01: a send carries an idempotency key (supplied or derived from the
+ * template plus the reference id). A UNIQUE index on `event_key` makes claiming
+ * that key atomic. A second call for the same key returns the row that is
+ * already there and never reaches the transport.
+ *
+ * NOT-02: the provider's `MessageId` is persisted on the row, and a failed send
+ * keeps its error text, so an operator can see what happened and retry it.
  */
 import { Notification } from "./entities/notification";
 import { MedusaServiceModelObjectsSymbol } from "@medusajs/utils";
 import { randomUUID } from "crypto";
 import type { SendNotificationInput } from "./types";
 import { renderTemplate, type TemplateContext } from "./templates";
-import { sendEmail } from "./transport";
+import { sendEmailWithReceipt, type SendReceipt } from "./transport";
 
 const MODEL_OBJECTS = {
   Notification,
 };
+
+/** The service accepts an optional explicit key; old callers need not change. */
+type NotificationInput = SendNotificationInput & { eventKey?: string };
+type NotificationRow = any;
+
+/**
+ * A stable key for "this message about this thing". The storefront posts
+ * `{ to, template, data }` to /store/notifications/send, where the reference id
+ * lives in `data.order.id`; the backend subscriber has the same id. Deriving the
+ * same string on both paths is what collapses the two confirmation sends into
+ * one. An explicit key (or one carried inside `data`) wins over derivation.
+ */
+export function deriveEventKey(
+  template: string,
+  data: Record<string, any> = {}
+): string | null {
+  const supplied = data?.eventKey ?? data?.idempotencyKey ?? data?.event_key;
+  if (typeof supplied === "string" && supplied.trim()) return supplied.trim();
+
+  const ref =
+    data?.order?.id ??
+    data?.orderId ??
+    data?.order_id ??
+    data?.reference_id ??
+    data?.quote_id ??
+    data?.shipment_id ??
+    data?.cart_id;
+  if (ref === undefined || ref === null || ref === "") return null;
+  return `${template}:${String(ref)}`;
+}
+
+function isUniqueViolation(err: any): boolean {
+  return Boolean(
+    err &&
+      (err.code === "23505" ||
+        /unique|duplicate key|conflict/i.test(String(err?.message || "")))
+  );
+}
 
 export class NotificationService {
   protected readonly manager_: any;
@@ -22,47 +68,163 @@ export class NotificationService {
     this.manager_ = manager;
   }
 
-  async sendNotification(data: SendNotificationInput): Promise<any> {
-    const { to, template, data: templateData, channel = "email" } = data;
+  /** The underlying query builder, when the manager exposes one. */
+  private knex(): any | null {
+    try {
+      return this.manager_?.getConnection?.()?.getKnex?.() || null;
+    } catch {
+      return null;
+    }
+  }
 
-    const notification = this.manager_.getRepository(Notification).create({
+  private async findByEventKey(eventKey: string): Promise<NotificationRow | null> {
+    const repo = this.manager_?.getRepository?.(Notification);
+    if (repo && typeof repo.findOne === "function") {
+      return (await repo.findOne({ event_key: eventKey })) || null;
+    }
+    if (typeof this.manager_?.findOne === "function") {
+      return (await this.manager_.findOne(Notification, { event_key: eventKey })) || null;
+    }
+    return null;
+  }
+
+  /**
+   * Claim the right to send.
+   *
+   * With a SQL runner this is a real `INSERT ... ON CONFLICT DO NOTHING
+   * RETURNING`: the UNIQUE index is the arbiter, so two concurrent callers
+   * cannot both win. Without one (unit tests, or a manager that hides
+   * its connection) we do the equivalent read-then-create and rely on the same
+   * index plus a unique-violation catch as the final guard.
+   */
+  private async claim(
+    eventKey: string | null,
+    seed: Record<string, any>
+  ): Promise<{ row: NotificationRow | null; claimed: boolean; viaSql: boolean }> {
+    const knex = this.knex();
+    if (knex && eventKey) {
+      const [inserted] = await knex("app_notification")
+        .insert({ ...seed, event_key: eventKey })
+        .onConflict("event_key")
+        .ignore()
+        .returning("*");
+      if (inserted) return { row: inserted, claimed: true, viaSql: true };
+      const existing = await knex("app_notification")
+        .where({ event_key: eventKey })
+        .first();
+      return { row: existing || null, claimed: false, viaSql: true };
+    }
+
+    if (eventKey) {
+      const existing = await this.findByEventKey(eventKey);
+      if (existing) return { row: existing, claimed: false, viaSql: false };
+    }
+    return { row: null, claimed: false, viaSql: false };
+  }
+
+  private async writeSqlOutcome(
+    row: NotificationRow,
+    outcome: { status: string; messageId?: string | null; error?: string | null }
+  ): Promise<NotificationRow> {
+    const updates = {
+      status: outcome.status,
+      provider_message_id: outcome.messageId ?? null,
+      error_message: outcome.error ?? null,
+      updated_at: new Date(),
+    };
+    const knex = this.knex()!;
+    await knex("app_notification").where({ id: row.id }).update(updates);
+    return { ...row, ...updates };
+  }
+
+  async sendNotification(data: NotificationInput): Promise<any> {
+    const {
+      to,
+      template,
+      data: templateData,
+      channel = "email",
+      eventKey,
+    } = data;
+    const key = eventKey || deriveEventKey(template, templateData || {});
+
+    const seed: Record<string, any> = {
       id: randomUUID(),
       recipient: to,
       channel,
       template,
       data: templateData || {},
       status: "pending",
-    });
+      provider_message_id: null,
+      error_message: null,
+    };
+
+    const claim = await this.claim(key, seed);
+    if (claim.row && !claim.claimed) {
+      // NOT-01: already recorded. Returning here means no second render, no
+      // second transport call and no second row — a true no-op.
+      return claim.row;
+    }
+
+    const row: NotificationRow =
+      claim.row ||
+      this.manager_.getRepository(Notification).create({
+        ...seed,
+        event_key: key,
+      });
+
+    let outcome: {
+      status: string;
+      messageId?: string | null;
+      error?: string | null;
+    } = { status: "skipped" };
 
     try {
       if (channel === "email") {
-        const outcome = await this.sendViaSES(
-          to,
-          template,
-          templateData || {}
-        );
+        const receipt = await this.sendViaSES(to, template, templateData || {});
         // "skipped" means SES is not configured (development). That is not a
         // failure — recording it as one would make the admin queue look broken.
-        notification.status = outcome === "sent" ? "sent" : "skipped";
+        outcome = {
+          status: receipt.status === "sent" ? "sent" : "skipped",
+          messageId: receipt.messageId,
+        };
       } else {
         console.log(
           `[Notification] channel "${channel}" is not implemented; skipping (template="${template}")`
         );
-        notification.status = "skipped";
+        outcome = { status: "skipped" };
       }
     } catch (err) {
-      notification.status = "failed";
-      notification.error_message =
-        err instanceof Error ? err.message : String(err);
+      outcome = {
+        status: "failed",
+        error: err instanceof Error ? err.message : String(err),
+      };
       console.error(
         `[Notification] Failed to send "${template}" to ${to}:`,
         err
       );
     }
 
-    await this.manager_.persistAndFlush(notification);
+    if (claim.viaSql && claim.claimed) {
+      return this.writeSqlOutcome(row, outcome);
+    }
 
-    return notification;
+    row.status = outcome.status;
+    row.provider_message_id = outcome.messageId ?? null;
+    row.error_message = outcome.error ?? null;
+
+    try {
+      await this.manager_.persistAndFlush(row);
+    } catch (err) {
+      // A racing insert can still beat the pre-check. The unique index decides
+      // the winner, and returning the winner keeps this call a no-op.
+      if (isUniqueViolation(err) && key) {
+        const existing = await this.findByEventKey(key);
+        if (existing) return existing;
+      }
+      throw err;
+    }
+
+    return row;
   }
 
   private templateContext(): TemplateContext {
@@ -84,7 +246,7 @@ export class NotificationService {
     to: string,
     template: string,
     templateData: Record<string, any>
-  ): Promise<"sent" | "skipped"> {
+  ): Promise<SendReceipt> {
     if (!to) {
       throw new Error(
         `Cannot send "${template}": no recipient address was provided`
@@ -97,7 +259,7 @@ export class NotificationService {
       templateData
     );
 
-    return sendEmail({
+    return sendEmailWithReceipt({
       to,
       subject: rendered.subject,
       html: rendered.html,

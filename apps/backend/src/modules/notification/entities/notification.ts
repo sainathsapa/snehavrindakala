@@ -31,4 +31,10 @@ export const Notification = model.define("app_notification", {
     .default("pending"),
   provider_message_id: model.text().nullable(),
   error_message: model.text().nullable(),
+  /**
+   * NOT-01 idempotency key. Nullable and backfilled by a migration, so an
+   * existing database (and an old row) keeps working — Postgres treats NULLs as
+   * distinct in a UNIQUE index, so only real keys are constrained.
+   */
+  event_key: model.text().nullable(),
 });

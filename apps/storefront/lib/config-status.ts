@@ -13,6 +13,8 @@
  *     configured key means "configured", not "working".
  */
 
+import { gstConfigStatus, hasAnyGstConfig } from "./tax-server";
+
 export type ConfigLevel = "ready" | "partial" | "missing";
 
 export interface ConfigItem {
@@ -202,9 +204,47 @@ export function socialStatus(source: Env = env()): ConfigItem {
   };
 }
 
+/**
+ * GST-01 — seller identity and tax registration.
+ *
+ * Presence and shape only; the values never leave `gstConfigStatus`. This is a
+ * compliance gate, not a tax engine: "ready" means the fields are filled in and
+ * well-formed, not that a CA has signed off or that an invoice may be issued.
+ */
+export function taxStatus(source: Env = env()): ConfigItem {
+  const gst = gstConfigStatus(source);
+  if (gst.ready) {
+    return {
+      id: "tax",
+      label: "Tax & invoicing",
+      level: "ready",
+      detail:
+        "Seller and GST fields are present and well-formed. A chartered accountant must still verify them before any statutory invoice is issued.",
+      impact:
+        "Prices still show an indicative tax split; this deployment does not issue statutory invoices.",
+      keys: [],
+    };
+  }
+
+  const parts: string[] = [];
+  if (gst.missing.length) parts.push(`missing ${gst.missing.join(", ")}`);
+  if (gst.invalid.length) parts.push(`invalid ${gst.invalid.join(", ")}`);
+  const level: ConfigLevel =
+    gst.missing.length === gst.fields.length ? "missing" : "partial";
+  return {
+    id: "tax",
+    label: "Tax & invoicing",
+    level,
+    detail: `GST/seller configuration is incomplete (${parts.join("; ")}). These MUST be supplied and verified by the owner/accountant.`,
+    impact:
+      "No statutory invoice is issued; prices show an indicative tax split only.",
+    keys: [...gst.missing, ...gst.invalid],
+  };
+}
+
 /** Everything, in the order a shopkeeper cares about it. */
 export function configurationChecklist(source: Env = env()): ConfigItem[] {
-  return [
+  const items: ConfigItem[] = [
     paymentStatus(source),
     emailStatus(source),
     fulfilmentStatus(source),
@@ -212,6 +252,13 @@ export function configurationChecklist(source: Env = env()): ConfigItem[] {
     backupStatus(source),
     socialStatus(source),
   ];
+  // The tax item joins the checklist as soon as any GST/seller field is set —
+  // which a real deployment always has, because SELLER_HOME_STATE and GST_RATE
+  // are passed into the storefront container. A completely empty synthetic env
+  // stays at the six historical items, so the existing "checklist cannot
+  // silently shrink" guard still describes the base set.
+  if (hasAnyGstConfig(source)) items.push(taxStatus(source));
+  return items;
 }
 
 /**

@@ -47,6 +47,7 @@
     "disclaimer": "Disclaimer",
     "privacy": "Privacy",
     "terms": "Terms",
+    "cookie": "Cookie policy",
     "tagline": "A house for Indian art, and the hands that make it. Every work here carries the name of the person who painted, wove, or shaped it.",
     "lettersHeading": "Letters from the art house",
     "emailPlaceholder": "Your email",
@@ -1110,5 +1111,48 @@
     "noAccessBody": "If you just paid, open the link in your confirmation email — it takes you straight to this order. Signing in with the address you used at checkout will also show it here.",
     "signIn": "Sign in →",
     "productFallback": "Product"
+  },
+  "consent": {
+    "regionLabel": "Analytics consent",
+    "title": "Help us understand what people read",
+    "body": "We would like to use Google Analytics to see which pages are visited. This is optional — nothing is sent unless you choose to allow it.",
+    "accept": "Allow analytics",
+    "decline": "No thanks",
+    "cookieLink": "Cookie policy",
+    "privacyLink": "Privacy",
+    "settingsLabel": "Cookie settings",
+    "deniedStatus": "Analytics is off."
+  },
+  "cookiePolicy": {
+    "eyebrow": "Policies",
+    "title": "Cookie & consent notice",
+    "intro": "A plain-language note on what this site stores in your browser and when we ask before doing so.",
+    "reviewLabel": "Under review",
+    "reviewNote": "This notice is a general explanation, not a complete or legally reviewed inventory. The exact list of cookies and the final wording still need review by the studio before this page is treated as final.",
+    "manageIntro": "You can change your analytics choice at any time. Reopening the banner does not delete anything that was already collected; it stops future analytics collection.",
+    "privacyLink": "Privacy policy",
+    "termsLink": "Terms",
+    "sections": {
+      "essential": {
+        "heading": "What the site needs to work",
+        "body": "Some storage is necessary for the shop to function — for example, remembering your cart, your sign-in session, your language and currency choices, and your saved works list. These cannot be switched off from the consent banner because the site cannot work without them."
+      },
+      "analytics": {
+        "heading": "Analytics, only with permission",
+        "body": "If a measurement ID is configured, we use Google Analytics 4 to understand which pages are visited and how the shop is used. Analytics storage is denied by default and stays off unless you choose Allow analytics. No analytics events are sent before that choice."
+      },
+      "choices": {
+        "heading": "Your choices",
+        "body": "You can accept or decline analytics when the banner appears, and you can change that choice later using Cookie settings in the footer or on this page. Declining does not limit your ability to browse or buy anything."
+      },
+      "thirdParties": {
+        "heading": "Other services",
+        "body": "Some pages load images or scripts from other providers, and payments are handled by our payment provider. Those providers may set their own storage under their own notices. We do not place advertising or cross-site tracking cookies for our own purposes."
+      },
+      "changes": {
+        "heading": "Changes to this notice",
+        "body": "When the way this site uses storage changes, this page will be updated and the date at the top of the related policies will be revised. The section marked Under review will be replaced with the reviewed version once the studio has approved it."
+      }
+    }
   }
 }
