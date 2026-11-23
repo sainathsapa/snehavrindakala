@@ -7,6 +7,7 @@
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
+import { getAdminSessionSecret } from "./session-secret";
 
 export const ADMIN_SESSION_COOKIE = "svk_admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -17,12 +18,9 @@ export interface AdminSession {
   exp: number;
 }
 
+/** Uses the same chain as the Edge middleware verifier. Never a hardcoded prod fallback. */
 function getSecret(): string {
-  return (
-    process.env.COOKIE_SECRET ||
-    process.env.JWT_SECRET ||
-    "svk-dev-admin-session-secret"
-  );
+  return getAdminSessionSecret();
 }
 
 function sign(payload: string): string {

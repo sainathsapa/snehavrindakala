@@ -25,12 +25,28 @@ const RATE_LIMIT_MAX_ATTEMPTS = 5;
  * the status they are asserting on. Only the throwaway E2E server sets this, so
  * production keeps the limiter intact.
  */
-const RATE_LIMIT_DISABLED = process.env.E2E_DISABLE_RATE_LIMIT === "1";
+const RATE_LIMIT_DISABLED =
+  process.env.NODE_ENV !== "production" &&
+  process.env.E2E_DISABLE_RATE_LIMIT === "1";
 
+/**
+ * A trusted reverse proxy (Caddy) APPENDS the real client IP to XFF. Trusting
+ * the FIRST entry let anyone spoof a fresh IP per attempt and walk straight
+ * through the limiter. The LAST entry is the one the proxy appended, so it is
+ * the caller we actually want to throttle. x-real-ip is the next best signal.
+ */
 function getIp(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return "unknown";
+  if (forwarded) {
+    const entries = forwarded.split(",").map((s) => s.trim()).filter(Boolean);
+    if (entries.length) return entries[entries.length - 1];
+  }
+  return req.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
+/** Key on both caller and account so rotating either alone cannot evade the cap. */
+function rateKey(ip: string, email: string): string {
+  return `${ip}:${email.toLowerCase()}`;
 }
 
 function checkRateLimit(ip: string): { allowed: boolean; remaining?: number } {
@@ -108,17 +124,7 @@ async function verifyAdminUserPassword(
 }
 
 export async function POST(req: Request) {
-  // Rate limiting
   const ip = getIp(req);
-  const limit = checkRateLimit(ip);
-  if (!limit.allowed) {
-    return NextResponse.json(
-      {
-        error: `Too many failed login attempts. Try again in ${limit.remaining} minute(s).`,
-      },
-      { status: 429 }
-    );
-  }
 
   let body: { email?: string; password?: string };
   try {
@@ -134,6 +140,18 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "Email and password are required" },
       { status: 400 }
+    );
+  }
+
+  // Rate limit after we know the account, so the key binds caller + account.
+  const key = rateKey(ip, email);
+  const limit = checkRateLimit(key);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        error: `Too many failed login attempts. Try again in ${limit.remaining} minute(s).`,
+      },
+      { status: 429 }
     );
   }
 
@@ -175,7 +193,7 @@ export async function POST(req: Request) {
   }
 
   if (!role) {
-    recordFailedAttempt(ip);
+    recordFailedAttempt(key);
     return NextResponse.json(
       { error: "Invalid email or password" },
       { status: 401 }

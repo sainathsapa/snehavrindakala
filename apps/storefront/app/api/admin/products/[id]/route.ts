@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/app/admin/actions";
+import { requireAdmin, requirePermission } from "@/app/admin/actions";
 import {
   getSystemAdminToken,
   getAdminProduct,
@@ -32,7 +32,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("products:read"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -76,7 +76,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("products:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -193,7 +193,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("products:delete"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { getAdminIdentity, requireAdmin } from "@/app/admin/actions";
+import { getAdminIdentity, requireAdmin, requirePermission } from "@/app/admin/actions";
 import { getSystemAdminToken } from "@/lib/admin";
 import {
   createRefundRequest,
@@ -35,7 +35,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("refunds:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   // Who asked matters as much as what was asked for: the same person cannot
@@ -147,7 +147,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("refunds:read"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

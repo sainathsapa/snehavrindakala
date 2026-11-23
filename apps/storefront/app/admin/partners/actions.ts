@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { requirePermission } from "@/app/admin/actions";
 
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || ""
@@ -51,8 +52,8 @@ export async function isAdmin(): Promise<boolean> {
   }
 }
 
-export async function requireAdmin() {
-  await isAdmin();
+export async function requireAdmin(): Promise<boolean> {
+  return isAdmin();
 }
 
 interface ArtistRow {
@@ -95,6 +96,11 @@ export async function toggleArtistStatus(
   id: string,
   enabled: boolean
 ): Promise<{ ok: boolean; message: string }> {
+  // A logged-in customer is not an admin. Enforce the role server-side before
+  // touching a partner record — previously this action had no check at all.
+  if (!(await requirePermission("partners:write"))) {
+    return { ok: false, message: "Not authorised." };
+  }
   const token = await getAuthToken();
   if (!token) {
     return { ok: false, message: "Not signed in." };

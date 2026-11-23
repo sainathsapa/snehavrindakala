@@ -7,18 +7,19 @@
  */
 
 import { NextResponse } from "next/server";
-import { getAdminIdentity, requireAdmin } from "@/app/admin/actions";
+import { getAdminIdentity, requireAdmin, requirePermission } from "@/app/admin/actions";
 import {
   canDecide,
   decideRefund,
   getRefund,
   listPendingRefunds,
 } from "@/lib/refund-approvals";
+import { recordAdminAction } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("refunds:read"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -36,7 +37,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("refunds:approve"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const identity = await getAdminIdentity();
@@ -76,6 +77,15 @@ export async function POST(req: Request) {
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 409 });
   }
+
+  await recordAdminAction({
+    actorEmail: identity.email,
+    actorRole: identity.role,
+    action: decision === "approve" ? "refund.approve" : "refund.reject",
+    entityType: "order_refund",
+    entityId: refundId,
+    newValues: { decision, note },
+  });
 
   return NextResponse.json({
     refund: result.refund,

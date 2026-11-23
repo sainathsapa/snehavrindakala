@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/app/admin/actions";
+import { requireAdmin, requirePermission } from "@/app/admin/actions";
 import { getSystemAdminToken } from "@/lib/admin";
 
 async function adminFetch(
@@ -117,7 +117,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("customers:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

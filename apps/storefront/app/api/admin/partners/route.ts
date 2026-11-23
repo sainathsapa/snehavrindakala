@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/app/admin/actions";
+import { requireAdmin, requirePermission } from "@/app/admin/actions";
 import { getSystemAdminToken, listAdminArtists } from "@/lib/admin";
 
 async function adminAuthHeader(): Promise<Record<string, string>> {
@@ -12,7 +12,7 @@ async function adminAuthHeader(): Promise<Record<string, string>> {
 }
 
 export async function GET(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("partners:read"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("partners:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

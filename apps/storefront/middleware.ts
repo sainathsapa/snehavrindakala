@@ -1,6 +1,7 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import { routing } from "./i18n/routing";
+import { getAdminSessionSecret } from "./lib/session-secret";
 
 /**
  * Locale routing, plus the admin gate.
@@ -24,7 +25,6 @@ import { routing } from "./i18n/routing";
 const intlMiddleware = createIntlMiddleware(routing);
 
 const ADMIN_SESSION_COOKIE = "svk_admin_session";
-const AUTH_COOKIE = "medusa_auth_token";
 
 function base64urlToBytes(input: string): Uint8Array {
   const normalised = input.replace(/-/g, "+").replace(/_/g, "/");
@@ -48,8 +48,14 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 async function verifyAdminSession(token: string | undefined): Promise<boolean> {
   if (!token) return false;
-  const secret = process.env.ADMIN_SESSION_SECRET;
-  if (!secret) return false;
+
+  // Fail closed if the secret is missing (getAdminSessionSecret throws in prod).
+  let secret: string;
+  try {
+    secret = getAdminSessionSecret();
+  } catch {
+    return false;
+  }
 
   const parts = token.split(".");
   if (parts.length !== 2) return false;
@@ -71,7 +77,6 @@ async function verifyAdminSession(token: string | undefined): Promise<boolean> {
       )
     );
 
-    const givenB64 = signatureB64.replace(/-/g, "+").replace(/_/g, "/");
     const given = base64urlToBytes(signatureB64);
     if (given.length !== expected.length) return false;
     if (
@@ -86,9 +91,12 @@ async function verifyAdminSession(token: string | undefined): Promise<boolean> {
     const payload = JSON.parse(
       new TextDecoder().decode(base64urlToBytes(payloadB64))
     );
-    if (typeof payload?.exp === "number" && payload.exp < Date.now()) {
-      return false;
-    }
+    // The signer stores `exp` in SECONDS. Date.now() is milliseconds; comparing
+    // the two directly marked every valid cookie as expired and silently
+    // downgraded the gate to the cookie-presence bypass below.
+    if (typeof payload?.exp !== "number") return false;
+    if (payload.exp < Math.floor(Date.now() / 1000)) return false;
+    if (!payload.email || !payload.role) return false;
     return true;
   } catch {
     return false;
@@ -173,11 +181,15 @@ export default async function middleware(request: NextRequest) {
     // this exception used to whitelist a path that does not exist. If an OAuth
     // flow is added later, add its callback here *with* the route.
 
+    // Only a verified signed session grants the gate. A bare medusa_auth_token
+    // used to be accepted on presence alone — any logged-in *customer* cookie
+    // could open every admin page. The per-route requireAdmin() checks were the
+    // only real defence; every admin page HTML was served first. The live login
+    // route always issues this signed cookie, so no legitimate flow is lost.
     const sessionToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
     const hasSession = await verifyAdminSession(sessionToken);
-    const hasMedusaAuth = Boolean(request.cookies.get(AUTH_COOKIE)?.value);
 
-    if (!hasSession && !hasMedusaAuth) {
+    if (!hasSession) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json(
           { error: "Unauthorized" },

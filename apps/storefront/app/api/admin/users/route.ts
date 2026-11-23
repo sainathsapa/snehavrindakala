@@ -4,12 +4,13 @@
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { requireAdmin } from "@/app/admin/actions";
+import { getAdminIdentity, requireAdmin, requirePermission } from "@/app/admin/actions";
+import { recordAdminAction } from "@/lib/audit";
 
 
 
 export async function GET(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("users:read"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("users:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -71,6 +72,18 @@ export async function POST(req: Request) {
       [id, email, passwordHash, role]
     );
 
+    const actor = await getAdminIdentity();
+    if (actor) {
+      await recordAdminAction({
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        action: "admin_user.create",
+        entityType: "admin_user",
+        entityId: id,
+        newValues: { email, role }, // never audit the password hash
+      });
+    }
+
     return NextResponse.json({ user: rows[0] }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -78,7 +91,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("users:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -114,6 +127,18 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const actor = await getAdminIdentity();
+    if (actor) {
+      await recordAdminAction({
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        action: "admin_user.update",
+        entityType: "admin_user",
+        entityId: id,
+        newValues: { role, is_active },
+      });
+    }
+
     return NextResponse.json({ user: rows[0] });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -121,7 +146,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("users:delete"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -133,6 +158,16 @@ export async function DELETE(req: Request) {
     }
 
     await query("DELETE FROM admin_users WHERE id = $1", [id]);
+    const actor = await getAdminIdentity();
+    if (actor) {
+      await recordAdminAction({
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        action: "admin_user.delete",
+        entityType: "admin_user",
+        entityId: id,
+      });
+    }
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

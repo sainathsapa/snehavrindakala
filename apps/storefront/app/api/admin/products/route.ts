@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/app/admin/actions";
+import { requireAdmin, requirePermission } from "@/app/admin/actions";
 import { getSystemAdminToken, listAdminProducts, resolveProductTagIds } from "@/lib/admin";
 import { mergeTags } from "@/lib/admin-tags";
 import { soldHandles } from "@/lib/sold-works";
@@ -15,7 +15,7 @@ async function adminAuthHeader(): Promise<Record<string, string>> {
 }
 
 export async function GET(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("products:read"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("products:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

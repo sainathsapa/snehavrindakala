@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/app/admin/actions";
+import { requireAdmin, requirePermission } from "@/app/admin/actions";
 import { setPlatformMode } from "@/lib/settings";
 
 export async function POST(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("settings:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { mode } = await req.json();

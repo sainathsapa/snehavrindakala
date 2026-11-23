@@ -56,6 +56,8 @@ import {
   ADMIN_SESSION_COOKIE,
   verifyAdminSession,
 } from "@/lib/admin-session";
+import { hasPermission, type Permission, type Role } from "@/lib/rbac";
+import { query } from "@/lib/db";
 
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || ""
@@ -75,7 +77,27 @@ export async function getAdminIdentity(): Promise<{
   if (sessionToken) {
     const session = verifyAdminSession(sessionToken);
     if (session) {
-      return { email: session.email, role: session.role };
+      // Re-read the role from the database for DB-backed staff accounts. This
+      // makes demotion and deactivation take effect immediately instead of
+      // lingering until the 7-day cookie expires. Env admins (ADMIN_EMAILS)
+      // have no DB row and keep the role embedded at sign-in.
+      try {
+        const rows = await query<{ role: string; is_active: boolean }>(
+          "SELECT role, is_active FROM admin_users WHERE lower(email) = $1 LIMIT 1",
+          [session.email.toLowerCase()]
+        );
+        const row = rows[0];
+        if (row) {
+          if (row.is_active === false) return null;
+          return { email: session.email, role: row.role || "viewer" };
+        }
+      } catch {
+        // DB unavailable — fall through to the signed role only for env admins.
+      }
+      if (ADMIN_EMAILS.includes(session.email.toLowerCase())) {
+        return { email: session.email, role: session.role };
+      }
+      return null;
     }
   }
 
@@ -120,6 +142,24 @@ export async function isAdmin(): Promise<boolean> {
 
 export async function requireAdmin(): Promise<boolean> {
   return isAdmin();
+}
+
+/**
+ * Server-side permission gate. Use before every privileged mutation (API route
+ * or Server Action). Returns true only for an authenticated identity whose
+ * role grants the permission in lib/rbac.ts. Unknown roles are denied.
+ */
+export async function requirePermission(permission: Permission): Promise<boolean> {
+  const identity = await getAdminIdentity();
+  if (!identity) return false;
+  return hasPermission(identity.role as Role, permission);
+}
+
+/** True if the identity has every listed permission. */
+export async function requireAllPermissions(...permissions: Permission[]): Promise<boolean> {
+  const identity = await getAdminIdentity();
+  if (!identity) return false;
+  return permissions.every((p) => hasPermission(identity.role as Role, p));
 }
 
 export async function adminLoginAction(formData: FormData): Promise<void> {
@@ -177,8 +217,7 @@ export async function getOrder(orderId: string) {
 }
 
 export async function updateOrderStatus(orderId: string, data: Record<string, unknown>) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("orders:write"))) return null;
   return updateAdminOrder(orderId, data);
 }
 
@@ -195,20 +234,17 @@ export async function getProduct(productId: string) {
 }
 
 export async function createProduct(data: Record<string, unknown>) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("products:write"))) return null;
   return createAdminProduct(data);
 }
 
 export async function updateProduct(productId: string, data: Record<string, unknown>) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("products:write"))) return null;
   return updateAdminProduct(productId, data);
 }
 
 export async function deleteProduct(productId: string) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("products:delete"))) return null;
   return deleteAdminProduct(productId);
 }
 
@@ -219,20 +255,17 @@ export async function listCategories(params?: { limit?: number; offset?: number 
 }
 
 export async function createCategory(data: Record<string, unknown>) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("categories:write"))) return null;
   return createAdminCategory(data);
 }
 
 export async function updateCategory(categoryId: string, data: Record<string, unknown>) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("categories:write"))) return null;
   return updateAdminCategory(categoryId, data);
 }
 
 export async function deleteCategory(categoryId: string) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("categories:delete"))) return null;
   return deleteAdminCategory(categoryId);
 }
 
@@ -243,26 +276,22 @@ export async function listArtists(params?: { limit?: number; offset?: number; q?
 }
 
 export async function createArtist(data: Record<string, unknown>) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("artists:write"))) return null;
   return createAdminArtist(data);
 }
 
 export async function updateArtist(artistId: string, data: Record<string, unknown>) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("artists:write"))) return null;
   return updateAdminArtist(artistId, data);
 }
 
 export async function deleteArtist(artistId: string) {
-  const ok = await isAdmin();
-  if (!ok) return null;
+  if (!(await requirePermission("artists:delete"))) return null;
   return deleteAdminArtist(artistId);
 }
 
 export async function toggleArtistStatusAction(artistId: string, enabled: boolean) {
-  const ok = await isAdmin();
-  if (!ok) return { ok: false, message: "Not signed in." };
+  if (!(await requirePermission("artists:write"))) return { ok: false, message: "Not signed in." };
   return toggleAdminArtistStatus(artistId, enabled);
 }
 
@@ -297,7 +326,7 @@ export async function listStorefrontContent() {
 }
 
 export async function saveHeroSlideAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("settings:write"))) throw new Error("Not authorised.");
   const id = Number(formData.get("id") || 0);
   const input = {
     eyebrow: String(formData.get("eyebrow") || ""),
@@ -317,14 +346,14 @@ export async function saveHeroSlideAction(formData: FormData) {
 }
 
 export async function deleteHeroSlideAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("settings:write"))) throw new Error("Not authorised.");
   await deleteHeroSlide(Number(formData.get("id")));
   revalidatePath("/");
   revalidatePath("/admin/content");
 }
 
 export async function saveArtFormAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("settings:write"))) throw new Error("Not authorised.");
   const id = Number(formData.get("id") || 0);
   const input = {
     slug: String(formData.get("slug") || "").trim().toLowerCase(),
@@ -350,7 +379,7 @@ export async function saveArtFormAction(formData: FormData) {
 }
 
 export async function deleteArtFormAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("settings:write"))) throw new Error("Not authorised.");
   await deleteArtForm(Number(formData.get("id")));
   revalidatePath("/");
   revalidatePath("/art-forms");
@@ -365,7 +394,7 @@ export async function deleteArtFormAction(formData: FormData) {
  * the failure mode is visible — the page keeps showing name and works.
  */
 export async function saveArtistAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("artists:write"))) throw new Error("Not authorised.");
   const id = Number(formData.get("id") || 0);
   const name = String(formData.get("name") || "").trim();
   const input = {
@@ -391,14 +420,14 @@ export async function saveArtistAction(formData: FormData) {
 }
 
 export async function deleteArtistAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("artists:delete"))) throw new Error("Not authorised.");
   await deleteSiteArtist(Number(formData.get("id")));
   revalidatePath("/makers");
   revalidatePath("/admin/content");
 }
 
 export async function saveFeaturedCategoryAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("categories:write"))) throw new Error("Not authorised.");
   const id = Number(formData.get("id") || 0);
   const input = {
     label: String(formData.get("label") || "").trim(),
@@ -415,14 +444,14 @@ export async function saveFeaturedCategoryAction(formData: FormData) {
 }
 
 export async function deleteFeaturedCategoryAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("categories:delete"))) throw new Error("Not authorised.");
   await deleteFeaturedCategory(Number(formData.get("id")));
   revalidatePath("/");
   revalidatePath("/admin/content");
 }
 
 export async function saveTestimonialAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("settings:write"))) throw new Error("Not authorised.");
   const id = Number(formData.get("id") || 0);
   const input = {
     quote: String(formData.get("quote") || "").trim(),
@@ -443,7 +472,7 @@ export async function saveTestimonialAction(formData: FormData) {
 }
 
 export async function deleteTestimonialAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("settings:write"))) throw new Error("Not authorised.");
   await deleteTestimonial(Number(formData.get("id")));
   revalidatePath("/");
   revalidatePath("/authenticity");
@@ -451,7 +480,7 @@ export async function deleteTestimonialAction(formData: FormData) {
 }
 
 export async function reorderContentAction(formData: FormData) {
-  if (!(await requireAdmin())) throw new Error("Not authorised.");
+  if (!(await requirePermission("settings:write"))) throw new Error("Not authorised.");
   const table = String(formData.get("table")) as
     | "site_hero_slide"
     | "site_art_form"

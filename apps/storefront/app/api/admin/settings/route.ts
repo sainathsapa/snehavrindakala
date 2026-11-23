@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { requireAdmin } from "@/app/admin/actions";
+import { requireAdmin, requirePermission } from "@/app/admin/actions";
 import fs from "fs";
 import path from "path";
 
@@ -46,7 +46,7 @@ async function ensureTable() {
 }
 
 export async function GET() {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("settings:read"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -68,7 +68,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requirePermission("settings:write"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

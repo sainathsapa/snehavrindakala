@@ -48,6 +48,24 @@ describe("admin API routes", () => {
     expect(unguarded, `admin routes with no auth check: ${unguarded.join(", ")}`).toEqual([]);
   });
 
+  it("sensitive mutations enforce a permission, not just identity", () => {
+    const mustGate: Array<[string, string]> = [
+      ["admin/products/[id]/route.ts", "products:delete"],
+      ["admin/products/route.ts", "products:write"],
+      ["admin/users/route.ts", "users:write"],
+      ["admin/settings/route.ts", "settings:write"],
+      ["admin/refunds/route.ts", "refunds:approve"],
+      ["admin/orders/[id]/refund/route.ts", "refunds:write"],
+      ["admin/partners/[id]/route.ts", "partners:write"],
+    ];
+    for (const [relativePath, permission] of mustGate) {
+      const source = readFileSync(join(apiRoot, relativePath), "utf8");
+      expect(source, `${relativePath} must gate ${permission}`).toMatch(
+        new RegExp(`requirePermission\\(["']${permission}["']\\)`)
+      );
+    }
+  });
+
   it("the login route is the only one that sets a session rather than reading one", () => {
     const setsCookie = files
       .filter((entry) => /cookies\(\)\.set|\.cookies\.set/.test(entry.source))
