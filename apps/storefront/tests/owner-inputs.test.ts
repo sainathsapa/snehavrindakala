@@ -208,8 +208,8 @@ describe("businessRulesReady — no defaults, no guesses", () => {
 });
 
 describe("status API wiring", () => {
-  it("gates the v2 status route on settings:read and returns only the validation result", () => {
-    const source = read("app/api/admin/config-status-v2/route.ts");
+  it("gates the owner-input status route on settings:read and returns only the validation result", () => {
+    const source = read("app/api/admin/owner-input-status/route.ts");
     expect(source).toMatch(/requirePermission\(["']settings:read["']\)/);
     expect(source).toMatch(/status: 401/);
     expect(source).toMatch(/validateOwnerInputs\(\)/);

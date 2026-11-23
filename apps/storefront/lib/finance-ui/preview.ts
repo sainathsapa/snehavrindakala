@@ -214,7 +214,10 @@ export interface CommissionPreview {
   lines: CommissionPreviewLine[];
 }
 
-function normaliseSample(sample: SampleAmount, index: number): PreviewSampleInput {
+function normaliseSample(
+  sample: SampleAmount,
+  index: number
+): { label: string; amounts: CommissionAmounts } {
   if (typeof sample === "number") {
     return { label: `Example ${index + 1}`, amounts: { gross: sample } };
   }

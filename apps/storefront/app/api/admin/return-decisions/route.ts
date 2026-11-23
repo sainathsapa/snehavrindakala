@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/returns-v2 — return queue for the admin decision workflow.
+ * GET /api/admin/return-decisions — return queue for the admin decision workflow.
  *
  * Read-only. The response also reports whether the return window has been
  * configured by the owner: we never substitute a default window, so an

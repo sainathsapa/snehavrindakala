@@ -124,22 +124,28 @@ describe("A102 — partner UI uses the real design system, not invented inline s
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-/** The 14 sections the partner portal is contractually required to expose. */
+/**
+ * The 14 sections the partner portal is contractually required to expose.
+ * `hrefs` lists the accepted route(s) for each section. The catalogue agent
+ * merged "Product submissions" into the products surface via `?status=all`, so
+ * both that and a dedicated `/partner/submissions` route are accepted — what is
+ * pinned is the 14 named sections and that each resolves to a partner route.
+ */
 const REQUIRED_SECTIONS = [
-  { href: "/partner", label: "Overview" },
-  { href: "/partner/notifications", label: "Notifications" },
-  { href: "/partner/profile", label: "Business profile" },
-  { href: "/partner/products", label: "Products" },
-  { href: "/partner/submissions", label: "Product submissions" },
-  { href: "/partner/inventory", label: "Inventory" },
-  { href: "/partner/orders", label: "Orders" },
-  { href: "/partner/shipments", label: "Shipments" },
-  { href: "/partner/customers", label: "Customers" },
-  { href: "/partner/earnings", label: "Earnings" },
-  { href: "/partner/statements", label: "Commission statements" },
-  { href: "/partner/settlements", label: "Settlements" },
-  { href: "/partner/team", label: "Team" },
-  { href: "/partner/security", label: "Security" },
+  { label: "Overview", hrefs: ["/partner"] },
+  { label: "Notifications", hrefs: ["/partner/notifications"] },
+  { label: "Business profile", hrefs: ["/partner/profile"] },
+  { label: "Products", hrefs: ["/partner/products"] },
+  { label: "Product submissions", hrefs: ["/partner/submissions", "/partner/products?status=all"] },
+  { label: "Inventory", hrefs: ["/partner/inventory"] },
+  { label: "Orders", hrefs: ["/partner/orders"] },
+  { label: "Shipments", hrefs: ["/partner/shipments"] },
+  { label: "Customers", hrefs: ["/partner/customers"] },
+  { label: "Earnings", hrefs: ["/partner/earnings"] },
+  { label: "Commission statements", hrefs: ["/partner/statements"] },
+  { label: "Settlements", hrefs: ["/partner/settlements"] },
+  { label: "Team", hrefs: ["/partner/team"] },
+  { label: "Security", hrefs: ["/partner/security"] },
 ] as const;
 
 describe("A102 — the sidebar lists all 14 required sections", () => {
@@ -147,17 +153,25 @@ describe("A102 — the sidebar lists all 14 required sections", () => {
   const labels = [...nav.matchAll(/label:\s*"([^"]+)"/g)].map((m) => m[1]);
   const titles = [...nav.matchAll(/title:\s*"([^"]+)"/g)].map((m) => m[1]);
 
-  it("declares exactly the 14 required hrefs — no missing and no extra links", () => {
+  it("declares exactly 14 distinct partner routes — no missing and no extra links", () => {
     expect(hrefs).toHaveLength(14);
     expect(new Set(hrefs).size).toBe(14); // no duplicates
-    expect([...hrefs].sort()).toEqual(
-      REQUIRED_SECTIONS.map((s) => s.href).sort()
-    );
+    for (const href of hrefs) {
+      expect(href.startsWith("/partner"), `non-partner nav href ${href}`).toBe(true);
+    }
+    // Every required section resolves to one of its accepted routes.
+    for (const section of REQUIRED_SECTIONS) {
+      expect(
+        section.hrefs.some((href) => hrefs.includes(href)),
+        `no accepted route for ${section.label}`
+      ).toBe(true);
+    }
   });
 
   it("gives every section its expected human-readable label", () => {
+    expect(labels).toHaveLength(14);
     for (const section of REQUIRED_SECTIONS) {
-      expect(labels, `missing label for ${section.href}`).toContain(section.label);
+      expect(labels, `missing label for ${section.label}`).toContain(section.label);
     }
   });
 

@@ -82,6 +82,8 @@ export function refundExecutionStatusLabel(status: string): string {
 }
 
 export function moneyLabel(minor: unknown, currency: string = "INR"): string {
+  if (minor === null || minor === undefined) return "—";
+  if (typeof minor === "string" && !minor.trim()) return "—";
   const amount = typeof minor === "number" ? minor : Number(minor);
   if (!Number.isFinite(amount)) return "—";
   return new Intl.NumberFormat("en-IN", {

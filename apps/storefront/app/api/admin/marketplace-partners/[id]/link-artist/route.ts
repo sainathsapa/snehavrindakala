@@ -1,19 +1,20 @@
 /**
- * POST /api/admin/partners-v2/[id]/status — change a partner's account status.
+ * POST /api/admin/marketplace-partners/[id]/link-artist — admin-assisted artist↔partner
+ * mapping.
  *
- * Requires `partners:write`. The only accepted status is a validated enum;
- * there is no generic profile-update path to `account_status`. The actor email
- * and role are taken from the signed admin session, never from the request
- * body. The partner id comes from the URL path only.
+ * Requires `partners:write`. Linking an artist does NOT activate or verify a
+ * partner and does not create a new partner; it only records the mapping in
+ * `approval_history` plus the audit log. The partner id comes from the URL
+ * path; the artist id is validated from the body. Actor email from the session.
  */
 
 import { NextResponse } from "next/server";
 import { getAdminIdentity, requirePermission } from "@/app/admin/actions";
 import {
-  isAccountStatus,
+  ArtistNotFoundError,
+  linkArtist,
   PartnerNotFoundError,
   PlatformValidationError,
-  setAccountStatus,
 } from "@/lib/admin-partners/platform";
 
 export async function POST(
@@ -29,13 +30,10 @@ export async function POST(
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
-  const { status, notes } = body as Record<string, unknown>;
-  if (!isAccountStatus(status)) {
+  const { artistId, notes } = body as Record<string, unknown>;
+  if (typeof artistId !== "string" || !/^\d{1,20}$/.test(artistId.trim())) {
     return NextResponse.json(
-      {
-        error:
-          "status must be one of: pending, active, suspended, rejected.",
-      },
+      { error: "A valid numeric artistId is required." },
       { status: 400 }
     );
   }
@@ -46,7 +44,7 @@ export async function POST(
   }
 
   try {
-    const partner = await setAccountStatus(id, status, identity.email, {
+    const partner = await linkArtist(id, artistId.trim(), identity.email, {
       notes: typeof notes === "string" ? notes : null,
       actorRole: identity.role,
     });
@@ -58,12 +56,15 @@ export async function POST(
     if (err instanceof PlatformValidationError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
+    if (err instanceof ArtistNotFoundError) {
+      return NextResponse.json({ error: err.message }, { status: 404 });
+    }
     if (err instanceof PartnerNotFoundError) {
       return NextResponse.json({ error: err.message }, { status: 404 });
     }
-    console.error("Failed to set partner account status", err);
+    console.error("Failed to link artist to partner", err);
     return NextResponse.json(
-      { error: err?.message || "Failed to update account status" },
+      { error: err?.message || "Failed to link artist" },
       { status: 500 }
     );
   }

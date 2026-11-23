@@ -1,19 +1,19 @@
 /**
- * POST /api/admin/partners-v2/[id]/verify — set a partner's verification status.
+ * POST /api/admin/marketplace-partners/[id]/status — change a partner's account status.
  *
- * Requires `partners:write`. Verification is NEVER automatic: an explicit
- * admin decision with non-empty notes is required (enforced both here and in
- * the platform library). Status changes and account activation are not part of
- * this route. Actor identity comes from the signed admin session.
+ * Requires `partners:write`. The only accepted status is a validated enum;
+ * there is no generic profile-update path to `account_status`. The actor email
+ * and role are taken from the signed admin session, never from the request
+ * body. The partner id comes from the URL path only.
  */
 
 import { NextResponse } from "next/server";
 import { getAdminIdentity, requirePermission } from "@/app/admin/actions";
 import {
-  isVerificationStatus,
+  isAccountStatus,
   PartnerNotFoundError,
   PlatformValidationError,
-  setVerification,
+  setAccountStatus,
 } from "@/lib/admin-partners/platform";
 
 export async function POST(
@@ -30,18 +30,12 @@ export async function POST(
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
   const { status, notes } = body as Record<string, unknown>;
-  if (!isVerificationStatus(status)) {
+  if (!isAccountStatus(status)) {
     return NextResponse.json(
       {
         error:
-          "status must be one of: unverified, pending, verified, rejected.",
+          "status must be one of: pending, active, suspended, rejected.",
       },
-      { status: 400 }
-    );
-  }
-  if (typeof notes !== "string" || !notes.trim()) {
-    return NextResponse.json(
-      { error: "Verification requires explicit admin notes." },
       { status: 400 }
     );
   }
@@ -52,8 +46,8 @@ export async function POST(
   }
 
   try {
-    const partner = await setVerification(id, status, identity.email, {
-      notes,
+    const partner = await setAccountStatus(id, status, identity.email, {
+      notes: typeof notes === "string" ? notes : null,
       actorRole: identity.role,
     });
     return NextResponse.json(
@@ -67,9 +61,9 @@ export async function POST(
     if (err instanceof PartnerNotFoundError) {
       return NextResponse.json({ error: err.message }, { status: 404 });
     }
-    console.error("Failed to set partner verification status", err);
+    console.error("Failed to set partner account status", err);
     return NextResponse.json(
-      { error: err?.message || "Failed to update verification status" },
+      { error: err?.message || "Failed to update account status" },
       { status: 500 }
     );
   }

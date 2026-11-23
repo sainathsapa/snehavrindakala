@@ -1,5 +1,5 @@
 /**
- * POST/PATCH /api/admin/returns-v2/[id] — decide a return request.
+ * POST/PATCH /api/admin/return-decisions/[id] — decide a return request.
  *
  * Writes are gated by `orders:write`; the actor comes from the admin session,
  * never from the request body. The decision rule, the eligibility window and

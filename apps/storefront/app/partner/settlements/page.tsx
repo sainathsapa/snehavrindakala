@@ -270,7 +270,7 @@ export default async function PartnerSettlementsPage() {
                   <p className="mt-4 rounded-lg border border-sand-border bg-rang-paper p-3 text-xs font-sans text-muted-ink">
                     Provider confirmation is required before this batch is final. Provider:{" "}
                     {batch.provider || "not recorded"}
-                    {batch.payout_reference ? ` · Reference: ${batch.payout_reference}` : ""}.
+                    {batch.payoutReference ? ` · Reference: ${batch.payoutReference}` : ""}.
                   </p>
                 )}
                 {batch.status === "payment_failed" && (

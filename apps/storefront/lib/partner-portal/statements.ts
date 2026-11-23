@@ -85,7 +85,7 @@ function fromMinor(minor: number): number {
   return Math.round(minor) / 100;
 }
 
-function money(value: number): number {
+function money(value: number | string | null | undefined): number {
   return fromMinor(toMinor(value));
 }
 

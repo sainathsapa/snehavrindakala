@@ -161,7 +161,7 @@ export function validatePolicy(policy: CommissionPolicy): ValidationResult {
     } else if (
       validDate(policy.effective_from) &&
       new Date(policy.effective_to).getTime() <=
-        new Date(policy.effective_from).getTime()
+        new Date(policy.effective_from as string).getTime()
     ) {
       errors.push("effective_to must be after effective_from");
     }

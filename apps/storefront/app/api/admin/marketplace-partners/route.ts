@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/partners-v2 — platform-admin list of first-class partners.
+ * GET /api/admin/marketplace-partners — platform-admin list of first-class partners.
  *
  * Distinct from the legacy `/api/admin/partners` artist screens. Read access is
  * gated by `partners:read`. This is a read-only endpoint: lifecycle changes go

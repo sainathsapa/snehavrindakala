@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/config-status-v2 — owner-input readiness report.
+ * GET /api/admin/owner-input-status — owner-input readiness report.
  *
  * Presence-only and read-only. It returns the validation result from
  * `lib/config/owner-inputs`, which names missing fields and environment

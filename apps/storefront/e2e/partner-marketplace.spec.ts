@@ -142,8 +142,10 @@ async function signInPartner(
     failOnStatusCode: false,
   });
   await expectStatus(res, 200, "partner login");
-  const session = (await res.cookies()).find(
-    (cookie) => cookie.name === "svk_partner_session"
+  // APIResponse has no cookies() method; read the jar of this test's request context.
+  const cookies: Array<{ name: string; value: string }> = await request.cookies();
+  const session = cookies.find(
+    (cookie: { name: string; value: string }) => cookie.name === "svk_partner_session"
   );
   expect(session, "signed partner session cookie is set").toBeTruthy();
   return {
@@ -155,6 +157,31 @@ async function signInPartner(
 function entriesOf(payload: any): any[] {
   if (Array.isArray(payload)) return payload;
   return payload?.entries ?? payload?.ledger ?? payload?.rows ?? [];
+}
+
+/** Walk the strict fulfilment state machine: assigned → … → dispatched. */
+async function dispatchGroup(
+  request: APIRequestContext,
+  cookie: string,
+  groupId: string,
+  shipmentId: string
+): Promise<void> {
+  const headers = { Cookie: cookie, "content-type": "application/json" };
+  const accept = await request.post(`/api/partner/orders/${groupId}/accept`, {
+    headers,
+    data: {},
+    failOnStatusCode: false,
+  });
+  await expectStatus(accept, 200, `accept group ${groupId}`);
+  for (const to of ["packing", "ready_for_dispatch", "dispatched"]) {
+    const step = await request.post(`/api/partner/orders/${groupId}/fulfil`, {
+      headers,
+      data: to === "dispatched" ? { to, shipment_id: shipmentId } : { to },
+      failOnStatusCode: false,
+    });
+    await expectStatus(step, 200, `group ${groupId} → ${to}`);
+    expect((await step.json()).status).toBe(to);
+  }
 }
 
 // ----- Scenario A ---------------------------------------------------------
@@ -313,26 +340,26 @@ test.describe("Scenario B — multi-partner cart, one parent order", () => {
     );
 
     // 2. Each partner independently accepts and dispatches only its own group.
-    const dispatchA = await request.post(`/api/partner/orders/${groupA.id}/fulfil`, {
-      headers: { Cookie: sessionA.cookie },
-      data: { to: "dispatched", shipment_id: order.sandbox_tracking.a.shipment_id },
-      failOnStatusCode: false,
-    });
-    await expectStatus(dispatchA, 200, "partner A dispatches its group");
+    await dispatchGroup(
+      request,
+      sessionA.cookie,
+      groupA.id,
+      order.sandbox_tracking.a.shipment_id
+    );
 
     const viewB = await request.get(`/api/partner/orders/${groupB.id}`, {
       headers: { Cookie: sessionB.cookie },
       failOnStatusCode: false,
     });
     await expectStatus(viewB, 200, "partner B reads its own group");
-    expect((await viewB.json()).status).toBe("assigned", "B is untouched by A's actions");
+    expect((await viewB.json()).status, "B is untouched by A's actions").toBe("assigned");
 
-    const dispatchB = await request.post(`/api/partner/orders/${groupB.id}/fulfil`, {
-      headers: { Cookie: sessionB.cookie },
-      data: { to: "dispatched", shipment_id: order.sandbox_tracking.b.shipment_id },
-      failOnStatusCode: false,
-    });
-    await expectStatus(dispatchB, 200, "partner B dispatches its group");
+    await dispatchGroup(
+      request,
+      sessionB.cookie,
+      groupB.id,
+      order.sandbox_tracking.b.shipment_id
+    );
 
     // 3. The customer still sees ONE order containing BOTH partners' items.
     const customer = await fixture(

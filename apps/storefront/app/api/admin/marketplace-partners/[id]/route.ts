@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/partners-v2/[id] — one platform partner.
+ * GET /api/admin/marketplace-partners/[id] — one platform partner.
  *
  * Read access is gated by `partners:read`. The partner id comes only from the
  * URL path; a partner id supplied in the body/query/header is never read.

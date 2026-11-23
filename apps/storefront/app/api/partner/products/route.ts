@@ -53,7 +53,8 @@ export async function POST(req: Request) {
 
   // Whitelist only submission fields; nothing else from the body is forwarded.
   const input: ProductSubmissionInput = {
-    ...(typeof raw.title === "string" ? { title: raw.title } : {}),
+    // `title` is required by the type; createSubmission validates non-empty.
+    title: typeof raw.title === "string" ? raw.title : "",
     ...(typeof raw.description === "string" ? { description: raw.description } : {}),
     ...(raw.productId !== undefined ? { productId: raw.productId as string } : {}),
     ...(raw.attributes !== undefined ? { attributes: raw.attributes as any } : {}),

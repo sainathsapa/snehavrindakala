@@ -31,7 +31,7 @@ partner id from request bodies, query strings or headers.
 | A06 | Shipping/fulfilment verification | `lib/shipping/verify.ts`, `tests/shipping-lifecycle.test.ts`, docs note | existing `lib/shipping/**` (read-only) |
 | A07 | DB integrity + migrations | `db/migrate.ts`, `scripts/migrate.mjs`, `scripts/verify-schema.mjs`, `db/migrations/README.md`, `tests/migration-*.test.ts`, lazy-DDL removal in existing handlers | A00 migration files (read-only to A07) |
 | A08 | CI/CD, dependency security, secret scanning, prod startup validation | `.github/workflows/**`, `scripts/audit-deps.mjs`, `scripts/secret-scan.mjs`, `lib/startup-validation.ts`, `tests/startup-validation.test.ts`, `docs/release/CI_SECURITY.md` | — |
-| A09 | Customer/admin/business integration | `app/admin/partners-v2/**` (new unified screens), `app/api/admin/marketplace/**`, `tests/integration-*.test.ts` | A00, A02, A04 |
+| A09 | Customer/admin/business integration | `app/admin/marketplace-partners/**` (new unified screens), `app/api/admin/marketplace/**`, `tests/integration-*.test.ts` | A00, A02, A04 |
 | A10 | Independent QA + E2E (release gate) | `e2e/**`, `tests/qa-*.test.ts`, `docs/release/QA_REPORT.md`; writes findings to `FINAL_GO_BLOCKERS.md` via Lead | all |
 
 ## Conflict-avoidance contract

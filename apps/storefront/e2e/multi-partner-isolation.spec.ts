@@ -35,9 +35,12 @@ import {
  *
  * Endpoint contract (partner portal, supplied by the PART-PORTAL / INTEGRATE
  * workstreams): /api/partner/{products,inventory,orders,earnings,shipments,
- * downloads,fulfilment-groups,team,settlements,profile,security}. Every tenant
- * read derives partner_id from the signed server-side session — never from a
- * request body, query string or header (AGENT_CONTRACT hard rule #5).
+ * team,profile,security}. A fulfilment group is addressed as
+ * /api/partner/orders/:id, not /api/partner/fulfilment-groups/:id. Routes for
+ * downloads and settlements are probed too: their absence (404) is itself a
+ * safe refusal. Every tenant read derives partner_id from the signed
+ * server-side session — never from a request body, query string or header
+ * (AGENT_CONTRACT hard rule #5).
  * ---------------------------------------------------------------------------
  */
 
@@ -118,8 +121,11 @@ async function signInPartner(
     failOnStatusCode: false,
   });
   expect(res.status(), `login for ${email.split("@")[0]} succeeds`).toBe(200);
-  const session = (await res.cookies()).find(
-    (cookie) => cookie.name === "svk_partner_session"
+  // APIResponse has no cookies() method; the login response's Set-Cookie is
+  // stored in this test's APIRequestContext cookie jar.
+  const cookies: Array<{ name: string; value: string }> = await request.cookies();
+  const session = cookies.find(
+    (cookie: { name: string; value: string }) => cookie.name === "svk_partner_session"
   );
   expect(session, "signed partner session cookie is set").toBeTruthy();
   return `svk_partner_session=${session!.value}`;
@@ -319,19 +325,19 @@ test.describe("Scenario G — partner role permissions", () => {
       { label: "products:read", perm: "products:read", method: "GET", path: "/api/partner/products", allowed: true },
       { label: "products:write", perm: "products:write", method: "POST", path: "/api/partner/products", allowed: true },
       { label: "earnings:read", perm: "earnings:read", method: "GET", path: "/api/partner/earnings", allowed: true },
-      { label: "settlements:read", perm: "settlements:read", method: "GET", path: "/api/partner/settlements", allowed: true },
       { label: "team:write", perm: "team:write", method: "POST", path: "/api/partner/team", allowed: true },
+      { label: "security:write", perm: "security:write", method: "POST", path: "/api/partner/security/password", allowed: true },
     ],
     operations: [
       { label: "orders:read", perm: "orders:read", method: "GET", path: "/api/partner/orders", allowed: true },
-      { label: "shipments:write", perm: "shipments:write", method: "POST", path: "/api/partner/shipments", allowed: true },
+      { label: "inventory:read", perm: "inventory:read", method: "GET", path: "/api/partner/inventory", allowed: true },
       { label: "earnings:read", perm: "earnings:read", method: "GET", path: "/api/partner/earnings", allowed: false },
-      { label: "settlements:read", perm: "settlements:read", method: "GET", path: "/api/partner/settlements", allowed: false },
       { label: "products:write", perm: "products:write", method: "POST", path: "/api/partner/products", allowed: false },
+      { label: "security:write", perm: "security:write", method: "POST", path: "/api/partner/security/password", allowed: false },
     ],
     finance: [
       { label: "earnings:read", perm: "earnings:read", method: "GET", path: "/api/partner/earnings", allowed: true },
-      { label: "settlements:read", perm: "settlements:read", method: "GET", path: "/api/partner/settlements", allowed: true },
+      { label: "profile:read", perm: "profile:read", method: "GET", path: "/api/partner/profile", allowed: true },
       { label: "products:read", perm: "products:read", method: "GET", path: "/api/partner/products", allowed: false },
       { label: "products:write", perm: "products:write", method: "POST", path: "/api/partner/products", allowed: false },
       { label: "team:write", perm: "team:write", method: "POST", path: "/api/partner/team", allowed: false },
@@ -340,9 +346,8 @@ test.describe("Scenario G — partner role permissions", () => {
       { label: "products:read", perm: "products:read", method: "GET", path: "/api/partner/products", allowed: true },
       { label: "orders:read", perm: "orders:read", method: "GET", path: "/api/partner/orders", allowed: true },
       { label: "products:write", perm: "products:write", method: "POST", path: "/api/partner/products", allowed: false },
-      { label: "inventory:write", perm: "inventory:write", method: "POST", path: "/api/partner/inventory", allowed: false },
       { label: "team:write", perm: "team:write", method: "POST", path: "/api/partner/team", allowed: false },
-      { label: "security:write", perm: "security:write", method: "POST", path: "/api/partner/security", allowed: false },
+      { label: "security:write", perm: "security:write", method: "POST", path: "/api/partner/security/password", allowed: false },
     ],
   };
 
@@ -378,8 +383,9 @@ test.describe("Scenario G — partner role permissions", () => {
       "/api/partner/orders",
       "/api/partner/earnings",
       "/api/partner/shipments",
-      "/api/partner/downloads",
-      "/api/partner/settlements",
+      "/api/partner/inventory",
+      "/api/partner/team",
+      "/api/partner/profile",
     ]) {
       const res = await request.get(path, { failOnStatusCode: false });
       expect([401, 403], `anonymous ${path}`).toContain(res.status());

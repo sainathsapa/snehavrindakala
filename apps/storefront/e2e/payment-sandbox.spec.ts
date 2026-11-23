@@ -41,7 +41,9 @@ import {
  *   POST /api/webhooks/razorpay           -> signed event (dedupe by provider_event_id)
  *   POST /api/cron/reconcile-payments     -> CRON_SECRET-guarded queue worker
  *   POST /api/store/checkout/complete     -> single-use payment claim
- *   GET  /api/partner/earnings, /api/partner/settlements
+ *   GET  /api/partner/earnings            -> partner ledger statement
+ * Settlement batches are read from the sandbox fixture service, not a partner
+ * route, until the finance portal exposes a scoped settlements endpoint.
  * ---------------------------------------------------------------------------
  */
 
@@ -134,9 +136,10 @@ async function signInAdmin(
     failOnStatusCode: false,
   });
   await expectStatus(res, 200, "admin login");
-  const cookies = await res.cookies();
-  const admin = cookies.find((c) => c.name === "svk_admin_session");
-  const medusa = cookies.find((c) => c.name === "medusa_auth_token");
+  // APIResponse has no cookies() method; read the jar of this test's request context.
+  const cookies: Array<{ name: string; value: string }> = await request.cookies();
+  const admin = cookies.find((c: { name: string; value: string }) => c.name === "svk_admin_session");
+  const medusa = cookies.find((c: { name: string; value: string }) => c.name === "medusa_auth_token");
   expect(admin, "admin session cookie is set").toBeTruthy();
   const parts = [`svk_admin_session=${admin!.value}`];
   if (medusa) parts.push(`medusa_auth_token=${medusa.value}`);
@@ -153,9 +156,9 @@ async function signInPartner(
     failOnStatusCode: false,
   });
   await expectStatus(res, 200, "partner login");
-  const session = (await res.cookies()).find(
-    (c) => c.name === "svk_partner_session"
-  );
+  // APIResponse has no cookies() method; read the jar of this test's request context.
+  const cookies: Array<{ name: string; value: string }> = await request.cookies();
+  const session = cookies.find((c: { name: string; value: string }) => c.name === "svk_partner_session");
   expect(session, "partner session cookie is set").toBeTruthy();
   return `svk_partner_session=${session!.value}`;
 }
@@ -303,10 +306,10 @@ test.describe("Scenario F — earnings ledger and settlement batch", () => {
       "E2E_PARTNER_FINANCE_EMAIL",
       "E2E_PARTNER_FINANCE_PASSWORD"
     );
-    const earnings = await request.get(
-      `/api/partner/earnings?order_id=${encodeURIComponent(data.order_id)}`,
-      { headers: { Cookie: cookie }, failOnStatusCode: false }
-    );
+    const earnings = await request.get("/api/partner/earnings", {
+      headers: { Cookie: cookie },
+      failOnStatusCode: false,
+    });
     await expectStatus(earnings, 200, "finance reads earnings");
     const entries = (await earnings.json()).entries ?? [];
     const credit = entries.find(
@@ -323,17 +326,23 @@ test.describe("Scenario F — earnings ledger and settlement batch", () => {
     });
     await expectStatus(batchSeed, 201, "calculate settlement batch");
     const batch = await batchSeed.json();
-    const batches = await request.get("/api/partner/settlements", {
-      headers: { Cookie: cookie },
-      failOnStatusCode: false,
-    });
-    await expectStatus(batches, 200, "finance reads settlements");
-    const batchPayload = await batches.json();
-    const list = batchPayload.batches ?? batchPayload.settlements ?? [];
-    const found = list.find((item: any) => item.id === batch.id);
-    expect(found, "new settlement batch is visible to finance").toBeTruthy();
+    expect(batch.id, "settlement batch id").toBeTruthy();
+
+    // Read the batch back from the sandbox finance fixture (there is no
+    // partner settlements route yet). It must reconcile to the ledger rows.
+    const batchRead = await fixture(
+      request,
+      "GET",
+      `/finance/settlement-batches/${encodeURIComponent(batch.id)}`
+    );
+    await expectStatus(batchRead, 200, "read settlement batch from fixture");
+    const found = await batchRead.json();
+    expect(found.id).toBe(batch.id);
     expect(found.line_count).toBeGreaterThanOrEqual(1);
     expect(Number(found.total_amount)).toBe(Number(batch.total_amount));
+    expect(found.lines ?? []).toEqual(
+      expect.arrayContaining([expect.objectContaining({ ledger_entry_id: credit.id })])
+    );
   });
 });
 

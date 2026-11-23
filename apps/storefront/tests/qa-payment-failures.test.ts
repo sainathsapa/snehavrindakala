@@ -21,7 +21,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /* ── No real DB: both import specifiers resolve to lib/db.ts ──────────────── */
-const queryMock = vi.fn(async (_sql: string, _params?: any[]) => [] as any[]);
+const queryMock = vi.fn(async (..._a: any[]) => [] as any[]);
 vi.mock("@/lib/db", () => ({ query: (...a: any[]) => queryMock(...a) }));
 vi.mock("../lib/db", () => ({ query: (...a: any[]) => queryMock(...a) }));
 
@@ -307,7 +307,7 @@ describe("Scenario H3 — a delayed/missed capture is reconciled from provider t
   });
 
   it("the verifier is a fake by default in tests — no live Razorpay call is made", () => {
-    const verifier = getPaymentVerifier({}); // no keys, not production
+    const verifier = getPaymentVerifier({} as NodeJS.ProcessEnv); // no keys, not production
     expect(verifier.mode).toBe("test");
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     return verifier("pay_any").then((state) => {

@@ -418,14 +418,13 @@ export default async function NewCommissionPolicyPage({
               type="submit"
               formAction={createCommissionPolicyAction}
               formMethod="post"
-              disabled={!formCheck.valid}
-              className="rounded-md bg-sindoor px-4 py-2 font-sans text-sm font-medium text-white transition-colors hover:bg-sindoor/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md bg-sindoor px-4 py-2 font-sans text-sm font-medium text-white transition-colors hover:bg-sindoor/90"
             >
               Save as draft
             </button>
             <span className="font-sans text-xs text-muted-ink">
-              Saving is disabled until the checklist is clear; the server
-              re-validates every field regardless.
+              The server re-validates every field (including the confirmation and
+              approver) and will refuse an incomplete draft.
             </span>
           </div>
         </form>

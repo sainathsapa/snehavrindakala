@@ -8,7 +8,8 @@
  * `requirePermission('orders:write')` in the route layer.
  */
 
-import { query as defaultQuery, type QueryResultRow } from "@/lib/db";
+import type { QueryResultRow } from "pg";
+import { query as defaultQuery } from "@/lib/db";
 import {
   findPartnerById,
   tenantQuery,

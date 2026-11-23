@@ -491,7 +491,7 @@ export function getPaymentVerifier(
       throw new Error(
         "Payment verifier is not configured: set RAZORPAY_KEY_ID and RAZORPAY_SECRET (or RAZORPAY_KEY_SECRET)."
       );
-    }) as PaymentVerifier;
+    }) as unknown as PaymentVerifier;
     verifier.mode = "unconfigured";
     return verifier;
   }

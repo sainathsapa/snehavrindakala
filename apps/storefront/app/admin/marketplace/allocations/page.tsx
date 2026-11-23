@@ -30,7 +30,7 @@ function AccessDenied() {
   );
 }
 
-function when(value: string): string {
+function when(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime())

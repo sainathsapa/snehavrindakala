@@ -1,20 +1,19 @@
 /**
- * POST /api/admin/partners-v2/[id]/link-artist — admin-assisted artist↔partner
- * mapping.
+ * POST /api/admin/marketplace-partners/[id]/verify — set a partner's verification status.
  *
- * Requires `partners:write`. Linking an artist does NOT activate or verify a
- * partner and does not create a new partner; it only records the mapping in
- * `approval_history` plus the audit log. The partner id comes from the URL
- * path; the artist id is validated from the body. Actor email from the session.
+ * Requires `partners:write`. Verification is NEVER automatic: an explicit
+ * admin decision with non-empty notes is required (enforced both here and in
+ * the platform library). Status changes and account activation are not part of
+ * this route. Actor identity comes from the signed admin session.
  */
 
 import { NextResponse } from "next/server";
 import { getAdminIdentity, requirePermission } from "@/app/admin/actions";
 import {
-  ArtistNotFoundError,
-  linkArtist,
+  isVerificationStatus,
   PartnerNotFoundError,
   PlatformValidationError,
+  setVerification,
 } from "@/lib/admin-partners/platform";
 
 export async function POST(
@@ -30,10 +29,19 @@ export async function POST(
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
-  const { artistId, notes } = body as Record<string, unknown>;
-  if (typeof artistId !== "string" || !/^\d{1,20}$/.test(artistId.trim())) {
+  const { status, notes } = body as Record<string, unknown>;
+  if (!isVerificationStatus(status)) {
     return NextResponse.json(
-      { error: "A valid numeric artistId is required." },
+      {
+        error:
+          "status must be one of: unverified, pending, verified, rejected.",
+      },
+      { status: 400 }
+    );
+  }
+  if (typeof notes !== "string" || !notes.trim()) {
+    return NextResponse.json(
+      { error: "Verification requires explicit admin notes." },
       { status: 400 }
     );
   }
@@ -44,8 +52,8 @@ export async function POST(
   }
 
   try {
-    const partner = await linkArtist(id, artistId.trim(), identity.email, {
-      notes: typeof notes === "string" ? notes : null,
+    const partner = await setVerification(id, status, identity.email, {
+      notes,
       actorRole: identity.role,
     });
     return NextResponse.json(
@@ -56,15 +64,12 @@ export async function POST(
     if (err instanceof PlatformValidationError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
-    if (err instanceof ArtistNotFoundError) {
-      return NextResponse.json({ error: err.message }, { status: 404 });
-    }
     if (err instanceof PartnerNotFoundError) {
       return NextResponse.json({ error: err.message }, { status: 404 });
     }
-    console.error("Failed to link artist to partner", err);
+    console.error("Failed to set partner verification status", err);
     return NextResponse.json(
-      { error: err?.message || "Failed to link artist" },
+      { error: err?.message || "Failed to update verification status" },
       { status: 500 }
     );
   }
