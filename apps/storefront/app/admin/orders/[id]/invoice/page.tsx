@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getAuthToken } from "@/lib/auth";
 import { medusa, formatPrice } from "@/lib/medusa";
+import { gstConfigStatus, taxForAmount } from "@/lib/tax-server";
+import { taxLabel } from "@/lib/tax";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +50,16 @@ export default async function InvoicePage({
 
   const items = order.items ?? [];
   const totalItems = items.reduce((sum: number, i: any) => sum + (i.quantity ?? 0), 0);
+
+  // GST-02: a document is only a statutory tax invoice when the seller's legal
+  // identity, GSTIN, address and HSN/SAC have actually been supplied and pass
+  // validation. Never present a printed page as one when they are missing — and
+  // never invent them. All fields are configuration supplied by the owner/CA.
+  const gst = gstConfigStatus();
+  const statutory = gst.ready;
+  const placeOfSupply = order.billing_address?.province || order.shipping_address?.province || null;
+  const taxBreakdown = statutory ? taxForAmount(order.total ?? 0, placeOfSupply) : null;
+
   const orderDate = new Date(order.created_at).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "long",
@@ -86,6 +98,33 @@ export default async function InvoicePage({
           </button>
         </div>
 
+        {!statutory && (
+          <div
+            role="status"
+            className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm font-sans text-amber-900 print:border-amber-400"
+          >
+            <p className="font-semibold mb-2">
+              Not a statutory tax invoice.
+            </p>
+            <p className="mb-2">
+              Seller legal identity, GSTIN, address and HSN/SAC must be supplied
+              and verified by the owner and a qualified accountant before this
+              document can be issued as a tax invoice. No such values are filled
+              in automatically.
+            </p>
+            {gst.missing.length > 0 && (
+              <p className="text-xs">
+                Missing configuration: {gst.missing.join(", ")}.
+              </p>
+            )}
+            {gst.invalid.length > 0 && (
+              <p className="text-xs">
+                Invalid configuration: {gst.invalid.join(", ")}.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Invoice document */}
         <div className="print:invoice max-w-none">
           <div className="mb-8">
@@ -97,14 +136,27 @@ export default async function InvoicePage({
                 <span className="text-xl font-serif font-bold text-terracotta tracking-tight">
                   Kala
                 </span>
+                {statutory && (
+                  <div className="mt-2 text-xs font-sans text-deep-ink">
+                    <p className="font-semibold">{process.env.SELLER_LEGAL_NAME}</p>
+                    <p className="whitespace-pre-line">{process.env.SELLER_ADDRESS}</p>
+                    <p>GSTIN: {process.env.SELLER_GSTIN}</p>
+                  </div>
+                )}
               </div>
               <div className="text-right">
                 <h1 className="text-2xl font-serif font-bold text-deep-ink mb-1">
-                  INVOICE
+                  {statutory ? "TAX INVOICE" : "ORDER STATEMENT"}
                 </h1>
                 <p className="text-sm text-muted-ink font-sans">
-                  Invoice #{order.display_id ?? order.id.slice(-6)}
+                  {statutory ? "Invoice" : "Statement"} #
+                  {order.display_id ?? order.id.slice(-6)}
                 </p>
+                {!statutory && (
+                  <p className="text-xs text-amber-700 font-sans">
+                    Not valid as a tax invoice
+                  </p>
+                )}
               </div>
             </div>
             <p className="mt-2 text-sm text-muted-ink font-sans">
@@ -175,6 +227,11 @@ export default async function InvoicePage({
                   <th className="py-3 px-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
                     Item
                   </th>
+                  {statutory && (
+                    <th className="py-3 px-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider">
+                      HSN/SAC
+                    </th>
+                  )}
                   <th className="py-3 px-4 text-xs font-sans font-medium text-muted-ink uppercase tracking-wider text-right">
                     Unit Price
                   </th>
@@ -197,6 +254,11 @@ export default async function InvoicePage({
                         </span>
                       )}
                     </td>
+                    {statutory && (
+                      <td className="py-4 px-4 text-sm font-sans text-deep-ink">
+                        {process.env.HSN_SAC_DEFAULT}
+                      </td>
+                    )}
                     <td className="py-4 px-4 text-sm font-sans text-deep-ink text-right">
                       {(item.unit_price / 100).toFixed(2)}
                       {" "}
@@ -215,7 +277,7 @@ export default async function InvoicePage({
               </tbody>
               <tfoot className="border-t border-sand-border">
                 <tr>
-                  <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={3}>
+                  <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
                     Subtotal
                   </td>
                   <td className="py-4 px-4 text-sm font-sans text-deep-ink text-right">
@@ -226,7 +288,7 @@ export default async function InvoicePage({
                 </tr>
                 {order.discountTotal && order.discountTotal > 0 && (
                   <tr>
-                    <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={3}>
+                    <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
                       Discount
                     </td>
                     <td className="py-4 px-4 text-sm font-sans text-red-600 text-right">
@@ -238,7 +300,7 @@ export default async function InvoicePage({
                 )}
                 {order.shippingTotal && order.shippingTotal > 0 && (
                   <tr>
-                    <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={3}>
+                    <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
                       Shipping
                     </td>
                     <td className="py-4 px-4 text-sm font-sans text-deep-ink text-right">
@@ -248,10 +310,58 @@ export default async function InvoicePage({
                     </td>
                   </tr>
                 )}
-                {order.taxTotal && order.taxTotal > 0 && (
+                {taxBreakdown ? (
+                  <>
+                    <tr>
+                      <td className="py-2 px-4 text-xs font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
+                        Taxable value ({taxLabel(taxBreakdown)})
+                      </td>
+                      <td className="py-2 px-4 text-xs font-sans text-deep-ink text-right">
+                        {(taxBreakdown.taxable_amount / 100).toFixed(2)}
+                      </td>
+                    </tr>
+                    {taxBreakdown.igst > 0 ? (
+                      <tr>
+                        <td className="py-2 px-4 text-xs font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
+                          IGST
+                        </td>
+                        <td className="py-2 px-4 text-xs font-sans text-deep-ink text-right">
+                          {(taxBreakdown.igst / 100).toFixed(2)}
+                        </td>
+                      </tr>
+                    ) : (
+                      <>
+                        <tr>
+                          <td className="py-2 px-4 text-xs font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
+                            CGST
+                          </td>
+                          <td className="py-2 px-4 text-xs font-sans text-deep-ink text-right">
+                            {(taxBreakdown.cgst / 100).toFixed(2)}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-4 text-xs font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
+                            SGST
+                          </td>
+                          <td className="py-2 px-4 text-xs font-sans text-deep-ink text-right">
+                            {(taxBreakdown.sgst / 100).toFixed(2)}
+                          </td>
+                        </tr>
+                      </>
+                    )}
+                    <tr>
+                      <td className="py-2 px-4 text-xs font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
+                        Place of supply
+                      </td>
+                      <td className="py-2 px-4 text-xs font-sans text-deep-ink text-right">
+                        {placeOfSupply || "—"}
+                      </td>
+                    </tr>
+                  </>
+                ) : order.taxTotal && order.taxTotal > 0 ? (
                   <tr>
-                    <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={3}>
-                      Tax
+                    <td className="py-4 px-4 text-sm font-sans text-muted-ink text-right" colSpan={statutory ? 4 : 3}>
+                      Tax (indicative only — not a GST breakdown)
                     </td>
                     <td className="py-4 px-4 text-sm font-sans text-deep-ink text-right">
                       {(order.taxTotal / 100).toFixed(2)}
@@ -259,9 +369,9 @@ export default async function InvoicePage({
                       {order.currency_code?.toUpperCase() || "INR"}
                     </td>
                   </tr>
-                )}
+                ) : null}
                 <tr className="border-t border-deep-ink font-serif font-bold text-deep-ink">
-                  <td className="py-4 px-4 text-right" colSpan={3}>
+                  <td className="py-4 px-4 text-right" colSpan={statutory ? 4 : 3}>
                     Total
                   </td>
                   <td className="py-4 px-4 text-right">

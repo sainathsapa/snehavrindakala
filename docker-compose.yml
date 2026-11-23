@@ -260,6 +260,13 @@ services:
       # passed into the container, so the split silently fell back to defaults.
       SELLER_HOME_STATE: ${SELLER_HOME_STATE:-Karnataka}
       GST_RATE: ${GST_RATE:-5}
+      # GST-02: seller identity and tax configuration. These are owner/CA data,
+      # never invented. Empty by default: the invoice stays an order statement
+      # and the config checklist reports them missing until they are supplied.
+      SELLER_LEGAL_NAME: ${SELLER_LEGAL_NAME:-}
+      SELLER_GSTIN: ${SELLER_GSTIN:-}
+      SELLER_ADDRESS: ${SELLER_ADDRESS:-}
+      HSN_SAC_DEFAULT: ${HSN_SAC_DEFAULT:-}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
       # Postgres pool size for the storefront's own tables.
       PG_POOL_MAX: ${PG_POOL_MAX:-10}
