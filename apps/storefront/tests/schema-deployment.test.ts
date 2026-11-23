@@ -92,7 +92,7 @@ describe("schema deployment", () => {
       "commission_payouts", "discount_codes", "journal_posts", "order_refunds",
       "order_gift_notes", "order_shipments", "product_review", "product_translation", "return_requests",
       "site_artist", "site_art_form", "site_featured_category", "site_hero_slide",
-      "site_settings", "variant_stock", "stock_reservation",
+      "site_settings", "variant_stock", "stock_reservation", "processed_payments",
       "site_testimonial", "support_tickets", "ticket_replies", "translations",
     ]);
 

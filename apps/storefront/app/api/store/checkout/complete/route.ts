@@ -28,6 +28,7 @@ import {
   linkReservationsToOrder,
 } from "@/lib/inventory";
 import { checkoutProvider } from "@/lib/payment-provider";
+import { claimPayment, releasePaymentClaim } from "@/lib/payment-guard";
 
 const RAZORPAY_KEY_ID =
   process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "";
@@ -69,9 +70,15 @@ export async function POST(req: Request) {
 
     const paymentId = razorpay_payment_id || payment_id;
 
-    if (!cart_id || !paymentId) {
+    // The signature and the Razorpay order id are MANDATORY. An earlier version
+    // only checked them when the client happened to send them, which let anyone
+    // attach an unrelated captured payment to their own cart by omitting both.
+    if (!cart_id || !paymentId || !razorpay_order_id || !razorpay_signature) {
       return NextResponse.json(
-        { error: "Cart ID and payment ID required" },
+        {
+          error:
+            "Cart ID, payment ID, Razorpay order ID and signature are all required.",
+        },
         { status: 400 }
       );
     }
@@ -109,15 +116,11 @@ export async function POST(req: Request) {
       );
     }
 
-    if (razorpay_order_id && razorpay_signature) {
-      if (
-        !verifySignature(razorpay_order_id, paymentId, razorpay_signature)
-      ) {
-        return NextResponse.json(
-          { error: "Payment signature verification failed" },
-          { status: 400 }
-        );
-      }
+    if (!verifySignature(razorpay_order_id, paymentId, razorpay_signature)) {
+      return NextResponse.json(
+        { error: "Payment signature verification failed" },
+        { status: 400 }
+      );
     }
 
     // Ask Razorpay directly as well: signature checks the handshake, this
@@ -138,18 +141,20 @@ export async function POST(req: Request) {
     }
 
     const payment = await paymentRes.json();
-    if (!["captured", "authorized"].includes(payment.status)) {
+    // Only a captured payment counts. "authorized" is not money in the account
+    // and accepting it let an order be created against a payment that could
+    // never be captured.
+    if (payment.status !== "captured") {
       return NextResponse.json(
         { error: "Payment has not been captured" },
         { status: 400 }
       );
     }
 
-    if (
-      razorpay_order_id &&
-      payment.order_id &&
-      payment.order_id !== razorpay_order_id
-    ) {
+    // HMAC already binds this pair to our secret; also confirm Razorpay's own
+    // record agrees, unconditionally rather than only when the client supplied
+    // a matching order id.
+    if (!payment.order_id || payment.order_id !== razorpay_order_id) {
       return NextResponse.json(
         { error: "Payment does not belong to this checkout" },
         { status: 400 }
@@ -194,6 +199,24 @@ export async function POST(req: Request) {
       if (consumed.reservationId) consumedReservationIds.push(consumed.reservationId);
     }
 
+    // Single-use claim: the same verified payment must never create two orders.
+    // Atomic ON CONFLICT DO NOTHING makes concurrent replays safe.
+    const claimed = await claimPayment({
+      paymentId,
+      cartId: cart_id,
+      razorpayOrderId: razorpay_order_id,
+    });
+    if (!claimed) {
+      return NextResponse.json(
+        {
+          error:
+            "This payment has already been used for an order. If you were charged twice, contact the studio with this payment ID.",
+          code: "payment_already_used",
+        },
+        { status: 409 }
+      );
+    }
+
     // Medusa refuses to complete a cart with shippable items and no shipping
     // method. Checkout charges a Shiprocket quote but never registered a method,
     // so every paid order failed here after the money was taken.
@@ -215,7 +238,17 @@ export async function POST(req: Request) {
       console.error("Failed to ensure payment session:", err);
     }
 
-    const order = await medusa.completeOrder(cart_id);
+    let order;
+    try {
+      order = await medusa.completeOrder(cart_id);
+    } catch (err) {
+      // Completion failed after the money moved. Free the claim so a genuine
+      // retry is possible; the payment is untouched and must be reconciled.
+      await releasePaymentClaim(paymentId).catch((releaseErr) =>
+        console.error("Could not release payment claim", releaseErr)
+      );
+      throw err;
+    }
     await linkReservationsToOrder(consumedReservationIds, order.id).catch((err) =>
       console.error("Could not link stock reservations to order", order.id, err)
     );

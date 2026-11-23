@@ -523,3 +523,15 @@ CREATE INDEX IF NOT EXISTS idx_stock_reservation_cart
   ON stock_reservation USING btree (cart_id, status);
 CREATE INDEX IF NOT EXISTS idx_stock_reservation_order
   ON stock_reservation USING btree (order_id);
+
+-- PAY-01 — single-use claim on a verified Razorpay payment id.
+-- Prevents replaying the same captured payment into a second order.
+CREATE TABLE IF NOT EXISTS processed_payments (
+  payment_id text NOT NULL,
+  cart_id text NOT NULL,
+  razorpay_order_id text NOT NULL,
+  order_id text,
+  created_at timestamp without time zone NOT NULL DEFAULT now(),
+  PRIMARY KEY (payment_id)
+);
+CREATE INDEX IF NOT EXISTS idx_processed_payments_order ON processed_payments USING btree (order_id);
