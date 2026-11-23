@@ -11,8 +11,19 @@ import { randomUUID } from "node:crypto";
 import { query as defaultQuery } from "@/lib/db";
 import { tenantQuery } from "@/lib/partner/repository";
 import type { PartnerContext } from "@/lib/partner/types";
-import { computeCommission, round2, toNumber } from "./commission-policy";
-import type { BuildEarningInput, EarningsEntry, QueryExecutor } from "./types";
+import {
+  assertKnownRefundEffect,
+  computeCommission,
+  round2,
+  toNumber,
+} from "./commission-policy";
+import type {
+  BuildEarningInput,
+  CommissionPolicy,
+  EarningsEntry,
+  QueryExecutor,
+  RefundEffect,
+} from "./types";
 
 const LEDGER_COLUMNS = [
   "id",
@@ -89,6 +100,48 @@ export function buildRefundReversal(
       reversal_of: original.id ?? null,
     },
   };
+}
+
+/**
+ * Decide whether a refund/cancellation reverses earned commission and payable.
+ *
+ * `reverse_earnings` ⇒ a negative `refund_reversal` row must be posted.
+ * `no_reversal`      ⇒ nothing is posted; the earning stands.
+ * Anything else      ⇒ fail closed — there is no defined money behaviour.
+ */
+export function shouldReverseEarnings(
+  effect: RefundEffect | string | null | undefined
+): boolean {
+  return assertKnownRefundEffect(effect) === "reverse_earnings";
+}
+
+/**
+ * Policy-driven refund ledger effect. Returns the rows to post (0 or 1) so the
+ * caller can pass the result straight to `postEntries` without branching on the
+ * policy itself. Historical money is never UPDATEd — a reversal is a NEW row.
+ *
+ * Accepts a whole policy (preferred) or a bare refund_effect value.
+ */
+export function reversalEntriesForRefund(
+  policy: CommissionPolicy | RefundEffect | string | null | undefined,
+  original: EarningsEntry,
+  idempotencyKey: string
+): EarningsEntry[] {
+  const effect =
+    policy !== null && typeof policy === "object"
+      ? (policy as CommissionPolicy).refund_effect
+      : policy;
+  if (!shouldReverseEarnings(effect)) return [];
+  const reversal = buildRefundReversal(original, idempotencyKey);
+  return [
+    {
+      ...reversal,
+      metadata: {
+        ...(reversal.metadata ?? {}),
+        refund_effect: assertKnownRefundEffect(effect),
+      },
+    },
+  ];
 }
 
 /**

@@ -4,14 +4,15 @@
  *
  * Two independent checks, both runnable in CI or on a deployed host:
  *
- *   1. DATABASE: every table/column introduced by migrations 002-004 exists in
- *      the live database. This is the "no CREATE TABLE in a request handler"
- *      safety net: if a handler's lazy CREATE is removed before the migration
- *      ran, this check fails loudly instead of the first customer finding out.
+ *   1. DATABASE: every table/column introduced by migrations 002-009 exists in
+ *      the live database. This is the hard gate that lets the lazy CREATEs be
+ *      removed from request handlers: if the tables are missing, the check fails
+ *      loudly instead of the first customer finding out.
  *
- *   2. SOURCE: none of the configured high-traffic handlers still contain a
+ *   2. SOURCE (HARD GATE): none of the configured handlers may contain a
  *      `CREATE TABLE`. Those are the hot paths where a cold-container DDL is
- *      most likely to race or to be the first thing a visitor hits.
+ *      most likely to race or to be the first thing a visitor hits. Any DDL
+ *      found here fails the script, just like a missing table does.
  *
  * Nothing is written. No secret value is printed — DATABASE_URL is referred to
  * by name only, and any error text is redacted before logging.
@@ -24,7 +25,7 @@ import pg from "pg";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
- * Expected tables and columns from migrations 002-004. Kept explicit (rather
+ * Expected tables and columns from migrations 002-009. Kept explicit (rather
  * than parsed from the SQL) so a typo in a migration cannot silently define
  * what "verified" means.
  */
@@ -96,6 +97,35 @@ const EXPECTED_SCHEMA = {
     "status", "requested_by", "approved_by", "idempotency_key", "provider",
     "provider_refund_id", "provider_response", "ledger_reversal_key",
     "inventory_restored", "failure_reason", "created_at", "updated_at",
+    // 007_refund_inventory
+    "inventory_restoration_state", "inventory_eligibility_reason",
+    "inventory_restored_by", "inventory_restored_at", "inventory_restoration_key",
+  ],
+  // 005_notification_retry (app_notification is backend-owned but migration 005
+  // creates a compatible base table when absent, so it must always be present).
+  app_notification: [
+    "id", "recipient", "channel", "template", "status", "created_at", "updated_at",
+    "attempts", "max_attempts", "next_attempt_at", "last_error", "error_kind",
+    "last_attempt_at", "delivery_status", "terminal_reason", "dead_lettered_at",
+    "suppressed", "last_delivery_event_at", "lease_owner", "lease_until",
+  ],
+  notification_event: [
+    "id", "provider", "provider_event_id", "event_type", "message_id",
+    "notification_id", "bounce_type", "received_at",
+  ],
+  notification_suppression: ["id", "recipient", "reason", "created_at"],
+  // 007_refund_inventory
+  inventory_restoration_action: [
+    "id", "action_key", "refund_execution_id", "refund_request_id",
+    "return_request_id", "order_id", "order_item_id", "variant_id", "status",
+    "eligibility_reason", "trigger", "actor", "attempts", "last_error",
+    "metadata", "created_at", "updated_at",
+  ],
+  inventory_movement: [
+    "id", "movement_key", "direction", "order_id", "order_item_id",
+    "variant_id", "quantity", "refund_execution_id", "refund_request_id",
+    "return_request_id", "actor", "reason", "restoration_action_key",
+    "metadata", "created_at",
   ],
 };
 
@@ -133,15 +163,14 @@ const HIGH_TRAFFIC_HANDLERS = [
   "app/api/admin/commissions/route.ts",
   "app/api/admin/commissions/[id]/route.ts",
   "app/api/admin/orders/[id]/refund/route.ts",
+  // Additional handler found during the lazy-DDL sweep (product_handle ALTER).
+  "app/api/tickets/route.ts",
 ];
 
 let failures = 0;
 function fail(msg) {
   console.error(`  - ${msg}`);
   failures++;
-}
-function warn(msg) {
-  console.warn(`  ~ ${msg}`);
 }
 
 function redact(value) {
@@ -176,12 +205,10 @@ function checkHandlers() {
       continue;
     }
     if (/CREATE\s+TABLE\b/i.test(stripComments(src))) {
-      // Advisory only: these are idempotent `CREATE TABLE IF NOT EXISTS` calls,
-      // now guarded by a Postgres advisory lock and redundant with the deploy-
-      // time schema/migrations. Removing them from all 28 handlers is a tracked
-      // hardening follow-up, not a release blocker. The HARD gate below checks
-      // the live DB actually has every table/column from migrations 002-004.
-      warn(`CREATE TABLE still present in high-traffic handler: ${rel} (advisory — removal tracked as follow-up)`);
+      // HARD gate: the tables are created by db/schema.sql + migrations 002-009
+      // before the server starts, so a CREATE TABLE here is a race/regression,
+      // not a harmless fallback. Fail exactly as we do for a missing table.
+      fail(`CREATE TABLE still present in handler: ${rel}`);
     }
   }
 }
@@ -224,9 +251,9 @@ async function checkDatabase() {
 }
 
 async function main() {
-  console.log("verify-schema: advisory check of high-traffic handlers for CREATE TABLE ...");
+  console.log("verify-schema: HARD check — no CREATE TABLE may remain in handlers ...");
   checkHandlers();
-  console.log("verify-schema: checking migrations 002-004 in the live database ...");
+  console.log("verify-schema: checking migrations 002-009 in the live database ...");
   await checkDatabase();
 
   if (failures) {
@@ -235,7 +262,7 @@ async function main() {
   }
   console.log(
     `verify-schema OK: ${Object.keys(EXPECTED_SCHEMA).length} tables with expected columns present ` +
-      `(the hard gate). Lazy CREATE TABLE in high-traffic handlers is reported as advisory warnings above.`
+      `and no CREATE TABLE left in any configured handler (both hard gates passed).`
   );
 }
 

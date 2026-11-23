@@ -9,13 +9,28 @@
 
 import { NextResponse } from "next/server";
 import { getAdminIdentity, requirePermission } from "@/app/admin/actions";
+import { recordAdminAction } from "@/lib/audit";
+import {
+  correlationIdFrom,
+  redactAuditText,
+} from "@/lib/partner-audit/audit";
 import {
   AlreadyReviewedError,
   ApplicationNotFoundError,
+  getApplication,
   isReviewDecision,
   reviewApplication,
   ReviewValidationError,
+  type ReviewDecision,
 } from "@/lib/partner-onboarding/review";
+
+/** Stable admin audit action per review decision (incl. request-for-info). */
+const DECISION_ACTIONS: Record<ReviewDecision, string> = {
+  pending: "partner_application.reviewed",
+  more_info: "partner_application.info_requested",
+  approved: "partner_application.approved",
+  rejected: "partner_application.rejected",
+};
 
 export async function POST(req: Request) {
   if (!(await requirePermission("partners:write"))) {
@@ -49,11 +64,31 @@ export async function POST(req: Request) {
   }
 
   try {
+    const before = await getApplication(id);
     const result = await reviewApplication({
       id,
       decision,
       reviewerId: identity.email,
       notes: typeof notes === "string" ? notes : null,
+    });
+    // A108: every review decision is audited. The generated one-time password,
+    // applicant contact details and business documents are NEVER copied here —
+    // only ids, the decision, the new review status and a redacted note.
+    await recordAdminAction({
+      actorEmail: identity.email,
+      actorRole: identity.role,
+      action: DECISION_ACTIONS[decision],
+      entityType: "partner_onboarding_application",
+      entityId: result.application.id,
+      oldValues: { reviewStatus: before?.review_status ?? null },
+      newValues: {
+        decision,
+        reviewStatus: result.application.review_status,
+        partnerId: result.partnerId,
+        notes: redactAuditText(notes),
+        requestId: correlationIdFrom(req),
+        result: "success",
+      },
     });
     return NextResponse.json(result, {
       headers: { "Cache-Control": "no-store" },

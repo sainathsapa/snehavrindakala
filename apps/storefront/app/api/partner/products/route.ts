@@ -12,11 +12,21 @@
 import { NextResponse } from "next/server";
 import { requirePartnerPermission } from "@/lib/partner/context";
 import {
+  auditPayload,
+  correlationIdFrom,
+  recordMutationAudit,
+} from "@/lib/partner-audit/audit";
+import {
   createSubmission,
   listProducts,
   ProductValidationError,
   type ProductSubmissionInput,
 } from "@/lib/partner-portal/products";
+
+// Creation/editing are not in the canonical AUDIT_ACTIONS set (only submission
+// is). recordPartnerAudit deliberately accepts custom action strings so the
+// new actions are still durable; the submit action uses the canonical value.
+const PRODUCT_CREATED = "PRODUCT_CREATED";
 
 export async function GET() {
   const ctx = await requirePartnerPermission("products:read");
@@ -65,6 +75,23 @@ export async function POST(req: Request) {
 
   try {
     const product = await createSubmission(ctx, input);
+    // Only ids/status go into the audit row — titles, prices and image URLs are
+    // caller-controlled and are passed through auditPayload's redaction/scoping.
+    await recordMutationAudit({
+      partnerId: ctx.partnerId,
+      actorEmail: ctx.email,
+      actorRole: ctx.role,
+      action: PRODUCT_CREATED,
+      entityType: "partner_product",
+      entityId: product.id,
+      metadata: auditPayload(PRODUCT_CREATED, ctx, {
+        productId: product.product_id,
+        after: { submissionStatus: product.submission_status },
+        requestId: correlationIdFrom(req),
+        result: "success",
+        at: new Date().toISOString(),
+      }),
+    });
     return NextResponse.json({ product }, { status: 201 });
   } catch (err: any) {
     if (err instanceof ProductValidationError) {

@@ -14,16 +14,6 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const locale = searchParams.get("locale") || "en";
 
-    await query(`
-      CREATE TABLE IF NOT EXISTS translations (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        locale TEXT NOT NULL,
-        key TEXT NOT NULL,
-        value TEXT NOT NULL,
-        UNIQUE(locale, key)
-      )
-    `);
-
     // Insert default English translations if empty
     const existing = await query(
       "SELECT COUNT(*) FROM translations WHERE locale = $1",
@@ -120,16 +110,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    await query(`
-      CREATE TABLE IF NOT EXISTS translations (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        locale TEXT NOT NULL,
-        key TEXT NOT NULL,
-        value TEXT NOT NULL,
-        UNIQUE(locale, key)
-      )
-    `);
 
     await query(
       `INSERT INTO translations (locale, key, value) VALUES ($1, $2, $3)

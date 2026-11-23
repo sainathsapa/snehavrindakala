@@ -14,20 +14,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS commission_payouts (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        artist_id TEXT NOT NULL,
-        artist_name TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        currency_code TEXT NOT NULL DEFAULT 'inr',
-        status TEXT NOT NULL DEFAULT 'pending',
-        paid_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const payouts = await query(`
       SELECT cp.*, a.display_name
       FROM commission_payouts cp
@@ -57,20 +43,6 @@ export async function POST(req: Request) {
     if (!artist_id || !amount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-
-    await query(`
-      CREATE TABLE IF NOT EXISTS commission_payouts (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        artist_id TEXT NOT NULL,
-        artist_name TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        currency_code TEXT NOT NULL DEFAULT 'inr',
-        status TEXT NOT NULL DEFAULT 'pending',
-        paid_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
 
     const { v4: uuidv4 } = require("uuid");
     const id = `payout_${uuidv4().slice(0, 8)}`;

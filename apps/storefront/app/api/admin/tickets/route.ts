@@ -13,21 +13,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS support_tickets (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        subject TEXT NOT NULL,
-        message TEXT NOT NULL,
-        email TEXT NOT NULL,
-        name TEXT,
-        status TEXT NOT NULL DEFAULT 'open',
-        priority TEXT NOT NULL DEFAULT 'medium',
-        assigned_to TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const limit = parseInt(searchParams.get("limit") || "20");

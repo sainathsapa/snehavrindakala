@@ -9,6 +9,12 @@
 import { NextResponse } from "next/server";
 import { requirePartnerPermission } from "@/lib/partner/context";
 import {
+  AUDIT_ACTIONS,
+  auditPayload,
+  correlationIdFrom,
+  recordMutationAudit,
+} from "@/lib/partner-audit/audit";
+import {
   hasTenantIdField,
   readProfile,
   updateProfile,
@@ -57,6 +63,22 @@ export async function PATCH(req: Request) {
     if (!profile) {
       return NextResponse.json({ ok: false, error: "Profile not found" }, { status: 404 });
     }
+    // Record which fields changed, never their values: contact_email is PII and
+    // business_profile is free-form caller data. Identity stays server-derived.
+    await recordMutationAudit({
+      partnerId: ctx.partnerId,
+      actorEmail: ctx.email,
+      actorRole: ctx.role,
+      action: AUDIT_ACTIONS.PROFILE_UPDATED,
+      entityType: "partner",
+      entityId: ctx.partnerId,
+      metadata: auditPayload(AUDIT_ACTIONS.PROFILE_UPDATED, ctx, {
+        changedFields: Object.keys(body as Record<string, unknown>),
+        requestId: correlationIdFrom(req),
+        result: "success",
+        at: new Date().toISOString(),
+      }),
+    });
     return NextResponse.json({ ok: true, profile });
   } catch (error) {
     return NextResponse.json(

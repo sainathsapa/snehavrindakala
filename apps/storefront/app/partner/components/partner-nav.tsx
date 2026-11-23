@@ -32,7 +32,12 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const NAV_GROUPS: NavGroup[] = [
+/**
+ * Exported for pure tests. This is only an advisory map of what to *show*;
+ * every target page re-checks the permission on the server against the signed
+ * session, so hiding a link is never the enforcement boundary.
+ */
+export const NAV_GROUPS: readonly NavGroup[] = [
   {
     title: "Workspace",
     items: [
@@ -61,9 +66,9 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "products:read",
       },
       {
-        // The partner products surface (owned by the catalogue agent) is also
-        // the submissions list; `status=all` opens it on its full queue.
-        href: "/partner/products?status=all",
+        // Dedicated, read-only submission history page. The same permission as
+        // /partner/products, whose server-side gate it mirrors.
+        href: "/partner/submissions",
         label: "Product submissions",
         icon: "upload",
         permission: "products:read",
@@ -132,6 +137,14 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "team:read",
       },
       {
+        // Read-only account activity trail. Uses the existing `audit-log`
+        // glyph from the shared icon set and the same gate as the page.
+        href: "/partner/audit",
+        label: "Audit trail",
+        icon: "audit-log",
+        permission: "profile:read",
+      },
+      {
         href: "/partner/security",
         label: "Security",
         icon: "lock",
@@ -140,6 +153,34 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+/**
+ * Pure route matcher for the sidebar's `aria-current` state.
+ *
+ * `usePathname()` never carries a query string, while an `href` may (and a
+ * visited route may carry a trailing slash or be a nested child route), so both
+ * sides are normalised before comparing. The portal root is excluded from
+ * prefix matching: otherwise "Overview" would light up on every single page.
+ */
+export function isNavItemActive(pathname: string, href: string): boolean {
+  const normalize = (value: string): string =>
+    (value || "").split("?")[0].replace(/\/+$/, "") || "/";
+  const current = normalize(pathname);
+  const target = normalize(href);
+  if (current === target) return true;
+  if (target === "/partner" || target === "/") return false;
+  return current.startsWith(`${target}/`);
+}
+
+/** Pure, permission-filtered view of the nav used by both desktop and mobile. */
+export function visibleNavGroups(role: PartnerRole): NavGroup[] {
+  return NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter(
+      (item) => !item.permission || partnerHasPermission(role, item.permission)
+    ),
+  })).filter((group) => group.items.length > 0);
+}
 
 export function PartnerNav({ role }: { role: PartnerRole }) {
   const pathname = usePathname();
@@ -154,12 +195,7 @@ export function PartnerNav({ role }: { role: PartnerRole }) {
     return () => query.removeEventListener("change", apply);
   }, []);
 
-  const groups = NAV_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter(
-      (item) => !item.permission || partnerHasPermission(role, item.permission)
-    ),
-  })).filter((group) => group.items.length > 0);
+  const groups = visibleNavGroups(role);
 
   return (
     <>
@@ -225,13 +261,7 @@ export function PartnerNav({ role }: { role: PartnerRole }) {
               </p>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
-                  // hrefs may carry a query (e.g. ?status=all); usePathname
-                  // reports only the path, so compare against that portion.
-                  const itemPath = item.href.split("?")[0];
-                  const isActive =
-                    pathname === itemPath ||
-                    (itemPath !== "/partner" &&
-                      pathname.startsWith(`${itemPath}/`));
+                  const isActive = isNavItemActive(pathname, item.href);
 
                   return (
                     <Link

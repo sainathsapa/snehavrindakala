@@ -136,5 +136,48 @@ export interface ValidationResult {
   errors: string[];
 }
 
+/**
+ * Facts used by `payable_when` to decide whether an earning may be settled.
+ *
+ * Every field maps to something that already exists in the data model or in
+ * documented policy — no invented condition:
+ *  - `orderPaid`          — payment captured (payment_event / processed_payments)
+ *  - `orderDelivered`     — delivery confirmed (order_shipments.status / order
+ *                           fulfilment status)
+ *  - `orderCancelled`     — order status `cancelled`
+ *  - `refundIssued`       — order_refunds / refund_execution for the order
+ *  - `pendingReturn`      — open/needs_evidence/approved return_requests row
+ *  - `settlementHeld`     — ledger row already assigned (settlement_batch_id), or
+ *                           an explicit operational hold on the entry
+ *  - `daysSinceDelivery`  — whole days since confirmed delivery
+ *  - `returnWindowDays`   — operator-supplied RETURN_WINDOW_DAYS (never defaulted)
+ */
+export interface PayabilityContext {
+  payable_when: PayableWhen | string;
+  orderPaid: boolean;
+  orderDelivered: boolean;
+  orderCancelled: boolean;
+  refundIssued: boolean;
+  pendingReturn: boolean;
+  settlementHeld: boolean;
+  daysSinceDelivery: number | null;
+  returnWindowDays: number | null;
+}
+
+/** Result of evaluating a `payable_when` rule; the reason is audit text. */
+export interface PayabilityDecision {
+  payable: boolean;
+  reason: string;
+}
+
+/**
+ * Supplies a payability context for one ledger entry. Callers that already hold
+ * order/return/refund state (the settlement API) should provide this so the
+ * configured rule is actually enforced. See `explainPayability` in settlement.ts.
+ */
+export type PayabilityResolver =
+  | PayabilityContext
+  | ((entry: EarningsEntry) => PayabilityContext);
+
 /** Matches the partner package's QueryExecutor so fake executors are portable. */
 export type QueryExecutor = (sql: string, params?: any[]) => Promise<any[]>;

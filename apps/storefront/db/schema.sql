@@ -50,13 +50,12 @@
 --
 -- WHAT THIS FILE DOES NOT DO
 --
--- It does not alter existing tables. A database created by an older release
--- keeps whatever columns it had; the application's own
--- `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` calls still add the columns
--- introduced since (the `_hi` translation columns, `journal_posts.art_form`).
--- This file is the baseline for a fresh database, not a migration history.
--- Folding those runtime ALTERs in here would be a real migration system, and
--- is the next step if the schema keeps growing.
+-- It is the baseline for a fresh database, not a migration history, and it never
+-- deletes or rewrites business data. Columns introduced after the first release
+-- are applied below as idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+-- statements, so a database created by an older release reaches the same shape
+-- as a fresh one: the `_hi` translation columns, `journal_posts.art_form`, the
+-- refund approval columns on `order_refunds`, and `support_tickets.product_handle`.
 --
 -- SCOPE
 --
@@ -65,8 +64,8 @@
 -- database, and a `CREATE TABLE IF NOT EXISTS` for a Medusa table would pin a
 -- stale definition instead of letting a Medusa upgrade change it.
 --
--- The runtime `CREATE TABLE IF NOT EXISTS` calls in the application are left in
--- place as a fallback for local development. They are no longer the only path.
+-- No request handler or lib module creates tables at runtime any more: the only
+-- DDL in the application is this file and the deploy-time migration runner.
 
 CREATE TABLE IF NOT EXISTS admin_users (
   id text NOT NULL DEFAULT gen_random_uuid(),
@@ -489,6 +488,45 @@ CREATE UNIQUE INDEX IF NOT EXISTS site_art_form_slug_key ON public.site_art_form
 ALTER TABLE IF EXISTS public.app_notification ADD COLUMN IF NOT EXISTS event_key text;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_app_notification_event_key
   ON public.app_notification USING btree (event_key);
+
+-- Columns added after the first release. `CREATE TABLE IF NOT EXISTS` is a no-op
+-- on a table an older release already created, so these idempotent ALTERs are
+-- what bring an existing database up to the same shape as a fresh install. They
+-- replace the lazy per-request ALTERs that used to live in the handlers.
+ALTER TABLE IF EXISTS public.site_art_form
+  ADD COLUMN IF NOT EXISTS story text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS materials text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS quote text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS name_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS description_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS story_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS origin_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS materials_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS quote_hi text NOT NULL DEFAULT '';
+ALTER TABLE IF EXISTS public.site_hero_slide
+  ADD COLUMN IF NOT EXISTS eyebrow_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS title_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS tagline_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS cta_label_hi text NOT NULL DEFAULT '';
+ALTER TABLE IF EXISTS public.site_featured_category
+  ADD COLUMN IF NOT EXISTS label_hi text NOT NULL DEFAULT '';
+ALTER TABLE IF EXISTS public.site_artist
+  ADD COLUMN IF NOT EXISTS name_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS bio_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS region_hi text NOT NULL DEFAULT '';
+ALTER TABLE IF EXISTS public.journal_posts
+  ADD COLUMN IF NOT EXISTS title_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS excerpt_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS content_hi text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS art_form text NOT NULL DEFAULT '';
+ALTER TABLE IF EXISTS public.order_refunds
+  ADD COLUMN IF NOT EXISTS requested_by text,
+  ADD COLUMN IF NOT EXISTS approved_by text,
+  ADD COLUMN IF NOT EXISTS decided_at timestamptz,
+  ADD COLUMN IF NOT EXISTS decision_note text;
+ALTER TABLE IF EXISTS public.support_tickets
+  ADD COLUMN IF NOT EXISTS product_handle text NOT NULL DEFAULT '';
 
 -- INV-01 — atomic stock reservations.
 -- A variant becomes "tracked" only when the owner initialises it here with an

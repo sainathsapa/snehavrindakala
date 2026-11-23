@@ -14,20 +14,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS return_requests (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        order_id TEXT NOT NULL,
-        customer_id TEXT,
-        customer_email TEXT NOT NULL,
-        reason TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
-        items TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const { searchParams } = new URL(req.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
     const offset = parseInt(searchParams.get("offset") || "0") || 0;
@@ -93,20 +79,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    await query(`
-      CREATE TABLE IF NOT EXISTS return_requests (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        order_id TEXT NOT NULL,
-        customer_id TEXT,
-        customer_email TEXT NOT NULL,
-        reason TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
-        items TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
 
     const { v4: uuidv4 } = require("uuid");
     const id = `ret_${uuidv4().slice(0, 8)}`;

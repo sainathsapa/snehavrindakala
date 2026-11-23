@@ -292,6 +292,179 @@ export function restockDecision(
   return RESTOCKABLE_CONDITIONS.has(normalised) ? "restock" : "no_restock";
 }
 
+/* ── Refund-driven restoration eligibility (pure, policy-derived) ────────── */
+
+/**
+ * The physical state that a restock decision is derived from. These are NOT new
+ * business rules: they name the return/cancellation states already present in
+ * the domain (the return status machine in this file, the fulfilment status
+ * machine, and the cancellation flow). The caller supplies the state that
+ * already exists; we never infer it from a refund approval.
+ */
+export type RestorationTrigger =
+  | "refund_approved_only"
+  | "pre_dispatch_cancellation"
+  | "post_dispatch_cancellation"
+  | "return_requested"
+  | "return_approved"
+  | "return_received"
+  | "return_inspected"
+  | "restock_approved"
+  | "non_restockable_return"
+  | "refund_without_return";
+
+/**
+ * Owner/operator-supplied policy inputs. Every field is optional ON PURPOSE:
+ * an absent value is an unknown owner decision, never a default. See
+ * REFUND_AND_RETURN_POLICY.md ("Restock eligibility is owner-gated") — the
+ * return window, the resellable condition and the deliberate restock decision
+ * are all supplied by a person. We fail safe when any of them is undefined.
+ */
+export interface RestockPolicyInput {
+  /** Condition recorded at inspection (must be in RESTOCKABLE_CONDITIONS). */
+  condition?: unknown;
+  /** Explicit owner/operator approval to put this unit back on sale. */
+  restockApproved?: boolean;
+  /** The physical unit is back in the seller's hands. */
+  physicallyReceived?: boolean;
+  /** The physical unit has been inspected. */
+  inspected?: boolean;
+  /** The order had already been dispatched before cancellation. */
+  dispatched?: boolean;
+}
+
+/** Per-unit context, extending the item shape used by {@link restockDecision}. */
+export interface RestockItemContext extends ReturnItemLike {
+  unique_artwork?: unknown;
+  one_of_one?: unknown;
+}
+
+export interface RestockEligibility {
+  eligible: boolean;
+  reason: string;
+  /** True when ineligibility is due to a missing owner/policy input. */
+  needsOwnerDecision: boolean;
+}
+
+const ineligible = (reason: string, needsOwnerDecision = false): RestockEligibility => ({
+  eligible: false,
+  reason,
+  needsOwnerDecision,
+});
+const eligible = (reason: string): RestockEligibility => ({
+  eligible: true,
+  reason,
+  needsOwnerDecision: false,
+});
+
+/** Digital / custom / made-to-order / one-of-one art is never restocked. */
+export function isPhysicalRestockableItem(item: RestockItemContext | null | undefined): boolean {
+  if (!item || typeof item !== "object") return false;
+  if (item.is_digital || item.digital) return false;
+  if (item.is_custom || item.custom || item.made_to_order) return false;
+  if (item.unique_artwork || item.one_of_one) return false;
+  return true;
+}
+
+function hasCondition(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/**
+ * A physical return reaches "restockable" only after all documented inputs are
+ * present: received, inspected, explicitly restock-approved and in a
+ * resellable condition. Any undefined input blocks with `needsOwnerDecision`.
+ */
+function physicalReturnEligibility(
+  label: string,
+  item: RestockItemContext,
+  policy: RestockPolicyInput
+): RestockEligibility {
+  if (policy.physicallyReceived !== true) {
+    return policy.physicallyReceived === undefined
+      ? ineligible(`${label}: physical receipt is not recorded; owner decision required.`, true)
+      : ineligible(`${label}: goods were not physically received.`);
+  }
+  if (policy.inspected !== true) {
+    return policy.inspected === undefined
+      ? ineligible(`${label}: inspection is not recorded; owner decision required.`, true)
+      : ineligible(`${label}: goods were not inspected.`);
+  }
+  if (policy.restockApproved !== true) {
+    return policy.restockApproved === undefined
+      ? ineligible(`${label}: restock approval is not recorded; owner decision required.`, true)
+      : ineligible(`${label}: restock was not approved.`);
+  }
+  if (!hasCondition(policy.condition)) {
+    return ineligible(`${label}: item condition is not recorded; owner decision required.`, true);
+  }
+  if (restockDecision(item, policy.condition) !== "restock") {
+    return ineligible(`${label}: condition is not in RESTOCKABLE_CONDITIONS.`);
+  }
+  return eligible(`${label}: physical return received, inspected and resellable.`);
+}
+
+/**
+ * Derive restock eligibility from an EXISTING return/cancellation state plus the
+ * documented policy. No rule is invented here:
+ *  - a refund approval is a permission, never a restock trigger;
+ *  - refund-without-return is a money-only decision (no goods to restock);
+ *  - a digital / custom / made-to-order / unique-artwork item is never restocked;
+ *  - pre-dispatch cancellation restores consumed stock mechanically (this is
+ *    what the existing cancel route already does);
+ *  - a dispatched cancellation / return only restocks after receipt, inspection,
+ *    explicit restock approval and a resellable condition per restockDecision();
+ *  - any undefined owner input fails safe with `needsOwnerDecision = true`.
+ */
+export function deriveRestockEligibility(
+  trigger: RestorationTrigger,
+  item: RestockItemContext | null | undefined,
+  policy: RestockPolicyInput | null | undefined
+): RestockEligibility {
+  const t = asStatus(trigger);
+  const p: RestockPolicyInput = policy ?? {};
+
+  if (t === "refund_approved_only") {
+    return ineligible("A refund approval is a permission, not a restock trigger.");
+  }
+  if (t === "refund_without_return") {
+    return ineligible("Refund without physical return: no goods to restock.");
+  }
+  if (t === "non_restockable_return") {
+    return ineligible("Return was recorded as non-restockable.");
+  }
+  if (t === "return_requested" || t === "return_approved") {
+    return ineligible("Return has not been physically received yet.");
+  }
+  if (!isPhysicalRestockableItem(item)) {
+    return ineligible("Digital, custom, made-to-order or unique artwork is never restocked.");
+  }
+
+  if (t === "pre_dispatch_cancellation") {
+    if (p.dispatched !== false) {
+      return p.dispatched === undefined
+        ? ineligible("Dispatch status is not recorded; owner decision required.", true)
+        : ineligible("Order was already dispatched; not a pre-dispatch cancellation.");
+    }
+    return eligible("Pre-dispatch cancellation: consumed stock can be restored.");
+  }
+
+  if (
+    t === "post_dispatch_cancellation" ||
+    t === "return_received" ||
+    t === "return_inspected" ||
+    t === "restock_approved"
+  ) {
+    return physicalReturnEligibility(
+      t.replace(/_/g, " "),
+      item as RestockItemContext,
+      p
+    );
+  }
+
+  return ineligible(`Unknown restoration trigger "${trigger || "none"}".`, true);
+}
+
 /* ── DB helpers (injectable executor) ────────────────────────────────────── */
 
 export interface ReturnRow {

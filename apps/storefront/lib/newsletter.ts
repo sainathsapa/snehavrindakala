@@ -13,35 +13,13 @@
 
 import { query, queryResult } from "@/lib/db";
 
-let schemaReady: Promise<void> | null = null;
-
-async function createTable(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-      id SERIAL PRIMARY KEY,
-      email TEXT NOT NULL UNIQUE,
-      locale TEXT NOT NULL DEFAULT 'en',
-      source TEXT NOT NULL DEFAULT 'footer',
-      consent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      unsubscribed_at TIMESTAMPTZ,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await query(
-    `CREATE INDEX IF NOT EXISTS newsletter_subscribers_active_idx
-       ON newsletter_subscribers (created_at DESC)
-      WHERE unsubscribed_at IS NULL`
-  );
-}
-
+/**
+ * Kept as a no-op for callers such as the account data-export route. The table
+ * is created by db/schema.sql before the server starts, so request handlers no
+ * longer have anything to initialise at runtime.
+ */
 export function ensureNewsletterTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((err) => {
-      schemaReady = null;
-      throw err;
-    });
-  }
-  return schemaReady;
+  return Promise.resolve();
 }
 
 export type SubscribeOutcome = "subscribed" | "already" | "resubscribed" | "invalid";

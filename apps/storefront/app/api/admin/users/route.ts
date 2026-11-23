@@ -14,19 +14,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    // Ensure table exists
-    await query(`
-      CREATE TABLE IF NOT EXISTS admin_users (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'viewer',
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const rows = await query(
       "SELECT id, email, role, is_active, created_at, updated_at FROM admin_users ORDER BY created_at DESC"
     );
@@ -52,18 +39,6 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
     const { v4: uuidv4 } = require("uuid");
     const id = `admin_${uuidv4().slice(0, 8)}`;
-
-    await query(
-      `CREATE TABLE IF NOT EXISTS admin_users (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'viewer',
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )`
-    );
 
     const rows = await query(
       `INSERT INTO admin_users (id, email, password_hash, role, created_at, updated_at)

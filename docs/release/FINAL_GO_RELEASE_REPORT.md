@@ -166,3 +166,20 @@ requires live proof of the money/tenant-critical paths, the overall decision is
 7. **Final gate review**: only AGENT 00 may then re-run and mark gates PASS.
 
 Until every item above is evidenced, the decision remains **NO-GO**.
+
+## Engineering gap closure — update (branch `remediation/engineering-gap-closure`)
+
+The follow-up mission closed the engineering follow-ups listed in item 6 above
+that did **not** require owner input: GAP-01 (role namespacing), GAP-05 (notification
+retry + verified events), GAP-06 (reservation hardening), A108 (audit completeness),
+lazy-DDL removal, A110 (fail-safe refund/inventory restoration), GAP-12 (finance
+policy wiring + DB constraints), A01 (signed Razorpay webhook) and A09 (partner
+navigation). Reserved migrations 005–009 were integrated by the Lead. The full
+storefront suite is green (116 files / 1577 passed + 4 skipped) and typecheck is
+clean; independent QA is recorded in `QA_GAP_CLOSURE_REPORT.md`.
+
+**This does not change the production decision.** Items 1–5 and 7 above remain
+unverified and owner-gated; the live E2E scenarios A–J were not executed. No gate
+was marked PASS by any agent. The engineering-closure conclusion and the remaining
+owner gates are in `ENGINEERING_GAP_CLOSURE_REPORT.md` and
+`OWNER_INPUT_REQUIRED.md`. **Decision: NO-GO — unchanged.**

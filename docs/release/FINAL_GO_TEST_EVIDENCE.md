@@ -54,3 +54,46 @@ results alone.** Only AGENT 00 marks gates PASS after independent review.
   multi-partner-isolation, and payment-sandbox are authored but skipped (gated by
   `E2E_SANDBOX` plus credentials). A skipped test is **NOT verified and never a
   pass**; it contributes nothing to the totals above.
+
+## Engineering gap closure — `remediation/engineering-gap-closure`
+
+All commands below were run by the Lead (AGENT 00) on this branch. Agent-reported
+single-file results are quoted only; they are contained in the full suite total,
+not added again. Findings are code-level/static/pure — **still not live E2E proof**.
+
+| Command / suite | Result | Notes |
+|---|---|---|
+| `pnpm typecheck` (monorepo) | **4 / 4 successful** | ui + storefront + backend + root |
+| `pnpm --filter @snehavrinda-kala/backend test` | 7 files / **101 passed** | unchanged from final-go baseline |
+| `cd apps/storefront && npx vitest run` | 127 files / **1669 passed + 4 skipped**, 0 failures | full integrated storefront suite (final, incl. A10's 10 independent QA files / 88 tests + `qa-pii-hardening` 4 tests) |
+| `cd apps/storefront && npx tsc --noEmit` | 0 errors | — |
+| `docker compose config --quiet` | valid | Docker Desktop context |
+| `node apps/storefront/scripts/secret-scan.mjs` | OK — no potential secrets in 818 tracked files | clean |
+| `cd apps/storefront && env -u DATABASE_URL node scripts/verify-schema.mjs` | only `DATABASE_URL is not set` | hard handler gate active; no CREATE TABLE failures |
+
+Combined code-level total: **1770 passed + 4 skipped** (101 backend + 1669
+storefront), up from the final-go 1468. Live E2E A–J remain unrun and are not
+counted.
+
+New/updated suites integrated into that total (agent-reported counts, all
+independently re-run by the Lead within the full suite):
+
+| Suite | Result | Gap |
+|---|---|---|
+| `qa-webhook-endpoint` | 33 | A01 |
+| `qa-audit-coverage` | 25 | A02 |
+| `qa-notification-retry` | 19 | A03 |
+| `qa-notification-worker-routes` | 10 | A03 Lead wiring |
+| `qa-refund-inventory` | 18 | A04 |
+| `qa-finance-policy` | 22 | A05 |
+| `qa-payability-resolver` | 6 | A05 Lead wiring |
+| `qa-reservation-hardening` | 18 | A06 |
+| `qa-role-namespace` | 29 | A07 |
+| `qa-no-runtime-ddl` | 7 | A08 |
+| `partner-nav` | 22 | A09 |
+| `qa-migration-recovery` + `migration-integrity` + `qa-partner-ui` | 42 | Lead integration fixes (005–009 lists, nav counts, additive-DDL checks) |
+| `qa-gap-closure*` (10 files, A10 independent QA) | 88 | independent static/pure verification of all gaps — see `QA_GAP_CLOSURE_REPORT.md` |
+| `qa-pii-hardening` | 4 | Lead regression tests for A10 findings F1/F2 (dev-preview recipient scrubbing, camelCase secret-key redaction) |
+
+**Honesty note unchanged:** no gate is PASS from these results. Live E2E A–J and
+all owner-gated integrations remain unverified; only AGENT 00 may close a gate.

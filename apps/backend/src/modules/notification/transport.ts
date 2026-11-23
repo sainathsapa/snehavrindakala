@@ -12,16 +12,23 @@
 
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 
+/** Last line of defence for the dev/CI preview: never print raw PII. */
+function scrubPii(value: string): string {
+  return value
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED]")
+    .replace(/\b\d{13,19}\b/g, "[REDACTED]");
+}
+
 export type SendOutcome = "sent" | "skipped";
 
 /**
  * Delivery states the SES transport can report.
  *
- * BLOCKER: there is no SES event webhook / configuration-set destination wired
- * up yet, so `delivered` and `bounced` are declared but never written by this
- * code. They are kept here (and in the notification entity's status enum) so a
- * webhook can record them later without a schema change. Do not read a `sent`
- * row as proof of delivery until that webhook exists.
+ * `delivered` and `bounced` are written only by the verified SES→SNS event
+ * route (`apps/storefront/app/api/webhooks/ses/route.ts`), never by this send
+ * path. Do not read a `sent` row as proof of delivery: `sent` means the provider
+ * accepted/queued the message, and the owner must still provision the SES
+ * configuration-set → SNS destination for delivery events to arrive.
  */
 export const NOTIFICATION_STATUS = {
   PENDING: "pending",
@@ -33,6 +40,32 @@ export const NOTIFICATION_STATUS = {
 } as const;
 
 export const DELIVERY_CONFIRMATION_STATUSES = ["delivered", "bounced"] as const;
+
+/**
+ * GAP-05/07 additive vocabulary for the `delivery_status` column added by
+ * migration 005. `sent` means only "the provider accepted/queued the message";
+ * it is NEVER delivery proof. The real lifecycle (delivered / bounced /
+ * complained / rejected / delivery_delayed) is written only from a verified SES
+ * event. The six-value `status` CHECK is deliberately left untouched.
+ *
+ * A verified SNS webhook is implemented at
+ * apps/storefront/app/api/webhooks/ses/route.ts; until the owner provisions the
+ * SES configuration-set → SNS destination and subscribes that endpoint, the
+ * BLOCKER note above still describes the deployed runtime honestly.
+ */
+export const DELIVERY_STATUS = {
+  QUEUED: "queued",
+  ACCEPTED: "accepted",
+  RETRYING: "retrying",
+  DEAD_LETTERED: "dead_lettered",
+  FAILED_TERMINAL: "failed_terminal",
+  SKIPPED: "skipped",
+  DELIVERED: "delivered",
+  BOUNCED: "bounced",
+  COMPLAINED: "complained",
+  REJECTED: "rejected",
+  DELIVERY_DELAYED: "delivery_delayed",
+} as const;
 
 /** What a transport call returned, including the provider's own receipt id. */
 export interface SendReceipt {
@@ -118,9 +151,11 @@ export async function sendEmailWithReceipt(
   const config = readTransportConfig(env);
 
   if (!config || !hasCredentials(env)) {
-    // Development / CI: print a readable preview instead of sending.
+    // Development / CI: print a readable preview instead of sending. Even here
+    // the recipient and body are PII: scrub emails and card-like numbers before
+    // logging, so a preview can never leak a real address into shared CI logs.
     console.log(
-      `\n[email:skipped] to=${payload.to} subject="${payload.subject}"\n${payload.text}\n`
+      `\n[email:skipped] to=${scrubPii(payload.to)} subject="${scrubPii(payload.subject)}"\n${scrubPii(payload.text)}\n`
     );
     return { status: "skipped", messageId: null };
   }
@@ -147,6 +182,8 @@ export async function sendEmailWithReceipt(
   });
 
   const result = await getClient(config.region).send(command);
+  // SES has ACCEPTED/QUEUED the message; this is not proof of delivery. Only a
+  // verified delivery event may advance the row to `delivered`.
   return { status: "sent", messageId: result.MessageId || null };
 }
 

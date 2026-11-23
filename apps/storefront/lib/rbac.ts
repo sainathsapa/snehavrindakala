@@ -6,28 +6,57 @@
  * admin session and checks it against this matrix before any privileged
  * mutation. The client hooks use the same matrix only to hide controls.
  *
- * Roles (all values are valid values of admin_users.role / session.role):
- *   - super_admin: full access, including users, roles and settings
- *   - admin:       operational + finance leadership; no user/role management
- *   - manager:     orders, products, categories, artists, inventory, shipping
- *   - operations:  order fulfilment, shipping, inventory, support
- *   - finance:     refunds, approvals, finance data, settlements
- *   - support:     tickets, view orders/customers, request refunds
- *   - partner:     partner-scoped read access (tenant isolation enforced separately)
- *   - viewer:      read-only
+ * ROLE NAMESPACING (GAP-01 closure):
+ *   Platform (this file) canonical roles use the `platform_` prefix. Partner
+ *   portal roles (lib/partner/types.ts) use the `partner_` prefix. The two
+ *   string domains are disjoint, so a partner role can never be evaluated by
+ *   this matrix (and a platform role can never be evaluated by the partner
+ *   matrix). Bare, legacy role names are still accepted during the transition
+ *   (see the migration note in db/migrations/006_role_namespacing.sql) but are
+ *   canonicalised at every trusted resolution boundary before any permission
+ *   check, so a legacy ambiguous value never grants elevated access across the
+ *   namespace boundary.
+ *
+ * Canonical platform roles:
+ *   - platform_super_admin: full access, including users, roles and settings
+ *   - platform_admin:       operational + finance leadership; no user/role management
+ *   - platform_manager:     orders, products, categories, artists, inventory, shipping
+ *   - platform_operations:  order fulfilment, shipping, inventory, support
+ *   - platform_finance:     refunds, approvals, finance data, settlements
+ *   - platform_support:     tickets, view orders/customers, request refunds
+ *   - partner:              partner-scoped read access (tenant isolation enforced separately).
+ *                           Deliberately keeps its stable, unprefixed value: it does not
+ *                           collide with `partner_*` partner roles and is compared literally
+ *                           by the platform marketplace guards outside this module.
+ *   - platform_viewer:      read-only
+ *
+ * Legacy platform aliases (transition only): super_admin, admin, manager,
+ * operations, finance, support, viewer. They retain identical permissions and
+ * are mapped to their canonical `platform_*` value by canonicalPlatformRole().
  *
  * Unknown roles are denied every permission (fail closed).
  */
 
-export type Role =
+export type PlatformRoleCanonical =
+  | "platform_super_admin"
+  | "platform_admin"
+  | "platform_manager"
+  | "platform_operations"
+  | "platform_finance"
+  | "platform_support"
+  | "partner"
+  | "platform_viewer";
+
+export type PlatformRoleLegacy =
   | "super_admin"
   | "admin"
   | "manager"
   | "operations"
   | "finance"
   | "support"
-  | "partner"
   | "viewer";
+
+export type Role = PlatformRoleCanonical | PlatformRoleLegacy;
 
 export type Permission =
   | "orders:read" | "orders:write" | "orders:delete"
@@ -45,117 +74,182 @@ export type Permission =
   | "roles:read" | "roles:write"
   | "settings:read" | "settings:write";
 
-/** Role → Permissions matrix. Additive; existing roles keep their old powers. */
+const ALL: Permission[] = [
+  "orders:read", "orders:write", "orders:delete",
+  "products:read", "products:write", "products:delete",
+  "categories:read", "categories:write", "categories:delete",
+  "customers:read", "customers:write",
+  "artists:read", "artists:write", "artists:delete",
+  "partners:read", "partners:write",
+  "inventory:read", "inventory:write",
+  "shipments:write",
+  "refunds:read", "refunds:write", "refunds:approve",
+  "finance:read", "settlements:write",
+  "tickets:read", "tickets:write", "tickets:assign",
+  "users:read", "users:write", "users:delete",
+  "roles:read", "roles:write",
+  "settings:read", "settings:write",
+];
+
+const ADMIN: Permission[] = [
+  "orders:read", "orders:write", "orders:delete",
+  "products:read", "products:write", "products:delete",
+  "categories:read", "categories:write", "categories:delete",
+  "customers:read", "customers:write",
+  "artists:read", "artists:write", "artists:delete",
+  "partners:read", "partners:write",
+  "inventory:read", "inventory:write",
+  "shipments:write",
+  "refunds:read", "refunds:write", "refunds:approve",
+  "finance:read", "settlements:write",
+  "tickets:read", "tickets:write", "tickets:assign",
+  "users:read", "roles:read",
+  "settings:read", "settings:write",
+];
+
+const MANAGER: Permission[] = [
+  "orders:read", "orders:write",
+  "products:read", "products:write", "products:delete",
+  "categories:read", "categories:write", "categories:delete",
+  "customers:read",
+  "artists:read", "artists:write",
+  "partners:read",
+  "inventory:read", "inventory:write",
+  "shipments:write",
+  "refunds:read", "refunds:write",
+  "tickets:read",
+];
+
+const OPERATIONS: Permission[] = [
+  "orders:read", "orders:write",
+  "products:read",
+  "customers:read",
+  "partners:read",
+  "inventory:read", "inventory:write",
+  "shipments:write",
+  "refunds:read",
+  "tickets:read", "tickets:write", "tickets:assign",
+];
+
+const FINANCE: Permission[] = [
+  "orders:read",
+  "customers:read",
+  "partners:read",
+  "products:read",
+  "refunds:read", "refunds:write", "refunds:approve",
+  "finance:read", "settlements:write",
+  "tickets:read",
+];
+
+const SUPPORT: Permission[] = [
+  "orders:read",
+  "customers:read", "customers:write",
+  "refunds:read", "refunds:write",
+  "tickets:read", "tickets:write", "tickets:assign",
+];
+
+const PARTNER_SCOPED: Permission[] = [
+  // Partner-scoped reads only. Tenant isolation is enforced in the partner
+  // data layer, never by this matrix alone.
+  "orders:read", "products:read", "partners:read",
+];
+
+const VIEWER: Permission[] = [
+  "orders:read",
+  "products:read",
+  "categories:read",
+  "customers:read",
+  "artists:read",
+  "partners:read",
+  "inventory:read",
+  "refunds:read",
+  "finance:read",
+  "tickets:read",
+  "settings:read",
+];
+
+/**
+ * Role → Permissions matrix. Additive; existing roles keep their old powers.
+ * Both canonical `platform_*` keys and legacy bare names are present so legacy
+ * data keeps working during the transition. Partner canonical (`partner_*`)
+ * keys are deliberately absent — passing one here fails closed.
+ */
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  super_admin: [
-    "orders:read", "orders:write", "orders:delete",
-    "products:read", "products:write", "products:delete",
-    "categories:read", "categories:write", "categories:delete",
-    "customers:read", "customers:write",
-    "artists:read", "artists:write", "artists:delete",
-    "partners:read", "partners:write",
-    "inventory:read", "inventory:write",
-    "shipments:write",
-    "refunds:read", "refunds:write", "refunds:approve",
-    "finance:read", "settlements:write",
-    "tickets:read", "tickets:write", "tickets:assign",
-    "users:read", "users:write", "users:delete",
-    "roles:read", "roles:write",
-    "settings:read", "settings:write",
-  ],
-  admin: [
-    "orders:read", "orders:write", "orders:delete",
-    "products:read", "products:write", "products:delete",
-    "categories:read", "categories:write", "categories:delete",
-    "customers:read", "customers:write",
-    "artists:read", "artists:write", "artists:delete",
-    "partners:read", "partners:write",
-    "inventory:read", "inventory:write",
-    "shipments:write",
-    "refunds:read", "refunds:write", "refunds:approve",
-    "finance:read", "settlements:write",
-    "tickets:read", "tickets:write", "tickets:assign",
-    "users:read", "roles:read",
-    "settings:read", "settings:write",
-  ],
-  manager: [
-    "orders:read", "orders:write",
-    "products:read", "products:write", "products:delete",
-    "categories:read", "categories:write", "categories:delete",
-    "customers:read",
-    "artists:read", "artists:write",
-    "partners:read",
-    "inventory:read", "inventory:write",
-    "shipments:write",
-    "refunds:read", "refunds:write",
-    "tickets:read",
-  ],
-  operations: [
-    "orders:read", "orders:write",
-    "products:read",
-    "customers:read",
-    "partners:read",
-    "inventory:read", "inventory:write",
-    "shipments:write",
-    "refunds:read",
-    "tickets:read", "tickets:write", "tickets:assign",
-  ],
-  finance: [
-    "orders:read",
-    "customers:read",
-    "partners:read",
-    "products:read",
-    "refunds:read", "refunds:write", "refunds:approve",
-    "finance:read", "settlements:write",
-    "tickets:read",
-  ],
-  support: [
-    "orders:read",
-    "customers:read", "customers:write",
-    "refunds:read", "refunds:write",
-    "tickets:read", "tickets:write", "tickets:assign",
-  ],
-  partner: [
-    // Partner-scoped reads only. Tenant isolation is enforced in the partner
-    // data layer, never by this matrix alone.
-    "orders:read", "products:read", "partners:read",
-  ],
-  viewer: [
-    "orders:read",
-    "products:read",
-    "categories:read",
-    "customers:read",
-    "artists:read",
-    "partners:read",
-    "inventory:read",
-    "refunds:read",
-    "finance:read",
-    "tickets:read",
-    "settings:read",
-  ],
+  // --- canonical platform roles ---
+  platform_super_admin: ALL,
+  platform_admin: ADMIN,
+  platform_manager: MANAGER,
+  platform_operations: OPERATIONS,
+  platform_finance: FINANCE,
+  platform_support: SUPPORT,
+  partner: PARTNER_SCOPED,
+  platform_viewer: VIEWER,
+  // --- legacy platform aliases (transition only) ---
+  super_admin: ALL,
+  admin: ADMIN,
+  manager: MANAGER,
+  operations: OPERATIONS,
+  finance: FINANCE,
+  support: SUPPORT,
+  viewer: VIEWER,
 };
 
 export const ROLE_LABELS: Record<Role, string> = {
+  platform_super_admin: "Super Admin",
+  platform_admin: "Admin",
+  platform_manager: "Manager",
+  platform_operations: "Operations Staff",
+  platform_finance: "Finance Staff",
+  platform_support: "Customer Support",
+  partner: "Partner",
+  platform_viewer: "Read-only Viewer",
   super_admin: "Super Admin",
   admin: "Admin",
   manager: "Manager",
   operations: "Operations Staff",
   finance: "Finance Staff",
   support: "Customer Support",
-  partner: "Partner",
   viewer: "Read-only Viewer",
 };
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  platform_super_admin: "Full access to all admin features including user and role management.",
+  platform_admin: "Runs the business day to day, including finance and partners; no user/role management.",
+  platform_manager: "Manages orders, products, categories, artists and inventory.",
+  platform_operations: "Fulfils orders, manages shipments and inventory, handles support.",
+  platform_finance: "Reviews refunds, finance records and partner settlements.",
+  platform_support: "Handles support tickets and view-only order/customer context; may request refunds.",
+  partner: "Partner-scoped access to their own orders and catalogue.",
+  platform_viewer: "Read-only access to admin resources.",
   super_admin: "Full access to all admin features including user and role management.",
   admin: "Runs the business day to day, including finance and partners; no user/role management.",
   manager: "Manages orders, products, categories, artists and inventory.",
   operations: "Fulfils orders, manages shipments and inventory, handles support.",
   finance: "Reviews refunds, finance records and partner settlements.",
   support: "Handles support tickets and view-only order/customer context; may request refunds.",
-  partner: "Partner-scoped access to their own orders and catalogue.",
   viewer: "Read-only access to admin resources.",
 };
+
+/** Legacy bare platform name → canonical platform role value. */
+const LEGACY_TO_CANONICAL_PLATFORM: Record<PlatformRoleLegacy, Role> = {
+  super_admin: "platform_super_admin",
+  admin: "platform_admin",
+  manager: "platform_manager",
+  operations: "platform_operations",
+  finance: "platform_finance",
+  support: "platform_support",
+  viewer: "platform_viewer",
+};
+
+const CANONICAL_PLATFORM_VALUES = new Set<string>([
+  "platform_super_admin", "platform_admin", "platform_manager",
+  "platform_operations", "platform_finance", "platform_support",
+  "platform_viewer", "partner",
+]);
+
+export function isCanonicalPlatformRole(value: unknown): value is PlatformRoleCanonical {
+  return typeof value === "string" && CANONICAL_PLATFORM_VALUES.has(value);
+}
 
 export function isRole(value: unknown): value is Role {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(ROLE_PERMISSIONS, value);
@@ -164,20 +258,27 @@ export function isRole(value: unknown): value is Role {
 /**
  * Fail-closed boundary between the partner and platform RBAC namespaces.
  *
- * Partner membership roles (owner/manager/operations/finance/viewer) live in a
- * different table. Four of those strings collide with genuine platform roles,
- * so a partner role that ever reaches `hasPermission` would silently inherit
- * platform powers. This guard is applied where an admin identity is built
+ * Partner membership roles (partner_owner/... or legacy owner/...) live in a
+ * different table. This guard is applied where an admin identity is built
  * (getAdminIdentity): only a string that is genuinely in the platform matrix
  * may become an admin role. A partner-only or unknown role yields `null`, so no
- * identity is produced at all (QA GAP-01 mitigation).
- *
- * Note: the colliding names themselves remain valid *platform* roles by design;
- * full string-level namespacing of partner roles is a separate, owner-gated
- * data migration tracked in FINAL_GO_BLOCKERS.md.
+ * identity is produced at all (QA GAP-01 mitigation). Canonical `platform_*`
+ * values and legacy platform aliases are both accepted; partner values are not.
  */
 export function platformRoleOrNull(value: unknown): Role | null {
   return isRole(value) ? value : null;
+}
+
+/**
+ * Canonicalise a value already accepted by `platformRoleOrNull` into its stable
+ * `platform_*` role value. Returns null for anything outside the platform
+ * namespace. Used at every trusted platform resolution boundary so that a
+ * legacy, ambiguous bare name never reaches a permission check as a bare name.
+ */
+export function canonicalPlatformRole(value: unknown): Role | null {
+  if (typeof value !== "string" || !isRole(value)) return null;
+  if (isCanonicalPlatformRole(value)) return value;
+  return LEGACY_TO_CANONICAL_PLATFORM[value as PlatformRoleLegacy] ?? null;
 }
 
 /** Unknown roles / permissions are always denied (fail closed). */

@@ -17,22 +17,6 @@ const DATABASE_URL =
   "postgresql://medusa:medusa@localhost:5432/medusa";
 
 
-async function ensureTable() {
-  await query(`
-    CREATE TABLE IF NOT EXISTS return_requests (
-      id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-      order_id TEXT NOT NULL,
-      customer_id TEXT,
-      customer_email TEXT NOT NULL,
-      reason TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending',
-      items TEXT,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now()
-    )
-  `);
-}
-
 export async function POST(req: Request) {
   try {
     const token = await getAuthToken();
@@ -77,8 +61,6 @@ export async function POST(req: Request) {
       );
     }
 
-    await ensureTable();
-
     const id = `ret_${randomUUID().slice(0, 8)}`;
     const rows = await query(
       `INSERT INTO return_requests
@@ -119,8 +101,6 @@ export async function GET(req: Request) {
     } catch {
       customer = null;
     }
-
-    await ensureTable();
 
     const rows = customer?.id
       ? await query(

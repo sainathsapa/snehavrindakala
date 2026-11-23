@@ -125,11 +125,13 @@ describe("A102 — partner UI uses the real design system, not invented inline s
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The 14 sections the partner portal is contractually required to expose.
- * `hrefs` lists the accepted route(s) for each section. The catalogue agent
- * merged "Product submissions" into the products surface via `?status=all`, so
- * both that and a dedicated `/partner/submissions` route are accepted — what is
- * pinned is the 14 named sections and that each resolves to a partner route.
+ * The sections the partner portal is required to expose. The 14 contractual
+ * sections are joined by the "Audit trail" page added in engineering-gap
+ * closure. `hrefs` lists the accepted route(s) for each section. The catalogue
+ * agent merged "Product submissions" into the products surface via
+ * `?status=all`, so both that and a dedicated `/partner/submissions` route are
+ * accepted — what is pinned is the named sections and that each resolves to a
+ * partner route. Assertions use REQUIRED_SECTIONS.length, not a magic number.
  */
 const REQUIRED_SECTIONS = [
   { label: "Overview", hrefs: ["/partner"] },
@@ -146,16 +148,17 @@ const REQUIRED_SECTIONS = [
   { label: "Settlements", hrefs: ["/partner/settlements"] },
   { label: "Team", hrefs: ["/partner/team"] },
   { label: "Security", hrefs: ["/partner/security"] },
+  { label: "Audit trail", hrefs: ["/partner/audit"] },
 ] as const;
 
-describe("A102 — the sidebar lists all 14 required sections", () => {
+describe("A102 — the sidebar lists all required sections", () => {
   const hrefs = [...nav.matchAll(/href:\s*"(\/partner[^"]*)"/g)].map((m) => m[1]);
   const labels = [...nav.matchAll(/label:\s*"([^"]+)"/g)].map((m) => m[1]);
   const titles = [...nav.matchAll(/title:\s*"([^"]+)"/g)].map((m) => m[1]);
 
-  it("declares exactly 14 distinct partner routes — no missing and no extra links", () => {
-    expect(hrefs).toHaveLength(14);
-    expect(new Set(hrefs).size).toBe(14); // no duplicates
+  it("declares exactly the expected distinct partner routes — no missing and no extra links", () => {
+    expect(hrefs).toHaveLength(REQUIRED_SECTIONS.length);
+    expect(new Set(hrefs).size).toBe(REQUIRED_SECTIONS.length); // no duplicates
     for (const href of hrefs) {
       expect(href.startsWith("/partner"), `non-partner nav href ${href}`).toBe(true);
     }
@@ -169,7 +172,7 @@ describe("A102 — the sidebar lists all 14 required sections", () => {
   });
 
   it("gives every section its expected human-readable label", () => {
-    expect(labels).toHaveLength(14);
+    expect(labels).toHaveLength(REQUIRED_SECTIONS.length);
     for (const section of REQUIRED_SECTIONS) {
       expect(labels, `missing label for ${section.label}`).toContain(section.label);
     }

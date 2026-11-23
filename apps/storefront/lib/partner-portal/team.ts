@@ -20,6 +20,7 @@ import {
 } from "@/lib/partner/repository";
 import {
   isPartnerRole,
+  isPartnerOwnerRole,
   type PartnerContext,
   type PartnerRole,
 } from "@/lib/partner/types";
@@ -141,7 +142,7 @@ async function assertNotLastOwner(
   const rows = await tenantQuery<{ count: number }>(
     ctx,
     "SELECT count(*)::int AS count FROM partner_membership " +
-      "WHERE partner_id = {partner} AND role = 'owner' AND status = 'active'",
+      "WHERE partner_id = {partner} AND role IN ('owner','partner_owner') AND status = 'active'",
     [],
     run(ex)
   );
@@ -214,7 +215,11 @@ export async function changeMemberRole(
   const target = await findScopedMember(ctx, memberId, ex);
   if (!target) return null;
 
-  if (target.role === "owner" && role !== "owner" && target.status === "active") {
+  if (
+    isPartnerOwnerRole(target.role) &&
+    !isPartnerOwnerRole(role) &&
+    target.status === "active"
+  ) {
     await assertNotLastOwner(ctx, ex);
   }
 
@@ -249,7 +254,7 @@ export async function suspendMember(
   if (!target) return null;
   if (target.status === "suspended") return target;
 
-  if (target.role === "owner" && target.status === "active") {
+  if (isPartnerOwnerRole(target.role) && target.status === "active") {
     await assertNotLastOwner(ctx, ex);
   }
 

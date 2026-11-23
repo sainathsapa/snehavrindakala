@@ -115,7 +115,8 @@ describe("POST /api/store/partner-applications", () => {
 
     expect(result.status).toBe(201);
     expect(result.json).toEqual({ id: "app_123", status: "pending" });
-    expect(mockQuery).toHaveBeenCalledTimes(1);
+    // The submission now also writes an A108 audit row by application id only.
+    expect(mockQuery).toHaveBeenCalledTimes(2);
 
     const [sql, params] = mockQuery.mock.calls[0];
     expect(sql).toMatch(/INSERT INTO partner_onboarding_application/i);
@@ -124,6 +125,12 @@ describe("POST /api/store/partner-applications", () => {
     expect(params[2]).toBe("studio@example.com");
     expect(params[4]).toBe(JSON.stringify(validInput().business_details));
     expect(params[6]).toBe(JSON.stringify(validInput().product_categories));
+
+    const [auditSql, auditParams] = mockQuery.mock.calls[1];
+    expect(auditSql).toMatch(/INSERT INTO audit_log/i);
+    expect(auditParams).toContain("partner_application.submitted");
+    expect(auditParams).toContain("app_123");
+    expect(JSON.stringify(auditParams)).not.toMatch(/studio@example\.com/);
   });
 
   it("never trusts a client status", async () => {

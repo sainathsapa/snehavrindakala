@@ -32,35 +32,6 @@ export interface ResetRequest {
   handled_by: string | null;
 }
 
-let schemaReady: Promise<void> | null = null;
-
-async function createTable(): Promise<void> {
-  await query(
-    `CREATE TABLE IF NOT EXISTS password_reset_requests (
-       id SERIAL PRIMARY KEY,
-       email TEXT NOT NULL,
-       requested_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-       handled_at TIMESTAMPTZ,
-       handled_by TEXT
-     )`
-  );
-  await query(
-    `CREATE UNIQUE INDEX IF NOT EXISTS password_reset_requests_open_email
-       ON password_reset_requests (lower(email))
-       WHERE handled_at IS NULL`
-  );
-}
-
-function ensureTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((error) => {
-      schemaReady = null;
-      throw error;
-    });
-  }
-  return schemaReady;
-}
-
 /** Cheap shape check — the same one the other forms use. */
 export function looksLikeEmail(value: unknown): value is string {
   if (typeof value !== "string") return false;
@@ -77,7 +48,6 @@ export async function recordResetRequest(
   now?: Date
 ): Promise<{ recorded: boolean; id: number | null }> {
   if (!looksLikeEmail(email)) return { recorded: false, id: null };
-  await ensureTable();
   const result = await queryResult<{ id: number }>(
     `INSERT INTO password_reset_requests (email, requested_at)
      VALUES (lower($1), $2)
@@ -90,7 +60,6 @@ export async function recordResetRequest(
 }
 
 export async function listResetRequests(): Promise<ResetRequest[]> {
-  await ensureTable();
   return query<ResetRequest>(
     `SELECT id, email, requested_at, handled_at, handled_by
        FROM password_reset_requests
@@ -103,7 +72,6 @@ export async function markResetHandled(
   id: number,
   by: string | null
 ): Promise<boolean> {
-  await ensureTable();
   const result = await queryResult(
     `UPDATE password_reset_requests
         SET handled_at = now(), handled_by = $2

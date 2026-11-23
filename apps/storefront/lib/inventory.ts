@@ -18,8 +18,10 @@
  *   releaseExpired()      cron / admin                   → expired
  */
 
+import { randomUUID } from "node:crypto";
 import { query, transaction } from "./db";
 import type { PoolClient } from "pg";
+import { isPhysicalRestockableItem, restockDecision, type RestockItemContext } from "./returns/process";
 
 export const RESERVATION_TTL_SECONDS = 15 * 60; // 15 minutes, matching a checkout window
 
@@ -278,4 +280,343 @@ export async function getStock(variantId: string): Promise<StockRow | null> {
     [variantId]
   );
   return rows[0] ?? null;
+}
+
+/* ── Refund/return-driven stock restoration (additive, idempotent) ────────── */
+
+/**
+ * Refund execution records live in migration 007. None of these helpers touches
+ * money or order status. They only:
+ *   - record an OBSERVABLE restoration action (pending/failed/restored), and
+ *   - write an append-only inventory_movement with UNIQUE(movement_key) before
+ *     changing stock, so a concurrent replay cannot restore twice.
+ *
+ * An executor (not a live pool) is taken everywhere so tests can use a fake DB.
+ * `restoreSoldForRefund` is the transaction-wrapped production entry point.
+ */
+
+export type InventoryExecutor = (sql: string, params?: any[]) => Promise<any[]>;
+
+export type RestorationActionStatus =
+  | "not_required"
+  | "eligible"
+  | "pending"
+  | "restored"
+  | "failed"
+  | "not_eligible";
+
+export function restorationActionKey(
+  executionId: string,
+  discriminator: string
+): string {
+  return `inventory-restore:${executionId}:${discriminator}`;
+}
+
+export function restorationMovementKey(actionKey: string): string {
+  return `${actionKey}:movement`;
+}
+
+export interface RestorationActionInput {
+  actionKey: string;
+  orderId: string;
+  status: RestorationActionStatus;
+  refundExecutionId?: string | null;
+  refundRequestId?: string | null;
+  returnRequestId?: string | null;
+  orderItemId?: string | null;
+  variantId?: string | null;
+  reason?: string | null;
+  trigger?: string | null;
+  actor?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+/** Claim (or read back) the observable action row for an idempotency key. */
+export async function claimRestorationAction(
+  input: RestorationActionInput,
+  ex: InventoryExecutor
+): Promise<{ row: any | null; claimed: boolean }> {
+  const rows = await ex(
+    `INSERT INTO inventory_restoration_action
+       (id, action_key, refund_execution_id, refund_request_id, return_request_id,
+        order_id, order_item_id, variant_id, status, eligibility_reason, trigger,
+        actor, attempts, metadata, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,0,$13,now(),now())
+     ON CONFLICT (action_key) DO NOTHING RETURNING *`,
+    [
+      randomUUID(),
+      input.actionKey,
+      input.refundExecutionId ?? null,
+      input.refundRequestId ?? null,
+      input.returnRequestId ?? null,
+      input.orderId,
+      input.orderItemId ?? null,
+      input.variantId ?? null,
+      input.status,
+      input.reason ?? null,
+      input.trigger ?? null,
+      input.actor ?? null,
+      JSON.stringify(input.metadata ?? {}),
+    ]
+  );
+  if (rows?.[0]) return { row: rows[0], claimed: true };
+  const existing = await ex(
+    "SELECT * FROM inventory_restoration_action WHERE action_key = $1 LIMIT 1",
+    [input.actionKey]
+  );
+  return { row: existing?.[0] ?? null, claimed: false };
+}
+
+/** Move an action to a terminal/intermediate state. Idempotent on action_key. */
+export async function finalizeRestorationAction(
+  args: {
+    actionKey: string;
+    status: RestorationActionStatus;
+    reason?: string | null;
+    actor?: string | null;
+    lastError?: string | null;
+    incrementAttempts?: boolean;
+  },
+  ex: InventoryExecutor
+): Promise<any | null> {
+  const rows = await ex(
+    `UPDATE inventory_restoration_action
+        SET status = $2,
+            eligibility_reason = COALESCE($3, eligibility_reason),
+            actor = COALESCE($4, actor),
+            attempts = attempts + $5,
+            last_error = $6,
+            updated_at = now()
+      WHERE action_key = $1 RETURNING *`,
+    [
+      args.actionKey,
+      args.status,
+      args.reason ?? null,
+      args.actor ?? null,
+      args.incrementAttempts ? 1 : 0,
+      args.lastError ?? null,
+    ]
+  );
+  return rows?.[0] ?? null;
+}
+
+/** Record a non-restoring decision (not eligible / pending owner decision). */
+export async function recordNonRestoringAction(
+  input: RestorationActionInput,
+  ex: InventoryExecutor
+): Promise<any | null> {
+  const { row } = await claimRestorationAction(input, ex);
+  if (row && row.status === input.status) return row; // already observed
+  return finalizeRestorationAction(
+    {
+      actionKey: input.actionKey,
+      status: input.status,
+      reason: input.reason,
+      actor: input.actor,
+    },
+    ex
+  );
+}
+
+export interface RestoreSoldForRefundInput {
+  orderId: string;
+  actionKey: string;
+  movementKey: string;
+  actor: string;
+  reason: string;
+  refundExecutionId?: string | null;
+  refundRequestId?: string | null;
+  returnRequestId?: string | null;
+  orderItemId?: string | null;
+  variantId?: string | null;
+  quantity?: number;
+  trigger?: string | null;
+  condition?: unknown;
+  item?: RestockItemContext | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface RestoreSoldForRefundResult {
+  restored: boolean;
+  alreadyRestored: boolean;
+  restoredQuantity: number;
+  actionStatus: RestorationActionStatus;
+  reason: string;
+}
+
+/**
+ * Verify the item is still restockable, then restore consumed stock. The
+ * append-only movement is claimed (UNIQUE movement_key) before stock changes;
+ * a concurrent caller that loses the claim never touches stock. Called only
+ * with an executor inside a transaction in production.
+ */
+export async function restoreSoldForRefundWithExecutor(
+  input: RestoreSoldForRefundInput,
+  ex: InventoryExecutor
+): Promise<RestoreSoldForRefundResult> {
+  const fail = async (reason: string): Promise<RestoreSoldForRefundResult> => {
+    await finalizeRestorationAction(
+      {
+        actionKey: input.actionKey,
+        status: "failed",
+        reason,
+        actor: input.actor,
+        lastError: reason,
+        incrementAttempts: true,
+      },
+      ex
+    );
+    return {
+      restored: false,
+      alreadyRestored: false,
+      restoredQuantity: 0,
+      actionStatus: "failed",
+      reason,
+    };
+  };
+
+  // Re-verify the documented condition at execution time. A caller cannot skip
+  // eligibility by passing `eligible` straight into this function.
+  const preDispatch = input.trigger === "pre_dispatch_cancellation";
+  if (
+    !isPhysicalRestockableItem(input.item) ||
+    (!preDispatch && restockDecision(input.item ?? null, input.condition) !== "restock")
+  ) {
+    return fail("Condition/item re-verification failed: item is not restockable.");
+  }
+
+  const claimedAction = await claimRestorationAction(
+    {
+      actionKey: input.actionKey,
+      orderId: input.orderId,
+      status: "eligible",
+      reason: input.reason,
+      trigger: input.trigger,
+      actor: input.actor,
+      refundExecutionId: input.refundExecutionId,
+      refundRequestId: input.refundRequestId,
+      returnRequestId: input.returnRequestId,
+      orderItemId: input.orderItemId,
+      variantId: input.variantId,
+      metadata: input.metadata,
+    },
+    ex
+  );
+  if (claimedAction.row?.status === "restored") {
+    return {
+      restored: false,
+      alreadyRestored: true,
+      restoredQuantity: 0,
+      actionStatus: "restored",
+      reason: "Stock was already restored for this action key.",
+    };
+  }
+
+  const consumedSql = input.variantId
+    ? "SELECT id, variant_id, quantity FROM stock_reservation WHERE order_id = $1 AND status = 'consumed' AND variant_id = $2 FOR UPDATE"
+    : "SELECT id, variant_id, quantity FROM stock_reservation WHERE order_id = $1 AND status = 'consumed' FOR UPDATE";
+  const consumed = await ex(consumedSql, input.variantId ? [input.orderId, input.variantId] : [input.orderId]);
+  if (!consumed || consumed.length === 0) {
+    return fail("No consumed stock reservation found for this order; nothing to restore.");
+  }
+
+  let selected = consumed as Array<{ id: string; variant_id: string; quantity: number }>;
+  if (
+    typeof input.quantity === "number" &&
+    Number.isInteger(input.quantity) &&
+    input.quantity > 0
+  ) {
+    const capped: typeof selected = [];
+    let total = 0;
+    for (const r of selected) {
+      if (total >= input.quantity) break;
+      capped.push(r);
+      total += r.quantity;
+    }
+    selected = capped;
+  }
+  const restoredQuantity = selected.reduce((sum, r) => sum + Number(r.quantity), 0);
+
+  // Append-only movement claim: UNIQUE(movement_key) is the hard idempotency
+  // boundary. Losing the claim means another process already restored.
+  const movement = await ex(
+    `INSERT INTO inventory_movement
+       (id, movement_key, direction, order_id, order_item_id, variant_id, quantity,
+        refund_execution_id, refund_request_id, return_request_id, actor, reason,
+        restoration_action_key, metadata, created_at)
+     VALUES ($1,$2,'restock',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now())
+     ON CONFLICT (movement_key) DO NOTHING RETURNING *`,
+    [
+      randomUUID(),
+      input.movementKey,
+      input.orderId,
+      input.orderItemId ?? null,
+      input.variantId ?? null,
+      restoredQuantity,
+      input.refundExecutionId ?? null,
+      input.refundRequestId ?? null,
+      input.returnRequestId ?? null,
+      input.actor,
+      input.reason,
+      input.actionKey,
+      JSON.stringify(input.metadata ?? {}),
+    ]
+  );
+  if (!movement?.[0]) {
+    await finalizeRestorationAction(
+      {
+        actionKey: input.actionKey,
+        status: "restored",
+        reason: "Movement already recorded by a concurrent restoration.",
+        actor: input.actor,
+      },
+      ex
+    );
+    return {
+      restored: false,
+      alreadyRestored: true,
+      restoredQuantity: 0,
+      actionStatus: "restored",
+      reason: "Movement already recorded for this key.",
+    };
+  }
+
+  for (const r of selected) {
+    await ex(
+      "UPDATE stock_reservation SET status = 'released', updated_at = now() WHERE id = $1 AND status = 'consumed'",
+      [r.id]
+    );
+    await ex(
+      "UPDATE variant_stock SET sold = GREATEST(0, sold - $2), updated_at = now() WHERE variant_id = $1",
+      [r.variant_id, r.quantity]
+    );
+  }
+
+  await finalizeRestorationAction(
+    {
+      actionKey: input.actionKey,
+      status: "restored",
+      reason: input.reason,
+      actor: input.actor,
+    },
+    ex
+  );
+  return {
+    restored: restoredQuantity > 0,
+    alreadyRestored: false,
+    restoredQuantity,
+    actionStatus: "restored",
+    reason: input.reason,
+  };
+}
+
+/** Transaction-wrapped production entry point. */
+export async function restoreSoldForRefund(
+  input: RestoreSoldForRefundInput
+): Promise<RestoreSoldForRefundResult> {
+  return transaction(async (client) => {
+    const ex: InventoryExecutor = async (sql, params = []) =>
+      (await client.query(sql, params)).rows;
+    return restoreSoldForRefundWithExecutor(input, ex);
+  });
 }

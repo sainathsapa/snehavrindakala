@@ -14,18 +14,64 @@ import type {
   CommissionPolicy,
   CommissionResult,
   QueryExecutor,
+  RefundEffect,
+  PayableWhen,
   ValidationResult,
 } from "./types";
 
 const POLICY_STATUSES = ["draft", "approved", "active", "archived"];
 const SCOPES = ["global", "partner", "category", "product"];
 const RATE_BASES = ["gross_item_value", "discounted_item_value"];
-const REFUND_EFFECTS = ["reverse_earnings", "no_reversal"];
-const PAYABLE_WHENS = [
+
+/**
+ * The complete, documented vocabulary of the two policy rules that drive
+ * money behaviour. Anything outside these arrays has NO defined semantics and
+ * must fail closed (see `assertKnownRefundEffect` / `assertKnownPayableWhen`).
+ *
+ *  refund_effect:
+ *    reverse_earnings — post a new negative `refund_reversal` ledger row that
+ *                       reverses commission AND payable (net effect = 0).
+ *    no_reversal      — post nothing; the earning stands per the agreement.
+ *  payable_when:
+ *    order_paid            — payable once payment is captured.
+ *    order_delivered       — also requires confirmed delivery.
+ *    return_window_elapsed — also requires the configured return window to have
+ *                            elapsed with no pending return / refund / hold.
+ */
+export const REFUND_EFFECTS = ["reverse_earnings", "no_reversal"] as const;
+export const PAYABLE_WHENS = [
   "order_paid",
   "order_delivered",
   "return_window_elapsed",
-];
+] as const;
+
+export function isKnownRefundEffect(value: unknown): value is RefundEffect {
+  return typeof value === "string" && (REFUND_EFFECTS as readonly string[]).includes(value);
+}
+
+export function isKnownPayableWhen(value: unknown): value is PayableWhen {
+  return typeof value === "string" && (PAYABLE_WHENS as readonly string[]).includes(value);
+}
+
+/** Fail closed: an unknown/undefined refund_effect has no behaviour to apply. */
+export function assertKnownRefundEffect(value: unknown): RefundEffect {
+  if (!isKnownRefundEffect(value)) {
+    throw new Error(
+      `UNCONFIGURED_REFUND_EFFECT: "${String(value)}" has no defined refund semantics`
+    );
+  }
+  return value;
+}
+
+/** Fail closed: an unknown/undefined payable_when must never settle early. */
+export function assertKnownPayableWhen(value: unknown): PayableWhen {
+  if (!isKnownPayableWhen(value)) {
+    throw new Error(
+      `UNCONFIGURED_PAYABLE_WHEN: "${String(value)}" has no defined settlement timing; refusing to settle`
+    );
+  }
+  return value;
+}
 
 /** pg returns numeric(14,2) as a string; normalise all inputs to finite numbers. */
 export function toNumber(value: unknown): number {
@@ -172,6 +218,11 @@ export function validatePolicy(policy: CommissionPolicy): ValidationResult {
 
 /** Activation is only legal from an approved policy that names its approver. */
 export function activatePolicy(policy: CommissionPolicy): CommissionPolicy {
+  // Explicit fail-safe for the two behaviour-driving rules. validatePolicy also
+  // rejects these, but naming the checks here makes "no defined semantics ⇒
+  // cannot be activated" an intentional, testable contract.
+  assertKnownRefundEffect(policy?.refund_effect);
+  assertKnownPayableWhen(policy?.payable_when);
   const validation = validatePolicy(policy);
   if (!validation.valid) {
     throw new Error(

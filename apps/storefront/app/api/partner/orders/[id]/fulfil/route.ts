@@ -10,6 +10,12 @@
 import { NextResponse } from "next/server";
 import { requirePartnerPermission } from "@/lib/partner/context";
 import {
+  AUDIT_ACTIONS,
+  auditPayload,
+  correlationIdFrom,
+  recordMutationAudit,
+} from "@/lib/partner-audit/audit";
+import {
   updateGroupStatus,
   assertNoForbiddenFulfilmentFields,
   FulfilmentError,
@@ -46,6 +52,23 @@ export async function POST(
         : {};
     const group = await updateGroupStatus(ctx, id, to, ctx.email, extra);
     if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    // All fulfilment steps append one row; the exact step lives in `after.step`
+    // so an incident review can reconstruct the packing -> delivered sequence.
+    await recordMutationAudit({
+      partnerId: ctx.partnerId,
+      actorEmail: ctx.email,
+      actorRole: ctx.role,
+      action: AUDIT_ACTIONS.ORDER_FULFILLED,
+      entityType: "fulfilment_group",
+      entityId: group.id,
+      metadata: auditPayload(AUDIT_ACTIONS.ORDER_FULFILLED, ctx, {
+        customerOrderId: group.customer_order_id,
+        after: { status: group.status, step: to },
+        requestId: correlationIdFrom(req),
+        result: "success",
+        at: new Date().toISOString(),
+      }),
+    });
     return NextResponse.json(group);
   } catch (err) {
     const code = err instanceof FulfilmentError ? err.code : "ERROR";

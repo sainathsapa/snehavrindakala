@@ -13,29 +13,6 @@
 
 import { query, queryResult } from "@/lib/db";
 
-let schemaReady: Promise<void> | null = null;
-
-async function createTable(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS order_gift_notes (
-      order_id TEXT PRIMARY KEY,
-      note TEXT NOT NULL DEFAULT '',
-      wrap BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-}
-
-export function ensureGiftTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((err) => {
-      schemaReady = null;
-      throw err;
-    });
-  }
-  return schemaReady;
-}
-
 /**
  * A gift note is read by a person, so newlines are kept and only the edges are
  * trimmed. 300 characters is about what fits on a card — longer is a letter, and
@@ -67,7 +44,6 @@ export async function saveGiftForOrder(
   // Nothing asked for, nothing stored: an empty row would make every ordinary
   // order look like it had a gift option that was declined.
   if (!cleaned && !wrapped) return;
-  await ensureGiftTable();
   await query(
     `INSERT INTO order_gift_notes (order_id, note, wrap)
      VALUES ($1,$2,$3)
@@ -78,7 +54,6 @@ export async function saveGiftForOrder(
 
 export async function getGiftForOrder(orderId: string): Promise<GiftNote | null> {
   if (!orderId) return null;
-  await ensureGiftTable();
   const result = await queryResult<GiftNote>(
     `SELECT order_id, note, wrap FROM order_gift_notes WHERE order_id=$1`,
     [orderId]

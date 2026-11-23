@@ -14,22 +14,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS journal_posts (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        title TEXT NOT NULL,
-        slug TEXT UNIQUE NOT NULL,
-        content TEXT,
-        excerpt TEXT,
-        cover_image TEXT,
-        author TEXT,
-        status TEXT NOT NULL DEFAULT 'draft',
-        published_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const rows = await query(
       "SELECT * FROM journal_posts ORDER BY created_at DESC LIMIT 100"
     );
@@ -53,22 +37,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    await query(`
-      CREATE TABLE IF NOT EXISTS journal_posts (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        title TEXT NOT NULL,
-        slug TEXT UNIQUE NOT NULL,
-        content TEXT,
-        excerpt TEXT,
-        cover_image TEXT,
-        author TEXT,
-        status TEXT NOT NULL DEFAULT 'draft',
-        published_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
 
     const { v4: uuidv4 } = require("uuid");
     const id = `journal_${uuidv4().slice(0, 8)}`;

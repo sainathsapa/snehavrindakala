@@ -12,6 +12,12 @@
 import { NextResponse } from "next/server";
 import { requirePartnerPermission } from "@/lib/partner/context";
 import {
+  AUDIT_ACTIONS,
+  auditPayload,
+  correlationIdFrom,
+  recordMutationAudit,
+} from "@/lib/partner-audit/audit";
+import {
   getProduct,
   submitForApproval,
   updateSubmission,
@@ -21,6 +27,9 @@ import {
   type PartnerProductRow,
   type ProductSubmissionPatch,
 } from "@/lib/partner-portal/products";
+
+// Editing is not in the canonical AUDIT_ACTIONS set (only submission is).
+const PRODUCT_UPDATED = "PRODUCT_UPDATED";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -85,6 +94,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     }
 
     let product: PartnerProductRow;
+    const action = body.action === "submit" ? AUDIT_ACTIONS.PRODUCT_SUBMITTED : PRODUCT_UPDATED;
     if (body.action === "submit") {
       product = await submitForApproval(ctx, id);
     } else {
@@ -98,6 +108,24 @@ export async function PATCH(req: Request, { params }: RouteContext) {
       };
       product = await updateSubmission(ctx, id, patch);
     }
+    // Never audit the submitted payload itself (titles/prices/image URLs are
+    // caller-controlled); record ids, changed field names and the new status.
+    await recordMutationAudit({
+      partnerId: ctx.partnerId,
+      actorEmail: ctx.email,
+      actorRole: ctx.role,
+      action,
+      entityType: "partner_product",
+      entityId: product.id,
+      metadata: auditPayload(action, ctx, {
+        productId: product.product_id,
+        changedFields: body.action === "submit" ? ["submission_status"] : Object.keys(body).filter((k) => k !== "action"),
+        after: { submissionStatus: product.submission_status },
+        requestId: correlationIdFrom(req),
+        result: "success",
+        at: new Date().toISOString(),
+      }),
+    });
     return NextResponse.json({ product });
   } catch (err: any) {
     return errorResponse(err);

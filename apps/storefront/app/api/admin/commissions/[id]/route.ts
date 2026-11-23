@@ -25,20 +25,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Missing status field" }, { status: 400 });
     }
 
-    await query(`
-      CREATE TABLE IF NOT EXISTS commission_payouts (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        artist_id TEXT NOT NULL,
-        artist_name TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        currency_code TEXT NOT NULL DEFAULT 'inr',
-        status TEXT NOT NULL DEFAULT 'pending',
-        paid_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const rows = await query(
       `UPDATE commission_payouts SET status = $1, updated_at = now(),
         paid_at = CASE WHEN $1 = 'paid' THEN now() ELSE paid_at END
@@ -65,20 +51,6 @@ export async function DELETE(
   }
   try {
     const { id } = await params;
-
-    await query(`
-      CREATE TABLE IF NOT EXISTS commission_payouts (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        artist_id TEXT NOT NULL,
-        artist_name TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        currency_code TEXT NOT NULL DEFAULT 'inr',
-        status TEXT NOT NULL DEFAULT 'pending',
-        paid_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
 
     const rows = await query(
       `DELETE FROM commission_payouts WHERE id = $1 RETURNING *`,

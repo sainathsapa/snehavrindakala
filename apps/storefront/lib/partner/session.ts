@@ -7,6 +7,12 @@
  * The role and token version in the cookie are advisory; `requirePartnerContext`
  * re-reads the membership from the database on every request, so a suspended
  * member or a revoked session (bumped token_version) is rejected immediately.
+ *
+ * Namespace awareness: only partner roles (`partner_*`, or legacy bare partner
+ * names during the transition) pass `isPartnerRole` here. A platform role —
+ * bare or `platform_*` — fails verification, so a platform identity can never
+ * be minted as a partner session. `resolvePartnerContext` canonicalises the
+ * claim to the stable `partner_*` value before any permission check.
  */
 
 import { createHmac, timingSafeEqual } from "crypto";

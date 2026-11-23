@@ -25,38 +25,6 @@ export interface OrderShipment {
 }
 
 
-async function ensureTable() {
-  await query(`
-    CREATE TABLE IF NOT EXISTS order_shipments (
-      id TEXT PRIMARY KEY,
-      order_id TEXT UNIQUE NOT NULL,
-      shiprocket_order_id TEXT,
-      shipment_id TEXT,
-      awb_code TEXT,
-      courier_name TEXT,
-      courier_service TEXT,
-      tracking_url TEXT,
-      label_url TEXT,
-      pickup_location TEXT,
-      status TEXT NOT NULL DEFAULT 'created',
-      raw JSONB,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now()
-    )
-  `);
-  // The track page looks shipments up by AWB, which is a guest-facing query on a
-  // table that grows with every order, so it needs an index.
-  //
-  // Plain, not partial. A partial index on `awb_code <> ''` was tried first and
-  // the planner ignored it: a partial index can only serve a query that repeats
-  // its predicate, so the lookup fell back to a sequential scan while looking
-  // indexed. The index is verified in the plan, not assumed from its existence.
-  await query(`
-    CREATE INDEX IF NOT EXISTS order_shipments_awb_code_idx
-      ON order_shipments (upper(awb_code))
-  `);
-}
-
 export async function saveOrderShipment(
   orderId: string,
   shipment: {
@@ -72,7 +40,6 @@ export async function saveOrderShipment(
     raw?: any;
   }
 ): Promise<OrderShipment> {
-  await ensureTable();
   const rows = await query(
     `INSERT INTO order_shipments
        (id, order_id, shiprocket_order_id, shipment_id, awb_code, courier_name,
@@ -113,7 +80,6 @@ export async function saveOrderShipment(
 export async function getOrderShipment(
   orderId: string
 ): Promise<OrderShipment | null> {
-  await ensureTable();
   const rows = await query(
     "SELECT * FROM order_shipments WHERE order_id = $1 LIMIT 1",
     [orderId]
@@ -130,15 +96,15 @@ export async function getOrderShipment(
  * their order did not exist while it was in transit.
  *
  * Matched case-insensitively because carriers print AWB codes in upper case
- * and people type them however they like. The index in ensureTable() is what
- * keeps this from scanning every shipment on a guest-facing lookup.
+ * and people type them however they like. The `order_shipments_awb_code_idx`
+ * index created by db/schema.sql keeps this from scanning every shipment on a
+ * guest-facing lookup.
  */
 export async function findShipmentByAwb(
   awb: string
 ): Promise<OrderShipment | null> {
   const code = awb.trim();
   if (!code) return null;
-  await ensureTable();
   const rows = await query(
     "SELECT * FROM order_shipments WHERE upper(awb_code) = upper($1) LIMIT 1",
     [code]

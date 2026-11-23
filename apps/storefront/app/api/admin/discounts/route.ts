@@ -14,23 +14,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS discount_codes (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        code TEXT UNIQUE NOT NULL,
-        type TEXT NOT NULL DEFAULT 'percentage',
-        value TEXT NOT NULL,
-        min_order_amount TEXT DEFAULT '0',
-        usage_limit INTEGER DEFAULT 0,
-        used_count INTEGER DEFAULT 0,
-        starts_at TIMESTAMP,
-        ends_at TIMESTAMP,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const rows = await query(
       "SELECT * FROM discount_codes ORDER BY created_at DESC LIMIT 100"
     );
@@ -67,23 +50,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    await query(`
-      CREATE TABLE IF NOT EXISTS discount_codes (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        code TEXT UNIQUE NOT NULL,
-        type TEXT NOT NULL DEFAULT 'percentage',
-        value TEXT NOT NULL,
-        min_order_amount TEXT DEFAULT '0',
-        usage_limit INTEGER DEFAULT 0,
-        used_count INTEGER DEFAULT 0,
-        starts_at TIMESTAMP,
-        ends_at TIMESTAMP,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
 
     const { v4: uuidv4 } = require("uuid");
     const id = `disc_${uuidv4().slice(0, 8)}`;

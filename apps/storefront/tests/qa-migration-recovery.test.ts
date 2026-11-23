@@ -25,6 +25,11 @@ const EXPECTED_MIGRATIONS = [
   "002_partner_marketplace.sql",
   "003_marketplace_finance.sql",
   "004_payment_reconciliation.sql",
+  "005_notification_retry.sql",
+  "006_role_namespacing.sql",
+  "007_refund_inventory.sql",
+  "008_finance_constraints.sql",
+  "009_reservation_hardening.sql",
 ];
 
 /** Drop SQL comments so prose can neither trigger nor hide a rule. */
@@ -90,7 +95,7 @@ describe("Scenario J — backup + restore-drill wiring (static)", () => {
   });
 });
 
-describe("Scenario J — migrations 002-004 are additive and ordered", () => {
+describe("Scenario J — migrations 002-009 are additive and ordered", () => {
   it("exactly the expected migration files exist", () => {
     const sqlFiles = readdirSync(migrationsDir)
       .filter((f) => f.endsWith(".sql"))
@@ -100,7 +105,7 @@ describe("Scenario J — migrations 002-004 are additive and ordered", () => {
 
   it("filenames form a strictly increasing numeric sequence", () => {
     const numbers = EXPECTED_MIGRATIONS.map((f) => parseInt(f.slice(0, 3), 10));
-    expect(numbers).toEqual([2, 3, 4]);
+    expect(numbers).toEqual(EXPECTED_MIGRATIONS.map((_, i) => i + 2));
     for (let i = 1; i < numbers.length; i++) {
       expect(numbers[i]).toBeGreaterThan(numbers[i - 1]);
     }
@@ -115,8 +120,10 @@ describe("Scenario J — migrations 002-004 are additive and ordered", () => {
           createCount++;
           expect(stmt, `${file}: ${stmt.slice(0, 70)}`).toMatch(/IF\s+NOT\s+EXISTS/i);
         }
+        // Additive `ALTER TABLE ... ADD COLUMN` is allowed (migrations 005-009
+        // extend existing tables). Only destructive DDL is rejected here.
         expect(stmt, `${file}: destructive DDL`).not.toMatch(
-          /^(DROP|DELETE|TRUNCATE|ALTER)\b/i
+          /^(DROP|DELETE|TRUNCATE)\b/i
         );
       }
     }
@@ -156,19 +163,34 @@ describe("Scenario J — fresh-install path is documented", () => {
 });
 
 describe("Scenario J — no migration deletes business data", () => {
-  it("migrations 002-004 contain no DROP/DELETE/TRUNCATE or destructive ALTER", () => {
+  it("migrations 002-009 contain no DROP/DELETE/TRUNCATE or destructive ALTER", () => {
     const destructive = [
       /\bDROP\s+TABLE\b/i,
       /\bDROP\s+COLUMN\b/i,
       /\bDELETE\s+FROM\b/i,
       /\bTRUNCATE\b/i,
-      /\bALTER\s+TABLE\b[^;]*\bDROP\b/i,
     ];
     for (const file of EXPECTED_MIGRATIONS) {
       const sql = stripComments(read(join("apps/storefront/db/migrations", file)));
       for (const pattern of destructive) {
         expect(sql, `${file}: ${pattern}`).not.toMatch(pattern);
       }
+    }
+  });
+
+  it("any DROP CONSTRAINT is a documented CHECK widening, never business-data deletion", () => {
+    for (const file of EXPECTED_MIGRATIONS) {
+      const sql = read(join("apps/storefront/db/migrations", file));
+      // Only real DDL counts — comments document manual rollback by name.
+      if (!/\bDROP\s+CONSTRAINT\b/i.test(stripComments(sql))) continue;
+      // GAP-01 role namespacing (006) replaces a legacy 5-value role CHECK with
+      // a widened constraint admitting both canonical and legacy values. It is
+      // the only migration allowed to do this, and it never touches row data.
+      expect(file).toBe("006_role_namespacing.sql");
+      expect(stripComments(sql)).not.toMatch(/\b(DELETE\s+FROM|TRUNCATE|DROP\s+TABLE|DROP\s+COLUMN)\b/i);
+      // The migration header must explicitly declare that no business data is
+      // modified (phrasings vary between agents, so accept the common forms).
+      expect(sql).toMatch(/no (existing )?business (data|row)|does not (modify|delete|reassign)|additive/i);
     }
   });
 

@@ -25,14 +25,14 @@ import {
   partnerHasPermission,
   type PartnerPermission,
 } from "@/lib/partner/rbac";
-import type { PartnerRole } from "@/lib/partner/types";
+import type { PartnerRole, PartnerRoleLegacy } from "@/lib/partner/types";
 
 // ---------------------------------------------------------------------------
 // Helpers — all derived from the real matrices, no hard-coded policy
 // ---------------------------------------------------------------------------
 
 const platformRoles = Object.keys(ROLE_PERMISSIONS) as Role[];
-const partnerRoles: PartnerRole[] = ["owner", "manager", "operations", "finance", "viewer"];
+const partnerRoles: PartnerRoleLegacy[] = ["owner", "manager", "operations", "finance", "viewer"];
 
 function unique<T>(values: T[]): T[] {
   return Array.from(new Set(values));
@@ -135,7 +135,10 @@ describe("Scenario G — platform staff role enforcement", () => {
 // ---------------------------------------------------------------------------
 
 /** Exact expected permission sets, used as fixtures to verify the real matrix. */
-const EXPECTED_PARTNER_PERMISSIONS: Record<PartnerRole, PartnerPermission[]> = {
+// This legacy-alias matrix pins the transition aliases; canonical `partner_*`
+// roles are asserted separately in qa-role-namespace.test.ts. Both map to the
+// same permission sets in PARTNER_ROLE_PERMISSIONS.
+const EXPECTED_PARTNER_PERMISSIONS: Record<PartnerRoleLegacy, PartnerPermission[]> = {
   owner: [
     "dashboard:read", "products:read", "products:write",
     "inventory:read", "inventory:write", "orders:read", "orders:write",

@@ -16,6 +16,21 @@ import {
   type ProviderRefund,
   type RefundProvider,
 } from "./refund-provider";
+import {
+  deriveRestockEligibility,
+  type RestorationTrigger,
+  type RestockItemContext,
+  type RestockPolicyInput,
+} from "@/lib/returns/process";
+import {
+  finalizeRestorationAction,
+  recordNonRestoringAction,
+  restorationActionKey,
+  restorationMovementKey,
+  restoreSoldForRefundWithExecutor,
+  type RestorationActionStatus,
+  type RestoreSoldForRefundResult,
+} from "@/lib/inventory";
 
 export type { DbExecutor };
 
@@ -67,7 +82,34 @@ export interface RefundExecutionRow {
   provider_response: unknown;
   ledger_reversal_key: string | null;
   inventory_restored: boolean;
+  /** Migration 007 — additive observability fields (absent on pre-007 rows). */
+  inventory_restoration_state?: RestorationActionStatus;
+  inventory_eligibility_reason?: string | null;
+  inventory_restored_by?: string | null;
+  inventory_restored_at?: string | null;
   failure_reason: string | null;
+}
+
+/**
+ * Optional, explicit restoration context. A refund NEVER restocks on its own:
+ * restoration only runs when a caller supplies the return/cancellation state
+ * that already exists. Omitting this field leaves stock and inventory_restored
+ * untouched — the safe default (A110).
+ */
+export interface RefundRestorationItem {
+  orderItemId?: string | null;
+  variantId?: string | null;
+  quantity?: number;
+  trigger: RestorationTrigger;
+  item: RestockItemContext;
+  policy: RestockPolicyInput;
+}
+
+export interface RefundRestorationInput {
+  actor: string;
+  reason?: string;
+  returnRequestId?: string | null;
+  items: RefundRestorationItem[];
 }
 
 export interface ExecuteRefundInput {
@@ -81,6 +123,7 @@ export interface ExecuteRefundInput {
   partnerId?: string;
   paymentId?: string;
   reason?: string;
+  restoration?: RefundRestorationInput;
 }
 
 export interface ExecuteRefundResult {
@@ -107,6 +150,257 @@ export function assertDualControl(
 
 export function buildLedgerReversalKey(executionId: string): string {
   return `refund-ledger-reversal:${executionId}`;
+}
+
+/* ── Inventory restoration orchestration (policy-driven, fail-safe) ──────── */
+
+export interface RestoreInventoryForRefundParams {
+  executionId: string;
+  orderId: string;
+  refundRequestId?: string | null;
+  partnerId?: string | null;
+  actor: string;
+  restoration: RefundRestorationInput;
+}
+
+export interface RefundRestorationResult {
+  processed: number;
+  restoredItems: number;
+  alreadyRestoredItems: number;
+  pendingItems: number;
+  notEligibleItems: number;
+  failedItems: number;
+  state: RestorationActionStatus;
+  reason: string;
+  execution: RefundExecutionRow | null;
+}
+
+/**
+ * Persist the derived eligibility/restoration state on the execution row.
+ * Never flips `inventory_restored` — use markRefundInventoryRestored for that.
+ */
+export async function updateRefundInventoryState(
+  executionId: string,
+  state: RestorationActionStatus,
+  reason: string,
+  executor: DbExecutor = defaultQuery
+): Promise<RefundExecutionRow | null> {
+  const rows = await executor(
+    `UPDATE refund_execution
+        SET inventory_restoration_state = $2,
+            inventory_eligibility_reason = $3,
+            updated_at = now()
+      WHERE id = $1 RETURNING *`,
+    [executionId, state, reason]
+  );
+  return (rows?.[0] as RefundExecutionRow) ?? null;
+}
+
+/**
+ * Flip the `inventory_restored` flag ONLY after a real stock restoration has
+ * completed. Uses a bound parameter (never a literal `true` in SQL) and guards
+ * with `inventory_restored = FALSE` so a replay cannot re-flag the row.
+ */
+export async function markRefundInventoryRestored(
+  executionId: string,
+  actor: string,
+  executor: DbExecutor = defaultQuery
+): Promise<RefundExecutionRow | null> {
+  const rows = await executor(
+    `UPDATE refund_execution
+        SET inventory_restored = $2,
+            inventory_restoration_state = $3,
+            inventory_restored_by = $4,
+            inventory_restored_at = now(),
+            updated_at = now()
+      WHERE id = $1 AND inventory_restored = FALSE RETURNING *`,
+    [executionId, true, "restored", actor]
+  );
+  return (rows?.[0] as RefundExecutionRow) ?? null;
+}
+
+function aggregateState(parts: {
+  failed: number;
+  restored: number;
+  alreadyRestored: number;
+  pending: number;
+  notEligible: number;
+  count: number;
+}): RestorationActionStatus {
+  if (parts.count === 0) return "not_required";
+  if (parts.failed > 0) return "failed";
+  if (parts.restored > 0 || parts.alreadyRestored > 0) return "restored";
+  if (parts.pending > 0) return "pending";
+  return "not_eligible";
+}
+
+function combinedReason(reasons: string[]): string {
+  const unique = [...new Set(reasons.filter(Boolean))];
+  return unique.join(" | ").slice(0, 1000);
+}
+
+/**
+ * Derive eligibility per line item from existing return/cancellation state and
+ * the documented policy, then restore only the eligible ones. This function is
+ * deliberately separate from `executeRefund` so an operator can also invoke it
+ * as the "deliberate action" the policy requires — with the SAME idempotency
+ * keys, so it can never double-restore.
+ */
+export async function restoreInventoryForRefund(
+  params: RestoreInventoryForRefundParams,
+  executor: DbExecutor = defaultQuery
+): Promise<RefundRestorationResult> {
+  const empty: RefundRestorationResult = {
+    processed: 0,
+    restoredItems: 0,
+    alreadyRestoredItems: 0,
+    pendingItems: 0,
+    notEligibleItems: 0,
+    failedItems: 0,
+    state: "not_required",
+    reason: "No restoration context supplied; inventory unchanged.",
+    execution: null,
+  };
+  const items = params.restoration?.items ?? [];
+  if (items.length === 0) return empty;
+
+  const tally = { failed: 0, restored: 0, alreadyRestored: 0, pending: 0, notEligible: 0 };
+  const reasons: string[] = [];
+
+  try {
+    for (let i = 0; i < items.length; i++) {
+      const line = items[i];
+      const discriminator = line.orderItemId || line.variantId || `item-${i}`;
+      const actionKey = restorationActionKey(params.executionId, discriminator);
+      const eligibility = deriveRestockEligibility(line.trigger, line.item, line.policy);
+      reasons.push(eligibility.reason);
+
+      if (!eligibility.eligible) {
+        const status: RestorationActionStatus = eligibility.needsOwnerDecision
+          ? "pending"
+          : "not_eligible";
+        await recordNonRestoringAction(
+          {
+            actionKey,
+            orderId: params.orderId,
+            status,
+            reason: eligibility.reason,
+            actor: params.restoration.actor,
+            refundExecutionId: params.executionId,
+            refundRequestId: params.refundRequestId,
+            returnRequestId: params.restoration.returnRequestId,
+            orderItemId: line.orderItemId ?? null,
+            variantId: line.variantId ?? null,
+            trigger: line.trigger,
+          },
+          executor
+        );
+        if (status === "pending") tally.pending += 1;
+        else tally.notEligible += 1;
+        continue;
+      }
+
+      let result: RestoreSoldForRefundResult;
+      try {
+        result = await restoreSoldForRefundWithExecutor(
+          {
+            orderId: params.orderId,
+            actionKey,
+            movementKey: restorationMovementKey(actionKey),
+            actor: params.restoration.actor,
+            reason: eligibility.reason,
+            trigger: line.trigger,
+            condition: line.policy.condition,
+            item: line.item,
+            quantity: line.quantity,
+            orderItemId: line.orderItemId ?? null,
+            variantId: line.variantId ?? null,
+            refundExecutionId: params.executionId,
+            refundRequestId: params.refundRequestId,
+            returnRequestId: params.restoration.returnRequestId,
+          },
+          executor
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await finalizeRestorationAction(
+          {
+            actionKey,
+            status: "failed",
+            reason: message,
+            actor: params.restoration.actor,
+            lastError: message,
+            incrementAttempts: true,
+          },
+          executor
+        );
+        result = {
+          restored: false,
+          alreadyRestored: false,
+          restoredQuantity: 0,
+          actionStatus: "failed",
+          reason: message,
+        };
+      }
+
+      reasons.push(result.reason);
+      if (result.actionStatus === "failed") tally.failed += 1;
+      else if (result.alreadyRestored) tally.alreadyRestored += 1;
+      else if (result.restored) tally.restored += 1;
+      else tally.notEligible += 1;
+    }
+
+    const state = aggregateState({ ...tally, count: items.length });
+    const reason = combinedReason(reasons);
+    let execution = await updateRefundInventoryState(
+      params.executionId,
+      state,
+      reason,
+      executor
+    );
+    // inventory_restored is set ONLY after a successful restoration. An
+    // already-restored replay also keeps the flag true (idempotent).
+    if (state === "restored") {
+      const flagged = await markRefundInventoryRestored(
+        params.executionId,
+        params.restoration.actor,
+        executor
+      );
+      if (flagged) execution = flagged;
+    }
+
+    return {
+      processed: items.length,
+      restoredItems: tally.restored,
+      alreadyRestoredItems: tally.alreadyRestored,
+      pendingItems: tally.pending,
+      notEligibleItems: tally.notEligible,
+      failedItems: tally.failed,
+      state,
+      reason,
+      execution,
+    };
+  } catch (error) {
+    // Unexpected failure: keep an observable FAILED state, never a false flag.
+    const message = error instanceof Error ? error.message : String(error);
+    const execution = await updateRefundInventoryState(
+      params.executionId,
+      "failed",
+      message,
+      executor
+    ).catch(() => null);
+    return {
+      processed: items.length,
+      restoredItems: tally.restored,
+      alreadyRestoredItems: tally.alreadyRestored,
+      pendingItems: tally.pending,
+      notEligibleItems: tally.notEligible,
+      failedItems: tally.failed + 1,
+      state: "failed",
+      reason: message,
+      execution,
+    };
+  }
 }
 
 /**
@@ -246,8 +540,28 @@ export async function executeRefund(
     ]
   );
 
+  let execution = (updated[0] ?? claimed[0]) as RefundExecutionRow;
+
+  // Restoration runs only after the provider CONFIRMED money moved, and only
+  // when an explicit restoration context was supplied. Approval alone never
+  // restocks (A110). Failures are observable but never fail the money refund.
+  if (confirmed && input.restoration && input.restoration.items.length > 0) {
+    const restoration = await restoreInventoryForRefund(
+      {
+        executionId: execution.id,
+        orderId: input.orderId,
+        refundRequestId: input.refundRequestId,
+        partnerId: input.partnerId,
+        actor: input.restoration.actor,
+        restoration: input.restoration,
+      },
+      executor
+    );
+    if (restoration.execution) execution = restoration.execution;
+  }
+
   return {
-    execution: (updated[0] ?? claimed[0]) as RefundExecutionRow,
+    execution,
     providerRefund,
     reused: false,
   };

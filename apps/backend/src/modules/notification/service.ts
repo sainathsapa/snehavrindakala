@@ -18,6 +18,7 @@ import { randomUUID } from "crypto";
 import type { SendNotificationInput } from "./types";
 import { renderTemplate, type TemplateContext } from "./templates";
 import { sendEmailWithReceipt, type SendReceipt } from "./transport";
+import { planNotificationFailure, classifySendError } from "./retry";
 
 const MODEL_OBJECTS = {
   Notification,
@@ -126,11 +127,34 @@ export class NotificationService {
     row: NotificationRow,
     outcome: { status: string; messageId?: string | null; error?: string | null }
   ): Promise<NotificationRow> {
-    const updates = {
+    // GAP-05: the send path writes retry state (migration 005) alongside the
+    // historical outcome. A transient failure is scheduled for retry instead of
+    // being discarded; a terminal one is marked terminal. `status` keeps its
+    // six-value vocabulary, so this is fully additive for existing rows/readers.
+    const failure =
+      outcome.status === "failed"
+        ? planNotificationFailure({ attempts: Number(row.attempts) || 0, error: outcome.error })
+        : null;
+    const updates: Record<string, any> = {
       status: outcome.status,
       provider_message_id: outcome.messageId ?? null,
       error_message: outcome.error ?? null,
       updated_at: new Date(),
+      last_attempt_at: new Date(),
+      ...(failure
+        ? {
+            attempts: failure.attempts,
+            delivery_status: failure.delivery_status,
+            next_attempt_at: failure.next_attempt_at,
+            last_error: failure.last_error,
+            error_kind: failure.error_kind,
+            terminal_reason: failure.terminal_reason,
+            dead_lettered_at: failure.dead_lettered_at,
+          }
+        : {
+            attempts: Number(row.attempts) || 0,
+            delivery_status: outcome.status === "sent" ? "accepted" : "skipped",
+          }),
     };
     const knex = this.knex()!;
     await knex("app_notification").where({ id: row.id }).update(updates);
@@ -156,6 +180,8 @@ export class NotificationService {
       status: "pending",
       provider_message_id: null,
       error_message: null,
+      attempts: 0,
+      delivery_status: "queued",
     };
 
     const claim = await this.claim(key, seed);
@@ -198,9 +224,10 @@ export class NotificationService {
         status: "failed",
         error: err instanceof Error ? err.message : String(err),
       };
+      // Log a PII-free classification only — the provider error may quote the
+      // recipient address and must not be copied into application logs.
       console.error(
-        `[Notification] Failed to send "${template}" to ${to}:`,
-        err
+        `[Notification] Failed to send "${template}" (${classifySendError(err).reason}); recipient withheld`
       );
     }
 
@@ -211,6 +238,20 @@ export class NotificationService {
     row.status = outcome.status;
     row.provider_message_id = outcome.messageId ?? null;
     row.error_message = outcome.error ?? null;
+    // GAP-05 retry state, mirrored from writeSqlOutcome for non-SQL managers.
+    row.attempts = Number(row.attempts) || 0;
+    row.last_attempt_at = new Date();
+    if (outcome.status === "failed") {
+      Object.assign(
+        row,
+        planNotificationFailure({
+          attempts: Number(row.attempts) || 0,
+          error: outcome.error,
+        })
+      );
+    } else {
+      row.delivery_status = outcome.status === "sent" ? "accepted" : "skipped";
+    }
 
     try {
       await this.manager_.persistAndFlush(row);

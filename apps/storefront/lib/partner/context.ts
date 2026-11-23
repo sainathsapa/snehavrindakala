@@ -12,7 +12,7 @@ import {
 } from "./session";
 import { findMembershipById, findPartnerById, type QueryExecutor } from "./repository";
 import { partnerHasPermission, type PartnerPermission } from "./rbac";
-import type { PartnerContext } from "./types";
+import { partnerRoleOrNull, type PartnerContext } from "./types";
 
 export async function resolvePartnerContext(
   token: string | undefined | null,
@@ -21,11 +21,20 @@ export async function resolvePartnerContext(
   const payload = verifyPartnerToken(token ?? "");
   if (!payload) return null;
 
+  // Namespace-aware canonicalisation: both the signed claim and the DB row are
+  // mapped through the partner-only role guard. A platform role, a legacy
+  // ambiguous value that cannot be mapped, or any unknown value fails closed
+  // (null) here — before it can reach a permission check.
+  const claimedRole = partnerRoleOrNull(payload.role);
+  if (!claimedRole) return null;
+
   const membership = await findMembershipById(payload.mid, executor);
   if (!membership || membership.status !== "active") return null;
+  const actualRole = partnerRoleOrNull(membership.role);
+  if (!actualRole) return null;
   if (membership.partner_id !== payload.pid) return null;
   if (membership.token_version !== payload.ver) return null;
-  if (membership.role !== payload.role) return null;
+  if (actualRole !== claimedRole) return null;
 
   const partner = await findPartnerById(payload.pid, executor);
   if (!partner || partner.account_status !== "active") return null;
@@ -34,7 +43,7 @@ export async function resolvePartnerContext(
     partnerId: payload.pid,
     membershipId: payload.mid,
     email: payload.email,
-    role: payload.role,
+    role: actualRole,
     tokenVersion: payload.ver,
     displayName: partner.display_name,
   };

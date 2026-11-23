@@ -56,7 +56,13 @@ import {
   ADMIN_SESSION_COOKIE,
   verifyAdminSession,
 } from "@/lib/admin-session";
-import { hasPermission, platformRoleOrNull, type Permission, type Role } from "@/lib/rbac";
+import {
+  hasPermission,
+  platformRoleOrNull,
+  canonicalPlatformRole,
+  type Permission,
+  type Role,
+} from "@/lib/rbac";
 import { query } from "@/lib/db";
 
 const ADMIN_EMAILS = (
@@ -90,16 +96,18 @@ export async function getAdminIdentity(): Promise<{
         if (row) {
           if (row.is_active === false) return null;
           const role = platformRoleOrNull(row.role || "viewer");
-          if (!role) return null;
-          return { email: session.email, role };
+          const canonical = canonicalPlatformRole(role);
+          if (!canonical) return null;
+          return { email: session.email, role: canonical };
         }
       } catch {
         // DB unavailable — fall through to the signed role only for env admins.
       }
       if (ADMIN_EMAILS.includes(session.email.toLowerCase())) {
         const role = platformRoleOrNull(session.role);
-        if (!role) return null;
-        return { email: session.email, role };
+        const canonical = canonicalPlatformRole(role);
+        if (!canonical) return null;
+        return { email: session.email, role: canonical };
       }
       return null;
     }
@@ -132,7 +140,7 @@ export async function getAdminIdentity(): Promise<{
     const customer = data?.customer ?? data;
     const email = (customer?.email || "").toLowerCase();
     if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(email)) {
-      return { email, role: "super_admin" };
+      return { email, role: "platform_super_admin" };
     }
     return null;
   } catch {

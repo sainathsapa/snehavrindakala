@@ -15,6 +15,10 @@ import {
   listPendingRefunds,
 } from "@/lib/refund-approvals";
 import { recordAdminAction } from "@/lib/audit";
+import {
+  correlationIdFrom,
+  redactAuditText,
+} from "@/lib/partner-audit/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -78,13 +82,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: result.error }, { status: 409 });
   }
 
+  // Free-text admin notes can contain customer PII; scrub them with the same
+  // last-line-of-defence helper used by the partner audit log before persisting.
   await recordAdminAction({
     actorEmail: identity.email,
     actorRole: identity.role,
     action: decision === "approve" ? "refund.approve" : "refund.reject",
     entityType: "order_refund",
     entityId: refundId,
-    newValues: { decision, note },
+    oldValues: { status: refund.status },
+    newValues: {
+      decision,
+      status: result.refund?.status ?? decision,
+      orderId: refund.order_id,
+      amount: refund.amount,
+      note: redactAuditText(note),
+      requestId: correlationIdFrom(req),
+      result: "success",
+    },
   });
 
   return NextResponse.json({

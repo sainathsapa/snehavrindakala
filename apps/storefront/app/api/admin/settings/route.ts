@@ -26,15 +26,9 @@ const DEFAULT_SETTINGS = [
   { key: "supported_locales", value: "en,hi", description: "Locales the storefront ships (see i18n/routing.ts)." },
 ];
 
+// Seed the default rows. `site_settings` itself is created by the deploy-time
+// schema migration (db/schema.sql) before the server starts.
 async function ensureTable() {
-  await query(`
-    CREATE TABLE IF NOT EXISTS site_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT,
-      description TEXT,
-      updated_at TIMESTAMP NOT NULL DEFAULT now()
-    )
-  `);
   for (const setting of DEFAULT_SETTINGS) {
     await query(
       `INSERT INTO site_settings (key, value, description)

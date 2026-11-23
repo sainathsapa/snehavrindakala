@@ -25,23 +25,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Missing is_active field" }, { status: 400 });
     }
 
-    await query(`
-      CREATE TABLE IF NOT EXISTS discount_codes (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        code TEXT UNIQUE NOT NULL,
-        type TEXT NOT NULL DEFAULT 'percentage',
-        value TEXT NOT NULL,
-        min_order_amount TEXT DEFAULT '0',
-        usage_limit INTEGER DEFAULT 0,
-        used_count INTEGER DEFAULT 0,
-        starts_at TIMESTAMP,
-        ends_at TIMESTAMP,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const rows = await query(
       `UPDATE discount_codes SET is_active = $1, updated_at = now() WHERE id = $2 RETURNING *`,
       [is_active, id]
@@ -66,23 +49,6 @@ export async function DELETE(
   }
   try {
     const { id } = await params;
-
-    await query(`
-      CREATE TABLE IF NOT EXISTS discount_codes (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        code TEXT UNIQUE NOT NULL,
-        type TEXT NOT NULL DEFAULT 'percentage',
-        value TEXT NOT NULL,
-        min_order_amount TEXT DEFAULT '0',
-        usage_limit INTEGER DEFAULT 0,
-        used_count INTEGER DEFAULT 0,
-        starts_at TIMESTAMP,
-        ends_at TIMESTAMP,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
 
     const rows = await query(
       `DELETE FROM discount_codes WHERE id = $1 RETURNING *`,

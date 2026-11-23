@@ -14,34 +14,213 @@
 
 import { randomUUID } from "node:crypto";
 import { query as defaultQuery } from "@/lib/db";
-import { policyConfigured, round2, toNumber } from "./commission-policy";
+import {
+  assertKnownPayableWhen,
+  policyConfigured,
+  round2,
+  toNumber,
+} from "./commission-policy";
 import type {
   CommissionPolicy,
   EarningsEntry,
+  PayabilityContext,
+  PayabilityDecision,
+  PayabilityResolver,
   PaymentConfirmation,
   QueryExecutor,
   SettlementBatch,
   SettlementPeriod,
 } from "./types";
 
-/** Select only payable, unassigned, policy-linked earning rows. */
+/**
+ * Evaluate the configured `payable_when` rule against documented facts.
+ *
+ * This is the single decision point for settlement timing. It fails closed on
+ * an unknown/undefined rule, and universal blockers (hold, cancellation,
+ * refund, pending return, unpaid order) apply before the rule-specific test.
+ * No condition here is invented: each fact is listed in PayabilityContext.
+ */
+export function explainPayability(
+  context: PayabilityContext | null | undefined
+): PayabilityDecision {
+  if (!context || typeof context !== "object") {
+    return {
+      payable: false,
+      reason:
+        "UNCONFIGURED_PAYABLE_WHEN: no payability context; refusing to settle",
+    };
+  }
+  let rule: ReturnType<typeof assertKnownPayableWhen>;
+  try {
+    rule = assertKnownPayableWhen(context.payable_when);
+  } catch (error) {
+    return { payable: false, reason: (error as Error).message };
+  }
+
+  if (context.settlementHeld) {
+    return {
+      payable: false,
+      reason: "SETTLEMENT_HOLD: entry is already assigned or held",
+    };
+  }
+  if (context.orderCancelled) {
+    return {
+      payable: false,
+      reason: "ORDER_CANCELLED: cancelled orders are not payable",
+    };
+  }
+  if (context.refundIssued) {
+    return {
+      payable: false,
+      reason: "REFUND_ISSUED: refunded orders are not payable",
+    };
+  }
+  if (context.pendingReturn) {
+    return {
+      payable: false,
+      reason: "PENDING_RETURN: return in progress; wait for resolution",
+    };
+  }
+  if (!context.orderPaid) {
+    return { payable: false, reason: "ORDER_NOT_PAID: payment not captured" };
+  }
+
+  if (rule === "order_paid") {
+    return { payable: true, reason: "order_paid: payment captured" };
+  }
+
+  if (!context.orderDelivered) {
+    return {
+      payable: false,
+      reason: "ORDER_NOT_DELIVERED: delivery not confirmed",
+    };
+  }
+  if (rule === "order_delivered") {
+    return {
+      payable: true,
+      reason: "order_delivered: payment captured and delivery confirmed",
+    };
+  }
+
+  // return_window_elapsed. The window is operator-supplied and never defaulted;
+  // the boundary day (== window) is still inside the window, matching the
+  // returns module's eligibility rule.
+  const window = context.returnWindowDays;
+  const days = context.daysSinceDelivery;
+  if (typeof window !== "number" || !Number.isFinite(window) || window <= 0) {
+    return {
+      payable: false,
+      reason: "RETURN_WINDOW_UNCONFIGURED: owner must configure the return window",
+    };
+  }
+  if (typeof days !== "number" || !Number.isFinite(days) || days < 0) {
+    return {
+      payable: false,
+      reason: "DELIVERY_DATE_UNKNOWN: cannot prove the return window elapsed",
+    };
+  }
+  if (days <= window) {
+    return {
+      payable: false,
+      reason: `RETURN_WINDOW_OPEN: day ${days} is within the ${window}-day window`,
+    };
+  }
+  return {
+    payable: true,
+    reason: `return_window_elapsed: day ${days} is beyond the ${window}-day window`,
+  };
+}
+
+export function isPayable(
+  context: PayabilityContext | null | undefined
+): boolean {
+  return explainPayability(context).payable;
+}
+
+/** External facts needed by the rule, all sourced from existing data. */
+export interface PayabilityFacts {
+  orderPaid?: boolean;
+  orderDelivered?: boolean;
+  orderCancelled?: boolean;
+  refundIssued?: boolean;
+  pendingReturn?: boolean;
+  /** Explicit operational hold; otherwise derived from settlement_batch_id. */
+  settlementHeld?: boolean;
+  daysSinceDelivery?: number | null;
+  returnWindowDays?: number | null;
+}
+
+/**
+ * Build a context for one ledger entry from an explicit policy and facts.
+ * `settlementHeld` is derived from the ledger row itself. Missing facts default
+ * to "not proven" (false/null) so an incomplete integration cannot settle early.
+ */
+export function payabilityContextForEntry(
+  entry: EarningsEntry,
+  policy: CommissionPolicy,
+  facts: PayabilityFacts = {}
+): PayabilityContext {
+  return {
+    payable_when: policy.payable_when,
+    orderPaid: facts.orderPaid ?? false,
+    orderDelivered: facts.orderDelivered ?? false,
+    orderCancelled: facts.orderCancelled ?? false,
+    refundIssued: facts.refundIssued ?? false,
+    pendingReturn: facts.pendingReturn ?? false,
+    settlementHeld: facts.settlementHeld ?? entry.settlement_batch_id != null,
+    daysSinceDelivery: facts.daysSinceDelivery ?? null,
+    returnWindowDays: facts.returnWindowDays ?? null,
+  };
+}
+
+/**
+ * Select only payable, unassigned, policy-linked earning rows.
+ *
+ * `payability` is the hook that makes the configured `payable_when` rule
+ * controlling: when a caller supplies a resolver, EVERY candidate row is
+ * filtered through `explainPayability`. An unknown rule always fails closed,
+ * even on the compatibility path where a caller has no order state to supply.
+ */
 export function selectPayableEntries(
   entries: EarningsEntry[],
-  policies?: CommissionPolicy[]
+  policies?: CommissionPolicy[],
+  payability?: PayabilityResolver
 ): EarningsEntry[] {
   if (policies !== undefined && !policyConfigured(policies)) {
     throw new Error(
       "No active configured commission policy: refusing to settle"
     );
   }
-  const eligible = (entries ?? []).filter(
-    (entry) =>
-      entry &&
-      entry.entry_type === "earning" &&
-      entry.settlement_batch_id == null &&
-      entry.commission_policy_id != null &&
-      toNumber(entry.payable_amount) > 0
-  );
+  const policiesById = new Map<string, CommissionPolicy>();
+  for (const policy of policies ?? []) {
+    if (policy?.id) policiesById.set(policy.id, policy);
+  }
+
+  const eligible = (entries ?? []).filter((entry) => {
+    if (
+      !(
+        entry &&
+        entry.entry_type === "earning" &&
+        entry.settlement_batch_id == null &&
+        entry.commission_policy_id != null &&
+        toNumber(entry.payable_amount) > 0
+      )
+    ) {
+      return false;
+    }
+    const policy = policiesById.get(entry.commission_policy_id);
+    // Unknown/undefined rule can never be settled, regardless of context.
+    if (policy) assertKnownPayableWhen(policy.payable_when);
+    if (payability === undefined) {
+      // Compatibility path: this caller cannot supply order/delivery state.
+      // Such callers (legacy pure helpers) remain unchanged; the settlement API
+      // must pass a resolver for the rule to be enforced end to end.
+      return true;
+    }
+    const context =
+      typeof payability === "function" ? payability(entry) : payability;
+    return explainPayability(context).payable;
+  });
   if (eligible.length === 0) {
     throw new Error("No payable entries available for settlement");
   }
@@ -52,9 +231,10 @@ export function selectPayableEntries(
 export function createBatch(
   entries: EarningsEntry[],
   period: SettlementPeriod,
-  policies?: CommissionPolicy[]
+  policies?: CommissionPolicy[],
+  payability?: PayabilityResolver
 ): SettlementBatch {
-  const eligible = selectPayableEntries(entries, policies);
+  const eligible = selectPayableEntries(entries, policies, payability);
   const total = round2(
     eligible.reduce((sum, entry) => sum + toNumber(entry.payable_amount), 0)
   );
@@ -130,18 +310,34 @@ export async function listActivePolicies(
   )) as CommissionPolicy[];
 }
 
-/** Eligible ledger rows, restricted to configured (active) policies. */
+/**
+ * Eligible ledger rows, restricted to configured (active) policies.
+ *
+ * The SQL also refuses rows whose policy has a rule outside the documented
+ * vocabulary — defence in depth for the fail-safe. When a `payability` resolver
+ * is supplied, rows are additionally filtered through `explainPayability` so
+ * the configured `payable_when` actually controls settlement selection.
+ */
 export async function listEligibleLedgerEntries(
-  executor: QueryExecutor = defaultQuery
+  executor: QueryExecutor = defaultQuery,
+  payability?: PayabilityResolver
 ): Promise<EarningsEntry[]> {
-  return (await executor(
+  const rows = (await executor(
     "SELECT le.* FROM partner_earnings_ledger le " +
       "JOIN commission_policy cp ON cp.id = le.commission_policy_id " +
       "WHERE le.settlement_batch_id IS NULL " +
       "AND le.entry_type = 'earning' " +
       "AND le.payable_amount > 0 " +
-      "AND cp.status = 'active'"
+      "AND cp.status = 'active' " +
+      "AND cp.payable_when IN ('order_paid','order_delivered','return_window_elapsed') " +
+      "AND cp.refund_effect IN ('reverse_earnings','no_reversal')"
   )) as EarningsEntry[];
+  if (payability === undefined) return rows;
+  return rows.filter((entry) => {
+    const context =
+      typeof payability === "function" ? payability(entry) : payability;
+    return explainPayability(context).payable;
+  });
 }
 
 function requireRow(rows: any[] | undefined, action: string): SettlementBatch {

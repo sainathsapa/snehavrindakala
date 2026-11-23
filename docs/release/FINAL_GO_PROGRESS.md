@@ -3,6 +3,10 @@
 Branch: `remediation/final-go`. HEAD at last integration: `83931c0` (pushed to
 origin). Baseline: backend 101 + storefront 519 = **620 passed** (+4 skipped).
 
+> **Follow-up branch:** the engineering-gap-closure mission continues on
+> `remediation/engineering-gap-closure` (cut from `final-go` @ `4a597ca`). Its
+> status table and measured test runs are appended at the end of this file.
+
 ## Status legend
 
 Statuses: NOT STARTED · IN PROGRESS · REVIEW REQUIRED · BLOCKED BY OWNER INPUT ·
@@ -78,3 +82,37 @@ The Lead independently re-ran the full `pnpm test` suite above (covering the
 new agent test files), so the code-level tests are verified; the tasks remain
 `REVIEW REQUIRED` because no task's gate can be closed without live E2E/owner
 input. Gate status is unchanged by these unit-test results.
+
+## Engineering gap closure — `remediation/engineering-gap-closure`
+
+Cut from `remediation/final-go` @ `4a597ca`. Ten specialists (A01–A10) closed the
+engineering findings that did **not** require owner input. All migration work was
+integrated by the Lead (AGENT 00) using reserved migrations 005–009. No gate was
+marked PASS by any agent; production decision remains **NO-GO** (see
+`ENGINEERING_GAP_CLOSURE_REPORT.md` and `FINAL_GO_RELEASE_REPORT.md`).
+
+| ID | Gap | Status | Evidence |
+|---|---|---|---|
+| A01 | Razorpay signed webhook (dedupe + provider truth) | COMPLETED AND VERIFIED | `app/api/webhooks/razorpay/**`, `lib/payments/webhook.ts`, `tests/qa-webhook-endpoint.test.ts` (33) |
+| A02 | Audit coverage for all in-scope mutations | COMPLETED AND VERIFIED | `tests/qa-audit-coverage.test.ts` (25, incl. two Lead-wired writes) |
+| A03 | Notification retry + verified SES events | COMPLETED AND VERIFIED | `lib/notifications.ts`, `app/api/webhooks/ses/**`, migration `005`, worker/admin routes, `tests/qa-notification-retry.test.ts` (19) + worker-routes (10) |
+| A04 | Refund/inventory restoration (fail-safe) | COMPLETED AND VERIFIED | `lib/payments/refund-execution.ts`, `lib/inventory.ts`, migration `007`, `tests/qa-refund-inventory.test.ts` (18) |
+| A05 | Finance policy wired end-to-end | COMPLETED AND VERIFIED | `lib/finance/**`, migration `008`, `tests/qa-finance-policy.test.ts` (22) + Lead `PayabilityResolver` (6) |
+| A06 | Reservation hardening | COMPLETED AND VERIFIED | migration `009`, `tests/qa-reservation-hardening.test.ts` (18) |
+| A07 | Role namespacing (GAP-01 full fix) | COMPLETED AND VERIFIED | `lib/rbac.ts`, `lib/partner/**`, migration `006`, `tests/qa-role-namespace.test.ts` (29) |
+| A08 | Remove lazy runtime DDL + restore hard gate | COMPLETED AND VERIFIED | `scripts/verify-schema.mjs` (`fail()`), `db/schema.sql`, `tests/qa-no-runtime-ddl.test.ts` (7) |
+| A09 | Partner nav audit/submissions links | COMPLETED AND VERIFIED | `app/partner/components/partner-nav.tsx`, `tests/partner-nav.test.ts` (22) |
+| A10 | Independent QA | IN PROGRESS → see `QA_GAP_CLOSURE_REPORT.md` | independent static/pure verification of all gaps |
+
+### Integration / test runs (this branch)
+
+| Run | Result | Detail |
+|---|---|---|
+| storefront full Vitest suite | 127 files / **1669 passed + 4 skipped**, 0 failures | Lead-run final verification (incl. A10 independent QA files + PII-hardening regression) |
+| `npx tsc --noEmit` (storefront) | 0 errors | — |
+| `docker compose config --quiet` | valid | Docker Desktop context |
+| `verify-schema.mjs` (no DB) | only the expected `DATABASE_URL is not set` failure; no CREATE TABLE failures | hard handler gate active |
+
+All counts are code-level/static/pure; they are **not** live E2E proof. Live E2E
+A–J remain **BLOCKED BY OWNER INPUT** (running stack + credentials). Only AGENT 00
+may classify a gate as PASS, and no production GO is asserted.

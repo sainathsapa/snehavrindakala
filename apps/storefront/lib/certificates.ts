@@ -17,40 +17,6 @@
 import crypto from "crypto";
 import { query, queryResult } from "@/lib/db";
 
-let schemaReady: Promise<void> | null = null;
-
-async function createTable(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS certificates (
-      id SERIAL PRIMARY KEY,
-      code TEXT NOT NULL UNIQUE,
-      order_id TEXT NOT NULL,
-      order_item_id TEXT NOT NULL UNIQUE,
-      handle TEXT NOT NULL DEFAULT '',
-      title TEXT NOT NULL DEFAULT '',
-      artist TEXT NOT NULL DEFAULT '',
-      art_form TEXT NOT NULL DEFAULT '',
-      dimensions TEXT NOT NULL DEFAULT '',
-      edition TEXT NOT NULL DEFAULT '1/1',
-      issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      revoked_at TIMESTAMPTZ
-    )
-  `);
-  await query(
-    `CREATE INDEX IF NOT EXISTS certificates_order_idx ON certificates (order_id)`
-  );
-}
-
-export function ensureCertificatesTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((err) => {
-      schemaReady = null;
-      throw err;
-    });
-  }
-  return schemaReady;
-}
-
 /**
  * A reference someone can read off a printed certificate and type back in.
  *
@@ -136,7 +102,6 @@ export function isMeasured(metadata: Record<string, unknown> | undefined): boole
 
 export async function issueCertificatesForOrder(order: OrderLike): Promise<Certificate[]> {
   if (!order?.id || !Array.isArray(order.items)) return [];
-  await ensureCertificatesTable();
 
   for (const item of order.items) {
     if (!item?.id) continue;
@@ -169,7 +134,6 @@ export async function issueCertificatesForOrder(order: OrderLike): Promise<Certi
 
 export async function listCertificatesForOrder(orderId: string): Promise<Certificate[]> {
   if (!orderId) return [];
-  await ensureCertificatesTable();
   const result = await queryResult<Certificate>(
     `SELECT id, code, order_id, order_item_id, handle, title, artist, art_form,
             dimensions, edition, issued_at, revoked_at
@@ -185,7 +149,6 @@ export async function getCertificate(code: string): Promise<Certificate | null> 
     .toUpperCase()
     .replace(/[^0-9A-Z]/g, "");
   if (normalised.length < 8) return null;
-  await ensureCertificatesTable();
   const result = await queryResult<Certificate>(
     `SELECT id, code, order_id, order_item_id, handle, title, artist, art_form,
             dimensions, edition, issued_at, revoked_at
@@ -197,7 +160,6 @@ export async function getCertificate(code: string): Promise<Certificate | null> 
 
 /** Revocation is a record, not a deletion: a forged or returned certificate must stay auditable. */
 export async function revokeCertificate(code: string): Promise<boolean> {
-  await ensureCertificatesTable();
   const result = await queryResult(
     `UPDATE certificates SET revoked_at=NOW() WHERE code=$1 AND revoked_at IS NULL`,
     [code]

@@ -250,56 +250,25 @@ export const DEFAULT_FEATURED_CATEGORIES = [
 
 let schemaReady: Promise<void> | null = null;
 
+/**
+ * Seed the content tables once per process. Next evaluates pages in separate
+ * worker processes during a build, so the in-process `schemaReady` promise does
+ * not serialise them: an advisory lock keeps the seed-once INSERTs from racing
+ * across workers. The tables and their editorial/translation columns are created
+ * by db/schema.sql (applied by the container entrypoint) before the server starts.
+ */
 async function createSchema(): Promise<void> {
-  // Next evaluates pages in separate worker processes during a build, so the
-  // in-process `schemaReady` promise does not serialise them: several workers
-  // ran CREATE TABLE IF NOT EXISTS at once and collided in the system catalogue
-  // ("duplicate key value violates unique constraint pg_type_typname_nsp_index").
-  // A Postgres advisory lock makes the whole migration safe across processes.
   await query("SELECT pg_advisory_lock(918273645)");
   try {
-    await createTables();
+    await seedContent();
   } finally {
     await query("SELECT pg_advisory_unlock(918273645)");
   }
 }
 
-async function createTables(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS site_hero_slide (
-      id SERIAL PRIMARY KEY,
-      position INTEGER NOT NULL DEFAULT 0,
-      eyebrow TEXT NOT NULL DEFAULT '',
-      title TEXT NOT NULL,
-      tagline TEXT NOT NULL DEFAULT '',
-      cta_label TEXT NOT NULL DEFAULT '',
-      cta_href TEXT NOT NULL DEFAULT '/shop',
-      image TEXT NOT NULL DEFAULT '',
-      published BOOLEAN NOT NULL DEFAULT TRUE,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await query(`
-    CREATE TABLE IF NOT EXISTS site_art_form (
-      id SERIAL PRIMARY KEY,
-      position INTEGER NOT NULL DEFAULT 0,
-      slug TEXT NOT NULL UNIQUE,
-      name TEXT NOT NULL,
-      description TEXT NOT NULL DEFAULT '',
-      image TEXT NOT NULL DEFAULT '',
-      published BOOLEAN NOT NULL DEFAULT TRUE,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-
-  // Editorial columns added after the first release. `ADD COLUMN IF NOT EXISTS`
-  // keeps this idempotent, so a redeploy over an existing database is a no-op
-  // rather than an error.
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS story TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote TEXT NOT NULL DEFAULT ''`);
-
+async function seedContent(): Promise<void> {
+  // Table/column creation now happens at deploy time in db/schema.sql; only
+  // seed-once content work is done here.
   // Hindi columns for admin-edited content.
   //
   // Shipping one page of static copy in two languages is a message file; but
@@ -309,17 +278,6 @@ async function createTables(): Promise<void> {
   // read, and would let a row exist in Hindi with no English — so the columns
   // sit here instead, prefixed and nullable-by-default ('' means "not
   // translated yet", and every reader falls back to the English column).
-  for (const column of ["eyebrow_hi", "title_hi", "tagline_hi", "cta_label_hi"]) {
-    await query(`ALTER TABLE site_hero_slide ADD COLUMN IF NOT EXISTS ${column} TEXT NOT NULL DEFAULT ''`);
-  }
-  await query(`ALTER TABLE site_featured_category ADD COLUMN IF NOT EXISTS label_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS name_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS description_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS story_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS origin_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS materials_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_art_form ADD COLUMN IF NOT EXISTS quote_hi TEXT NOT NULL DEFAULT ''`);
-
   // Fill the essays for the six default art forms where they are still empty —
   // English first, then Hindi.
   //
@@ -373,58 +331,12 @@ async function createTables(): Promise<void> {
   // slugify(product.artist) so the PDP maker link lands on the right entry
   // without a second mapping. Single-brand only: in platform mode the artists
   // module is the directory, and a second one would compete with it.
-  await query(`
-    CREATE TABLE IF NOT EXISTS site_artist (
-      id SERIAL PRIMARY KEY,
-      position INTEGER NOT NULL DEFAULT 0,
-      slug TEXT NOT NULL UNIQUE,
-      name TEXT NOT NULL,
-      bio TEXT NOT NULL DEFAULT '',
-      portrait TEXT NOT NULL DEFAULT '',
-      region TEXT NOT NULL DEFAULT '',
-      years_active TEXT NOT NULL DEFAULT '',
-      published BOOLEAN NOT NULL DEFAULT TRUE,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await query(`ALTER TABLE site_artist ADD COLUMN IF NOT EXISTS name_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_artist ADD COLUMN IF NOT EXISTS bio_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE site_artist ADD COLUMN IF NOT EXISTS region_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS title_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS excerpt_hi TEXT NOT NULL DEFAULT ''`);
-  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS content_hi TEXT NOT NULL DEFAULT ''`);
   // Which tradition an essay is about, by art-form slug. Empty means the essay
   // is not about one tradition in particular. A column rather than a join table
   // because the relationship runs one way: an essay belongs to at most one
   // tradition, while a tradition may have several essays.
-  await query(`ALTER TABLE journal_posts ADD COLUMN IF NOT EXISTS art_form TEXT NOT NULL DEFAULT ''`);
-
   // Buyer words. Kept separate from journal posts because a testimonial is an
   // attribution (who, where, which work) rather than an essay.
-  await query(`
-    CREATE TABLE IF NOT EXISTS site_testimonial (
-      id SERIAL PRIMARY KEY,
-      position INTEGER NOT NULL DEFAULT 0,
-      quote TEXT NOT NULL,
-      author TEXT NOT NULL,
-      location TEXT NOT NULL DEFAULT '',
-      work TEXT NOT NULL DEFAULT '',
-      published BOOLEAN NOT NULL DEFAULT TRUE,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await query(`
-    CREATE TABLE IF NOT EXISTS site_featured_category (
-      id SERIAL PRIMARY KEY,
-      position INTEGER NOT NULL DEFAULT 0,
-      label TEXT NOT NULL,
-      href TEXT NOT NULL,
-      image TEXT NOT NULL DEFAULT '',
-      published BOOLEAN NOT NULL DEFAULT TRUE,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-
   // Product copy in a second language.
   //
   // Medusa keeps one title per product, so translated titles need somewhere of
@@ -433,21 +345,6 @@ async function createTables(): Promise<void> {
   // An empty string means "not translated yet" and the caller falls back to the
   // Medusa title — that is deliberate, so a half-finished translation shows the
   // English name rather than a blank card.
-  await query(`
-    CREATE TABLE IF NOT EXISTS product_translation (
-      id SERIAL PRIMARY KEY,
-      handle TEXT NOT NULL,
-      locale TEXT NOT NULL,
-      title TEXT NOT NULL DEFAULT '',
-      description TEXT NOT NULL DEFAULT '',
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      UNIQUE (handle, locale)
-    )
-  `);
-  await query(
-    `CREATE INDEX IF NOT EXISTS product_translation_locale_idx ON product_translation (locale)`
-  );
-
   // Seed once. A table that already has rows is left untouched so admin edits
   // are never overwritten by a redeploy.
   const slides = await queryResult<{ count: string }>(
@@ -522,7 +419,7 @@ async function createTables(): Promise<void> {
   }
 }
 
-/** Create and seed the tables once per process. */
+/** Seed the content tables once per process. */
 export function ensureSeeded(): Promise<void> {
   if (!schemaReady) {
     schemaReady = createSchema().catch((err) => {
@@ -701,16 +598,8 @@ export function translateArtForms<T extends { slug: string; name: string; descri
  * renamed in the admin without re-keying on an id nobody types.
  */
 export async function ensureCategoryTranslations(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS category_translation (
-      id SERIAL PRIMARY KEY,
-      handle TEXT NOT NULL,
-      locale TEXT NOT NULL,
-      name TEXT NOT NULL DEFAULT '',
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      UNIQUE (handle, locale)
-    )
-  `);
+  // No-op: category_translation is created by db/schema.sql before the server
+  // starts. Kept so existing callers do not need to change.
 }
 
 export async function categoryTranslationsFor(
@@ -1043,22 +932,6 @@ export async function reorder(
    /admin/journal — editing or deleting a seeded piece is permanent, because the
    seed only runs when the table has no rows at all. */
 export async function ensureJournalSeeded(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS journal_posts (
-      id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-      title TEXT NOT NULL,
-      slug TEXT UNIQUE NOT NULL,
-      content TEXT,
-      excerpt TEXT,
-      cover_image TEXT,
-      author TEXT,
-      status TEXT NOT NULL DEFAULT 'draft',
-      published_at TIMESTAMP,
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now()
-    )
-  `);
-
   const count = await queryResult<{ count: string }>(
     "SELECT COUNT(*)::text AS count FROM journal_posts"
   );

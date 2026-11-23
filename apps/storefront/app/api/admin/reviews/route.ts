@@ -21,26 +21,6 @@ export async function GET(req: Request) {
   const offset = Math.max(Number(searchParams.get("offset") || 0), 0);
 
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS product_review (
-        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-        product_id text NOT NULL,
-        variant_id text,
-        customer_id text,
-        author_name text,
-        rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
-        title text,
-        body text NOT NULL,
-        verified boolean NOT NULL DEFAULT false,
-        verification_order_id text,
-        photos jsonb,
-        status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
-        admin_note text,
-        created_at timestamptz NOT NULL DEFAULT now(),
-        updated_at timestamptz NOT NULL DEFAULT now()
-      )
-    `);
-
     const where: string[] = [];
     const params: any[] = [];
     if (status) {

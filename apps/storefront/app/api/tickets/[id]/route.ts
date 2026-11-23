@@ -24,32 +24,6 @@ export async function GET(
   try {
     const { id } = await params;
 
-    await query(
-      `CREATE TABLE IF NOT EXISTS support_tickets (
-        id TEXT PRIMARY KEY,
-        subject TEXT NOT NULL,
-        message TEXT NOT NULL,
-        email TEXT NOT NULL,
-        name TEXT,
-        status TEXT NOT NULL DEFAULT 'open',
-        priority TEXT NOT NULL DEFAULT 'medium',
-        assigned_to TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )`
-    );
-
-    await query(
-      `CREATE TABLE IF NOT EXISTS ticket_replies (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        ticket_id TEXT NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
-        message TEXT NOT NULL,
-        author TEXT,
-        author_type TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT now()
-      )`
-    );
-
     const ticketRows = await query(
       "SELECT * FROM support_tickets WHERE id = $1",
       [id]

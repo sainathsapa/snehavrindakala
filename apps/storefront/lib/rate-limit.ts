@@ -19,29 +19,6 @@
 
 import { queryResult } from "@/lib/db";
 
-let schemaReady: Promise<void> | null = null;
-
-async function createTable(): Promise<void> {
-  await queryResult(
-    `CREATE TABLE IF NOT EXISTS rate_limit_hits (
-       key TEXT NOT NULL,
-       window_start TIMESTAMPTZ NOT NULL,
-       count INTEGER NOT NULL DEFAULT 0,
-       PRIMARY KEY (key, window_start)
-     )`
-  );
-}
-
-function ensureTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((error) => {
-      schemaReady = null;
-      throw error;
-    });
-  }
-  return schemaReady;
-}
-
 /** Start of the fixed window containing `now`, in milliseconds. */
 export function windowStart(now: number, windowSeconds: number): number {
   const size = Math.max(windowSeconds, 1) * 1000;
@@ -110,7 +87,6 @@ export async function checkRateLimit(params: {
   const start = new Date(windowStart(now, params.windowSeconds)).toISOString();
 
   try {
-    await ensureTable();
     const result = await queryResult<{ count: number }>(
       `INSERT INTO rate_limit_hits (key, window_start, count)
        VALUES ($1, $2, 1)

@@ -18,39 +18,6 @@
 import { query, queryResult } from "@/lib/db";
 import type { WishlistEntry } from "@/lib/wishlist-store";
 
-let schemaReady: Promise<void> | null = null;
-
-async function createTable(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS customer_wishlist (
-      id SERIAL PRIMARY KEY,
-      customer_id TEXT NOT NULL,
-      handle TEXT NOT NULL,
-      title TEXT NOT NULL DEFAULT '',
-      image TEXT NOT NULL DEFAULT '',
-      price NUMERIC,
-      currency TEXT NOT NULL DEFAULT '',
-      artist TEXT NOT NULL DEFAULT '',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      UNIQUE (customer_id, handle)
-    )
-  `);
-  await query(
-    `CREATE INDEX IF NOT EXISTS customer_wishlist_customer_idx
-       ON customer_wishlist (customer_id)`
-  );
-}
-
-function ensureTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((err) => {
-      schemaReady = null;
-      throw err;
-    });
-  }
-  return schemaReady;
-}
-
 type Row = {
   handle: string;
   title: string;
@@ -73,7 +40,6 @@ function toEntry(row: Row): WishlistEntry {
 
 export async function listWishlistFor(customerId: string): Promise<WishlistEntry[]> {
   if (!customerId) return [];
-  await ensureTable();
   const result = await queryResult<Row>(
     `SELECT handle, title, image, price, currency, artist
        FROM customer_wishlist WHERE customer_id=$1
@@ -96,7 +62,6 @@ export async function replaceWishlistFor(
   entries: WishlistEntry[]
 ): Promise<WishlistEntry[]> {
   if (!customerId) return [];
-  await ensureTable();
 
   const unique = dedupeByHandle(entries).slice(0, 200);
 

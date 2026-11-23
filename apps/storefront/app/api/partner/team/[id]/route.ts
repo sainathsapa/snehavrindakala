@@ -12,6 +12,12 @@
 import { NextResponse } from "next/server";
 import { requirePartnerPermission } from "@/lib/partner/context";
 import {
+  AUDIT_ACTIONS,
+  auditPayload,
+  correlationIdFrom,
+  recordMutationAudit,
+} from "@/lib/partner-audit/audit";
+import {
   changeMemberRole,
   hasTenantIdField,
   revokeMemberSessions,
@@ -51,6 +57,21 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (!member) {
       return NextResponse.json({ ok: false, error: "Member not found" }, { status: 404 });
     }
+    await recordMutationAudit({
+      partnerId: ctx.partnerId,
+      actorEmail: ctx.email,
+      actorRole: ctx.role,
+      action: AUDIT_ACTIONS.MEMBER_ROLE_CHANGED,
+      entityType: "partner_membership",
+      entityId: member.id,
+      metadata: auditPayload(AUDIT_ACTIONS.MEMBER_ROLE_CHANGED, ctx, {
+        membershipId: member.id,
+        after: { role: member.role },
+        requestId: correlationIdFrom(req),
+        result: "success",
+        at: new Date().toISOString(),
+      }),
+    });
     return NextResponse.json({ ok: true, member });
   } catch (error) {
     return NextResponse.json(
@@ -70,6 +91,21 @@ export async function POST(_req: Request, context: RouteContext) {
   if (!member) {
     return NextResponse.json({ ok: false, error: "Member not found" }, { status: 404 });
   }
+  await recordMutationAudit({
+    partnerId: ctx.partnerId,
+    actorEmail: ctx.email,
+    actorRole: ctx.role,
+    action: AUDIT_ACTIONS.SESSIONS_REVOKED,
+    entityType: "partner_membership",
+    entityId: member.id,
+    metadata: auditPayload(AUDIT_ACTIONS.SESSIONS_REVOKED, ctx, {
+      membershipId: member.id,
+      after: { tokenVersion: member.token_version },
+      requestId: correlationIdFrom(_req),
+      result: "success",
+      at: new Date().toISOString(),
+    }),
+  });
   return NextResponse.json({ ok: true, member });
 }
 
@@ -83,6 +119,21 @@ export async function DELETE(_req: Request, context: RouteContext) {
     if (!member) {
       return NextResponse.json({ ok: false, error: "Member not found" }, { status: 404 });
     }
+    await recordMutationAudit({
+      partnerId: ctx.partnerId,
+      actorEmail: ctx.email,
+      actorRole: ctx.role,
+      action: AUDIT_ACTIONS.MEMBER_SUSPENDED,
+      entityType: "partner_membership",
+      entityId: member.id,
+      metadata: auditPayload(AUDIT_ACTIONS.MEMBER_SUSPENDED, ctx, {
+        membershipId: member.id,
+        after: { status: member.status },
+        requestId: correlationIdFrom(_req),
+        result: "success",
+        at: new Date().toISOString(),
+      }),
+    });
     return NextResponse.json({ ok: true, member });
   } catch (error) {
     return NextResponse.json(

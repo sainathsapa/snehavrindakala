@@ -106,3 +106,24 @@ A gate is PASS only with: (a) real implementation, (b) tests asserting business
 outcomes/failures, (c) an independently re-run verification, (d) evidence recorded
 in `FINAL_GO_TEST_EVIDENCE.md`. Owner-gated items are `BLOCKED BY OWNER INPUT` and
 are consolidated in `OWNER_INPUT_REQUIRED.md` — never marked PASS.
+
+## 7. Engineering gap closure (follow-up mission)
+
+Branch `remediation/engineering-gap-closure`, cut from `final-go` @ `4a597ca`.
+Ten specialists closed the engineering findings that did not require owner input,
+with the Lead as sole migration coordinator (reserved migrations 005–009) and
+sole gate authority.
+
+Scope executed: signed Razorpay webhook (A01); audit coverage (A02); notification
+retry + verified SES/SNS events and worker trigger (A03); fail-safe refund/inventory
+restoration (A04); finance policy + resolver + DB constraints (A05); reservation
+hardening (A06); role namespacing (A07); lazy runtime DDL removal + hard verify gate
+(A08); partner navigation links (A09); independent QA (A10).
+
+Definition of done for this follow-up: every gap has code and tests asserting the
+business behavior; reserved migrations are additive, idempotent and order-safe;
+the full suite and typecheck are green; independent QA has reported. **Production
+Definition of Done is NOT met**: live stack, credentials, partner/finance/legal
+inputs and backup verification remain owner-gated. The authoritative conclusion
+is in `ENGINEERING_GAP_CLOSURE_REPORT.md`; the NO-GO gate classification in
+`FINAL_GO_RELEASE_REPORT.md` is unchanged.

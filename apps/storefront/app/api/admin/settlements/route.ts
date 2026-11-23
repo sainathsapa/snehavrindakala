@@ -19,6 +19,7 @@ import {
   listEligibleLedgerEntries,
   persistBatch,
 } from "@/lib/finance/settlement";
+import { buildPayabilityResolver } from "@/lib/finance/payability-resolver";
 
 export const dynamic = "force-dynamic";
 
@@ -77,10 +78,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const entries = await listEligibleLedgerEntries();
+    // Load candidates first, then derive the payability facts from their real
+    // order/shipment/return/refund state. The resolver is applied both when
+    // listing and when building the batch so `payable_when` actually controls
+    // which earnings settle — an order without provable state fails closed.
+    const candidates = await listEligibleLedgerEntries();
+    const payability = await buildPayabilityResolver(candidates, policies);
+    const entries = await listEligibleLedgerEntries(undefined, payability);
     let batch;
     try {
-      batch = createBatch(entries, { start, end }, policies);
+      batch = createBatch(entries, { start, end }, policies, payability);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }

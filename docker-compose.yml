@@ -113,6 +113,12 @@ x-backend-environment: &backend-environment
   AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
   FROM_EMAIL: ${FROM_EMAIL:-}
   FROM_NAME: ${FROM_NAME:-SnehaVrinda Kala}
+  # Notification retry policy + verified SES->SNS delivery events. Bounded,
+  # fail-safe defaults; owner may tune max attempts and suppression policy.
+  NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-5}
+  SES_SNS_TOPIC_ARN: ${SES_SNS_TOPIC_ARN:-}
+  SES_SUPPRESS_ON_BOUNCE: ${SES_SUPPRESS_ON_BOUNCE:-true}
+  SES_SUPPRESS_ON_COMPLAINT: ${SES_SUPPRESS_ON_COMPLAINT:-true}
   # Where commission requests and internal notices are announced.
   COMMISSION_INBOX: ${COMMISSION_INBOX:-}
   CONTACT_EMAIL: ${CONTACT_EMAIL:-}
@@ -287,6 +293,11 @@ services:
       AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID:-}
       AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY:-}
       AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
+      # Notification retry + verified SES->SNS delivery events (see backend anchor).
+      NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-5}
+      SES_SNS_TOPIC_ARN: ${SES_SNS_TOPIC_ARN:-}
+      SES_SUPPRESS_ON_BOUNCE: ${SES_SUPPRESS_ON_BOUNCE:-true}
+      SES_SUPPRESS_ON_COMPLAINT: ${SES_SUPPRESS_ON_COMPLAINT:-true}
       # The reminder job's shared secret. The cron container sends it; this side
       # verifies it. Missing here, every scheduled run answers 503 and the job
       # does nothing while looking healthy.
@@ -493,6 +504,40 @@ services:
       - |
         if [ -z "$${CRON_SECRET}" ]; then
           echo "CRON_SECRET is empty: the reminder endpoint will refuse every call." >&2
+          echo "Generate one with: openssl rand -hex 32" >&2
+          exit 1
+        fi
+        while true; do
+          curl -sS -m 60 -X POST -H "Authorization: Bearer $${CRON_SECRET}" \
+            "$${CRON_TARGET}" || true
+          echo
+          sleep "$${CRON_INTERVAL_SECONDS}"
+        done
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - snehavrinda
+
+  # ── Scheduled notification retries ────────────────────────────────────────
+  # The bounded retry state machine lives in lib/notifications.ts; this is its
+  # scheduled caller. It runs more often than cart reminders because the first
+  # backoff step is only 60s. Guarded by CRON_SECRET, like every cron route:
+  # unset => the endpoint refuses each call, wrong => 401. A short per-run cap
+  # in the route keeps a provider outage from becoming a backlog burst.
+  notification-retry-cron:
+    image: curlimages/curl:8.11.1
+    profiles: ["ops"]
+    depends_on:
+      - storefront
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+      CRON_INTERVAL_SECONDS: ${NOTIFICATION_RETRY_INTERVAL_SECONDS:-300}
+      CRON_TARGET: ${NOTIFICATION_RETRY_TARGET:-http://storefront:3000/api/cron/notification-retries}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$${CRON_SECRET}" ]; then
+          echo "CRON_SECRET is empty: the retry endpoint will refuse every call." >&2
           echo "Generate one with: openssl rand -hex 32" >&2
           exit 1
         fi

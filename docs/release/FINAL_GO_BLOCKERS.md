@@ -41,3 +41,25 @@ Only AGENT 00 closes a blocker, with evidence. Owner-gated items point to
   `instrumentation.ts` — a Lead wiring gap, now closed.
 - 3 integration test failures fixed: `api-auth` `requirePermission` recognition,
   two `deployment-env` variables, and a reachability E2E exclusion.
+
+## Engineering findings resolved on `remediation/engineering-gap-closure`
+
+The following findings from the table above were engineering gaps (no owner input
+required) and are now **CLOSED AND VERIFIED** by code + tests. Owner-gated
+blockers (OWNER-*, QA-STACK, E2E-AJ) are **unchanged and still OPEN**.
+
+| ID | Previously | Now | Evidence |
+|---|---|---|---|
+| GAP-01 | MITIGATED AT BOUNDARY — full fix OPEN | **CLOSED** — canonical `partner_*`/`platform_*` namespacing with legacy transition aliases; no data rewritten | migration `006`, `tests/qa-role-namespace.test.ts` |
+| VERIFY-SCHEMA | OPEN (advisory) | **CLOSED** — hard `fail()` gate restored, zero runtime DDL in handlers | `scripts/verify-schema.mjs`, `tests/qa-no-runtime-ddl.test.ts` |
+| A70 | OPEN (webhook not shipped) | **CLOSED for webhook** — `/api/webhooks/razorpay` shipped; `/api/partner/downloads/:id` still not authored (owner-gated fixture) | `tests/qa-webhook-endpoint.test.ts` |
+| A108 | OPEN (audit completeness) | **CLOSED** — all in-scope mutations audited, incl. Lead-wired refund-creation and application-submission writes | `tests/qa-audit-coverage.test.ts` |
+| A110 | Documented / by-design-safe | **CLOSED at capability level** — fail-safe restoration executes after provider confirmation; automatic restock remains owner-gated (condition/inspection evidence not in DB), so `inventory_restored` correctly stays `false` | migration `007`, `tests/qa-refund-inventory.test.ts` |
+| A92 | OPEN by design | **CLOSED at capability level** — bounded retry/backoff/dead-letter state machine + CRON_SECRET worker + admin stats; SES event destination and test recipient remain owner-gated | migration `005`, `tests/qa-notification-retry.test.ts`, worker routes |
+| GAP-12 | OPEN / owner-gated | **CLOSED at capability level** — `refund_effect`/`payable_when` fail closed, DB CHECKs added, `PayabilityResolver` wired from real order state; owner must still **select** the policies and `RETURN_WINDOW_DAYS` | migration `008`, `tests/qa-finance-policy.test.ts`, `tests/qa-payability-resolver.test.ts` |
+
+Owner-gated items that remain **OPEN** after closure: live Razorpay/SES/Shiprocket
+credentials and sandbox fixtures, real partner identities/rates/GSTIN, legal/tax
+sign-off, production infra/secrets/backup, the active finance-policy selection and
+return window, SES event-destination provisioning, and restock inspection evidence.
+See `OWNER_INPUT_REQUIRED.md`.

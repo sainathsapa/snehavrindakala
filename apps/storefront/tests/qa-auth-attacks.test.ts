@@ -106,7 +106,9 @@ describe("A71 — auth attacks: every attack must yield a null context", () => {
     expect(ctx).toMatchObject({
       partnerId: PARTNER_A,
       membershipId: "member-A1",
-      role: "owner",
+      // Resolved partner identities always carry the canonical `partner_*` role,
+      // even when the signed claim and DB row still use the legacy bare name.
+      role: "partner_owner",
       tokenVersion: 1,
       email: EMAIL,
     });

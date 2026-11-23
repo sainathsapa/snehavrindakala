@@ -18,8 +18,9 @@ describe("work inquiry", () => {
 
   it("stores the work a question is about", () => {
     expect(route).toMatch(/product_handle/);
-    // The column must exist on a database that predates it, too.
-    expect(route).toMatch(/ADD COLUMN IF NOT EXISTS product_handle/);
+    // The column must exist on a database that predates it, too. The idempotent
+    // upgrade now runs at deploy time from db/schema.sql, not in the handler.
+    expect(schema).toMatch(/ADD COLUMN IF NOT EXISTS product_handle/);
     expect(schema).toMatch(/product_handle text/);
   });
 

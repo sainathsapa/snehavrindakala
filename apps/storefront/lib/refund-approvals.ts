@@ -13,8 +13,6 @@
 
 import { query, queryResult } from "@/lib/db";
 
-let schemaReady: Promise<void> | null = null;
-
 /**
  * Refund amounts are stored in minor units (paise), matching `order_refunds`.
  * The environment variable is in major units because that is what a person
@@ -38,36 +36,6 @@ export function needsSecondApproval(
   // A zero threshold means "nothing is auto-approved"; a negative or absent one
   // is treated as the default by refundApprovalThreshold, never as "no checks".
   return thresholdMinor === 0 || amountMinor >= thresholdMinor;
-}
-
-async function createColumns(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS order_refunds (
-      id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-      order_id TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      reason TEXT,
-      status TEXT NOT NULL DEFAULT 'pending',
-      created_at TIMESTAMP NOT NULL DEFAULT now(),
-      updated_at TIMESTAMP NOT NULL DEFAULT now()
-    )
-  `);
-  // `order_refunds` predates approvals. Adding the columns lazily keeps existing
-  // rows valid and means a deploy needs no migration step.
-  await query(`ALTER TABLE order_refunds ADD COLUMN IF NOT EXISTS requested_by TEXT`);
-  await query(`ALTER TABLE order_refunds ADD COLUMN IF NOT EXISTS approved_by TEXT`);
-  await query(`ALTER TABLE order_refunds ADD COLUMN IF NOT EXISTS decided_at TIMESTAMPTZ`);
-  await query(`ALTER TABLE order_refunds ADD COLUMN IF NOT EXISTS decision_note TEXT`);
-}
-
-export function ensureRefundTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createColumns().catch((error) => {
-      schemaReady = null;
-      throw error;
-    });
-  }
-  return schemaReady;
 }
 
 export interface RefundRow {
@@ -126,7 +94,6 @@ export async function createRefundRequest(params: {
   reason: string;
   actor: string;
 }): Promise<CreatedRefund> {
-  await ensureRefundTable();
 
   const needs = needsSecondApproval(params.amount);
   // Auto-approved rows record the requester as approver and say so in the note.
@@ -155,7 +122,6 @@ export async function createRefundRequest(params: {
 }
 
 export async function listPendingRefunds(): Promise<RefundRow[]> {
-  await ensureRefundTable();
   const result = await queryResult<RefundRow>(
     `SELECT * FROM order_refunds WHERE status = 'pending' ORDER BY created_at ASC`
   );
@@ -163,7 +129,6 @@ export async function listPendingRefunds(): Promise<RefundRow[]> {
 }
 
 export async function listRefundsForOrder(orderId: string): Promise<RefundRow[]> {
-  await ensureRefundTable();
   const result = await queryResult<RefundRow>(
     `SELECT * FROM order_refunds WHERE order_id = $1 ORDER BY created_at DESC`,
     [orderId]
@@ -172,7 +137,6 @@ export async function listRefundsForOrder(orderId: string): Promise<RefundRow[]>
 }
 
 export async function getRefund(refundId: string): Promise<RefundRow | null> {
-  await ensureRefundTable();
   const result = await queryResult<RefundRow>(
     `SELECT * FROM order_refunds WHERE id = $1`,
     [refundId]

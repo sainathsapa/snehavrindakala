@@ -20,8 +20,6 @@
 
 import { query, queryResult } from "@/lib/db";
 
-let schemaReady: Promise<void> | null = null;
-
 export function abandonedAfterHours(): number {
   const raw = Number((process.env.ABANDONED_CART_HOURS ?? "").trim() || "");
   if (!Number.isFinite(raw) || raw <= 0) return 6;
@@ -46,26 +44,6 @@ export function isAbandoned(params: {
   return params.ageHours >= minHours;
 }
 
-async function createTable(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS cart_reminders (
-      cart_id TEXT PRIMARY KEY,
-      status TEXT NOT NULL,
-      sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-}
-
-export function ensureReminderTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((error) => {
-      schemaReady = null;
-      throw error;
-    });
-  }
-  return schemaReady;
-}
-
 export interface AbandonedCartItem {
   title: string;
   quantity: number;
@@ -86,7 +64,6 @@ export interface AbandonedCart {
 export async function listAbandonedCarts(
   options: { minHours?: number; limit?: number } = {}
 ): Promise<AbandonedCart[]> {
-  await ensureReminderTable();
   const minHours = options.minHours ?? abandonedAfterHours();
   const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
 
@@ -180,7 +157,6 @@ export async function recordReminder(
   cartId: string,
   status: ReminderStatus
 ): Promise<void> {
-  await ensureReminderTable();
   await query(
     `INSERT INTO cart_reminders (cart_id, status, sent_at)
      VALUES ($1,$2,now())

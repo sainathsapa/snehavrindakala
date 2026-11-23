@@ -7,6 +7,11 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getAdminIdentity, requireAdmin, requirePermission } from "@/app/admin/actions";
 import { getSystemAdminToken } from "@/lib/admin";
+import { recordAdminAction } from "@/lib/audit";
+import {
+  correlationIdFrom,
+  redactAuditText,
+} from "@/lib/partner-audit/audit";
 import {
   createRefundRequest,
   listRefundsForOrder,
@@ -84,18 +89,6 @@ export async function POST(
     const refundableTotal = order.refundable_total ?? order.total ?? 0;
 
     // Calculate sum of existing completed/pending refunds
-    await query(`
-      CREATE TABLE IF NOT EXISTS order_refunds (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-        order_id TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        reason TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_at TIMESTAMP NOT NULL DEFAULT now()
-      )
-    `);
-
     const existing = await query(
       // Approved (awaiting release) and completed both still hold money, so
       // both count against the refundable total. Rejected rows do not.
@@ -126,6 +119,24 @@ export async function POST(
       amount,
       reason: reason || "",
       actor: identity.email,
+    });
+
+    // A108: creating the refund request is itself a business-critical mutation.
+    // Record who asked, on which order, and whether it needs a second signature.
+    // Free-text reason is scrubbed; identity comes from the verified session.
+    await recordAdminAction({
+      actorEmail: identity.email,
+      actorRole: identity.role,
+      action: "refund.requested",
+      entityType: "order_refunds",
+      entityId: created.refund?.id ?? null,
+      newValues: {
+        orderId: id,
+        amount,
+        needsApproval: created.needs_approval,
+        reason: redactAuditText(reason || ""),
+        requestId: correlationIdFrom(req),
+      },
     });
 
     return NextResponse.json(

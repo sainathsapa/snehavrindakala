@@ -205,13 +205,14 @@ describe("provider message id persistence", () => {
 /* ── 6. Delivery confirmation is declared-only (no webhook) ─────────────── */
 
 describe("delivery confirmation vocabulary (not a delivery proof)", () => {
-  it("declares delivered/bounced but no webhook writes them", () => {
+  it("declares delivered/bounced as written only by the verified webhook", () => {
     expect(DELIVERY_CONFIRMATION_STATUSES).toContain("delivered");
     expect(DELIVERY_CONFIRMATION_STATUSES).toContain("bounced");
     const src = transportSrc();
-    expect(src).toMatch(/no SES event webhook/i);
-    expect(src).toMatch(/BLOCKER/);
-    // The warning spans two source lines; match the stable fragment.
-    expect(src).toMatch(/proof of delivery until that webhook exists/);
+    // A03 shipped the verified SES→SNS event route: delivery states are written
+    // there, never by the send path, and `sent` is still not a delivery proof.
+    expect(src).toMatch(/written only by the verified SES→SNS event/);
+    expect(src).toMatch(/never by this send/);
+    expect(src).toMatch(/Do not read a `sent` row as proof of delivery/i);
   });
 });

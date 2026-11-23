@@ -17,7 +17,7 @@
  *    from the trusted context, never accepted as an argument.
  */
 
-import { query as defaultQuery } from "@/lib/db";
+import { query as defaultQuery, queryResult } from "@/lib/db";
 import { tenantQuery, type QueryExecutor } from "@/lib/partner/repository";
 import type { PartnerContext } from "@/lib/partner/types";
 
@@ -92,6 +92,60 @@ export async function recordPartnerAudit(
   ]);
 }
 
+/**
+ * Executor for mutation audit rows. It uses the result-returning DB primitive so
+ * an audit write never collides with the row-shape fakes used by the mutation
+ * libraries' own tests, while in production it is the very same pool/INSERT as
+ * `recordPartnerAudit`'s default executor (same table, same SQL above).
+ */
+export const AUDIT_EXECUTOR: QueryExecutor = async (sql, params) => {
+  const result = await queryResult(sql, params ?? []);
+  return result.rows;
+};
+
+/**
+ * Append an audit row for a *business-critical* mutation and fail loudly if the
+ * write does not land. This is deliberately NOT best-effort: a mutation that
+ * completes without a durable audit row is invisible to an incident review. The
+ * caller (route handler) receives a clear error it can turn into a 5xx rather
+ * than returning a success that was never recorded.
+ *
+ * Identity is still built by the caller from the verified `PartnerContext`; this
+ * helper never accepts a client-supplied partner id.
+ */
+export async function recordMutationAudit(input: PartnerAuditInput): Promise<void> {
+  try {
+    await recordPartnerAudit(input, AUDIT_EXECUTOR);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[audit] partner mutation audit write failed", {
+      action: input.action,
+      entityType: input.entityType,
+      entityId: input.entityId,
+      partnerId: input.partnerId,
+      error: detail,
+    });
+    throw new Error(
+      `Audit write failed for action "${input.action}"; the operation completed but was not recorded.`
+    );
+  }
+}
+
+/**
+ * Best-effort correlation/request id from an inbound request. The value is an
+ * opaque tracing token (never a tenant id or a secret), so it is safe to persist
+ * alongside an audit row when the caller supplies one.
+ */
+export function correlationIdFrom(req: Request): string | undefined {
+  try {
+    const value =
+      req.headers.get("x-request-id") || req.headers.get("x-correlation-id") || "";
+    return value.trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** List the authenticated partner's audit trail, newest first. Tenant scoped. */
 export function listPartnerAudit(
   ctx: PartnerContext,
@@ -121,6 +175,10 @@ const PAN_VALUE_RE = /\b\d{13,19}\b/g;
 
 function normaliseKey(key: string): string {
   return key
+    // Split camelCase BEFORE lowercasing: `apiToken` must become "api token"
+    // so the `\btoken\b` rule fires. Lowercasing first would fuse it into
+    // "apitoken", which no word-boundary rule can match.
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
@@ -175,4 +233,16 @@ export function auditPayload(
     actorRole: ctx?.role ?? "",
     entity: sanitize(entity) as Record<string, unknown>,
   };
+}
+
+/**
+ * Redact a free-form value for the *admin* audit log, which has no JSON metadata
+ * builder of its own. Reuses the exact same last-line-of-defence scrubber as
+ * `auditPayload` so emails, PANs and card numbers never reach either audit table.
+ */
+export function redactAuditText(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const text = typeof value === "string" ? value : String(value);
+  const redacted = scrubString(text);
+  return redacted.trim() ? redacted : null;
 }

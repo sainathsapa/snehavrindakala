@@ -3,6 +3,12 @@
 import { NextResponse } from "next/server";
 import { requirePartnerPermission } from "@/lib/partner/context";
 import {
+  AUDIT_ACTIONS,
+  auditPayload,
+  correlationIdFrom,
+  recordMutationAudit,
+} from "@/lib/partner-audit/audit";
+import {
   updateGroupStatus,
   assertNoForbiddenFulfilmentFields,
   FulfilmentError,
@@ -20,6 +26,21 @@ export async function POST(
     assertNoForbiddenFulfilmentFields(body);
     const group = await updateGroupStatus(ctx, id, "accepted", ctx.email);
     if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    await recordMutationAudit({
+      partnerId: ctx.partnerId,
+      actorEmail: ctx.email,
+      actorRole: ctx.role,
+      action: AUDIT_ACTIONS.ORDER_ACCEPTED,
+      entityType: "fulfilment_group",
+      entityId: group.id,
+      metadata: auditPayload(AUDIT_ACTIONS.ORDER_ACCEPTED, ctx, {
+        customerOrderId: group.customer_order_id,
+        after: { status: group.status },
+        requestId: correlationIdFrom(req),
+        result: "success",
+        at: new Date().toISOString(),
+      }),
+    });
     return NextResponse.json(group);
   } catch (err) {
     const code = err instanceof FulfilmentError ? err.code : "ERROR";

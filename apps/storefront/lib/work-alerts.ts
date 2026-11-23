@@ -14,40 +14,6 @@
 
 import { query, queryResult } from "@/lib/db";
 
-let schemaReady: Promise<void> | null = null;
-
-async function createTable(): Promise<void> {
-  await query(`
-    CREATE TABLE IF NOT EXISTS work_alerts (
-      id SERIAL PRIMARY KEY,
-      email TEXT NOT NULL,
-      art_form TEXT NOT NULL DEFAULT '',
-      price_max NUMERIC,
-      locale TEXT NOT NULL DEFAULT 'en',
-      source TEXT NOT NULL DEFAULT 'art-form',
-      consent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      notified_at TIMESTAMPTZ,
-      unsubscribed_at TIMESTAMPTZ,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await query(
-    `CREATE INDEX IF NOT EXISTS work_alerts_waiting_idx
-       ON work_alerts (created_at DESC)
-      WHERE unsubscribed_at IS NULL`
-  );
-}
-
-export function ensureWorkAlertsTable(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = createTable().catch((err) => {
-      schemaReady = null;
-      throw err;
-    });
-  }
-  return schemaReady;
-}
-
 /**
  * A budget is optional. Blank means "any price", not "free", so it is stored as
  * NULL rather than 0 — a zero budget would silently match nothing.
@@ -76,7 +42,6 @@ export async function createWorkAlert(input: {
   const email = normalizeEmail(input.email);
   if (!isValidEmail(email)) return { ok: false, reason: "invalid" };
 
-  await ensureWorkAlertsTable();
 
   const artForm = normaliseArtForm(input.artForm);
   const priceMax = parsePriceMax(input.priceMax);
@@ -111,7 +76,6 @@ export interface WorkAlert {
 }
 
 export async function listWorkAlerts(limit = 200): Promise<WorkAlert[]> {
-  await ensureWorkAlertsTable();
   const result = await queryResult<WorkAlert>(
     `SELECT id, email, art_form, price_max, locale, source, notified_at, created_at
        FROM work_alerts
@@ -124,12 +88,10 @@ export async function listWorkAlerts(limit = 200): Promise<WorkAlert[]> {
 }
 
 export async function markWorkAlertNotified(id: number): Promise<void> {
-  await ensureWorkAlertsTable();
   await query(`UPDATE work_alerts SET notified_at=NOW() WHERE id=$1`, [id]);
 }
 
 export async function deleteWorkAlert(id: number): Promise<void> {
-  await ensureWorkAlertsTable();
   await query(`DELETE FROM work_alerts WHERE id=$1`, [id]);
 }
 

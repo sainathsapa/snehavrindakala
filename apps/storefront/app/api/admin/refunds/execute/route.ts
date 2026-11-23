@@ -15,6 +15,10 @@ import { NextResponse } from "next/server";
 import { getAdminIdentity, requirePermission } from "@/app/admin/actions";
 import { getRefund } from "@/lib/refund-approvals";
 import { recordAdminAction } from "@/lib/audit";
+import {
+  correlationIdFrom,
+  redactAuditText,
+} from "@/lib/partner-audit/audit";
 import { getRefundProvider } from "@/lib/payments/refund-provider";
 import {
   DualControlError,
@@ -91,11 +95,14 @@ export async function POST(req: Request) {
       action: "refund.execute",
       entityType: "refund_execution",
       entityId: result.execution.id,
+      oldValues: { status: approval.status },
       newValues: {
         refundRequestId,
         status: result.execution.status,
         reused: result.reused,
         providerRefundId: result.execution.provider_refund_id,
+        requestId: correlationIdFrom(req),
+        result: "success",
       },
     });
 
@@ -108,14 +115,31 @@ export async function POST(req: Request) {
           : "The provider has not confirmed this refund yet; nothing is final.",
     });
   } catch (error) {
+    // A108: failed executions are business-critical and must be audited too.
+    // Provider error text is caller/provider-controlled, so it is scrubbed.
+    const code =
+      error instanceof RefundExecutionError ? error.code : "UNEXPECTED";
+    const message =
+      error instanceof Error ? error.message : "Refund execution failed";
+    await recordAdminAction({
+      actorEmail: identity.email,
+      actorRole: identity.role,
+      action: "refund.execute_failed",
+      entityType: "refund_execution",
+      entityId: refundRequestId,
+      newValues: {
+        code,
+        error: redactAuditText(message),
+        requestId: correlationIdFrom(req),
+        result: "failure",
+      },
+    });
     if (error instanceof DualControlError) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
     if (error instanceof RefundExecutionError) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
-    const message =
-      error instanceof Error ? error.message : "Refund execution failed";
     console.error("[admin] refund execution failed", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

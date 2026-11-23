@@ -8,27 +8,11 @@ import { query } from "@/lib/db";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
- * A ticket can carry the work it is about.
- *
- * Added lazily because `support_tickets` already exists in deployed databases
- * and this route is the only writer: a column added in schema.sql alone would
- * reach new installs and quietly miss every running one.
+ * A ticket can carry the work it is about. `support_tickets.product_handle` is
+ * created for fresh installs by db/schema.sql and added to pre-existing databases
+ * by the idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` in that same file,
+ * which the container entrypoint applies before the server starts.
  */
-let columnsReady: Promise<void> | null = null;
-function ensureColumns(): Promise<void> {
-  if (!columnsReady) {
-    columnsReady = query(
-      `ALTER TABLE support_tickets
-         ADD COLUMN IF NOT EXISTS product_handle TEXT NOT NULL DEFAULT ''`
-    )
-      .then(() => undefined)
-      .catch((err) => {
-        columnsReady = null;
-        throw err;
-      });
-  }
-  return columnsReady;
-}
 
 
 
@@ -94,8 +78,6 @@ export async function POST(req: Request) {
     if (!String(email).includes("@")) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
-
-    await ensureColumns();
 
     const { v4: uuidv4 } = require("uuid");
     const id = `ticket_${uuidv4().slice(0, 8)}`;

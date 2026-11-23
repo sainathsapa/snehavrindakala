@@ -8,6 +8,7 @@
 
 import { createHmac, timingSafeEqual } from "crypto";
 import { getAdminSessionSecret } from "./session-secret";
+import { isRole } from "./rbac";
 
 export const ADMIN_SESSION_COOKIE = "svk_admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -59,6 +60,10 @@ export function verifyAdminSession(token: string): AdminSession | null {
       return null;
     }
     if (!session.email || !session.role) return null;
+    // Namespace-aware: an admin session may only carry a genuine platform role
+    // (canonical `platform_*` or a legacy platform alias). A partner role —
+    // bare or `partner_*` — and any unknown value fail closed here.
+    if (!isRole(session.role)) return null;
     return session;
   } catch {
     return null;

@@ -8,6 +8,8 @@
 
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { recordAdminAction } from "@/lib/audit";
+import { correlationIdFrom } from "@/lib/partner-audit/audit";
 import { validateApplication } from "@/lib/partner-onboarding/validation";
 
 export async function POST(req: Request) {
@@ -52,6 +54,20 @@ export async function POST(req: Request) {
     if (!id) {
       throw new Error("Insert did not return an application id");
     }
+
+    // A108: a public submission is a business-critical mutation too. Record the
+    // application id and server-decided status only — no applicant contact
+    // details, business data or document keys are copied into the audit log.
+    // There is no signed-in actor on this public endpoint, so it is labelled
+    // `public`; the subsequent review actions carry the real admin identity.
+    await recordAdminAction({
+      actorEmail: "public",
+      actorRole: "public",
+      action: "partner_application.submitted",
+      entityType: "partner_onboarding_application",
+      entityId: id,
+      newValues: { status: "pending", requestId: correlationIdFrom(req) },
+    });
 
     // The status is a server decision, never an echo of the request body.
     return NextResponse.json({ id, status: "pending" }, { status: 201 });
