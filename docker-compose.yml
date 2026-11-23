@@ -326,6 +326,12 @@ services:
       # Partner portal sessions derive from COOKIE_SECRET when unset; set this
       # explicitly to rotate partner sessions independently.
       PARTNER_SESSION_SECRET: ${PARTNER_SESSION_SECRET:-${COOKIE_SECRET:-}}
+      # One-time partner password reset links derive from COOKIE_SECRET when
+      # unset. Empty by default; owner may set a dedicated rotation secret.
+      PARTNER_RESET_SECRET: ${PARTNER_RESET_SECRET:-}
+      # Return eligibility window in days. No default by design: an absent or
+      # invalid value is reported UNCONFIGURED until the owner decides it.
+      RETURN_WINDOW_DAYS: ${RETURN_WINDOW_DAYS:-}
       # The storefront owns a few tables (admin sessions, translations, review
       # cache) and applies them itself on start-up.
       DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-medusa}:${POSTGRES_PASSWORD:-medusa}@postgres:5432/${POSTGRES_DB:-medusa}?sslmode=disable}

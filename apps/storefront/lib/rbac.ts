@@ -161,6 +161,25 @@ export function isRole(value: unknown): value is Role {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(ROLE_PERMISSIONS, value);
 }
 
+/**
+ * Fail-closed boundary between the partner and platform RBAC namespaces.
+ *
+ * Partner membership roles (owner/manager/operations/finance/viewer) live in a
+ * different table. Four of those strings collide with genuine platform roles,
+ * so a partner role that ever reaches `hasPermission` would silently inherit
+ * platform powers. This guard is applied where an admin identity is built
+ * (getAdminIdentity): only a string that is genuinely in the platform matrix
+ * may become an admin role. A partner-only or unknown role yields `null`, so no
+ * identity is produced at all (QA GAP-01 mitigation).
+ *
+ * Note: the colliding names themselves remain valid *platform* roles by design;
+ * full string-level namespacing of partner roles is a separate, owner-gated
+ * data migration tracked in FINAL_GO_BLOCKERS.md.
+ */
+export function platformRoleOrNull(value: unknown): Role | null {
+  return isRole(value) ? value : null;
+}
+
 /** Unknown roles / permissions are always denied (fail closed). */
 export function hasPermission(role: Role | string, permission: Permission): boolean {
   if (!isRole(role)) return false;

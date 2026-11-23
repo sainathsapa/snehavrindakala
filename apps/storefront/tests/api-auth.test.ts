@@ -27,7 +27,9 @@ function routeFiles(dir: string): string[] {
   return out;
 }
 
-const guarded = /requireAdmin|getAdminIdentity|authoriseCron|timingSafeEqual/;
+// `requirePermission` / `requireAllPermissions` call getAdminIdentity() internally,
+// so they are a valid session gate (and a stricter permission gate on top).
+const guarded = /requireAdmin|getAdminIdentity|requirePermission|requireAllPermissions|authoriseCron|timingSafeEqual/;
 
 describe("admin API routes", () => {
   const files = routeFiles(join(apiRoot, "admin")).map((file) => ({

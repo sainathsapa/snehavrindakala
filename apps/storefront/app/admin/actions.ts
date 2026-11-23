@@ -56,7 +56,7 @@ import {
   ADMIN_SESSION_COOKIE,
   verifyAdminSession,
 } from "@/lib/admin-session";
-import { hasPermission, type Permission, type Role } from "@/lib/rbac";
+import { hasPermission, platformRoleOrNull, type Permission, type Role } from "@/lib/rbac";
 import { query } from "@/lib/db";
 
 const ADMIN_EMAILS = (
@@ -89,13 +89,17 @@ export async function getAdminIdentity(): Promise<{
         const row = rows[0];
         if (row) {
           if (row.is_active === false) return null;
-          return { email: session.email, role: row.role || "viewer" };
+          const role = platformRoleOrNull(row.role || "viewer");
+          if (!role) return null;
+          return { email: session.email, role };
         }
       } catch {
         // DB unavailable — fall through to the signed role only for env admins.
       }
       if (ADMIN_EMAILS.includes(session.email.toLowerCase())) {
-        return { email: session.email, role: session.role };
+        const role = platformRoleOrNull(session.role);
+        if (!role) return null;
+        return { email: session.email, role };
       }
       return null;
     }

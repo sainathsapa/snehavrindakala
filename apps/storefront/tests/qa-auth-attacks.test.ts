@@ -10,6 +10,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { resolvePartnerContext } from "@/lib/partner/context";
 import {
   PARTNER_SESSION_COOKIE,
@@ -18,7 +20,7 @@ import {
   verifyPartnerToken,
 } from "@/lib/partner/session";
 import { ADMIN_SESSION_COOKIE, signAdminSession, verifyAdminSession } from "@/lib/admin-session";
-import { hasPermission, isRole, ROLE_PERMISSIONS, type Role } from "@/lib/rbac";
+import { hasPermission, isRole, platformRoleOrNull, ROLE_PERMISSIONS, type Role } from "@/lib/rbac";
 import { partnerHasPermission } from "@/lib/partner/rbac";
 import type { QueryExecutor } from "@/lib/partner/repository";
 
@@ -274,12 +276,25 @@ describe("A71 — privilege confusion / privilege separation", () => {
     expect(hasPermission("owner" as Role, "refunds:approve")).toBe(false);
   });
 
-  it.skip("GAP-01 desired behaviour (currently FAILS): partner role strings must not satisfy platform permissions", () => {
-    // If role namespaces were properly separated, all of these would be false.
-    expect(hasPermission("finance", "refunds:approve")).toBe(false);
-    expect(hasPermission("manager", "products:write")).toBe(false);
-    expect(hasPermission("operations", "shipments:write")).toBe(false);
-    expect(hasPermission("viewer", "finance:read")).toBe(false);
+  it("GAP-01 mitigation: only genuine platform roles can become an admin identity", () => {
+    // The collision cannot be fixed inside hasPermission without breaking the
+    // platform: "finance"/"manager"/"operations"/"viewer" ARE real platform
+    // roles. The guard is applied where the identity is built, so a partner-only
+    // or unknown role string fails closed (no identity at all).
+    expect(platformRoleOrNull("owner")).toBeNull(); // partner-only
+    expect(platformRoleOrNull("partner_owner")).toBeNull(); // namespaced partner
+    expect(platformRoleOrNull("not_a_role")).toBeNull();
+    expect(platformRoleOrNull("")).toBeNull();
+    expect(platformRoleOrNull(null)).toBeNull();
+    // Genuine platform roles still resolve, including the colliding names.
+    expect(platformRoleOrNull("finance")).toBe("finance");
+    expect(platformRoleOrNull("super_admin")).toBe("super_admin");
+    expect(platformRoleOrNull("partner")).toBe("partner");
+
+    // The guard is wired into the real entry point, not just unit-tested here.
+    const actions = readFileSync(join(__dirname, "..", "app", "admin", "actions.ts"), "utf8");
+    expect(actions).toMatch(/import[^;]*platformRoleOrNull[^;]*from "@\/lib\/rbac"/);
+    expect(actions.match(/platformRoleOrNull\(/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
   it("platform role names are recognised, partner-only role names are not", () => {

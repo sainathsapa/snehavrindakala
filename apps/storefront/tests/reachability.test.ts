@@ -29,7 +29,14 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 const sourceFiles = walk(root).filter((file) =>
-  /\.(ts|tsx)$/.test(file) && !file.includes("/tests/")
+  /\.(ts|tsx)$/.test(file) &&
+  !file.includes("/tests/") &&
+  // E2E specs are test code, not shipped UI. They deliberately encode a
+  // *proposed* contract (e.g. /api/webhooks/razorpay, /api/partner/downloads/:id)
+  // for scenarios that are AUTHORED — NOT RUN and documented as blocked. A
+  // probe for a not-yet-implemented endpoint is not a broken UI link, and those
+  // gaps are tracked honestly in docs/release/QA_CONSOLIDATED_FINDINGS.md.
+  !file.includes("/e2e/")
 );
 
 const apiRoutes = new Set(
