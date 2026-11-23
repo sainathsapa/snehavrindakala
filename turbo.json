@@ -14,10 +14,10 @@
     "AWS_REGION",
     "SENTRY_DSN"
   ],
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["apps/**/.next/**", "apps/**/dist/**", "dist/**"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
       "cache": true
     },
     "lint": {

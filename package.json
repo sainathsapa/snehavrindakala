@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "SnehaVrinda Kala — Indian art house and creative-commerce platform (Next.js + Medusa v2 + PostgreSQL)",
+  "packageManager": "pnpm@12.18.0",
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
