@@ -40,4 +40,52 @@ Notes:
 
 ## Integration / regression evidence
 
-_To be appended after each wave._
+### Wave 2 — notifications, GST, SEO, analytics (commit `99f4dcd`)
+```
+backend typecheck   PASS
+backend test        PASS 101/101 (7 files; +11 dedupe tests)
+storefront typecheck PASS
+storefront test     PASS 494/498 (4 skipped, 50 files)
+```
+
+### Wave 2 — inventory (commit `1ca0144`)
+```
+storefront typecheck PASS
+storefront test     PASS 503/507 (4 skipped, 51 files; +9 inventory tests)
+```
+
+### Wave 2 — payments (commit `13510a5`)
+```
+storefront test     PASS 510/514 (4 skipped, 52 files; +7 payment-guard tests)
+```
+
+### Wave 4 — invoice gating (commit `23b85a1`)
+```
+storefront test     PASS 513/517 (4 skipped, 53 files; +3 invoice-gst tests)
+```
+
+### Wave 3 — shipping webhook (commit `8653c66`)
+```
+storefront test     PASS 519/523 (4 skipped, 54 files; +6 shipping-webhook tests)
+```
+
+### Full monorepo verification (final, HEAD `270d0c8`)
+```
+pnpm typecheck   Tasks: 4 successful, 4 total (turbo 2.11.10)
+pnpm test        storefront: Test Files 54 passed (54); Tests 519 passed | 4 skipped (523)
+                 backend:    Test Files 7 passed (7);  Tests 101 passed (101)
+pnpm build       Tasks: 2 successful, 2 total — Next.js + Medusa builds completed
+```
+
+### Build note
+Backend `medusa build` emits a harmless `ts-node cannot be loaded ... set NODE_ENV
+to production` warning from the CLI but completes "Backend build completed
+successfully". Storefront build emits the full route table including
+`/api/webhooks/shiprocket` and the new cron/admin routes.
+
+### Not executed (and why)
+- Live Razorpay sandbox purchase/webhook/refund: no sandbox credentials.
+- Live Shiprocket callback: no webhook token.
+- Playwright E2E scenarios A–H: no running Medusa/Postgres/Shiprocket stack.
+- Real SES send: no verified sender/credentials (outbox correctly records `skipped`).
+- These are honest blockers, not green claims. See `RELEASE_BLOCKERS.md`.

@@ -35,12 +35,12 @@ targets the **gaps that remain**, with evidence, rather than re-doing shipped wo
 | Wave | Scope | Status |
 |---|---|---|
 | 0 | Baseline + gap analysis | DONE — see AGENT_ASSIGNMENTS.md |
-| 1 | Auth, RBAC, session verify, credentials, rate limit, audit | IN PROGRESS |
-| 2 | Payments/reconciliation, inventory reservations, outbox retries, GST/invoice | PLANNED (partly externally blocked) |
-| 3 | Refund execution, shipping sync, partner portal + tenant isolation, settlements | PLANNED (mostly blocked / large) |
-| 4 | Canonical URLs, GA4 consent, cookie policy, data export, legal review | PLANNED |
-| 5 | Migration integrity, lazy DDL, CI, monitoring | PLANNED |
-| 6 | Independent E2E validation | PLANNED |
+| 1 | Auth, RBAC, session verify, credentials, rate limit, audit | DONE — all 6 tasks verified |
+| 2 | Payments/reconciliation, inventory, outbox, GST/invoice | DONE for INV-01/NOT-01/NOT-02/GST-01/GST-02/PAY-01; PAY-02 partial, PAY-03 blocked |
+| 3 | Refunds, shipping sync, partner portal, settlements | SHIP-01 code done; refunds + partners blocked on external input |
+| 4 | Canonicals, GA4 consent, cookie policy, data export, legal | DONE — all tasks verified |
+| 5 | Migration integrity, lazy DDL, CI, monitoring | PARTIAL — root tooling fixed; lazy DDL + CI security pending |
+| 6 | Independent E2E validation | NOT RUN — no running services/credentials; see blockers |
 
 ## 4. Master backlog
 
