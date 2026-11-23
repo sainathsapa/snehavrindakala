@@ -323,6 +323,9 @@ services:
       # Admin sessions + server-side data access
       COOKIE_SECRET: ${COOKIE_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-}
+      # Partner portal sessions derive from COOKIE_SECRET when unset; set this
+      # explicitly to rotate partner sessions independently.
+      PARTNER_SESSION_SECRET: ${PARTNER_SESSION_SECRET:-${COOKIE_SECRET:-}}
       # The storefront owns a few tables (admin sessions, translations, review
       # cache) and applies them itself on start-up.
       DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-medusa}:${POSTGRES_PASSWORD:-medusa}@postgres:5432/${POSTGRES_DB:-medusa}?sslmode=disable}
