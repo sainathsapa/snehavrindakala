@@ -12,10 +12,53 @@ on:
           - staging
           - production
 
+permissions:
+  contents: read
+  id-token: write # required by aws-actions/configure-aws-credentials (OIDC)
+
+# Never allow two applies to race each other.
+concurrency:
+  group: cd-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
 jobs:
+  # A deploy must re-check the exact revision being shipped — CI may have run
+  # against a different commit, and an exception may have expired since.
+  verify:
+    name: Pre-deploy security gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Scan tracked files for committed secrets
+        run: node apps/storefront/scripts/secret-scan.mjs
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: node apps/storefront/scripts/audit-deps.mjs
+        env:
+          AUDIT_LEVEL: high
+
   deploy:
     runs-on: ubuntu-latest
+    needs: verify
     environment: ${{ github.event.inputs.environment }}
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +80,9 @@ jobs:
         working-directory: infra/terraform
         run: terraform plan -var-file=terraform.tfvars
 
+      # Production requires a human approval on the GitHub environment before
+      # this step runs. Keep that protection enabled — the workflow must never
+      # be the only thing standing between a commit and production.
       - name: Terraform Apply
         working-directory: infra/terraform
         run: terraform apply -auto-approve -var-file=terraform.tfvars
