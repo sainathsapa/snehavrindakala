@@ -50,28 +50,33 @@ The previous work is present and unchanged. This mission **builds on it**.
 
 ## 4. Gate status (updated as evidence lands)
 
+> Authoritative classification: `FINAL_GO_RELEASE_REPORT.md` §3 (AGENT 00,
+> 2026-11-23, HEAD `83931c0`). "PASS (code-level)" means implementation +
+> independently re-run tests, **not** live production proof. Overall decision:
+> **NO-GO** — no gate is live-verified.
+
 | Gate | Status | Evidence |
 |---|---|---|
-| Authentication | NOT VERIFIED | — |
-| RBAC | NOT VERIFIED | — |
-| Marketplace | NOT VERIFIED | — |
-| Tenant isolation | NOT VERIFIED | — |
-| Catalogue | NOT VERIFIED | — |
-| Inventory | NOT VERIFIED | — |
-| Orders | NOT VERIFIED | — |
-| Payments | NOT VERIFIED | — |
-| Reconciliation | NOT VERIFIED | — |
-| Refunds | NOT VERIFIED | — |
-| Finance | NOT VERIFIED | — |
-| Settlements | NOT VERIFIED | — |
-| Shipping | NOT VERIFIED | — |
-| Notifications | NOT VERIFIED | — |
-| Database | NOT VERIFIED | — |
-| CI | NOT VERIFIED | — |
-| SEO | NOT VERIFIED | — |
-| Legal | NOT VERIFIED | — |
-| Production | NOT VERIFIED | — |
-| E2E | NOT VERIFIED | — |
+| Authentication | PASS (code-level) / live NOT VERIFIED | `qa-auth-attacks`, partner-auth; live needs `OWNER-PARTNER` |
+| RBAC | PASS (code-level) | `qa-permissions`, `rbac-session`, GAP-01 boundary test |
+| Marketplace | PASS (code-level) / live BLOCKED BY OWNER INPUT | partner domain/onboarding; real identities + agreements needed |
+| Tenant isolation | PASS (code-level) / live NOT VERIFIED | `partner-tenant-isolation` (19), `qa-cross-partner`, `qa-auth-attacks` (fake executor) |
+| Catalogue | PASS (code-level) / live BLOCKED BY OWNER INPUT | submissions built; media/stock/mapping = `OWNER-CONTENT` |
+| Inventory | NOT VERIFIED (live) | reservation model only; GAP-06 UNIQUE open |
+| Orders | PASS (code-level) / live NOT VERIFIED | allocation, fulfilment, order-sync; E2E A/B not run |
+| Payments | BLOCKED BY OWNER INPUT + NOT VERIFIED (live) | no Razorpay sandbox; `/api/webhooks/razorpay` not shipped |
+| Reconciliation | PASS (code-level) / live BLOCKED BY OWNER INPUT | `qa-payment-failures`; live provider needs creds |
+| Refunds | PASS (code-level) / live BLOCKED BY OWNER INPUT | `qa-refund-execution` (26), dual control; live needs sandbox |
+| Finance | PASS (code-level); activation BLOCKED BY OWNER INPUT | rates/basis unapproved → policies stay draft |
+| Settlements | PASS (code-level); live payout BLOCKED BY OWNER INPUT | GAP-09 no live payout; GAP-10 TDS missing |
+| Shipping | PASS (code-level) / live BLOCKED BY OWNER INPUT | decision layer tested; callbacks need Shiprocket creds |
+| Notifications | PASS (code-level) / live BLOCKED BY OWNER INPUT | outbox tested; SES empty → skipped; GAP-05/07 |
+| Database | NOT VERIFIED (live) | migrations 002–004 in code; no live restore drill (GAP-14) |
+| CI | PASS (code-level scripts verified locally) | secret scan clean, audit gate, migration gate; DDL check advisory |
+| SEO | PASS (code-level static) | `qa-seo-legal` |
+| Legal | BLOCKED BY OWNER INPUT | GAP-15 sign-off missing |
+| Production | BLOCKED BY OWNER INPUT | startup gate wired; prod infra/secrets unconfigured |
+| E2E | NOT VERIFIED / BLOCKED BY OWNER INPUT | all A–J AUTHORED — NOT RUN |
 
 ## 5. Task backlog (stable IDs)
 
