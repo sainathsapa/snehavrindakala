@@ -20,7 +20,7 @@
     "postinstall": "pnpm --filter @snehavrinda-kala/backend typecheck && pnpm --filter @snehavrinda-kala/storefront typecheck"
   },
   "devDependencies": {
-    "eslint": "^9.26.0",
+    "eslint": "^9.39.5",
     "pg": "^8.23.1",
     "turbo": "^2.4.0",
     "typescript": "5.8.3",

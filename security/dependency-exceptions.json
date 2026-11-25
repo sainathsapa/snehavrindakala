@@ -1,0 +1,35 @@
+{
+  "$comment": [
+    "Time-boxed dependency vulnerability exceptions for Snehavrinda Kala.",
+    "",
+    "This file is EMPTY on purpose. Every high/critical advisory reported by",
+    "`node apps/storefront/scripts/audit-deps.mjs` was fixed by upgrading the",
+    "dependency tree during the security closure (see",
+    "docs/release/DEPENDENCY_REMEDIATION_REPORT.md). An exception is a last",
+    "resort, not a habit: if you add one, it must name the exact installed",
+    "version, the exact dependency path, and the exact advisory.",
+    "",
+    "Rules enforced by apps/storefront/scripts/audit-deps.mjs:",
+    "  1. advisory must be a real CVE-* or GHSA-* identifier (no package-wide ignores);",
+    "  2. installedVersion must match the version the audit reports — a version",
+    "     bump invalidates the exception instead of silently carrying it forward;",
+    "  3. dependencyPath must match a path the audit reports — a new consumer",
+    "     cannot inherit an old exception;",
+    "  4. severity must match the advisory severity;",
+    "  5. expiresAt must be at most 14 days after approvedAt and must not be in the past;",
+    "  6. a critical advisory additionally needs criticalAuthorized: true;",
+    "  7. exploitability, reachability and remediationPlan are mandatory.",
+    "",
+    "An invalid or expired entry suppresses nothing and fails the build."
+  ],
+  "policy": {
+    "maxExceptionDays": 14,
+    "enforcedSeverity": "high",
+    "criticalRequiresAuthorization": true,
+    "reviewCadenceDays": 7,
+    "owner": "release-engineering",
+    "auditCommand": "node apps/storefront/scripts/audit-deps.mjs",
+    "selfTestCommand": "node scripts/security/test-dependency-policy.mjs"
+  },
+  "exceptions": []
+}

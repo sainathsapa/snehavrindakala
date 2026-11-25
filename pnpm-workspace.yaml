@@ -12,7 +12,38 @@ allowBuilds:
   "@img/sharp-*": true
   core-js: true
   medusa-telemetry: true
+  # Native build tooling reached through the vitest 4 / Next 15 toolchain.
+  # Both are legitimate upstream packages (SWC is Next's compiler; the parcel
+  # watcher provides file watching). Their install scripts fetch/link a native
+  # binary and are required for the build to work at all.
+  "@swc/core": true
+  "@parcel/watcher": true
 
 # Allow lifecycle/build scripts (pnpm 12 defaults to blocking them)
 ignoreScripts: false
 unsafePerm: true
+
+# ── dependency overrides ────────────────────────────────────────────────────
+#
+# pnpm 12 honours `overrides` here (and `pnpm.overrides` in the root
+# package.json). It does NOT read them from .npmrc — an earlier attempt to pin
+# tinypool there never applied, which is why the critical advisory survived.
+#
+# An override is the last resort: a real version bump is preferred, because an
+# override hides the fact that a consumer's declared range is unsupported.
+# Every entry here must also be explained in
+# docs/release/DEPENDENCY_REMEDIATION_REPORT.md.
+#
+# postcss — next@15.5.29 pins postcss 8.4.31, which is inside four advisories
+# (GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849, GHSA-fxqj-rqcc-2cmp,
+# GHSA-qx2v-qp2m-jg93); the patched release for the newest of them is
+# 8.5.23+. Next accepts any postcss 8.x it is given, and every other consumer
+# in this workspace is already on 8.5.x, so pinning the whole tree to the
+# current 8.5 patch is the least disruptive way to close all four at once.
+# Our own postcss devDependency is bumped in apps/storefront/package.json, so
+# this override exists purely for the transitive resolution.
+#
+# tinypool is NOT overridden: vitest 4 no longer depends on tinypool at all, so
+# upgrading vitest removes the package from the tree instead of pinning it.
+overrides:
+  postcss: 8.5.33
