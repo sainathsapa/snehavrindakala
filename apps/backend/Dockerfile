@@ -35,6 +35,13 @@ WORKDIR /app/apps/backend
 # linux node_modules installed in `base` is preserved intact).
 COPY apps/backend/ ./
 
+# Runtime credential gate. Lives at the repository root so the storefront image
+# can use the same file; copied here because this stage only ships apps/backend.
+# The destination must be ABSOLUTE: this stage's WORKDIR is /app/apps/backend, so
+# a relative destination would place the script where the entrypoint cannot find
+# it (it looks in /app/scripts/security) and the container would fail to start.
+COPY scripts/security/verify-runtime-secrets.mjs /app/scripts/security/verify-runtime-secrets.mjs
+
 # Medusa build → dist/ (backend server + admin UI in dist/public/admin)
 RUN pnpm exec medusa build && apk del python3 make g++
 
@@ -48,6 +55,15 @@ WORKDIR /app/apps/backend
 # the whole workspace — symlink resolution breaks if we copy only part.
 COPY --from=build /app /app
 
+# Tests are not part of a runtime image.
+#
+# The whole workspace is copied because pnpm's node_modules are symlinks into
+# /app/node_modules, so a partial copy breaks resolution. That also copied
+# `apps/backend/tests`, which ships certification-adjacent code and fixtures into
+# every production image and shows up in credential scans. They are removed here
+# so the artifact contains only what the server needs.
+RUN rm -rf /app/apps/backend/tests /app/apps/backend/coverage /app/node_modules/.cache
+
 # medusa start serves the admin UI from <root>/public/admin. The build
 # emits to dist/public/admin, so move it next to the backend root.
 RUN mkdir -p /app/apps/backend/public/admin && \
@@ -58,25 +74,22 @@ RUN addgroup --system --gid 1001 medusa && \
     adduser --system --uid 1001 medusa && \
     chown -R medusa:medusa /app
 
-# Environment variables (overridden at runtime)
-ENV DATABASE_URL=""
-ENV REDIS_URL=""
+# Non-secret defaults only.
+#
+# These used to include `ENV JWT_SECRET=""` and `ENV COOKIE_SECRET=""` (plus the
+# Razorpay/Shiprocket/SES credentials) so that "the image documents the env it
+# wants". That is actively dangerous: an image-level default is inherited by the
+# container and nothing forces the orchestrator to override it, so a deployment
+# that missed one started successfully with an empty signing key. Secret names
+# are documented in .env.example; the values arrive at runtime from the
+# orchestrator's secret store, and docker-entrypoint.sh refuses to start when a
+# required one is missing or a placeholder (scripts/security/verify-runtime-secrets.mjs).
 ENV MEDUSA_BACKEND_URL="http://localhost:9000"
 ENV MEDUSA_ADMIN_URL="http://localhost:9000/app"
 ENV STORE_CORS="http://localhost:3000"
 ENV ADMIN_CORS="http://localhost:7000,http://localhost:3000"
 ENV AUTH_CORS="http://localhost:3000"
-ENV JWT_SECRET=""
-ENV COOKIE_SECRET=""
-ENV RAZORPAY_KEY_ID=""
-ENV RAZORPAY_KEY_SECRET=""
-ENV RAZORPAY_WEBHOOK_SECRET=""
-ENV SHIPROCKET_API_TOKEN=""
-ENV SHIPROCKET_EMAIL=""
-ENV SHIPROCKET_PASSWORD=""
-ENV SANITY_PROJECT_ID=""
 ENV SANITY_DATASET="production"
-ENV SANITY_API_TOKEN=""
 ENV AWS_REGION="ap-south-1"
 ENV NODE_ENV="production"
 

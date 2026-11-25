@@ -19,11 +19,7 @@
 import { EventEmitter } from "events";
 import { createPublicKey, createVerify, X509Certificate } from "node:crypto";
 import pg from "pg";
-import { query as defaultQuery } from "@/lib/db";
-
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  "postgresql://medusa:medusa@localhost:5432/medusa";
+import { query as defaultQuery, resolveDatabaseUrl } from "@/lib/db";
 
 const CHANNEL = "svk_notifications";
 
@@ -59,7 +55,7 @@ declare global {
 function pool(): pg.Pool {
   if (!global.__svkNotificationPool) {
     global.__svkNotificationPool = new pg.Pool({
-      connectionString: DATABASE_URL,
+      connectionString: resolveDatabaseUrl(),
       max: 5,
       idleTimeoutMillis: 30_000,
     });
@@ -98,7 +94,7 @@ function bus(): EventEmitter {
 async function ensureListener(): Promise<void> {
   if (global.__svkNotificationListener) return;
 
-  const client = new pg.Client({ connectionString: DATABASE_URL });
+  const client = new pg.Client({ connectionString: resolveDatabaseUrl() });
   await client.connect();
   await client.query(`LISTEN ${CHANNEL}`);
 

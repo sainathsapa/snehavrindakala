@@ -93,6 +93,31 @@ const RULES = [
     placeholderGroup: 1,
     skipInTests: true,
   },
+  {
+    // Environment-variable FALLBACKS: `process.env.ADMIN_PASSWORD || "literal"`.
+    //
+    // Why this needs its own rule: the `hardcoded-credential` rule above matches
+    // a credential word followed by `=`, `:` or `||`. When the identifier is
+    // `process.env.ADMIN_PASSWORD`, the word is preceded by `_`, which the
+    // negative lookbehind rejects — so the most common way a real credential
+    // leaks into a script (`|| "real-password"`) was invisible to this scanner.
+    // It was found in scripts/seed-full.mjs by manual review, not by the gate.
+    name: "env-fallback-credential",
+    pattern:
+      /\bprocess\.env\.[A-Z0-9_]*(?:PASSWORD|PASSWD|SECRET|TOKEN|API_KEY|ACCESS_KEY|PRIVATE_KEY)[A-Z0-9_]*\s*(?:\|\||\?\?)\s*["'`]([^"'`\n]{6,})["'`]/g,
+    placeholderGroup: 1,
+    skipInTests: true,
+  },
+  {
+    // SCREAMING_CASE credential constants assigned a bare literal, e.g. an
+    // ADMIN_PASSWORD constant set to a quoted string. The value charset excludes
+    // `.` and `(`, so `= process.env.X` and `= build(x)` do not match.
+    name: "credential-constant-literal",
+    pattern:
+      /(?<![A-Za-z0-9_])(?:[A-Z0-9_]*(?:PASSWORD|PASSWD|SECRET|TOKEN|API_KEY|ACCESS_KEY|PRIVATE_KEY))\s*=\s*([A-Za-z0-9!@%^&*_\-+=]{8,})\s*(?:;|,|$)/gm,
+    placeholderGroup: 1,
+    skipInTests: true,
+  },
 ];
 
 const isExampleEnv = (relative) => {

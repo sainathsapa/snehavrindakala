@@ -36,6 +36,8 @@ COPY apps/storefront ./apps/storefront
 COPY packages/ui ./packages/ui
 COPY packages/types ./packages/types
 COPY packages/config-tailwind ./packages/config-tailwind
+# Runtime credential gate, shared with the backend image.
+COPY scripts/security/verify-runtime-secrets.mjs ./scripts/security/verify-runtime-secrets.mjs
 # Documentation ships with the app so the design system is readable from the
 # running container, not only from a developer checkout.
 COPY docs ./docs
@@ -93,6 +95,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/docs ./docs
 # the behaviour this migration exists to remove.
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/db ./apps/storefront/db
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/scripts ./apps/storefront/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/security ./scripts/security
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/docker-entrypoint.sh ./apps/storefront/docker-entrypoint.sh
 
 USER nextjs

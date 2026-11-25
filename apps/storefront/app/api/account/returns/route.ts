@@ -12,10 +12,6 @@ import { randomUUID } from "crypto";
 import { getAuthToken } from "@/lib/auth";
 import { medusa } from "@/lib/medusa";
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  "postgresql://medusa:medusa@localhost:5432/medusa";
-
 
 export async function POST(req: Request) {
   try {

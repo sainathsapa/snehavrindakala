@@ -17,10 +17,28 @@ const require = createRequire(import.meta.url);
 const { execSync } = require("child_process");
 const fs = require("fs");
 
-const ADMIN_EMAIL =
-  process.env.ADMIN_EMAIL || "sneha@sainath.com";
-const ADMIN_PASSWORD =
-  process.env.ADMIN_PASSWORD || "snehalovessainath143";
+// No credential defaults.
+//
+// These used to fall back to a real-looking admin email and password committed
+// in this file. A committed credential is exposed the moment it is pushed, even
+// if a later commit removes it — git history keeps it forever, and the value is
+// a working login if it was ever used. Require them explicitly instead; the CI
+// secret scanner now rejects this pattern.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+for (const [name, value] of [
+  ["ADMIN_EMAIL", ADMIN_EMAIL],
+  ["ADMIN_PASSWORD", ADMIN_PASSWORD],
+]) {
+  if (!value) {
+    console.error(
+      `[seed] ${name} is not set. Export it first, e.g.\n` +
+        `  ADMIN_EMAIL=you@example.com ADMIN_PASSWORD="$(openssl rand -base64 24)" pnpm ${process.env.npm_lifecycle_event || "seed:auto"}`
+    );
+    process.exit(1);
+  }
+}
 const BACKEND_URL =
   process.env.BACKEND_URL || "http://localhost:9000";
 

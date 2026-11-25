@@ -24,4 +24,9 @@ if [ -f "$RUNTIME_ENV" ]; then
   set +a
 fi
 
+# Fail closed on a missing database URL. The session secret is additionally
+# enforced in-process by lib/session-secret.ts, which throws when NODE_ENV is
+# production and no COOKIE_SECRET/JWT_SECRET is configured.
+node scripts/security/verify-runtime-secrets.mjs --app=storefront
+
 exec node apps/storefront/server.js

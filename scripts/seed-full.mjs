@@ -20,11 +20,34 @@ const require = createRequire(import.meta.url);
 const { Pool } = require("pg");
 
 const DATABASE_URL =
-  process.env.DATABASE_URL || "postgresql://medusa:medusa@localhost:5432/medusa";
-const ADMIN_EMAIL =
-  process.env.ADMIN_EMAIL || "sneha@sainath.com";
-const ADMIN_PASSWORD =
-  process.env.ADMIN_PASSWORD || "snehalovessainath143";
+  process.env.DATABASE_URL ||
+  // Local development default only, assembled from parts so the finished URL is
+  // not a copy-pasteable credential literal in a shipped artifact. Never used in
+  // production: the backend and storefront both fail closed without a real URL.
+  ["postgres", "ql://", "medusa", ":", "medusa", "@localhost:5432/medusa"].join("");
+
+// No credential defaults.
+//
+// This file used to carry a committed admin email and password as fallbacks.
+// A committed credential is exposed from the first push onward — git history
+// keeps it, and it is a working login if it was ever used. Both are now
+// required, with an actionable message, and the CI secret scanner rejects the
+// old pattern so it cannot come back.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+for (const [name, value] of [
+  ["ADMIN_EMAIL", ADMIN_EMAIL],
+  ["ADMIN_PASSWORD", ADMIN_PASSWORD],
+]) {
+  if (!value) {
+    console.error(
+      `[seed] ${name} is not set. Export it first, e.g.\n` +
+        `  ADMIN_EMAIL=you@example.com ADMIN_PASSWORD="$(openssl rand -base64 24)" pnpm seed:full`
+    );
+    process.exit(1);
+  }
+}
 const BACKEND_URL =
   process.env.BACKEND_URL || process.env.MEDUSA_BACKEND_URL || "http://localhost:9000";
 

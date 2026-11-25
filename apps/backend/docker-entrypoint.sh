@@ -24,10 +24,11 @@
 # a dedicated release step instead (see infra/terraform).
 set -e
 
-if [ -z "${DATABASE_URL}" ]; then
-  echo "[backend] DATABASE_URL is not set — cannot migrate. Check .env." >&2
-  exit 1
-fi
+# Fail closed on missing or placeholder credentials before touching the
+# database. An empty JWT_SECRET/COOKIE_SECRET would start fine and then sign
+# session tokens with a key an attacker knows; refusing to boot is the safer
+# failure. See scripts/security/verify-runtime-secrets.mjs.
+node /app/scripts/security/verify-runtime-secrets.mjs --app=backend
 
 # Wait for Postgres. depends_on only guarantees the container is up; the health
 # check narrows the window but does not close it (Postgres accepts connections a

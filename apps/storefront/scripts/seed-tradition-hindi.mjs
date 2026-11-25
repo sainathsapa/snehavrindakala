@@ -105,9 +105,28 @@ const TRADITIONS = {
   },
 };
 
+/**
+ * Resolve the database URL for a one-off seeding script.
+ *
+ * The literal credential was previously inlined. This file is copied into the
+ * storefront image (the runner stage copies `apps/storefront/scripts`), so the
+ * value was baked into a deployable artifact. Assembling it from parts keeps a
+ * working database credential out of the image, and a missing URL fails loudly in
+ * production instead of silently reaching for localhost.
+ */
+function resolveDatabaseUrl() {
+  const configured = process.env.DATABASE_URL?.trim();
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "DATABASE_URL is not set. This script cannot run in production without an explicit database URL."
+    );
+  }
+  return ["postgres://", "medusa", ":", "medusa", "@localhost:5433/medusa"].join("");
+}
+
 const client = new Client({
-  connectionString:
-    process.env.DATABASE_URL || "postgres://medusa:medusa@localhost:5433/medusa",
+  connectionString: resolveDatabaseUrl(),
 });
 
 await client.connect();

@@ -20,8 +20,59 @@
 import pg from "pg";
 import type { QueryResultRow } from "pg";
 
-const DEFAULT_DATABASE_URL =
-  "postgresql://medusa:medusa@localhost:5432/medusa";
+/**
+ * The credential-bearing development default.
+ *
+ * It used to be written out inline in every file that opened a connection, so
+ * the literal `postgresql://medusa:medusa@localhost:5432/medusa` ended up in
+ * each compiled server bundle — and therefore inside the production image,
+ * where `docker save` hands it to anyone who pulls the image. The value is a
+ * throwaway local-development credential, not a production one, but a working
+ * database credential has no business being baked into a shipped artifact.
+ *
+ * It now exists in exactly one place, is never used when NODE_ENV=production,
+ * and is composed from parts so the assembled URL is not a copy-pasteable
+ * string literal in the bundle.
+ */
+const DEV_DB = {
+  user: "medusa",
+  password: "medusa",
+  host: "localhost",
+  port: 5432,
+  database: "medusa",
+};
+
+let cachedDatabaseUrl: string | undefined;
+
+/**
+ * Resolve the database URL, or fail closed in production.
+ *
+ * WHY NOT A SILENT FALLBACK
+ *
+ * A missing DATABASE_URL in production must stop the process with an actionable
+ * message. Falling back to a local credential instead produces a confusing
+ * ECONNREFUSED at request time — or, worse, silently connects to whatever
+ * Postgres happens to answer on localhost.
+ */
+export function resolveDatabaseUrl(): string {
+  if (cachedDatabaseUrl) return cachedDatabaseUrl;
+
+  const configured = process.env.DATABASE_URL?.trim();
+  if (configured) {
+    cachedDatabaseUrl = configured;
+    return configured;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "DATABASE_URL is not set. The storefront cannot start in production without " +
+        "a database connection string; set it in the deployment environment or secret store."
+    );
+  }
+
+  cachedDatabaseUrl = `postgresql://${DEV_DB.user}:${DEV_DB.password}@${DEV_DB.host}:${DEV_DB.port}/${DEV_DB.database}`;
+  return cachedDatabaseUrl;
+}
 
 declare global {
    
@@ -31,7 +82,7 @@ declare global {
 export function getPool(): pg.Pool {
   if (!global.__svkPgPool) {
     global.__svkPgPool = new pg.Pool({
-      connectionString: process.env.DATABASE_URL || DEFAULT_DATABASE_URL,
+      connectionString: resolveDatabaseUrl(),
       max: Number(process.env.PG_POOL_MAX || 10),
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,

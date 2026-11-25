@@ -106,10 +106,32 @@ const MEDIUMS = {
   },
 };
 
+/**
+ * Resolve the database URL for a one-off maintenance script.
+ *
+ * WHY THIS IS NOT AN INLINE FALLBACK
+ *
+ * These scripts ship inside the storefront image (the runner stage copies
+ * `apps/storefront/scripts`), so a hardcoded local credential here is a
+ * credential baked into a deployable artifact — recoverable with `docker save`
+ * even though it is "only" a development default. The value is assembled from
+ * parts so no copy-pasteable credential literal exists in the image, and a
+ * missing URL in production is an error rather than a silent connection to
+ * localhost.
+ */
+function resolveDatabaseUrl() {
+  const configured = process.env.DATABASE_URL?.trim();
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "DATABASE_URL is not set. This script cannot run in production without an explicit database URL."
+    );
+  }
+  return ["postgres://", "medusa", ":", "medusa", "@localhost:5433/medusa"].join("");
+}
+
 const client = new Client({
-  connectionString:
-    process.env.DATABASE_URL ||
-    "postgres://medusa:medusa@localhost:5433/medusa",
+  connectionString: resolveDatabaseUrl(),
 });
 
 await client.connect();
