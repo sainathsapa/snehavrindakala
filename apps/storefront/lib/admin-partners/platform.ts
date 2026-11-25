@@ -27,6 +27,10 @@
  */
 
 import { query as dbQuery } from "@/lib/db";
+import {
+  assertCommerciallyActivatable,
+  CommercialValidationError,
+} from "./commercial";
 
 /* ── Types & constants ────────────────────────────────────────────────────── */
 
@@ -114,9 +118,12 @@ function resolveDeps(ex?: PlatformEx): ResolvedDeps {
 /* ── Errors (route handlers map these to HTTP statuses) ──────────────────── */
 
 export class PlatformValidationError extends Error {
-  constructor(message: string) {
+  /** Machine-readable reasons, when the failure has them (e.g. activation). */
+  readonly blockers?: string[];
+  constructor(message: string, blockers?: string[]) {
     super(message);
     this.name = "PlatformValidationError";
+    if (blockers?.length) this.blockers = blockers;
   }
 }
 export class PartnerNotFoundError extends Error {
@@ -327,6 +334,34 @@ export async function setAccountStatus(
   );
   const current = existing[0] as { account_status?: string } | undefined;
   if (!current) throw new PartnerNotFoundError();
+
+  // COMMERCIAL GATE.
+  //
+  // `active` is not just a label: it unlocks the partner portal, listing and
+  // settlement. It therefore requires a signed, in-force agreement and an
+  // approved commission/payout configuration. Checked here rather than only in
+  // the route so every caller — admin action, API route, backfill script — hits
+  // the same rule.
+  //
+  // Re-activating an already-active partner is still gated: an agreement that
+  // lapsed while the partner was live must not be quietly ignored.
+  if (status === "active") {
+    try {
+      await assertCommerciallyActivatable(
+        pid,
+        deps.now().toISOString().slice(0, 10),
+        deps.executor as any
+      );
+    } catch (err) {
+      if (err instanceof CommercialValidationError) {
+        throw new PlatformValidationError(
+          err.message,
+          err.blockers as unknown as string[]
+        );
+      }
+      throw err;
+    }
+  }
 
   const entry = {
     action: "account_status",

@@ -22,9 +22,42 @@ interface Call {
   params: any[];
 }
 
+/** A signed, in-force agreement + approved config, so status tests that expect
+ *  activation succeed for the reason they existed before: the status machinery.
+ *  The gate itself is exercised in `partner-commercial-gate.test.ts`. */
+const DEFAULT_AGREEMENT = {
+  id: "agr-1",
+  partner_id: "p-1",
+  agreement_reference: "AGR-2026-001",
+  status: "signed",
+  signed_on: "2026-01-01",
+  effective_from: "2026-01-01",
+  effective_to: null,
+  document_ref: "doc-store/agr-2026-001",
+  approved_by: "owner@example.com",
+  approved_at: "2026-01-01T00:00:00.000Z",
+};
+
+const DEFAULT_COMMERCIAL = {
+  id: "cc-1",
+  partner_id: "p-1",
+  commission_policy_id: "policy-1",
+  payout_frequency: "monthly",
+  payout_terms: "Net 15 after delivery confirmation",
+  effective_from: "2026-01-01",
+  approved_by: "owner@example.com",
+  approved_at: "2026-01-01T00:00:00.000Z",
+};
+
 /** Fake executor that records every statement and returns lifecycle-shaped rows. */
 function fakeDb(
-  opts: { partner?: Partial<Partner>; artistExists?: boolean } = {}
+  opts: {
+    partner?: Partial<Partner>;
+    artistExists?: boolean;
+    /** `null` simulates no agreement / no commercial config on record. */
+    agreement?: any | null;
+    commercial?: any | null;
+  } = {}
 ) {
   const calls: Call[] = [];
   const partner = {
@@ -52,6 +85,15 @@ function fakeDb(
     if (/^SELECT COUNT\(\*\)/.test(t)) return [{ count: "1" }];
     if (/^SELECT .* FROM site_artist\b/i.test(t)) {
       return opts.artistExists === false ? [] : [{ id: params[0] }];
+    }
+    // Commercial readiness reads (added with the activation gate).
+    if (/^SELECT \* FROM marketplace_partner_agreement\b/i.test(t)) {
+      const a = opts.agreement === undefined ? DEFAULT_AGREEMENT : opts.agreement;
+      return a ? [a] : [];
+    }
+    if (/^SELECT \* FROM partner_commercial_config\b/i.test(t)) {
+      const c = opts.commercial === undefined ? DEFAULT_COMMERCIAL : opts.commercial;
+      return c ? [c] : [];
     }
     if (/^SELECT .* FROM partner\b/i.test(t)) return [partner];
 

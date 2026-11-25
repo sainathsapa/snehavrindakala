@@ -25,7 +25,7 @@ import pg from "pg";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
- * Expected tables and columns from migrations 002-009. Kept explicit (rather
+ * Expected tables and columns from migrations 002-010. Kept explicit (rather
  * than parsed from the SQL) so a typo in a migration cannot silently define
  * what "verified" means.
  */
@@ -126,6 +126,23 @@ const EXPECTED_SCHEMA = {
     "variant_id", "quantity", "refund_execution_id", "refund_request_id",
     "return_request_id", "actor", "reason", "restoration_action_key",
     "metadata", "created_at",
+  ],
+  // 010_commercial_readiness_and_shipping
+  // Deliberately `marketplace_partner_agreement`, not `partner_agreement` — the
+  // Medusa artist module owns that name with different semantics.
+  marketplace_partner_agreement: [
+    "id", "partner_id", "agreement_reference", "status", "signed_on",
+    "effective_from", "effective_to", "document_ref", "approved_by",
+    "approved_at", "notes", "created_at", "updated_at",
+  ],
+  partner_commercial_config: [
+    "id", "partner_id", "commission_policy_id", "payout_frequency",
+    "payout_terms", "effective_from", "approved_by", "approved_at",
+    "created_at", "updated_at",
+  ],
+  product_shipping_data: [
+    "product_id", "weight_grams", "length_cm", "breadth_cm", "height_cm",
+    "source", "verified_by", "verified_at", "notes", "created_at", "updated_at",
   ],
 };
 
@@ -253,7 +270,7 @@ async function checkDatabase() {
 async function main() {
   console.log("verify-schema: HARD check — no CREATE TABLE may remain in handlers ...");
   checkHandlers();
-  console.log("verify-schema: checking migrations 002-009 in the live database ...");
+  console.log("verify-schema: checking migrations 002-010 in the live database ...");
   await checkDatabase();
 
   if (failures) {

@@ -20,6 +20,7 @@ const IDS = [
   "007_refund_inventory",
   "008_finance_constraints",
   "009_reservation_hardening",
+  "010_commercial_readiness_and_shipping",
 ];
 
 describe("migrations 005-009 — presence and form", () => {
@@ -34,6 +35,7 @@ describe("migrations 005-009 — presence and form", () => {
       "007_refund_inventory.sql",
       "008_finance_constraints.sql",
       "009_reservation_hardening.sql",
+      "010_commercial_readiness_and_shipping.sql",
     ]);
   });
 

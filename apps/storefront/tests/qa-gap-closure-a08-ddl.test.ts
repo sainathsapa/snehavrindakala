@@ -2,7 +2,7 @@
  * A10 INDEPENDENT QA — A08 no runtime DDL (static only).
  *
  * Independently verifies the hard fail() gate in verify-schema.mjs, the absence
- * of DDL in handlers, that schema.sql + migrations 002-009 cover the tables,
+ * of DDL in handlers, that schema.sql + migrations 002-010 cover the tables,
  * and that EXPECTED_SCHEMA includes the 005-009 tables.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -92,14 +92,14 @@ describe("A08 — no DDL in handlers or lib, schema coverage is complete", () =>
     expect(offenders).toEqual([]);
   });
 
-  it("schema.sql + migrations 002-009 define every EXPECTED_SCHEMA table", () => {
+  it("schema.sql + migrations 002-010 define every EXPECTED_SCHEMA table", () => {
     const verify = read("scripts/verify-schema.mjs");
     const expected = [...verify.matchAll(/^  ([a-z_]+):\s*\[/gm)].map((m) => m[1]);
     const migrationsDir = join(app, "db", "migrations");
     const files = readdirSync(migrationsDir)
-      .filter((f) => /^00[2-9]_.*\.sql$/.test(f))
+      .filter((f) => /^0\d{2}_.*\.sql$/.test(f))
       .sort();
-    expect(files).toHaveLength(8); // 002..009
+    expect(files).toHaveLength(9); // 002..010
     const fromSql = definedTables(read("db/schema.sql"));
     for (const file of files) {
       for (const t of definedTables(readFileSync(join(migrationsDir, file), "utf8"))) {

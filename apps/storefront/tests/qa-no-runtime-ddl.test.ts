@@ -7,7 +7,7 @@ import { join } from "node:path";
  *
  * These are STATIC checks. No running Postgres is involved: they pin the wiring
  * that makes it safe for handlers to assume their tables already exist —
- * db/schema.sql + migrations 002-009 are applied by the container entrypoint
+ * db/schema.sql + migrations 002-010 are applied by the container entrypoint
  * before the server starts, so a `CREATE TABLE`/`ALTER TABLE` on a request path
  * is a cold-container race/regression, not a harmless fallback.
  *
@@ -111,9 +111,9 @@ describe("A08 — no runtime DDL in handlers or lib modules", () => {
 
     const migrationsDir = join(app, "db", "migrations");
     const migrationFiles = readdirSync(migrationsDir)
-      .filter((f) => /^00[2-9]_.*\.sql$/.test(f))
+      .filter((f) => /^0\d{2}_.*\.sql$/.test(f))
       .sort();
-    expect(migrationFiles).toHaveLength(8); // 002..009, no new migration created here
+    expect(migrationFiles).toHaveLength(9); // 002..010, plus any migration added since
 
     const fromMigrations = new Set<string>();
     for (const file of migrationFiles) {
