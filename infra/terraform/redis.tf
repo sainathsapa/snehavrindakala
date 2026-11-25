@@ -1,5 +1,8 @@
-# ElastiCache Redis for Medusa workflow/cache
-resource "aws_subnet_group" "redis" {
+# ElastiCache Redis for Medusa workflow/cache.
+# `aws_subnet_group` is not an AWS provider resource — it must be
+# `aws_elasticache_subnet_group`, which is what the replication group below
+# expects. This was the reason `terraform validate` never passed.
+resource "aws_elasticache_subnet_group" "redis" {
   name        = "${var.environment}-snehavrinda-redis-subnet-group"
   subnet_ids  = aws_subnet.private[*].id
   description = "Subnet group for Redis"
@@ -32,20 +35,22 @@ resource "aws_security_group" "redis" {
 
 resource "aws_elasticache_replication_group" "redis" {
   replication_group_id = "${var.environment}-snehavrinda-redis"
-  replication_group_description = "Redis for Medusa workflow and cache"
-  port = 6379
-  parameter_group_name = "default.redis7"
-  engine = "redis"
-  engine_version = "7.0"
-  node_type = "cache.t3.micro"
+  # The provider argument is `description`, not `replication_group_description`.
+  # (The old name was silently rejected — validate is what surfaced it.)
+  description                = "Redis for Medusa workflow and cache"
+  port                       = 6379
+  parameter_group_name       = "default.redis7"
+  engine                     = "redis"
+  engine_version             = "7.0"
+  node_type                  = "cache.t3.micro"
   automatic_failover_enabled = var.enable_multi_az
-  num_cache_clusters = var.enable_multi_az ? 2 : 1
-  subnet_group_name = aws_subnet_group.redis.name
-  security_group_ids = [aws_security_group.redis.id]
+  num_cache_clusters         = var.enable_multi_az ? 2 : 1
+  subnet_group_name          = aws_elasticache_subnet_group.redis.name
+  security_group_ids         = [aws_security_group.redis.id]
   transit_encryption_enabled = false
   at_rest_encryption_enabled = true
-  snapshot_retention_limit = 7
-  snapshot_window = "03:00-04:00"
+  snapshot_retention_limit   = 7
+  snapshot_window            = "03:00-04:00"
 
   tags = {
     Environment = var.environment

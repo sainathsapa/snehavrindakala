@@ -33,24 +33,24 @@ resource "aws_security_group" "rds" {
 }
 
 resource "aws_db_instance" "medusa" {
-  identifier       = "${var.environment}-snehavrinda-medusa-db"
-  engine           = "postgres"
-  engine_version   = "16"
-  instance_class   = var.db_instance_class
-  allocated_storage = 100
-  max_allocated_storage = 500
-  storage_encrypted = true
-  db_name          = "medusa"
-  username         = "medusa"
-  password         = var.db_password
-  port             = 5432
-  vpc_security_group_ids = [aws_security_group.rds.id]
-  db_subnet_group_name   = aws_db_subnet_group.medusa.name
+  identifier              = "${var.environment}-snehavrinda-medusa-db"
+  engine                  = "postgres"
+  engine_version          = "16"
+  instance_class          = var.db_instance_class
+  allocated_storage       = 100
+  max_allocated_storage   = 500
+  storage_encrypted       = true
+  db_name                 = "medusa"
+  username                = "medusa"
+  password                = var.db_password
+  port                    = 5432
+  vpc_security_group_ids  = [aws_security_group.rds.id]
+  db_subnet_group_name    = aws_db_subnet_group.medusa.name
   backup_retention_period = 7
-  multi_az = var.enable_multi_az
-  deletion_protection = var.enable_deletion_protection
-  backup_window = "03:00-04:00"
-  maintenance_window = "sun:04:00-sun:05:00"
+  multi_az                = var.enable_multi_az
+  deletion_protection     = var.enable_deletion_protection
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
 
   tags = {
     Name        = "${var.environment}-snehavrinda-medusa-db"

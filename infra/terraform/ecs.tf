@@ -52,8 +52,8 @@ resource "aws_ecs_task_definition" "backend_api" {
   task_role_arn            = aws_iam_role.ecs_task.arn
   container_definitions = jsonencode([
     {
-      name      = "medusa-backend"
-      image     = "${var.backend_image}"
+      name  = "medusa-backend"
+      image = "${var.backend_image}"
       portMappings = [
         {
           containerPort = 9000
@@ -62,15 +62,21 @@ resource "aws_ecs_task_definition" "backend_api" {
         }
       ]
       environment = [
-        { name = "DATABASE_URL", value = aws_db_instance.medusa.endpoint },
-        { name = "REDIS_URL", value = "redis://${aws_elasticache_replication_group.redis.primary_endpoint_address}:6379" },
+        # Public or non-credential values only. Anything secret must be a
+        # `secrets` entry below: an `environment` entry is stored in plaintext
+        # inside the task definition revision and in Terraform state.
         { name = "MEDUSA_BACKEND_URL", value = var.backend_url },
+        { name = "REDIS_URL", value = "redis://${aws_elasticache_replication_group.redis.primary_endpoint_address}:6379" },
         { name = "RAZORPAY_KEY_ID", value = var.razorpay_key_id },
-        { name = "RAZORPAY_KEY_SECRET", value = var.razorpay_key_secret },
-        { name = "SHIPROCKET_API_TOKEN", value = var.shiprocket_api_token },
         { name = "AWS_REGION", value = var.aws_region },
       ]
       secrets = [
+        # DATABASE_URL was previously the bare RDS endpoint (host:port), which is
+        # not a connection string at all and carried no credentials. It is now a
+        # full URL resolved at task start from Secrets Manager.
+        { name = "DATABASE_URL", valueArn = aws_secretsmanager_secret_version.database_url.arn },
+        { name = "RAZORPAY_KEY_SECRET", valueArn = aws_secretsmanager_secret_version.razorpay_key_secret.arn },
+        { name = "SHIPROCKET_API_TOKEN", valueArn = aws_secretsmanager_secret_version.shiprocket_api_token.arn },
         { name = "RAZORPAY_WEBHOOK_SECRET", valueArn = aws_secretsmanager_secret_version.razorpay_webhook_secret.arn },
         { name = "JWT_SECRET", valueArn = aws_secretsmanager_secret_version.jwt_secret.arn },
         { name = "COOKIE_SECRET", valueArn = aws_secretsmanager_secret_version.cookie_secret.arn },
@@ -79,16 +85,16 @@ resource "aws_ecs_task_definition" "backend_api" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group" = aws_cloudwatch_log_group.backend.name
-          "awslogs-region" = var.aws_region
+          "awslogs-group"         = aws_cloudwatch_log_group.backend.name
+          "awslogs-region"        = var.aws_region
           "awslogs-stream-prefix" = "backend"
         }
       }
       healthCheck = {
-        command = ["CMD-SHELL", "curl -f http://localhost:9000/health || exit 1"]
-        interval = 30
-        timeout = 5
-        retries = 3
+        command     = ["CMD-SHELL", "curl -f http://localhost:9000/health || exit 1"]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
         startPeriod = 30
       }
     }
@@ -106,25 +112,24 @@ resource "aws_ecs_service" "backend_api" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.backend.id]
+    subnets          = aws_subnet.private[*].id
+    security_groups  = [aws_security_group.backend.id]
     assign_public_ip = false
   }
 
-  load_balancers {
+  load_balancer {
     target_group_arn = aws_lb_target_group.backend.arn
     container_name   = "medusa-backend"
     container_port   = 9000
   }
 
-  depends_on = [aws_ecs_service_deployment.backend_api]
+  # NOTE: this previously depended on an `aws_ecs_service_deployment` resource,
+  # which is not a type the AWS provider defines — the whole configuration
+  # failed `terraform validate`, so the CD workflow's plan step could never
+  # succeed. The service is the unit of deployment here; nothing else is needed.
   tags = {
     Environment = var.environment
   }
-}
-
-resource "aws_ecs_service_deployment" "backend_api" {
-  service = aws_ecs_service.backend_api.id
 }
 
 variable "backend_image" {
@@ -146,16 +151,4 @@ variable "backend_desired_count" {
 variable "razorpay_key_id" {
   description = "Razorpay key ID"
   type        = string
-}
-
-variable "razorpay_key_secret" {
-  description = "Razorpay key secret"
-  type        = string
-  sensitive   = true
-}
-
-variable "shiprocket_api_token" {
-  description = "Shiprocket API token"
-  type        = string
-  sensitive   = true
 }
