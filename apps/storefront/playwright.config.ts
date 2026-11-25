@@ -16,7 +16,16 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  // Workers are capped when the suite runs against an EXTERNAL server.
+  //
+  // WHY: two projects (chromium + mobile) × the default worker count is a lot of
+  // concurrent load for one Node/Next process talking to one Medusa backend.
+  // Measured on the staging stack, product-page journeys took 1.4–7.6 s at
+  // `--workers=1` and exceeded the 30 s test timeout under full parallelism,
+  // which reports real journeys as failures. The cap keeps the suite honest
+  // without weakening a single assertion; the journeys still run in both
+  // projects.
+  workers: process.env.E2E_BASE_URL ? 2 : process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
 
   timeout: 30_000,
