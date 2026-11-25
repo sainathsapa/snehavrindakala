@@ -20,7 +20,7 @@ const TITLES = {
   "embroidered-cotton-throw": "कढ़ाईदार सूती चादर",
   "custom-portrait-commission": "व्यक्तिचित्र — विशेष ऑर्डर",
   "block-printed-journal-set": "ब्लॉक-प्रिंट डायरी सेट",
-  "wearable-art-pendant": "पहनने योग्य कला लॉकेट",
+  "art-pendant": "पहनने योग्य कला लॉकेट",
   "warli-harvest-painting": "वारली फ़सल चित्र",
   "pattachitra-scroll-panel": "पट्टचित्र स्क्रॉल पैनल",
   "gond-tree-of-life": "गोंड — जीवन वृक्ष",

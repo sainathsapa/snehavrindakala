@@ -5,7 +5,27 @@ dist
 **/dist
 .medusa
 **/.medusa
-.env
-.env.local
 .next
+**/.next
+.turbo
+**/.turbo
 .DS_Store
+
+# ── Environment files ────────────────────────────────────────────────────────
+# The app-specific .env files (apps/storefront/.env, apps/backend/.env) are
+# real credentials: Razorpay key secret and webhook secret, JWT_SECRET,
+# COOKIE_SECRET, the database URL, SES keys, admin passwords, the Sanity token.
+#
+# A plain `.env` pattern only excluded the *root* file, so `COPY apps/storefront
+# ./apps/storefront` in both Dockerfiles carried those files into the production
+# images — /app/apps/storefront/.env and /app/apps/backend/.env were readable by
+# anything that could pull the image, and the image is pushed to a registry.
+# Wildcard patterns close that. Runtime values come from `environment:` in
+# docker-compose.yml or the orchestrator's secret store, and the only public
+# values that need to be present at build time are passed as build args.
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example

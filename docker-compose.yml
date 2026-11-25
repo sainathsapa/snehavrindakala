@@ -207,10 +207,14 @@ services:
       # have completed. Health must imply the storefront has a publishable key
       # to read, otherwise it starts before the shop exists and fails.
       test: ["CMD-SHELL", "test -f /tmp/store-provisioned && wget -q --spider http://127.0.0.1:9000/health || exit 1"]
+      # A cold start on an empty DB runs every Medusa module migration, link
+      # sync, server boot and idempotent provisioning before this can pass.
+      # That is several minutes on a fresh volume; the old 60s/30-retry budget
+      # marked a still-migrating backend unhealthy and aborted `up`.
       interval: 10s
       timeout: 5s
-      retries: 30
-      start_period: 60s
+      retries: 90
+      start_period: 900s
     # Migrations must not be interrupted mid-way on redeploy.
     stop_grace_period: 30s
     restart: unless-stopped
@@ -524,6 +528,74 @@ services:
         fi
         while true; do
           curl -sS -m 60 -X POST -H "Authorization: Bearer $${CRON_SECRET}" \
+            "$${CRON_TARGET}" || true
+          echo
+          sleep "$${CRON_INTERVAL_SECONDS}"
+        done
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - snehavrinda
+
+  # ── Scheduled stock-hold expiry ──────────────────────────────────────────
+  # `/api/cron/release-reservations` frees stock held by a buyer who opened a
+  # payment session and then closed the tab. The route existed and was guarded,
+  # but nothing called it, so those units stayed reserved for good and the shop
+  # slowly sold out of work it still had. Runs on the `ops` profile with the
+  # same bearer-token pattern as the other jobs:
+  #   docker compose --profile ops up -d release-reservations
+  release-reservations:
+    image: curlimages/curl:8.11.1
+    profiles: ["ops"]
+    depends_on:
+      - storefront
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+      CRON_INTERVAL_SECONDS: ${RESERVATION_SWEEP_INTERVAL_SECONDS:-900}
+      CRON_TARGET: ${RESERVATION_SWEEP_TARGET:-http://storefront:3000/api/cron/release-reservations}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$${CRON_SECRET}" ]; then
+          echo "CRON_SECRET is empty: the reservation sweep will be refused." >&2
+          exit 1
+        fi
+        while true; do
+          curl -sS -m 60 -X POST -H "Authorization: Bearer $${CRON_SECRET}" \
+            "$${CRON_TARGET}" || true
+          echo
+          sleep "$${CRON_INTERVAL_SECONDS}"
+        done
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - snehavrinda
+
+  # ── Scheduled payment reconciliation ────────────────────────────────────
+  # `/api/cron/reconcile-payments` picks up payments captured at Razorpay whose
+  # webhook or browser hand-back never arrived. The admin reconciliation screen
+  # already told operators this job runs on a schedule; nothing scheduled it, so
+  # a paid-but-unrecorded order stayed that way until someone pressed the button
+  # by hand. Every 15 minutes is well inside Razorpay's retry window and each
+  # run is idempotent.
+  reconcile-payments:
+    image: curlimages/curl:8.11.1
+    profiles: ["ops"]
+    depends_on:
+      - storefront
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+      CRON_INTERVAL_SECONDS: ${RECONCILE_INTERVAL_SECONDS:-900}
+      CRON_TARGET: ${RECONCILE_TARGET:-http://storefront:3000/api/cron/reconcile-payments}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$${CRON_SECRET}" ]; then
+          echo "CRON_SECRET is empty: reconciliation will be refused." >&2
+          exit 1
+        fi
+        while true; do
+          curl -sS -m 120 -X POST -H "Authorization: Bearer $${CRON_SECRET}" \
             "$${CRON_TARGET}" || true
           echo
           sleep "$${CRON_INTERVAL_SECONDS}"

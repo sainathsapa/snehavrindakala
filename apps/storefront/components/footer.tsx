@@ -12,7 +12,7 @@ import {
 } from "@/components/indian-motifs";
 import { GLOSSARY } from "@/lib/art-reference";
 import { PaymentMarks } from "@/components/payment-marks";
-import { STUDIO_EMAIL } from "@/lib/studio";
+import { STUDIO_EMAIL, STUDIO_NAME, STUDIO_ADDRESS_LINES } from "@/lib/studio";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CurrencySwitcher } from "@/components/currency-switcher";
 import { CookieSettingsButton } from "@/components/analytics-consent";
@@ -413,17 +413,29 @@ export function Footer({
                 />
               </div>
               <div className="mt-4 flex flex-col gap-2 border-t border-rang-paper/12 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="font-sans text-[11px] leading-relaxed text-rang-paper/55">
-                  Bikaner, Rajasthan, India
-                  <span className="mx-2 text-rang-paper/25">·</span>
+                {/* The registered address, as a postal address rather than
+                    a byline. It is the same text the courier label and the
+                    GST invoice carry (lib/studio.ts), so a move is edited
+                    once. */}
+                <address className="not-italic">
+                  <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-rang-paper/75">
+                    {STUDIO_NAME}
+                  </p>
+                  {STUDIO_ADDRESS_LINES.map((line) => (
+                    <span
+                      key={line}
+                      className="block font-sans text-[11px] leading-relaxed text-rang-paper/55"
+                    >
+                      {line}
+                    </span>
+                  ))}
                   <a
-                    href="mailto:hello@snehavrinda.in"
-                    className="text-rang-paper/70 transition-colors hover:text-haldi"
+                    href={`mailto:${STUDIO_EMAIL}`}
+                    className="mt-1 inline-block font-sans text-[11px] text-rang-paper/70 transition-colors hover:text-haldi"
                   >
-                    hello@snehavrinda.in
+                    {STUDIO_EMAIL}
                   </a>
-                </p>
-                <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-rang-paper/40">
+                </address>                <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-rang-paper/40">
                   {t("shippingWorldwide")}
                 </p>
               </div>

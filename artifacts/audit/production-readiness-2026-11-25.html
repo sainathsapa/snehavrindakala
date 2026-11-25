@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SnehaVrinda Kala — Production &amp; Release Readiness Audit</title>
+<style>
+  :root{
+    --ink:#2A120C; --paper:#FBF6EC; --surface:#fff; --line:#E4D8C4;
+    --terra:#B4552D; --sindoor:#8E2A22; --leaf:#3F6B3A; --haldi:#C99A2E;
+    --muted:#6C5B4E;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:40px 22px 80px}
+  header.hero{border-bottom:2px solid var(--line);padding-bottom:26px;margin-bottom:34px}
+  .eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--terra);font-weight:700}
+  h1{font:700 34px/1.15 Georgia,"Times New Roman",serif;margin:10px 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);max-width:70ch}
+  .verdict{margin-top:22px;border:1px solid #E3C9B6;border-left:5px solid var(--sindoor);
+    background:#fff8f2;border-radius:10px;padding:16px 18px}
+  .verdict b{color:var(--sindoor)}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:26px 0 8px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .stat .n{font:700 26px/1.1 Georgia,serif;color:var(--ink)}
+  .stat .l{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+  .stat.pass .n{color:var(--leaf)}
+  .stat.bad .n{color:var(--sindoor)}
+  h2{font:700 21px/1.25 Georgia,serif;margin:38px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font:700 15px/1.3 inherit;margin:22px 0 8px}
+  table{width:100%;border-collapse:collapse;background:var(--surface);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #EFE6D6;vertical-align:top}
+  th{background:#F5EDDD;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  code{background:#F3EADC;padding:1px 5px;border-radius:4px;font-size:12.5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;
+    font-weight:700;letter-spacing:.04em;white-space:nowrap}
+  .sev-c{background:#8E2A22;color:#fff}
+  .sev-h{background:#C2643A;color:#fff}
+  .sev-m{background:#E8C77E;color:#4a3510}
+  .sev-l{background:#DCE6D3;color:#2E4E29}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .card h3{margin-top:0}
+  ul{margin:8px 0 0;padding-left:20px}
+  li{margin:5px 0}
+  .two{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:760px){.two{grid-template-columns:1fr}}
+  .bar{height:7px;background:#EFE3CF;border-radius:99px;overflow:hidden;margin-top:8px}
+  .bar > span{display:block;height:100%;background:var(--leaf)}
+  .bar.warn > span{background:var(--haldi)}
+  .bar.bad > span{background:var(--sindoor)}
+  small.note{display:block;color:var(--muted);margin-top:6px}
+  footer{margin-top:44px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:12.5px}
+  a{color:var(--sindoor)}
+  .ok{color:var(--leaf);font-weight:700}
+  .no{color:var(--sindoor);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Audit · 25 November 2026</div>
+  <h1>Production &amp; release readiness</h1>
+  <p class="sub">SnehaVrinda Kala — Next.js 15 storefront, Medusa v2 backend, Postgres, Redis, Razorpay, Shiprocket.
+  Everything below was measured on the Docker stack that was built and run for this audit, not recalled from the docs.</p>
+
+  <div class="verdict">
+    <b>Verdict: NO-GO for public launch.</b> The code, containers and customer journeys check out —
+    114/114 sitemap URLs return 200, 37/37 storefront browser journeys pass, 1669 unit tests pass, no secrets in the images.
+    What still blocks launch is business data the shop must not invent: a verified sender address (email),
+    a GSTIN, a refund/returns decision, and partner identities. Plus one red CI gate on third-party advisories.
+  </div>
+
+  <div class="grid">
+    <div class="stat pass"><div class="n">37 / 37</div><div class="l">Storefront E2E, production image</div></div>
+    <div class="stat pass"><div class="n">1669</div><div class="l">Storefront unit tests</div></div>
+    <div class="stat pass"><div class="n">114 / 114</div><div class="l">Sitemap URLs → 200</div></div>
+    <div class="stat pass"><div class="n">0</div><div class="l">Secrets left in images</div></div>
+    <div class="stat bad"><div class="n">5</div><div class="l">CI advisories unresolved</div></div>
+    <div class="stat bad"><div class="n">4</div><div class="l">Owner inputs outstanding</div></div>
+  </div>
+</header>
+
+<h2>1. Fixed during this audit — each verified on the running stack</h2>
+<table>
+  <thead><tr><th style="width:70px">Severity</th><th>Problem</th><th>Fix</th><th style="width:210px">Proof</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="pill sev-c">Critical</span></td>
+      <td>Both images shipped real credentials. <code>.dockerignore</code> excluded only the root <code>.env</code>, so <code>COPY apps/storefront</code> carried <code>apps/storefront/.env</code> into the image with the Razorpay secret, webhook secret, <code>JWT_SECRET</code>, <code>COOKIE_SECRET</code>, DB URL, SES keys, admin passwords and the Sanity token.</td>
+      <td><code>.dockerignore</code> now ignores <code>.env</code> and <code>**/.env*</code> everywhere; runtime values come from compose <code>environment:</code>.</td>
+      <td><code>find /app -name .env</code> → clean on both images.</td>
+    </tr>
+    <tr>
+      <td><span class="pill sev-h">High</span></td>
+      <td>The whole <strong>partner portal 404'd</strong> on a production build: next-intl rewrote <code>/partner/*</code> onto <code>/[locale]/partner/*</code>, which only has the two marketing pages. A maker could not even open the sign-in screen.</td>
+      <td><code>middleware.ts</code> serves <code>/partner/*</code> directly (stamping <code>x-locale</code> and <code>x-pathname</code>), while <code>/partner/apply</code> and <code>/partner/status</code> stay localized.</td>
+      <td><code>/partner/login</code> 200 · <code>/partner/orders</code> 307 → login · 3 new E2E tests green.</td>
+    </tr>
+    <tr>
+      <td><span class="pill sev-h">High</span></td>
+      <td>Sitemap, nav and <code>/art-forms</code> linked to five traditions (madhubani, warli, pattachitra, gond, kalamkari) that <strong>404'd in both languages</strong>: the page only accepted rows from <code>site_art_form</code>, while the taxonomy lives in <code>lib/slugs.ts</code>.</td>
+      <td><code>/art-forms/[slug]</code> falls back to the static taxonomy; an admin-written row still wins.</td>
+      <td>Sitemap crawl <strong>114/114 → 200</strong> (was 10 × 404). New E2E test checks every tradition link in en + hi.</td>
+    </tr>
+    <tr>
+      <td><span class="pill sev-h">High</span></td>
+      <td><code>artForm.alertHeading</code> / <code>alertBody</code> were missing from both message bundles, so every tradition page rendered the <strong>raw key text</strong> (next-intl only warns).</td>
+      <td>Both keys added to <code>en.json</code> and <code>hi.json</code>.</td>
+      <td>No <code>MISSING_MESSAGE</code> in logs; heading renders in both locales.</td>
+    </tr>
+    <tr>
+      <td><span class="pill sev-h">High</span></td>
+      <td><code>/api/cron/release-reservations</code> and <code>/api/cron/reconcile-payments</code> had <strong>no scheduler</strong> anywhere — yet the admin reconciliation screen tells operators a scheduled job runs them. Abandoned stock holds never expired; captured-but-unrecorded payments stayed that way.</td>
+      <td>Two <code>ops</code>-profile compose services added (15 min interval, bearer token); <code>docs/DEPLOY.md</code> corrected.</td>
+      <td>Both containers answer 200: <code>{"released":0}</code>, <code>{"total":0,…}</code>.</td>
+    </tr>
+    <tr>
+      <td><span class="pill sev-m">Medium</span></td>
+      <td><code>next@15.5.28</code> carried three moderate advisories, one of them HttpOnly cookie exposure on Edge routes. CI's dependency gate was already red.</td>
+      <td><code>next</code> bumped to <code>15.5.29</code>; lockfile updated.</td>
+      <td>Those three advisories are gone from the audit; typecheck + tests green.</td>
+    </tr>
+    <tr>
+      <td><span class="pill sev-m">Medium</span></td>
+      <td><code>/partner/apply</code> and <code>/partner/status</code> had <strong>no <code>h1</code></strong> — the shared <code>SectionHeading</code> hard-coded <code>h2</code>.</td>
+      <td><code>SectionHeading</code> gained an <code>as</code> prop (default unchanged); both pages pass <code>as="h1"</code>.</td>
+      <td>Exactly one <code>h1</code> on each page.</td>
+    </tr>
+    <tr>
+      <td><span class="pill sev-l">Low</span></td>
+      <td>The E2E suite was red on a correct shop: stale product handle, a raw-key test that matched image filenames (<code>commission.jpg</code>), an address helper keyed to a removed layout, a <code>Pay .* now</code> regex that cannot match “Pay now”, and a promo test requiring an unseeded <code>WELCOME10</code>.</td>
+      <td>Tests updated; the promo journey now skips <em>with a reason</em> when the promotion is not configured.</td>
+      <td>Full suite: <strong>37 passed, 16 skipped, 0 failed</strong>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. The address is now the owner's registered address</h2>
+<div class="card">
+  <h3>Snehavrinda Arts Works</h3>
+  <p style="margin:0">Napasar Road, Near Ramdev Mandir<br>
+  Ward No. 16, Deshnok, Nokha<br>
+  Bikaner, Rajasthan – 334801, India</p>
+  <ul>
+    <li><code>apps/storefront/lib/studio.ts</code> is the single source: name, address lines, one-line form, <code>PostalAddress</code> parts.</li>
+    <li>Footer renders the full postal address; JSON-LD <code>ArtGallery</code> now carries street, locality, region, PIN and <code>legalName</code>.</li>
+    <li>Footer byline: “Deshnok · Bikaner · Rajasthan” (hi: “देशनोक · बीकानेर · राजस्थान”).</li>
+    <li><code>SELLER_LEGAL_NAME</code> / <code>SELLER_ADDRESS</code> set; <strong><code>SELLER_HOME_STATE=Rajasthan</code></strong> — it had defaulted to <em>Karnataka</em>, putting every Rajasthan order on the IGST branch. Checkout now shows “Includes CGST 2.5% + SGST 2.5%”.</li>
+    <li>Hindi product titles seeded (19 rows) via the corrected <code>seed-hindi-titles.mjs</code>; <code>/hi/products/art-pendant</code> now serves “पहनने योग्य कला लॉकेट”.</li>
+  </ul>
+</div>
+
+<h2>3. Measured evidence</h2>
+<table>
+  <thead><tr><th>Check</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td>Storefront / backend typecheck</td><td><span class="ok">pass</span> (both)</td></tr>
+    <tr><td>Storefront unit tests (<code>vitest run</code>)</td><td><span class="ok">127 files · 1669 passed · 4 skipped</span></td></tr>
+    <tr><td>Backend unit tests</td><td><span class="ok">7 files · 101 passed</span></td></tr>
+    <tr><td>Storefront E2E against the built image</td><td><span class="ok">37 passed · 16 skipped · 0 failed</span></td></tr>
+    <tr><td>Sitemap crawl (all <code>&lt;loc&gt;</code>)</td><td><span class="ok">114 / 114 → 200</span></td></tr>
+    <tr><td>Unauthenticated webhooks (razorpay, shiprocket, internal)</td><td><span class="ok">401</span> each</td></tr>
+    <tr><td>Cron endpoints without <code>CRON_SECRET</code></td><td><span class="ok">401</span> each</td></tr>
+    <tr><td>Admin gate: signed out / signed in</td><td><span class="ok">307 → login / 200</span></td></tr>
+    <tr><td>Admin screens (orders, products, commissions, partners, marketplace, content, settings)</td><td><span class="ok">all 200, links resolve</span></td></tr>
+    <tr><td>Checkout journey: address → courier quote → “Pay now”</td><td><span class="ok">works against live Shiprocket rates</span></td></tr>
+    <tr><td>Container users</td><td><span class="ok">backend <code>medusa</code> 1001 · storefront <code>nextjs</code> 1001</span></td></tr>
+    <tr><td>Tracked-file secret scan</td><td><span class="ok">OK · 857 files</span></td></tr>
+  </tbody>
+</table>
+
+<h2>4. Still open in code / config</h2>
+<div class="two">
+  <div class="card">
+    <h3>CI dependency gate is red</h3>
+    <div class="bar bad"><span style="width:100%"></span></div>
+    <ul>
+      <li><code>tinypool</code> critical ×2 — dev-only (vitest 3.2.6)</li>
+      <li><code>postcss</code> high ×2 — build-time (next/tailwind)</li>
+      <li><code>zod</code> high — runtime, pinned by Medusa at 3.25.76</li>
+    </ul>
+    <small class="note">Upgrade vitest/postcss; for zod either upgrade Medusa or add a time-boxed exception in <code>audit-exceptions.json</code>.</small>
+  </div>
+  <div class="card">
+    <h3>Configuration gaps</h3>
+    <div class="bar warn"><span style="width:55%"></span></div>
+    <ul>
+      <li><code>POSTGRES_PASSWORD</code> empty → compose default <code>medusa</code></li>
+      <li>No <code>error.tsx</code> / <code>global-error.tsx</code></li>
+      <li>No <code>/api/health</code>; healthcheck renders <code>/</code></li>
+      <li>Terraform never planned or validated</li>
+      <li>Single-node Redis, no HA; in-process rate limits</li>
+    </ul>
+  </div>
+</div>
+<div class="card">
+  <h3>Rotate if any image ever left this machine</h3>
+  <p style="margin:0">The pre-fix images contained the Razorpay key + webhook secret, <code>JWT_SECRET</code>, <code>COOKIE_SECRET</code>, SES keys, admin passwords and the Sanity token. If they reached a registry or CI cache, treat them as leaked — <code>docs/release/CREDENTIAL_ROTATION_PLAN.md</code> is the checklist.</p>
+</div>
+
+<h2>5. The actual launch gate — owner input</h2>
+<table>
+  <thead><tr><th>Item</th><th>Where it shows</th><th>Effect while missing</th></tr></thead>
+  <tbody>
+    <tr><td><code>FROM_EMAIL</code> + SES credentials</td><td>/admin/settings → Email: <span class="no">missing</span></td><td>Order confirmations, quotes and cart reminders are recorded as <em>skipped</em> and never sent.</td></tr>
+    <tr><td><code>SELLER_GSTIN</code>, <code>HSN_SAC_DEFAULT</code></td><td>Tax &amp; invoicing: <span class="no">partial</span></td><td>No statutory GST invoice is issued.</td></tr>
+    <tr><td>Refund policy approval + <code>RETURN_WINDOW_DAYS</code></td><td>Owner-input status</td><td>Returns window reported UNCONFIGURED.</td></tr>
+    <tr><td>Partner legal identities / signed agreements</td><td>Owner-input status</td><td>Partner onboarding cannot complete; 16 E2E scenarios stay skipped.</td></tr>
+    <tr><td>Confirmed weights &amp; dimensions</td><td>Shipping</td><td>Shipment creation leans on defaults.</td></tr>
+  </tbody>
+</table>
+<div class="card">
+  <h3>Two decisions to confirm with the CA / owner</h3>
+  <ul>
+    <li><strong><code>SELLER_HOME_STATE=Rajasthan</code></strong> (was Karnataka by default) — this decides CGST+SGST vs IGST on every invoice.</li>
+    <li><strong><code>WELCOME10</code></strong> — should a 10% launch promotion exist? The discount journey skips until it does.</li>
+  </ul>
+</div>
+
+<h2>6. Reproduce</h2>
+<div class="card">
+<pre style="margin:0;overflow:auto;font:12.5px/1.7 ui-monospace,Menlo,monospace"><code>docker compose up -d --build
+docker compose --profile ops up -d cron notification-retry-cron \
+  release-reservations reconcile-payments backup
+
+pnpm --filter @snehavrinda-kala/backend test
+pnpm --filter @snehavrinda-kala/storefront test
+E2E_BASE_URL=http://localhost:3000 \
+  pnpm --filter @snehavrinda-kala/storefront test:e2e
+
+docker run --rm --entrypoint sh snehavrinda-kala-storefront:latest \
+  -c 'find /app -maxdepth 4 -name ".env"'    # must print nothing
+node apps/storefront/scripts/audit-deps.mjs  # must pass before release</code></pre>
+</div>
+
+<footer>
+  Full write-up with commands and per-item notes:
+  <code>docs/release/PRODUCTION_READINESS_AUDIT_2026-11-25.md</code>.
+  Stack audited: Postgres 16, Redis 7, Medusa 2.22.3, Next.js 15.5.29, Node 24 · images built from this working tree.
+</footer>
+
+</div>
+</body>
+</html>

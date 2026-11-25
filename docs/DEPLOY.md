@@ -149,18 +149,28 @@ like the proxy.
 
 ## Scheduled jobs
 
-The only recurring job is the unfinished-checkout reminder, and it now has a
-caller built into this repository — otherwise the endpoint exists and nobody ever
-calls it, which is how the reminder would silently never be sent.
+Four recurring jobs, all in this repository, all behind the `ops` profile
+because a laptop does not need them:
+
+| Service | Calls | Default interval |
+|---|---|---|
+| `cron` | `/api/cron/cart-reminders` | 6 h |
+| `notification-retry-cron` | `/api/cron/notification-retries` | 5 min |
+| `release-reservations` | `/api/cron/release-reservations` | 15 min |
+| `reconcile-payments` | `/api/cron/reconcile-payments` | 15 min |
 
 ```bash
-docker compose --profile ops up -d cron
+docker compose --profile ops up -d cron notification-retry-cron \
+  release-reservations reconcile-payments
 ```
 
-That service (`docker-compose.yml`) POSTs the endpoint every
-`CRON_INTERVAL_SECONDS` (default 21600, six hours) from inside the compose
-network, sending `CRON_SECRET` as a bearer header so the secret stays out of
-proxy logs. It refuses to start with an empty secret rather than looping on 503s.
+Without the last two, stock held by an abandoned payment session is never
+released and a payment captured at Razorpay whose webhook never arrived is never
+recorded — both were dead endpoints until these callers were added.
+
+Each service POSTs its endpoint from inside the compose network, sending
+`CRON_SECRET` as a bearer header so the secret stays out of proxy logs, and
+refuses to start with an empty secret rather than looping on 503s.
 
 On a host that already runs cron and would rather not run another container, this
 is the equivalent line:

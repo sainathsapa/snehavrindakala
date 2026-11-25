@@ -162,8 +162,38 @@ function localeFromPath(pathname: string): string {
     : routing.defaultLocale;
 }
 
+/**
+ * The partner portal lives at the repository root (`app/partner/*`), outside the
+ * `[locale]` tree, because the makers who use it work in one language and
+ * translating it buys nothing. Two marketing pages share the same prefix but
+ * *are* localized (`app/[locale]/partner/{apply,status}`).
+ *
+ * Without this split every portal URL was rewritten by next-intl onto
+ * `/[locale]/partner/...`, which does not exist, so `/partner/login`, the whole
+ * dashboard and every partner API page answered 404 on a production build. The
+ * sign-in page could not even be reached to start a session.
+ */
+const LOCALIZED_PARTNER_PATHS = ["/partner/apply", "/partner/status"];
+
+function isLocalizedPartnerPath(pathname: string): boolean {
+  return LOCALIZED_PARTNER_PATHS.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ── Partner portal ──────────────────────────────────────────────────────
+  // Serve it directly, with the same locale/path headers the intl handler
+  // stamps, so `app/partner/layout.tsx` can still tell a signed-out screen
+  // (/partner/login, /partner/reset) from a protected one without looping.
+  if (pathname.startsWith("/partner") && !isLocalizedPartnerPath(pathname)) {
+    const forwarded = new Headers(request.headers);
+    forwarded.set("x-locale", localeFromPath(pathname));
+    forwarded.set("x-pathname", pathname);
+    return NextResponse.next({ request: { headers: forwarded } });
+  }
 
   // ── Admin gate ──────────────────────────────────────────────────────────
   // Only admin paths reach this branch; everything else falls through to the

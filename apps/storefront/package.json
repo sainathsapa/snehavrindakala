@@ -17,7 +17,7 @@
   "dependencies": {
     "@snehavrinda-kala/types": "workspace:*",
     "@snehavrinda-kala/ui": "workspace:*",
-    "next": "15.5.28",
+    "next": "15.5.29",
     "next-intl": "^4.15.1",
     "pg": "^8.23.1",
     "react": "19.1.0",

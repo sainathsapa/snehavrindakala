@@ -13,11 +13,20 @@ export function SectionHeading({
   title,
   description,
   className,
+  as: Heading = "h2",
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   className?: string;
+  /**
+   * Heading level. Defaults to `h2`, which is right for a section inside a
+   * page. A page whose only title is a SectionHeading must pass `"h1"` —
+   * /partner/apply and /partner/status shipped with no h1 at all, which leaves
+   * screen-reader users without a page title and search engines without a
+   * heading to rank.
+   */
+  as?: "h1" | "h2" | "h3";
 }) {
   return (
     <div className={`mb-8 ${className ?? ""}`}>
@@ -26,9 +35,9 @@ export function SectionHeading({
           {eyebrow}
         </p>
       )}
-      <h2 className="mt-2 text-3xl md:text-4xl font-serif font-semibold text-deep-ink text-balance">
+      <Heading className="mt-2 text-3xl md:text-4xl font-serif font-semibold text-deep-ink text-balance">
         {title}
-      </h2>
+      </Heading>
       {description && <p className="mt-3 max-w-2xl text-muted-ink font-sans">{description}</p>}
     </div>
   );

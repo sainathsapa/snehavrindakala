@@ -2,7 +2,8 @@ import { Link } from "@/i18n/routing";
 import { localeAlternates } from "@/lib/seo";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { listArtForms, translateArtForms } from "@/lib/site-content";
+import { listArtForms, translateArtForms, type ArtForm } from "@/lib/site-content";
+import { getArtFormBySlug } from "@/lib/slugs";
 import { getTranslations, getLocale } from "next-intl/server";
 import { listCatalogueFor } from "@/lib/catalogue";
 import { WorkAlertForm } from "@/components/work-alert-form";
@@ -99,7 +100,29 @@ export default async function ArtFormPage({ params }: PageProps) {
   const has = (key: string) => t.has(key as never);
 
   const forms = await listArtForms(locale).catch(() => []);
-  const raw = forms.find((f) => f.slug === slug);
+  const stored = forms.find((f) => f.slug === slug);
+  // The five individual traditions (madhubani, warli, pattachitra, gond,
+  // kalamkari) are part of the taxonomy in lib/slugs.ts and are advertised by
+  // the sitemap, the art-forms index and the nav, but they are not rows in
+  // site_art_form on a seeded database. Without this fallback every one of
+  // those links answered 404 — a broken page reachable from a top-level index.
+  // The stored row still wins when the owner writes a story for it in the
+  // admin; the taxonomy supplies the name, description and origin until then.
+  let raw: ArtForm | undefined = stored;
+  if (!raw) {
+    const taxonomy = getArtFormBySlug(slug);
+    if (!taxonomy) notFound();
+    raw = {
+      id: -1,
+      position: Number.MAX_SAFE_INTEGER,
+      slug: taxonomy.slug,
+      name: taxonomy.name,
+      description: taxonomy.description,
+      image: "",
+      published: true,
+      origin: taxonomy.origin,
+    };
+  }
   if (!raw) notFound();
   // Translate before anything reads the name, including the catalogue lookup
   // below: matching happens on the stored name, so the English value has to be

@@ -23,6 +23,7 @@ export default function PartnerApplyPage() {
     <main className="py-10">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
+          as="h1"
           eyebrow="For makers & studios"
           title="Apply to partner with us"
           description="We work with makers whose process, quality, and story deserve a wider audience. Tell us about your business and the work you create — our team reviews every application before anything goes live."

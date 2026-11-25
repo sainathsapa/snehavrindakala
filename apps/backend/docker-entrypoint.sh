@@ -75,7 +75,7 @@ trap 'kill -TERM "$MEDUSA_PID" 2>/dev/null || true' TERM INT
 echo "[backend] waiting for Medusa to answer /health…"
 MEDUSA_PID="$MEDUSA_PID" node -e '
 const pid = Number(process.env.MEDUSA_PID);
-const deadline = Date.now() + 180000;
+const deadline = Date.now() + 600000;
 (async () => {
   for (;;) {
     try {

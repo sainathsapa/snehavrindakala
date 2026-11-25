@@ -6,6 +6,10 @@ import { getPlatformModeFromEnv } from "@/lib/settings";
 import { getPreferredCurrency } from "@/lib/currency";
 import { socialLinks, socialUrls } from "@/lib/social";
 import { artFormSlugs } from "@/lib/slugs";
+import {
+  STUDIO_ADDRESS_PARTS,
+  STUDIO_NAME,
+} from "@/lib/studio";
 import { NextIntlClientProvider } from "next-intl";
 import { listArtForms } from "@/lib/site-content";
 import { localeAlternates } from "@/lib/seo";
@@ -231,10 +235,13 @@ export default async function LocaleLayout({
               // trust: an art house with no address reads as a dropshipper.
               address: {
                 "@type": "PostalAddress",
-                addressLocality: "Bikaner",
-                addressRegion: "Rajasthan",
-                addressCountry: "IN",
+                streetAddress: STUDIO_ADDRESS_PARTS.streetAddress,
+                addressLocality: STUDIO_ADDRESS_PARTS.addressLocality,
+                addressRegion: STUDIO_ADDRESS_PARTS.addressRegion,
+                postalCode: STUDIO_ADDRESS_PARTS.postalCode,
+                addressCountry: STUDIO_ADDRESS_PARTS.addressCountry,
               },
+              legalName: STUDIO_NAME,
               email: "hello@snehavrinda.in",
               contactPoint: {
                 "@type": "ContactPoint",
