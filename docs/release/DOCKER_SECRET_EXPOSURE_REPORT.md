@@ -259,7 +259,8 @@ rather than scan noise:
 
 The base image (`node:24-alpine`) is scanned by its own run, and its 4 layers are
 attributed as inherited rather than counted as findings of our images. Its npm man
-pages legitimately contain `-----BEGIN PRIVATE KEY-----`; treating that as a
+pages legitimately contain a PEM private-key header as documentation text;
+treating that as a
 finding would make the gate noisy enough to be switched off.
 
 ---

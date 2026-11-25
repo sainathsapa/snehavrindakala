@@ -183,3 +183,71 @@ that failure is observed and recorded.
 
 **Rotation completion: 0 of 4 required rotations. Production readiness remains
 NO-GO on that basis alone, independently of CI status.**
+
+---
+
+## 6. Addendum — historical (git) exposures added in the staging-qualification mission
+
+The register above was derived from the **image** incident. A full `git log --all`
+scan (see `CREDENTIAL_EXPOSURE_RECONCILIATION.md`) found additional committed
+credential-shaped values. They are added here with the same closure rule: **only
+observed rejection of the old value closes an entry.**
+
+### R-08 — `SHIPROCKET_PASSWORD` / `SHIPROCKET_API_TOKEN`
+
+| Field | Value |
+| --- | --- |
+| Exposure location | `apps/storefront/lib/shipping/shiprocket.ts` at commit `3975e315` — a literal fallback in `process.env.…` |
+| Exposure period | from `3975e315` until the fallback was removed |
+| Exposure scope | **git history** (any clone, `git log -p`); not present in current images (layer scans clean) |
+| Current tree | clean — credentials read from environment only |
+| Rotation method | Shiprocket dashboard → regenerate API token / change password; new value into the secret store (`infra/terraform/secrets.tf` already wires `SHIPROCKET_API_TOKEN` as a `secrets` ARN) |
+| Owner | business owner |
+| Revocation confirmation | required: `REVOKED` — a provider call with the old token returns an auth error |
+| Verification evidence | redacted provider error for the old token + one successful authenticated call with the new one |
+| Status | **OUTSTANDING — owner blocker** |
+
+### R-09 — Local database default credential (`medusa` / `medusa`)
+
+| Field | Value |
+| --- | --- |
+| Exposure location | hardcoded dev connection string in `lib/db.ts`, `lib/notifications.ts`, the account/returns route and several scripts, across many commits |
+| Exposure period | entire history until the fallbacks were removed |
+| Severity | **low by itself** — it is the local compose default, not a production secret |
+| Condition that makes it critical | if any deployed environment ever ran with `POSTGRES_PASSWORD=medusa`, the value is a live production credential |
+| Current tree | fallbacks removed; `resolveDatabaseUrl()` throws in production when `DATABASE_URL` is unset; Terraform injects a full URL from Secrets Manager |
+| Owner | release engineering + business owner (confirm production never used the default) |
+| Revocation confirmation | `NO-VALUE-IN-PROD` (config review) or `REVOKED` (rotate the RDS credential if it was ever the default) |
+| Verification evidence | RDS parameter/secret review showing a non-default password, recorded redacted |
+| Status | **OUTSTANDING — needs confirmation** |
+
+### R-10 — Hand-copied artifacts
+
+| Field | Value |
+| --- | --- |
+| Risk | the affected images/tags existed locally; only the owner knows whether one was `docker save`d, copied to another machine, or pushed to a registry by hand |
+| Repository evidence | no `docker push`, no registry login, no registry-qualified tags, empty `~/.docker/config.json` `auths` (see `DOCKER_SECRET_EXPOSURE_REPORT.md §6`) |
+| Owner | business owner |
+| Revocation confirmation | written confirmation: "no affected image left this machine" — or, if one did, treat every credential in the register as compromised in that environment |
+| Verification evidence | written statement recorded in the release tracker |
+| Status | **OUTSTANDING — owner blocker** |
+
+### R-11 — `RAZORPAY_KEY_ID` (context note, not a rotation item)
+
+The Razorpay key **id** appears in image scans and history. A key id is published
+to the browser by the checkout widget and is not a secret. Rotating the key pair
+(R-01) changes it; no separate action is required. Recorded so a future reviewer
+does not mistake it for an unremediated secret.
+
+## 7. Where the register stands
+
+| Rotation required | Closed | Outstanding |
+| --- | --- | --- |
+| 6 (`R-01`, `R-02`, `R-03`, `R-04`, `R-08`, `R-09`) | **0** | **6** |
+| Confirmations required | — | `R-10` |
+
+**No credential has been rotated in this mission.** No provider access, no
+dashboard credentials and no authorization were available, and claiming otherwise
+would be a fabrication. The engineering side of the incident — root cause,
+remediation, prevention, reconciliation and tooling to verify revocation — is
+complete; the revocation itself is an owner action with a named owner per row.

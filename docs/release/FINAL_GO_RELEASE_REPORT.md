@@ -1,3 +1,8 @@
+> **LATEST AUTHORITATIVE RELEASE DECISION:** `docs/release/FINAL_OWNER_INPUT_AND_STAGING_GO_REPORT.md`
+> (branch `release/owner-input-staging-qualification`, 2026-11-26).
+> This file is preserved as history. Where it disagrees with the report
+> above, the report wins.
+
 # FINAL GO — Production release decision & gate report
 
 > Author: **AGENT 00 — Lead Orchestrator / CTO** (the only role that may mark a gate PASS)

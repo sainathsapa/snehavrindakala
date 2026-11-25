@@ -1,3 +1,8 @@
+> **LATEST AUTHORITATIVE RELEASE DECISION:** `docs/release/FINAL_OWNER_INPUT_AND_STAGING_GO_REPORT.md`
+> (branch `release/owner-input-staging-qualification`, 2026-11-26).
+> This file is preserved as history. Where it disagrees with the report
+> above, the report wins.
+
 # Final release report — SnehaVrinda Kala
 
 > Branch: `remediation/production-readiness` (8 implementation commits from `f761d2e`)

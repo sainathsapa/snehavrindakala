@@ -1,3 +1,8 @@
+> **LATEST AUTHORITATIVE RELEASE DECISION:** `docs/release/FINAL_OWNER_INPUT_AND_STAGING_GO_REPORT.md`
+> (branch `release/owner-input-staging-qualification`, 2026-11-26).
+> This file is preserved as history. Where it disagrees with the report
+> above, the report wins.
+
 # Final Security Verification
 
 **Scope:** engineering security closure — Docker secret exposure, dependency gate, CI enforcement
