@@ -116,3 +116,41 @@ marked PASS by any agent; production decision remains **NO-GO** (see
 All counts are code-level/static/pure; they are **not** live E2E proof. Live E2E
 A–J remain **BLOCKED BY OWNER INPUT** (running stack + credentials). Only AGENT 00
 may classify a gate as PASS, and no production GO is asserted.
+
+---
+
+## Security closure (continuation branch `security/closure-final`)
+
+Cut from `remediation/engineering-gap-closure` @ `b042d79`. All prior commits
+preserved; nothing reset or force-pushed.
+
+| ID | Owner | Task | Status | Evidence |
+|---|---|---|---|---|
+| SEC-01 | A01 | Docker image secret exposure — investigation + remediation | COMPLETED AND VERIFIED | `docs/release/DOCKER_SECRET_EXPOSURE_REPORT.md`; pre-fix `.dockerignore` reconstructed and empirically proven to bake `apps/*/.env` into the image; cache purged, both images rebuilt `--no-cache` |
+| SEC-02 | A01 | Credential rotation for exposed values | **BLOCKED BY OWNER INPUT** (not engineering) | `docs/release/CREDENTIAL_ROTATION_REGISTER.md` R-01…R-04 `OUTSTANDING`; no rotation is claimed |
+| SEC-03 | A02 | tinypool (2 × critical) | COMPLETED AND VERIFIED | vitest 3.2.6 → 4.1.12; package removed from the tree (not pinned) |
+| SEC-04 | A02 | postcss (2 × high, 2 × moderate) | COMPLETED AND VERIFIED | scoped override → single `postcss@8.5.33`; builds pass |
+| SEC-05 | A02 | zod (1 × high) | COMPLETED AND VERIFIED | eslint 9.26.0 → 9.39.5 removed the `@modelcontextprotocol/sdk` path; zod now 4.6.6 elsewhere; **0 exceptions** |
+| SEC-06 | A02 | Time-boxed exception mechanism | COMPLETED AND VERIFIED | `security/dependency-exceptions.json` (0 entries) + `scripts/security/test-dependency-policy.mjs` 16/16 |
+| SEC-07 | A03 | CI gates: secret scan, audit × 3 scopes, exception validation, typecheck, both test suites, build, migrations, image build + scan, build-context, terraform | COMPLETED AND VERIFIED | `.github/workflows/ci.yml` (11 jobs), `cd.yml` pre-deploy gate |
+| SEC-08 | A04 | Independent QA — gates made to fail on purpose, both images rebuilt and scanned, full regression | COMPLETED AND VERIFIED | `docs/release/FINAL_SECURITY_VERIFICATION.md` §2–§3 (5 defects found in the gates themselves and fixed) |
+
+### Measured on `security/closure-final`
+
+| Run | Result |
+|---|---|
+| storefront Vitest | 127 files / **1669 passed + 4 skipped** (identical to baseline) |
+| backend Vitest | 7 files / **101 passed** (identical to baseline) |
+| `pnpm typecheck` / `pnpm lint` / `pnpm build` | pass / 0 errors / pass |
+| dependency audit (`prod`, `dev`, `all`) | 0 high, 0 critical, 0 exceptions |
+| `secret-scan` (860 tracked files) | clean |
+| build-context guard | PASS (10 checks; negative test exit 1) |
+| image layer scans (storefront, backend) | both **clean** |
+| `terraform fmt -check` + `terraform validate` | clean / valid (first time this module has validated) |
+| migration verification | 18 tables, both hard gates pass |
+| live stack | storefront `/` 200, backend `/health` 200, both `healthy` |
+
+**Production readiness is unchanged: NO-GO.** The remaining blockers are the
+credential rotations plus the business/legal/infrastructure items in
+`RELEASE_BLOCKERS.md`. Tax treatment for every transaction still requires CA
+validation — the Rajasthan home-state setting is not proof of CGST+SGST treatment.
