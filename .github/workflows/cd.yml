@@ -46,11 +46,24 @@ jobs:
       - name: Scan tracked files for committed secrets
         run: node apps/storefront/scripts/secret-scan.mjs
 
+      - name: Verify the Docker build context cannot carry a credential
+        run: node scripts/security/verify-build-context.mjs
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit dependencies
-        run: node apps/storefront/scripts/audit-deps.mjs
+      - name: Audit runtime dependencies
+        run: node apps/storefront/scripts/audit-deps.mjs --scope=prod
+        env:
+          AUDIT_LEVEL: high
+
+      - name: Audit development dependencies
+        run: node apps/storefront/scripts/audit-deps.mjs --scope=dev
+        env:
+          AUDIT_LEVEL: high
+
+      - name: Audit the full dependency tree
+        run: node apps/storefront/scripts/audit-deps.mjs --scope=all
         env:
           AUDIT_LEVEL: high
 

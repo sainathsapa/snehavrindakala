@@ -17,10 +17,27 @@ env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
+# ── rules this workflow follows ──────────────────────────────────────────────
+#
+#  * No `pnpm audit || true`. Every security step must be able to fail the run.
+#  * No silent fallbacks. A scanner that cannot run is a failure, not a pass.
+#  * No blanket ignores. The only way to silence a high/critical advisory is an
+#    entry in security/dependency-exceptions.json that names the package, the
+#    installed version, the dependency path, the advisory id and an expiry no
+#    more than 14 days out. Expired, malformed or drifted entries are rejected
+#    by apps/storefront/scripts/audit-deps.mjs and fail the build.
+#  * Runtime, development and build dependencies are audited separately, because
+#    a vulnerable test runner and a vulnerable server dependency are different
+#    risks and one must not mask the other.
+#  * Both Docker images are scanned independently — storefront scanning does not
+#    imply anything about the backend image.
+#
+# See docs/release/CI_SECURITY_GATE_REPORT.md for the full gate description.
+
 jobs:
   # ── security gates ───────────────────────────────────────────────────────
   secret-scan:
-    name: Secret scan
+    name: Secret scan (tracked files)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -33,10 +50,45 @@ jobs:
       - name: Scan tracked files for committed secrets
         run: node apps/storefront/scripts/secret-scan.mjs
 
-  dependency-audit:
-    name: Dependency audit (high/critical)
+  build-context:
+    name: Build context / build args / image ENV
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Proves that neither image can absorb a credential at build time: the
+      # .dockerignore covers app-level .env files, no Dockerfile takes a secret
+      # build arg, no Dockerfile gives a credential an ENV default, and
+      # .env.example holds placeholders only.
+      - name: Verify the Docker build context cannot carry a credential
+        run: node scripts/security/verify-build-context.mjs
+
+  dependency-policy:
+    name: Dependency exception policy self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # A policy that has never failed is indistinguishable from a policy that
+      # cannot fail. This asserts the exact exit code for expiry, version drift,
+      # path drift, severity mismatch, missing authorization and blanket ignores.
+      - name: Prove the exception gate rejects expired/drifted/overbroad entries
+        run: node scripts/security/test-dependency-policy.mjs
+
+  dependency-audit:
+    name: Dependency audit (runtime / dev / full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,13 +103,63 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      # Never `pnpm audit || true`: an advisory must fail the build unless it is
-      # covered by an active, approved, time-boxed exception.
-      # See docs/release/CI_SECURITY.md.
-      - name: Audit dependencies
-        run: node apps/storefront/scripts/audit-deps.mjs
+      # Three separate gates so a clean runtime tree cannot hide a vulnerable
+      # build toolchain (or the reverse).
+      - name: Audit runtime (production) dependencies
+        run: node apps/storefront/scripts/audit-deps.mjs --scope=prod
         env:
           AUDIT_LEVEL: high
+      - name: Audit development dependencies
+        run: node apps/storefront/scripts/audit-deps.mjs --scope=dev
+        env:
+          AUDIT_LEVEL: high
+      - name: Audit the full tree (build + transitive)
+        run: node apps/storefront/scripts/audit-deps.mjs --scope=all
+        env:
+          AUDIT_LEVEL: high
+      - name: Report and validate the dependency exception register
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = "security/dependency-exceptions.json";
+            if (!fs.existsSync(path)) {
+              console.error("security/dependency-exceptions.json is missing.");
+              process.exit(1);
+            }
+            const parsed = JSON.parse(fs.readFileSync(path, "utf8"));
+            const list = parsed.exceptions ?? [];
+            console.log(`[exceptions] ${list.length} active entry/entries`);
+            for (const e of list) {
+              console.log(`  - ${e.package}@${e.installedVersion} ${e.advisory} ` +
+                `(expires ${e.expiresAt}, owner ${e.owner})`);
+            }
+            const expired = list.filter((e) => e.expiresAt < new Date().toISOString().slice(0, 10));
+            if (expired.length) {
+              console.error(`[exceptions] ${expired.length} expired exception(s) — CI must not ship these.`);
+              process.exit(1);
+            }
+          '
+
+  # ── infrastructure ───────────────────────────────────────────────────────
+  terraform-validate:
+    name: Terraform format & validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: Check formatting
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive
+      - name: Validate configuration
+        working-directory: infra/terraform
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
 
   # ── build-quality gates ──────────────────────────────────────────────────
   lint-and-typecheck:
@@ -162,7 +264,11 @@ jobs:
       - name: Verify schema against migrations
         run: pnpm --filter @snehavrinda-kala/storefront db:verify
         env:
-          DATABASE_URL: postgresql://medusa:medusa@localhost:5432/medusa?sslmode=disable
+          # docker-compose publishes Postgres on host 5433 by default
+          # (127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432) because host 5432 is
+          # often already taken. This step used to point at 5432 and would fail
+          # to connect in CI.
+          DATABASE_URL: postgresql://medusa:medusa@127.0.0.1:5433/medusa?sslmode=disable
       - name: Tear down PostgreSQL
         if: always()
         run: docker compose down -v
@@ -174,6 +280,8 @@ jobs:
     timeout-minutes: 20
     needs:
       - secret-scan
+      - build-context
+      - dependency-policy
       - dependency-audit
       - lint-and-typecheck
       - unit-tests
@@ -194,6 +302,78 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build (workspace)
         run: pnpm build
+
+  # ── container images ─────────────────────────────────────────────────────
+  image-security:
+    name: Image build & secret scan (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs:
+      - secret-scan
+      - build-context
+    strategy:
+      # Both images must be reported independently. `fail-fast: false` means a
+      # finding in the storefront image does not hide a finding in the backend.
+      fail-fast: false
+      matrix:
+        include:
+          - name: storefront
+            dockerfile: apps/storefront/Dockerfile
+            tag: snehavrinda-storefront:ci
+          - name: backend
+            dockerfile: apps/backend/Dockerfile
+            tag: snehavrinda-backend:ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      # Build from the repository root with no secret files present. If the build
+      # needs a credential to succeed, that is the finding: an image must build
+      # from public inputs only and take secrets at runtime.
+      - name: Build the ${{ matrix.name }} image
+        run: |
+          docker build \
+            --file "${{ matrix.dockerfile }}" \
+            --tag "${{ matrix.tag }}" \
+            --progress plain \
+            .
+      # Layer-by-layer scan. `find /app -name .env` only inspects the final
+      # filesystem; a file deleted by a later layer is still inside the image and
+      # recoverable with `docker save`.
+      - name: Scan every image layer for credentials
+        run: node scripts/security/scan-image-secrets.mjs --base=node:24-alpine "${{ matrix.tag }}"
+      - name: Confirm no env file is present in the running filesystem (secondary)
+        run: |
+          found=$(docker run --rm --entrypoint sh "${{ matrix.tag }}" -c \
+            'find / -xdev \( -name ".env" -o -name ".env.*" \) -not -path "*/node_modules/*" 2>/dev/null || true')
+          if [ -n "$found" ]; then
+            echo "Environment file(s) found in the ${{ matrix.name }} image:" >&2
+            echo "$found" >&2
+            exit 1
+          fi
+          echo "No .env file in the ${{ matrix.name }} container filesystem."
+      - name: Confirm no credential is set in the image environment
+        run: |
+          node -e '
+            const { execFileSync } = require("node:child_process");
+            const tag = process.argv[1];
+            const env = JSON.parse(execFileSync("docker", ["image", "inspect", tag, "--format", "{{json .Config.Env}}"], { encoding: "utf8" }));
+            const secretish = /(SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE_KEY|CREDENTIAL|API_KEY|ACCESS_KEY|_DSN)$/i;
+            const bad = env.filter((entry) => {
+              const [name, ...rest] = entry.split("=");
+              if (!secretish.test(name)) return false;
+              // A public NEXT_PUBLIC_* identifier is not a credential.
+              if (name.startsWith("NEXT_PUBLIC_")) return false;
+              return true;
+            });
+            if (bad.length) {
+              console.error(`Image ${tag} declares credential env vars: ${bad.map((e) => e.split("=")[0]).join(", ")}`);
+              console.error("Inject them at runtime and validate at startup instead.");
+              process.exit(1);
+            }
+            console.log(`Image ${tag} declares no credential env vars.`);
+          ' "${{ matrix.tag }}"
 
   e2e-smoke:
     name: E2E smoke (preview)
