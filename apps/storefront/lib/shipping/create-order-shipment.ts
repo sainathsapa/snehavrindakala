@@ -6,6 +6,11 @@
 
 import { getOrderShipment, saveOrderShipment } from "./store";
 import { createShipment, SHIPROCKET_PICKUP_LOCATION } from "./shiprocket";
+import {
+  loadProductPhysicalData,
+  MissingPhysicalDataError,
+  resolvePackagePhysicalData,
+} from "./product-physical";
 
 function paiseToRupees(amount: unknown): number {
   const value = Number(amount);
@@ -43,7 +48,37 @@ export async function createShipmentForOrder(order: any) {
     (sum: number, item: ShipmentItem) => sum + item.units,
     0
   );
-  const weight = Math.max(totalItems * 0.5, 0.5);
+
+  // PHYSICAL DATA IS MEASURED, NEVER GUESSED.
+  //
+  // This function used to send `weight = totalItems * 0.5` and a fixed
+  // `10 x 10 x 5 cm` box to Shiprocket. Both were inventions: the weight decides
+  // the courier rate the shop pays, and the dimensions are what a damage or
+  // lost-parcel claim is judged against. lib/shipping/verify.ts already refused
+  // to build a request without real data; this was the path that bypassed it.
+  //
+  // Now every line must resolve a verified measurement or the shipment is
+  // refused with the product ids that are missing. The caller decides whether to
+  // surface that to the customer (checkout) or the admin (manual shipment).
+  const lines = (order.items || []).map((item: any) => ({
+    productId:
+      (typeof item.product_id === "string" && item.product_id) ||
+      (typeof item.product?.id === "string" && item.product.id) ||
+      null,
+    quantity: Number(item.quantity) || 1,
+  }));
+
+  const physicalRows = await loadProductPhysicalData(
+    lines
+      .map((l: { productId: string | null }) => l.productId)
+      .filter((id: string | null): id is string => Boolean(id))
+  );
+  const physical = resolvePackagePhysicalData(lines, physicalRows);
+  if (!physical.ok) {
+    throw new MissingPhysicalDataError(physical.missingProductIds);
+  }
+
+  const weight = physical.weightKg;
   const totalValue =
     paiseToRupees(order.total) ||
     items.reduce(
@@ -80,9 +115,9 @@ export async function createShipmentForOrder(order: any) {
     total_items: totalItems,
     total_value: totalValue,
     weight,
-    length: 10,
-    breadth: 10,
-    height: 5,
+    length: physical.dimensionsCm.length,
+    breadth: physical.dimensionsCm.breadth,
+    height: physical.dimensionsCm.height,
   });
 
   return saveOrderShipment(order.id, {
