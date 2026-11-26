@@ -22,8 +22,18 @@ import { join, relative } from "node:path";
 
 const ROOT = join(__dirname, "..");
 
-/** Routes that exist in exactly one of the two modes. */
-const MODE_EXCLUSIVE = ["/makers", "/artists", "/sell"];
+/**
+ * Routes whose *destination* differs by mode.
+ *
+ * This list used to be ["/makers", "/artists", "/sell"] because /artists and
+ * /sell both 404'd outside platform mode. That is no longer true: a house that
+ * names its makers cannot send its own footer to a 404, and a maker asking how
+ * to work with the studio deserves an answer in either mode. Both pages render
+ * in both modes now, so only /makers remains mode-dependent — it is the
+ * catalogue-derived makers page, and in platform mode it steps aside for the
+ * richer /artists directory rather than competing with it.
+ */
+const MODE_EXCLUSIVE = ["/makers"];
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
