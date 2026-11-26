@@ -188,7 +188,12 @@ export default async function middleware(request: NextRequest) {
   // Serve it directly, with the same locale/path headers the intl handler
   // stamps, so `app/partner/layout.tsx` can still tell a signed-out screen
   // (/partner/login, /partner/reset) from a protected one without looping.
-  if (pathname.startsWith("/partner") && !isLocalizedPartnerPath(pathname)) {
+  // Exact segment, not a prefix. `startsWith("/partner")` also matches
+  // "/partners" — the public trade page — so that page skipped the locale
+  // rewrite and `[locale]` swallowed "partners" as a language, rendering the
+  // home page at /partners with a 200. Nothing looked broken.
+  const isPortalPath = pathname === "/partner" || pathname.startsWith("/partner/");
+  if (isPortalPath && !isLocalizedPartnerPath(pathname)) {
     const forwarded = new Headers(request.headers);
     forwarded.set("x-locale", localeFromPath(pathname));
     forwarded.set("x-pathname", pathname);

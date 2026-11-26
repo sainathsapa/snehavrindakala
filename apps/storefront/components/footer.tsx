@@ -67,6 +67,7 @@ const LINK_GROUPS = [
       { key: "howItWorks", href: "/custom-art#process" },
       { key: "ourStory", href: "/about" },
       { key: "newsroom", href: "/newsroom" },
+      { key: "partners", href: "/partners" },
       { key: "writeToUs", href: "/contact" },
     ],
   },

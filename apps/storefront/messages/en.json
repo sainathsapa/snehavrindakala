@@ -19,7 +19,8 @@
     "theJournal": "The journal",
     "requestAPiece": "Request a piece",
     "contact": "Contact",
-    "rooms": "Rooms"
+    "rooms": "Rooms",
+    "partners": "Partners"
   },
   "currency": {
     "label": "Currency",
@@ -64,7 +65,8 @@
     "letterFailed": "We could not save that just now. Please try again.",
     "followUs": "Follow us",
     "rooms": "Rooms",
-    "newsroom": "Newsroom"
+    "newsroom": "Newsroom",
+    "partners": "Partners"
   },
   "common": {
     "priceOnRequest": "Price on request",

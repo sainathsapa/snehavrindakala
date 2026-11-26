@@ -42,6 +42,10 @@ const navLinks = [
   { key: "rooms", href: "/rooms" },
   { key: "learn", href: "/learn", menu: "learn" as const },
   { key: "studio", href: "/about", menu: "studio" as const },
+  // Trade buyers had no way in: the application form existed at /partner/apply
+  // with nothing on the site linking to it. The whole trade surface — makers,
+  // apply, application status, the portal — now hangs off this one item.
+  { key: "partners", href: "/partners", menu: "partners" as const },
   { key: "request", href: "/custom-art" },
 ];
 
@@ -73,7 +77,7 @@ export function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Which dropdown is open. CSS-only hover menus cannot be reached by keyboard
   // or touch, so the menu is explicitly state-driven with click and Escape.
-  const [openMenu, setOpenMenu] = useState<null | "shop" | "learn" | "studio">(null);
+  const [openMenu, setOpenMenu] = useState<null | "shop" | "learn" | "studio" | "partners">(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -249,13 +253,18 @@ export function Header({
                     : link.menu === "studio"
                       ? [
                           { label: "Our story", href: "/about" },
-                          { label: "The makers", href: "/artists" },
                           { label: "The journal", href: "/journal" },
                           { label: "Newsroom", href: "/newsroom" },
-                          { label: "Work with us", href: "/sell" },
                           { label: "Contact", href: "/contact" },
                         ]
-                      : [];
+                      : link.menu === "partners"
+                        ? [
+                            { label: "The makers", href: "/makers" },
+                            { label: "Apply to partner", href: "/partner/apply" },
+                            { label: "Application status", href: "/partner/status" },
+                            { label: "Partner sign in", href: "/partner/login" },
+                          ]
+                        : [];
 
               if (!link.menu) {
                 // A nav item stays active on its own sub-pages: /shop should
@@ -405,17 +414,18 @@ export function Header({
                         {/* The studio panel's own heading already opens /about,
                             so a footer link to the same page was the one
                             duplicate left in the menu. */}
-                        {link.menu === "studio" ? null : (
+                        {link.menu === "studio" || link.menu === "partners" ? null : (
                         <Link
                           href={link.href}
                           onClick={() => setOpenMenu(null)}
                           className="font-sans text-xs font-medium text-terracotta hover:text-kumkum"
                         >
+                          {/* Only shop and learn reach here: the studio and
+                              partners panels link to their own page from the
+                              menu heading, so a footer link duplicated it. */}
                           {link.menu === "shop"
                             ? "Browse every work"
-                            : link.menu === "learn"
-                              ? "All three plates"
-                              : "About the studio"}{" "}
+                            : "All three plates"}{" "}
                           →
                         </Link>
                         )}
@@ -608,14 +618,19 @@ export function Header({
                             { label: "The materials", href: "/learn/materials" },
                             { label: "The history", href: "/learn/history" },
                           ]
-                        : [
-                            { label: "Our story", href: "/about" },
-                            { label: "The makers", href: "/artists" },
-                            { label: "The journal", href: "/journal" },
-                            { label: "Newsroom", href: "/newsroom" },
-                            { label: "Work with us", href: "/sell" },
-                            { label: "Contact", href: "/contact" },
-                          ]
+                        : link.menu === "studio"
+                          ? [
+                              { label: "Our story", href: "/about" },
+                              { label: "The journal", href: "/journal" },
+                              { label: "Newsroom", href: "/newsroom" },
+                              { label: "Contact", href: "/contact" },
+                            ]
+                          : [
+                              { label: "The makers", href: "/makers" },
+                              { label: "Apply to partner", href: "/partner/apply" },
+                              { label: "Application status", href: "/partner/status" },
+                              { label: "Partner sign in", href: "/partner/login" },
+                            ]
                     ).map((entry: any) => (
                       <Link
                         key={entry.href}

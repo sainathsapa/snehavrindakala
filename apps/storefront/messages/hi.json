@@ -19,7 +19,8 @@
     "theJournal": "पत्रिका",
     "requestAPiece": "कलाकृति ऑर्डर करें",
     "contact": "संपर्क करें",
-    "rooms": "कक्ष"
+    "rooms": "कक्ष",
+    "partners": "साझेदार"
   },
   "currency": {
     "label": "मुद्रा",
@@ -64,7 +65,8 @@
     "letterFailed": "अभी सहेजा नहीं जा सका। कृपया फिर से प्रयास करें।",
     "followUs": "हमें फ़ॉलो करें",
     "rooms": "कक्ष",
-    "newsroom": "समाचार"
+    "newsroom": "समाचार",
+    "partners": "साझेदार"
   },
   "common": {
     "priceOnRequest": "कीमत पूछें",
