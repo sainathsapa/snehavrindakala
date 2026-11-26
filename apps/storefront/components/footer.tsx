@@ -581,34 +581,24 @@ export function Footer({
         </div>
       </div>
 
-      {/* ═══ 5. THE PLINTH ════════════════════════════════════════════════
-          The ornament returns as the base the page rests on, cropped lower so
-          it reads as a plinth rather than a repeat of the lintel. The kalash
-          sits at centre — the vessel that marks a threshold, and the last mark
-          on the page. */}
-      <div className="relative">
-        <div className="relative h-28 w-full overflow-hidden sm:h-32 lg:h-40">
-          <Image
-            src="/images/ornaments/footer-band.jpg"
-            alt=""
-            fill
-            aria-hidden="true"
-            sizes="100vw"
-            className="object-cover object-bottom"
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#2A120C] to-transparent"
-          />
-        </div>
+      {/* ═══ 5. THE BASE ══════════════════════════════════════════════════
+          The footer used to close with a second copy of the same carved band,
+          cropped differently and captioned "the plinth". Two copies of one
+          image, one above and one below the colophon, does not read as a
+          threshold and a base — it reads as the same picture used twice.
 
-        {/* The kalash, seated on the plinth. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
-          <div className="relative flex translate-y-[18%] flex-col items-center">
-            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2A120C] shadow-[0_0_0_1px_rgba(240,196,91,0.35)] sm:h-24 sm:w-24">
-              <KalashMotif className="h-11 w-11 text-haldi/85 sm:h-14 sm:w-14" />
-            </span>
+          The base is now a rule and the kalash alone: the vessel that marks a
+          threshold, at the centre, on the footer's own ground. One ornament,
+          at the point where the page actually ends. */}
+      <div className="relative mx-auto mt-10 max-w-[1400px] px-5 pb-10 sm:px-8 lg:px-12">
+        <div className="flex flex-col items-center">
+          <span aria-hidden="true" className="h-px w-full bg-gradient-to-r from-transparent via-haldi/30 to-transparent" />
+          <div className="relative -mt-10 flex h-20 w-20 items-center justify-center rounded-full bg-[#2A120C] shadow-[0_0_0_1px_rgba(240,196,91,0.35)]">
+            <KalashMotif className="h-10 w-10 text-haldi/85" />
           </div>
+          <p className="mt-3 font-sans text-[10px] uppercase tracking-[0.3em] text-rang-paper/40">
+            Bikaner · Rajasthan
+          </p>
         </div>
       </div>
     </footer>

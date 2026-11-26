@@ -153,8 +153,16 @@ export function AnalyticsConsent() {
 
   if (!GA_MEASUREMENT_ID || !visible) return null;
 
+  // The banner is fixed to the bottom of the viewport, so it was sitting on top
+  // of the last thing on the page — the footer's closing ornament and the
+  // copyright line — until a visitor answered. A spacer of the banner's own
+  // height, painted only while the banner is shown, gives the page somewhere to
+  // end that is not underneath it.
+  const spacer = <div aria-hidden="true" className="h-44 sm:h-28" />;
+
   return (
     <>
+      {spacer}
       {/* The Zoho chat button floats at a very high z-index of its own, so the
           banner sits above it: underneath, the copy is unreadable and the
           buttons are unclickable. */}
