@@ -416,6 +416,10 @@ export async function handleRazorpayWebhook(
       eventType: event.eventType,
       orderId: event.providerOrderId,
       paymentId: event.paymentId,
+      // Kept as the provider stated it. Reconciliation still re-reads the payment
+      // before any money moves; this is what the record remembers afterwards.
+      amount: event.amount ?? null,
+      currency: event.currency ?? null,
       payload: event.raw,
       status: "received",
     };

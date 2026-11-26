@@ -31,6 +31,16 @@ export interface ProviderEventInput {
   eventType: string;
   orderId?: string | null;
   paymentId?: string | null;
+  /**
+   * What the provider said the payment was worth, in minor units.
+   *
+   * Recorded because an event log that says "payment.captured happened" without
+   * an amount cannot answer the two questions anyone actually asks of it: how
+   * much was taken, and how much failed to be. The value is a snapshot of what
+   * the webhook claimed, never the source of truth — the provider fetch is.
+   */
+  amount?: number | null;
+  currency?: string | null;
   /** Precomputed hash. When absent it is derived deterministically from `payload`. */
   payloadHash?: string;
   payload?: unknown;
@@ -84,8 +94,8 @@ export async function recordProviderEvent(
 
   const inserted = await executor(
     `INSERT INTO payment_event
-       (provider, provider_event_id, event_type, order_id, payment_id, payload_hash, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+       (provider, provider_event_id, event_type, order_id, payment_id, amount, currency, payload_hash, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      ON CONFLICT (provider, provider_event_id) DO NOTHING
      RETURNING id`,
     [
@@ -94,6 +104,8 @@ export async function recordProviderEvent(
       event.eventType,
       event.orderId ?? null,
       event.paymentId ?? null,
+      event.amount ?? null,
+      event.currency ?? null,
       payloadHash,
       status,
     ]

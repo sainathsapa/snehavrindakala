@@ -181,6 +181,21 @@ export default function CustomerDetailPage() {
             {`${customer.first_name || ""} ${customer.last_name || ""}`.trim() ||
               customer.email}
           </p>
+          {/* The profile is a list of orders; this is what those orders say when
+              read end to end — payments, shipments, refunds, tickets. */}
+          {customer.email && (
+            <div className="mt-3 flex flex-wrap gap-4 font-sans text-sm">
+              <Link
+                href={`/admin/tickets?email=${encodeURIComponent(customer.email)}`}
+                className="text-sindoor hover:underline"
+              >
+                Their tickets
+              </Link>
+              <Link href="/admin/payments" className="text-sindoor hover:underline">
+                Payment log
+              </Link>
+            </div>
+          )}
         </div>
 
         {message && (

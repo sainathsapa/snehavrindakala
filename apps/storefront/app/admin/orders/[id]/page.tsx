@@ -202,6 +202,12 @@ export default function OrderDetailPage() {
               {order.status}
             </span>
             <Link
+              href={`/admin/orders/${id}/journey`}
+              className="text-sm font-sans text-sindoor hover:underline"
+            >
+              Journey
+            </Link>
+            <Link
               href={`/admin/orders/${id}/refunds`}
               className="text-sm font-sans text-sindoor hover:underline"
             >

@@ -50,6 +50,9 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
   // Refunds above the threshold need a second signature; without a queue the
   // request sat in a table nobody opened.
   { href: "/admin/refunds", label: "Refund approvals", icon: "credit-card", role: "manager" },
+  // The event log the webhook writes: captured, failed, refunded, with amounts.
+  // Without a list, "did that payment go through?" meant opening Razorpay.
+  { href: "/admin/payments", label: "Payments", icon: "analytics", role: "manager" },
   { href: "/admin/products", label: "Products", icon: "products", role: "viewer" },
   // Review moderation sits next to Products: it is a per-product content queue
   // and a staff member approving a work is the same person checking its

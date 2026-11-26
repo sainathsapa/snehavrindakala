@@ -94,6 +94,9 @@ Status words mean exactly what they say:
 | Audit log | `/admin/audit-log` | Every privileged action recorded | verified |
 | Exports | `/admin/export` | CSV of orders/customers/products | verified |
 | Password resets | `/admin/password-resets` | Reset requests recorded for the studio | verified |
+| Payments | `/admin/payments` | Every Razorpay event the webhook accepted — captured, failed, refunded — with the amount, the payment id and the order; test mode is labelled | verified (empty until a real payment) |
+| Order journey | `/admin/orders/[id]/journey` | One order read as a sequence: placed → payment events → shipment + AWB → refunds → certificates → tickets, beside the buyer's profile (orders, lifetime value, refunds, failed payments, open tickets) | verified |
+| Customer profile | `/admin/customers/[id]` | Profile, order history, links to their tickets and the payment log | verified |
 
 ## 6. Machines
 
@@ -114,6 +117,7 @@ Status words mean exactly what they say:
 
 | Gap | Why it is open | Unblocks when |
 | --- | --- | --- |
+| No payment event has ever been recorded | the webhook log is empty because no live payment has run; the table, the amounts, the admin page and the customer profile are all in place and were exercised against seeded rows | one test payment |
 | No order placed with a real card on the production build | Razorpay's modal needs a human tap; automation reached the card form and stopped | someone pays ₹1 on a test card and reads the confirmation |
 | No live Razorpay keys | owner input | live key + secret + webhook secret supplied |
 | GST lines unproven | `SELLER_GSTIN` is empty — the studio is below the registration threshold | GSTIN supplied, or confirmed unregistered and the toggle left off |
