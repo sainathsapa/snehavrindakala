@@ -237,6 +237,11 @@ interface OrderLine {
 interface OrderLike {
   id?: string;
   display_id?: number | string;
+  /**
+   * The random reference printed on the confirmation and accepted by /track.
+   * Opaque on purpose: display_id is a counter and cannot be used for lookup.
+   */
+  track_ref?: string | null;
   email?: string;
   currency_code?: string;
   total?: number;
@@ -293,6 +298,24 @@ function orderConfirmation(
     ? [address.first_name, address.last_name].filter(Boolean).join(" ")
     : "";
 
+  // The reference is the only way into /track, so it has to be in the email that
+  // announces the order. Grouped and monospaced so it survives being read off a
+  // phone screen and typed back in.
+  const trackRef = typeof order.track_ref === "string" ? order.track_ref : "";
+  const trackBlock = trackRef
+    ? `<div style="margin-top:24px;padding:16px;border:1px solid #DCCBB4;background:#FBF7F0;">
+        <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#C84636;">Tracking reference</p>
+        <p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;letter-spacing:0.12em;color:#2B211E;">${escapeHtml(
+          trackRef
+        )}</p>
+        <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#675A52;">
+          Enter this with the email address above at
+          <a href="${ctx.storefrontUrl}/track" style="color:#C84636;">${ctx.storefrontUrl}/track</a>
+          to see where your order is.
+        </p>
+      </div>`
+    : "";
+
   const html = layout(
     ctx,
     `Thank you — order #${escapeHtml(reference)} is confirmed`,
@@ -316,6 +339,7 @@ function orderConfirmation(
       paragraph(
         `<span style="font-size:14px;color:#675A52;">We will email you again as soon as this ships, with tracking.</span>`
       ) +
+      trackBlock +
       button(ctx, `${ctx.storefrontUrl}/account`, "View your orders"),
     `Your SnehaVrinda Kala order #${reference} is confirmed.`
   );
@@ -333,6 +357,8 @@ function orderConfirmation(
     "",
     `Total: ${formatMoney(order.total ?? data.amount, currency)}`,
     addressLine ? `Delivering to: ${addressLine}, ${address?.address_1 || ""}` : "",
+    trackRef ? `Tracking reference: ${trackRef}` : "",
+    trackRef ? `Track it at: ${ctx.storefrontUrl}/track` : "",
     "",
     `View your orders: ${ctx.storefrontUrl}/account`,
     `Questions? ${ctx.contactEmail}`,

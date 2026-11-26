@@ -90,7 +90,7 @@ describe("schema deployment", () => {
       "admin_users", "app_notifications", "audit_log", "category_translation",
       "cart_reminders", "certificates", "password_reset_requests", "rate_limit_hits", "customer_wishlist", "newsletter_subscribers", "work_alerts",
       "commission_payouts", "discount_codes", "journal_posts", "order_refunds",
-      "order_gift_notes", "order_shipments", "product_review", "product_translation", "return_requests",
+      "order_gift_notes", "order_public_ref", "order_shipments", "product_review", "product_translation", "return_requests",
       "site_artist", "site_art_form", "site_featured_category", "site_hero_slide",
       "site_settings", "variant_stock", "stock_reservation", "processed_payments",
       "site_testimonial", "site_room", "site_news", "support_tickets", "ticket_replies",

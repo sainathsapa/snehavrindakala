@@ -257,6 +257,18 @@ CREATE TABLE IF NOT EXISTS order_gift_notes (
   PRIMARY KEY (order_id)
 );
 
+-- The reference printed on the confirmation email and typed into /track.
+--
+-- Deliberately opaque and unrelated to the order id: a counter (display_id) plus
+-- an email address is enumerable, and an internal ULID is not something a buyer
+-- can read off a slip. 60 bits from crypto.randomBytes, Crockford's alphabet,
+-- unique per order and never reused.
+CREATE TABLE IF NOT EXISTS order_public_ref (
+  order_id text PRIMARY KEY,
+  ref text NOT NULL UNIQUE,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS order_refunds (
   id text NOT NULL DEFAULT gen_random_uuid(),
   order_id text NOT NULL,

@@ -131,6 +131,17 @@ export default async function OrderPage({
     `/api/orders/${order.id}/invoice` +
     (guestToken ? `?t=${encodeURIComponent(guestToken)}` : "");
 
+  // The reference the buyer types into /track. Minted on first view so an order
+  // placed before references existed still gets one; a failure here must not
+  // take the confirmation page down with it.
+  let trackRef: string | null = null;
+  try {
+    const { publicRefForOrder } = await import("@/lib/order-ref");
+    trackRef = await publicRefForOrder(order.id);
+  } catch (error) {
+    console.error("Could not allocate a track reference", error);
+  }
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -150,6 +161,22 @@ export default async function OrderPage({
               {new Date(order.created_at).toLocaleDateString()}
             </time>
           </p>
+          {trackRef && (
+            <p className="mt-4 inline-flex flex-wrap items-center gap-x-3 gap-y-1 border border-sand-border bg-surface px-3 py-2 text-sm text-muted-ink">
+              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-terracotta">
+                {t18n("trackRefLabel")}
+              </span>
+              <span className="font-mono text-base tracking-[0.12em] text-deep-ink">
+                {trackRef}
+              </span>
+              <Link
+                href="/track"
+                className="underline decoration-terracotta/40 underline-offset-4 hover:text-sindoor"
+              >
+                {t18n("trackLink")}
+              </Link>
+            </p>
+          )}
         </div>
 
         {paid && (

@@ -14,10 +14,42 @@ interface OrderNotificationPayload {
   order: Record<string, unknown>;
 }
 
-/** The subset of an order the confirmation template renders. */
-function payloadFor(order: Record<string, unknown>): Record<string, unknown> {
+/**
+ * The order's random track reference, or null.
+ *
+ * Never lets a missing reference cost the customer their confirmation: the email
+ * is worthless without it, but an order that exists with an unsent confirmation
+ * is worse.
+ */
+async function trackReferenceFor(
+  order: Record<string, unknown>
+): Promise<string | null> {
+  const id = (order as any)?.id;
+  if (!id) return null;
+  try {
+    const { publicRefForOrder } = await import("@/lib/order-ref");
+    return await publicRefForOrder(String(id));
+  } catch (err) {
+    console.error("[email] could not allocate a track reference", err);
+    return null;
+  }
+}
+
+/**
+ * The subset of an order the confirmation template renders.
+ *
+ * `track_ref` is the random reference the buyer types into /track. It is looked
+ * up (or minted) here rather than stored on the order because orders live in
+ * Medusa and this is the shop's own table — and because the email is the first
+ * moment the reference needs to exist.
+ */
+function payloadFor(
+  order: Record<string, unknown>,
+  trackRef?: string | null
+): Record<string, unknown> {
   const anyOrder = order as any;
   return {
+    track_ref: trackRef ?? null,
     id: anyOrder.id,
     display_id: anyOrder.display_id,
     email: anyOrder.email,
@@ -91,7 +123,7 @@ export async function sendOrderConfirmation(
           to,
           template: "order_confirmation",
           eventKey: `order_confirmation:${(order as any).id}`,
-          data: { order: payloadFor(order) },
+          data: { order: payloadFor(order, await trackReferenceFor(order)) },
           ...(attachments ? { attachments } : {}),
         }),
       });
@@ -128,7 +160,7 @@ export async function sendOrderConfirmation(
       body: JSON.stringify({
         to,
         template: "order_confirmation",
-        data: { order: payloadFor(order) },
+        data: { order: payloadFor(order, await trackReferenceFor(order)) },
       }),
     });
 

@@ -23,6 +23,7 @@
 
 import { getAdminOrder } from "@/lib/admin";
 import { getOrderShipment, findShipmentByAwb } from "@/lib/shipping/store";
+import { orderIdForRef } from "@/lib/order-ref";
 
 export interface TrackedOrder {
   displayId: string | number | null;
@@ -68,29 +69,51 @@ export async function trackOrder(
   const email = String(formData.get("email") || "").trim();
 
   if (!rawId || !email) {
-    return { ok: false, error: "Enter both your order number and email address." };
+    return { ok: false, error: "Enter both your order reference and email address." };
   }
 
-  // Accept what the buyer actually has in front of them: the order id from the
-  // URL (order_01J...) or the display id from the confirmation email (#1042),
-  // and the AWB printed on the parcel. The AWB is the one people reach for —
-  // it is what arrives on the slip and what a courier's app shows — so it is
-  // tried when the id does not resolve rather than rejected outright.
-  const id = rawId.replace(/^#/, "");
+  // Three things a buyer might paste, in the order they are likely to have
+  // them: the reference on their confirmation email (SV-7Q4K-...), the AWB from
+  // the parcel slip, or the internal order id from a link.
+  //
+  // What is deliberately NOT accepted is the display number (#1, #2, #3). It is
+  // a counter: an attacker holding an email address could walk it through every
+  // order the shop has taken and read names, addresses and totals. A reference
+  // that cannot be computed from the order is the only version of this form that
+  // is safe to leave open to the public.
+  const id = rawId.replace(/^#/, "").trim();
 
   let record: any = null;
+
+  // 1. The random reference.
   try {
-    const result = await getAdminOrder(id);
-    record = result.order;
+    const orderId = await orderIdForRef(id);
+    if (orderId) {
+      const result = await getAdminOrder(orderId);
+      record = result.order;
+    }
   } catch {
-    // Not an order id. It may still be a tracking number, so resolve that to
-    // the order it belongs to before giving up.
+    // Not a reference, or the lookup table is missing. Keep going.
+  }
+
+  // 2. A tracking number printed on the parcel.
+  if (!record) {
     try {
       const shipment = await findShipmentByAwb(id);
       if (shipment?.order_id) {
         const result = await getAdminOrder(shipment.order_id);
         record = result.order;
       }
+    } catch {
+      // Fall through.
+    }
+  }
+
+  // 3. The internal order id, for anyone following a link from the site.
+  if (!record && /^order_/.test(id)) {
+    try {
+      const result = await getAdminOrder(id);
+      record = result.order;
     } catch {
       // Fall through to the shared rejection below.
     }
@@ -102,7 +125,7 @@ export async function trackOrder(
     return {
       ok: false,
       error:
-        "We could not find an order matching those details. Check the number and the email used at checkout.",
+        "We could not find an order matching that reference. Check the code on your confirmation email.",
     };
   }
 
@@ -116,7 +139,7 @@ export async function trackOrder(
     return {
       ok: false,
       error:
-        "We could not find an order matching those details. Check the number and the email used at checkout.",
+        "We could not find an order matching that reference. Check the code on your confirmation email.",
     };
   }
 
