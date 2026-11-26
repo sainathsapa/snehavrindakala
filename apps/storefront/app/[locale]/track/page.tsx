@@ -61,6 +61,12 @@ export default async function TrackPage() {
             noShipment: t("noShipment"),
             viewOrder: t("viewOrder"),
             again: t("again"),
+            shipmentStatus: t("shipmentStatus"),
+            fromCourier: t("fromCourier"),
+            fromStudio: t("fromStudio"),
+            journey: t("journey"),
+            noScans: t("noScans"),
+            updated: t("updated"),
           }}
         />
 

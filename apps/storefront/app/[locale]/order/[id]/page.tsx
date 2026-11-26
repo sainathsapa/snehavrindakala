@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { getAuthToken } from "@/lib/auth";
 import { medusa, formatPrice } from "@/lib/medusa";
 import { getOrderShipment } from "@/lib/shipping/store";
+import { liveTracking } from "@/lib/shipping/live-tracking";
+import { buildBuyerTimeline } from "@/lib/order-timeline";
+import { OrderJourney } from "@/components/order-journey";
 import { shipmentStatusClasses, shipmentStatusLabel } from "@/lib/shipping/status-label";
 import { trackingLink } from "@/lib/shipping/notify";
 import { getAdminOrder } from "@/lib/admin";
@@ -62,6 +65,32 @@ export default async function OrderPage({
       console.error("Failed to load shipment", error);
     }
   }
+
+  // The courier's own scans, fetched only when there is an AWB to ask about.
+  // Null is a normal answer (no scans yet, courier unreachable) and the journey
+  // falls back to the studio's own milestones.
+  let live: Awaited<ReturnType<typeof liveTracking>> = null;
+  if (shipment?.awb_code) {
+    live = await liveTracking(shipment.awb_code);
+  }
+
+  const buyerTimeline = order
+    ? buildBuyerTimeline({
+        createdAt: order.created_at,
+        paymentStatus: order.payment_status,
+        status: order.status,
+        shipment: shipment
+          ? {
+              status: shipment.status,
+              trackingNumber: shipment.awb_code,
+              courier: shipment.courier_name,
+              createdAt: shipment.created_at,
+            }
+          : null,
+        live,
+        hasCertificate: false,
+      })
+    : [];
 
   if (!order) {
     // A signed-in visitor asking for an order that is not theirs (or does not
@@ -419,7 +448,19 @@ export default async function OrderPage({
             <h2 className="text-xl font-serif font-semibold text-deep-ink mb-6">
               {t18n("shipmentHeading")}
             </h2>
-            <dl className="space-y-3 text-sm font-sans">
+
+            {/* The journey first: what the studio did, and what the courier has
+                scanned, oldest at the top. A buyer opening this page is asking
+                "where is it now?" — a status chip alone cannot answer that. */}
+            <OrderJourney
+              steps={buyerTimeline}
+              studioLabel={t18n("fromStudio")}
+              courierLabel={t18n("fromCourier")}
+              fetchedAt={live?.fetchedAt ?? null}
+              updatedLabel={t18n("courierUpdated")}
+            />
+
+            <dl className="mt-8 space-y-3 border-t border-sand-border pt-6 text-sm font-sans">
               <div className="flex justify-between">
                 <dt className="text-muted-ink">Status</dt>
                 <dd>
@@ -437,17 +478,11 @@ export default async function OrderPage({
                   })()}
                 </dd>
               </div>
-              {shipment.courier_name && (
-                <div className="flex justify-between">
-                  <dt className="text-muted-ink">{t18n("courierLabel")}</dt>
-                  <dd className="text-deep-ink">
-                    {shipment.courier_name}
-                    {shipment.courier_service
-                      ? ` · ${shipment.courier_service}`
-                      : ""}
-                  </dd>
-                </div>
-              )}
+              {/* The courier and its service tier are deliberately not shown.
+                  A buyer needs to know where the parcel is and how to follow it,
+                  not which company was contracted — naming it invites a
+                  conversation about someone else's operations, and the studio
+                  cannot answer for them. The admin panel keeps both. */}
               {shipment.awb_code && (
                 <div className="flex justify-between">
                   <dt className="text-muted-ink">{t18n("awbLabel")}</dt>

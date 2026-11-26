@@ -454,12 +454,17 @@ export function CheckoutClient({
                             className="mt-1 accent-kumkum focus:ring-kumkum"
                           />
                           <span className="flex-1 font-sans text-sm">
+                            {/* The rate, and nothing else.
+
+                                The row used to name the courier, the service and
+                                an expected date. A buyer deciding what to pay
+                                does not need the company carrying it, and naming
+                                it invited questions the studio cannot answer ("why
+                                Xpressbees and not Blue Dart?"). The price is the
+                                decision; the rest is logistics and belongs in the
+                                admin panel. */}
                             <span className="block font-medium text-deep-ink">
-                              {rate.courier_name}
-                            </span>
-                            <span className="block text-xs text-muted-ink">
-                              {rate.service_name}
-                              {rate.expected_delivery ? ` · ${rate.expected_delivery}` : ""}
+                              {t("shipping")}
                             </span>
                           </span>
                           <span className="whitespace-nowrap font-sans text-sm font-medium text-deep-ink">

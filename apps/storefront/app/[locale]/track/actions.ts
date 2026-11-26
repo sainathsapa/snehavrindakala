@@ -24,6 +24,7 @@
 import { getAdminOrder } from "@/lib/admin";
 import { getOrderShipment, findShipmentByAwb } from "@/lib/shipping/store";
 import { orderIdForRef } from "@/lib/order-ref";
+import { liveTracking, type LiveTracking } from "@/lib/shipping/live-tracking";
 
 export interface TrackedOrder {
   displayId: string | number | null;
@@ -34,12 +35,9 @@ export interface TrackedOrder {
   currency: string;
   customerName: string | null;
   items: { title: string; quantity: number }[];
-  shipment: {
-    status: string | null;
-    trackingNumber: string | null;
-    trackingUrl: string | null;
-    carrier: string | null;
-  } | null;
+    shipment: { status: string | null; trackingNumber: string | null; trackingUrl: string | null; carrier: string | null } | null;
+  /** The courier's own scan history, when Shiprocket answered. Null is normal. */
+  live?: LiveTracking | null;
 }
 
 export interface TrackResult {
@@ -152,6 +150,15 @@ export async function trackOrder(
 
   const address = record.shipping_address || record.billing_address || {};
 
+  // Our own record and the courier's own record, both: the internal status says
+  // what the studio has done (packed, booked, handed over) and the scan history
+  // says where the parcel physically is. Neither replaces the other, and a
+  // buyer asking "where is it" needs both.
+  let live: LiveTracking | null = null;
+  if (shipment?.awb_code) {
+    live = await liveTracking(shipment.awb_code);
+  }
+
   return {
     ok: true,
     order: {
@@ -176,6 +183,7 @@ export async function trackOrder(
             carrier: shipment.courier_name ?? null,
           }
         : null,
+      live,
     },
   };
 }

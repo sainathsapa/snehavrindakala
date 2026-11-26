@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo } from "react";
 import { Link } from "@/i18n/routing";
+import { OrderJourney } from "@/components/order-journey";
+import { buildBuyerTimeline } from "@/lib/order-timeline";
 import { trackOrder, type TrackResult } from "./actions";
 
 /**
@@ -34,6 +36,18 @@ export function TrackForm({
     noShipment: string;
     viewOrder: string;
     again: string;
+    /** Our own status, as opposed to the courier's. */
+    shipmentStatus: string;
+    /** The courier's scan history heading. */
+    fromCourier: string;
+    /** Our own milestones, on the same timeline. */
+    fromStudio: string;
+    /** The timeline heading. */
+    journey: string;
+    /** Shown when the courier has nothing to report yet. */
+    noScans: string;
+    /** "Updated 12 minutes ago" — so a stale timeline does not look live. */
+    updated: string;
   };
 }) {
   const [state, formAction, pending] = useActionState<TrackResult | null, FormData>(
@@ -43,6 +57,20 @@ export function TrackForm({
 
   if (state?.ok && state.order) {
     const o = state.order;
+    const timeline = buildBuyerTimeline({
+      createdAt: o.createdAt,
+      paymentStatus: o.paymentStatus,
+      status: o.status,
+      shipment: o.shipment
+        ? {
+            status: o.shipment.status,
+            trackingNumber: o.shipment.trackingNumber,
+            courier: o.shipment.carrier,
+            createdAt: null,
+          }
+        : null,
+      live: o.live ?? null,
+    });
     return (
       <div className="mt-10 border border-sand-border/70 bg-surface/60 p-6 sm:p-8">
         <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-terracotta">
@@ -69,6 +97,19 @@ export function TrackForm({
               {o.paymentStatus}
             </dd>
           </div>
+          {/* Our status: what the studio has done with this parcel. The courier
+              scans below say where it physically is; these are different facts
+              and a buyer needs both to answer "is it even packed yet?". */}
+          {o.shipment?.status && (
+            <div>
+              <dt className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta">
+                {labels.shipmentStatus}
+              </dt>
+              <dd className="mt-1 font-serif text-base capitalize text-deep-ink">
+                {o.shipment.status.replace(/_/g, " ")}
+              </dd>
+            </div>
+          )}
           {o.createdAt && (
             <div>
               <dt className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta">
@@ -146,6 +187,23 @@ export function TrackForm({
               {labels.noShipment}
             </p>
           )}
+        </div>
+
+        {/* The journey, not just the current state: what we did, and what the
+            courier has actually scanned, on one thread. */}
+        <div className="mt-6 border-t border-sand-border/50 pt-5">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta">
+            {labels.journey}
+          </p>
+          <div className="mt-3">
+            <OrderJourney
+              steps={timeline}
+              studioLabel={labels.fromStudio}
+              courierLabel={labels.fromCourier}
+              fetchedAt={o.live?.fetchedAt ?? null}
+              updatedLabel={labels.updated}
+            />
+          </div>
         </div>
 
         <div className="mt-7 flex flex-wrap items-center gap-5">

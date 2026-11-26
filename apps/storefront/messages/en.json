@@ -199,6 +199,8 @@
     "shippingCalculatedNext": "Calculated next",
     "shippingConfirmed": "Confirmed by our team",
     "free": "Free",
+    "deliveryStandard": "Standard delivery",
+    "deliveryExpress": "Express delivery",
     "total": "Total",
     "paySecure": "Secure payment by Razorpay · UPI, cards & net banking",
     "completing": "Completing your order…",
@@ -1038,7 +1040,13 @@
     "noShipment": "Tracking appears here once the parcel is handed to the courier.",
     "viewOrder": "View order",
     "again": "Continue browsing",
-    "privacyNote": "We show an order only when the number and the email address both match it. So that we do not reveal who has ordered what, a mismatch never says which of the two was wrong."
+    "privacyNote": "We show an order only when the number and the email address both match it. So that we do not reveal who has ordered what, a mismatch never says which of the two was wrong.",
+    "shipmentStatus": "Shipment",
+    "fromCourier": "From the courier",
+    "fromStudio": "From the studio",
+    "journey": "The journey",
+    "noScans": "No scans yet",
+    "updated": "Courier updated"
   },
   "shopControls": {
     "worksOne": "work",
@@ -1156,7 +1164,10 @@
     "noAccessTitle": "We could not show this order here.",
     "noAccessBody": "If you just paid, open the link in your confirmation email — it takes you straight to this order. Signing in with the address you used at checkout will also show it here.",
     "signIn": "Sign in →",
-    "productFallback": "Product"
+    "productFallback": "Product",
+    "fromStudio": "From the studio",
+    "fromCourier": "From the courier",
+    "courierUpdated": "Courier updated"
   },
   "consent": {
     "regionLabel": "Analytics consent",
