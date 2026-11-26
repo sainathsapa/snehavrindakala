@@ -116,6 +116,10 @@ grep -q '^STOREFRONT_BASE_URL=https://' "$ENV_FILE" ||
 say "5/7 starting the stack"
 cd "$APP_DIR"
 $DOCKER compose up -d --build postgres redis backend storefront
+# Owner accounts and launch content, so a fresh database is not a shop with no
+# way into the panel and two empty sections behind the menu.
+node scripts/seed-launch-content.mjs --docker || echo "   (seeding skipped)"
+
 # The proxy is intentionally NOT started here: nginx refuses to boot without a
 # certificate, and TLS comes after DNS. Run deploy/tls-init.sh, then:
 #   docker compose --profile proxy up -d
