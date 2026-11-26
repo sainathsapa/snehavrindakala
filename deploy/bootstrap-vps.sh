@@ -159,6 +159,18 @@ with_key=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$base/api/webhooks/co
   -d '{"awb":"BOOTSTRAP1","current_status":"DELIVERED","order_id":"T-1"}' || true)
 echo "   webhook, correct token:   HTTP ${with_key}  (expect 200)"
 
+# ── Backups, on a timer ──────────────────────────────────────────────────────
+# scripts/backup-db.sh has always existed and nothing ever ran it. A backup that
+# depends on somebody remembering is not a backup; it is an intention. The dump
+# verifies itself (it checks the archive decompresses and carries the tables the
+# shop cannot be rebuilt without), so a failure is visible in the log rather
+# than discovered on the day it is needed.
+if command -v crontab >/dev/null 2>&1; then
+  CRON_LINE="15 2 * * * cd $ROOT && bash scripts/backup-db.sh >> /var/log/snehavrinda-backup.log 2>&1"
+  ( crontab -l 2>/dev/null | grep -v "backup-db.sh"; echo "$CRON_LINE" ) | crontab -
+  echo "   nightly database backup scheduled (02:15 server time)"
+fi
+
 say "done"
 cat <<EOF
 Live at: $base
@@ -176,6 +188,10 @@ Still to do by hand:
        docker compose --profile ops up -d backup
        bash scripts/restore-drill.sh
      and enable Lightsail automatic snapshots (instance -> Snapshots).
+
+     A nightly verified dump is installed by this script (root crontab, 02:15
+     IST). It is only half the job: a dump nobody has restored is a rumour.
+     Run the drill once, now, and note the date in docs/BACKUPS.md.
   4. Razorpay is still in test mode (rzp_test_...). Swap in live keys before
      taking money: RAZORPAY_KEY_ID, NEXT_PUBLIC_RAZORPAY_KEY_ID,
      RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET, then rebuild the storefront
