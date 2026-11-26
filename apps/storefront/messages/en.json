@@ -1047,7 +1047,11 @@
     "fromStudio": "From the studio",
     "journey": "The journey",
     "noScans": "No scans yet",
-    "updated": "Courier updated"
+    "updated": "Courier updated",
+    "stuckTitle": "Cannot find it?",
+    "stuckBody": "Send the studio what you have and a person will look it up.",
+    "stuckWhatsapp": "Message the studio on WhatsApp",
+    "stuckEmail": "Email the studio"
   },
   "shopControls": {
     "worksOne": "work",

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { localeAlternates } from "@/lib/seo";
 import { PageHeader } from "@/components/page-header";
 import { TrackForm } from "./track-form";
+import { supportNumber } from "@/lib/contact-links";
 
 /**
  * Track an order without signing in.
@@ -67,7 +68,12 @@ export default async function TrackPage() {
             journey: t("journey"),
             noScans: t("noScans"),
             updated: t("updated"),
+            stuckTitle: t("stuckTitle"),
+            stuckBody: t("stuckBody"),
+            stuckWhatsapp: t("stuckWhatsapp"),
+            stuckEmail: t("stuckEmail"),
           }}
+          whatsappNumber={supportNumber()}
         />
 
         <p className="mt-10 max-w-xl font-serif text-sm italic leading-relaxed text-muted-ink">

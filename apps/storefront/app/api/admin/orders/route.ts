@@ -43,7 +43,31 @@ export async function GET(req: Request) {
       "";
 
     const fields =
-      "id,display_id,status,total,currency_code,created_at,*customer";
+      "id,display_id,status,total,currency_code,created_at,*customer,*shipping_address";
+
+    // Most support starts with a phone number: "my order, 98…". Medusa's free-text
+    // search covers email and order number but not the address, so a digits-only
+    // query is answered by reading recent orders and matching the phone here.
+    // A studio sells a few works a week; a hundred recent orders is a phone book,
+    // and unlike a schema-level guess it cannot silently miss.
+    if (/[0-9]{6,}/.test(q) && /^[\d\s+()\-]+$/.test(q.trim())) {
+      const digitsWanted = q.replace(/\D/g, "").slice(-10);
+      const url = `/admin/orders?limit=100&fields=${encodeURIComponent(fields)}`;
+      const res = await adminFetch(BACKEND_URL, PUBLISHABLE_KEY, url);
+      if (!res.ok) {
+        return NextResponse.json({ error: await res.text() }, { status: res.status });
+      }
+      const data = await res.json();
+      const all: any[] = data.orders ?? [];
+      const matches = all.filter((order) => {
+        const phone = String(order.shipping_address?.phone || order.customer?.phone || "")
+          .replace(/\D/g, "")
+          .slice(-10);
+        return phone.length >= 6 && phone.includes(digitsWanted);
+      });
+      return NextResponse.json({ orders: matches, count: matches.length });
+    }
+
     let url = `/admin/orders?limit=${limit}&offset=${offset}&fields=${encodeURIComponent(
       fields
     )}`;

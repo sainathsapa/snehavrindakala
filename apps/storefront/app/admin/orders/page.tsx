@@ -241,7 +241,7 @@ export default function OrdersPage() {
               <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-ink" />
               <input
                 type="text"
-                placeholder="Search order ID, customer, email…"
+                placeholder="Search order ID, customer, email or phone…"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);

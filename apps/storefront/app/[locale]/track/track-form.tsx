@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { OrderJourney } from "@/components/order-journey";
 import { buildBuyerTimeline } from "@/lib/order-timeline";
@@ -15,6 +15,7 @@ import { trackOrder, type TrackResult } from "./actions";
  */
 export function TrackForm({
   labels,
+  whatsappNumber = null,
 }: {
   labels: {
     orderId: string;
@@ -48,12 +49,20 @@ export function TrackForm({
     noScans: string;
     /** "Updated 12 minutes ago" — so a stale timeline does not look live. */
     updated: string;
+    stuckTitle: string;
+    stuckBody: string;
+    stuckWhatsapp: string;
+    stuckEmail: string;
   };
+  whatsappNumber?: string | null;
 }) {
   const [state, formAction, pending] = useActionState<TrackResult | null, FormData>(
     trackOrder,
     null
   );
+  // Held so the help links can name whatever the buyer typed: asking somebody
+  // whose reference is wrong to retype it into a chat window is where they leave.
+  const [typed, setTyped] = useState("");
 
   if (state?.ok && state.order) {
     const o = state.order;
@@ -223,9 +232,33 @@ export function TrackForm({
       {state?.error && (
         <div
           role="alert"
-          className="border border-kumkum/30 bg-kumkum/5 p-3 font-sans text-sm text-kumkum"
+          className="border border-kumkum/30 bg-kumkum/5 p-4 font-sans text-sm text-kumkum"
         >
-          {state.error}
+          <p>{state.error}</p>
+          <p className="mt-3 font-semibold text-deep-ink">{labels.stuckTitle}</p>
+          <p className="mt-1 text-muted-ink">{labels.stuckBody}</p>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+            {whatsappNumber && (
+              <a
+                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                  `Hello - I cannot track my order. The reference I have is: ${typed.trim() || "(not sure)"}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-terracotta underline underline-offset-4"
+              >
+                {labels.stuckWhatsapp}
+              </a>
+            )}
+            <a
+              href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL || ""}?subject=${encodeURIComponent("Tracking help")}&body=${encodeURIComponent(
+                `I cannot find my order. The reference I have is: ${typed.trim() || "(not sure)"}`
+              )}`}
+              className="font-semibold text-terracotta underline underline-offset-4"
+            >
+              {labels.stuckEmail}
+            </a>
+          </div>
         </div>
       )}
 
@@ -241,6 +274,8 @@ export function TrackForm({
           name="orderId"
           required
           autoComplete="off"
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
           placeholder={labels.orderIdHint}
           className="mt-2 w-full border border-sand-border bg-surface px-3 py-2.5 font-serif text-base text-deep-ink outline-none focus:border-sindoor focus:ring-1 focus:ring-sindoor/40"
         />
