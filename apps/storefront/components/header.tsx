@@ -40,6 +40,9 @@ const navLinks = [
   { key: "learn", href: "/learn" },
   { key: "request", href: "/custom-art" },
   { key: "journal", href: "/journal" },
+  // A shop with no contact page sends people to a mailto: link; this is the
+  // address the terms, invoice and every policy point at.
+  { key: "contact", href: "/contact" },
   { key: "studio", href: "/about", menu: "studio" as const },
   { key: "artists", href: "/artists", platformOnly: true },
   // Only meaningful in marketplace mode: in single-brand mode there is nobody

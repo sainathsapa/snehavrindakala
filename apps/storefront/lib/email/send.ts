@@ -21,7 +21,9 @@ type Template =
   | "password_changed"
   | "order_cancelled"
   | "order_confirmation"
-  | "shipment_confirmed";
+  | "shipment_confirmed"
+  | "contact_enquiry"
+  | "contact_received";
 
 interface SendArgs {
   to: string | null | undefined;

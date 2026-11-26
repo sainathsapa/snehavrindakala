@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ImageUpload } from "@/components/image-upload";
+import { ProductImages, type ProductImage } from "@/components/product-images";
 import { useParams } from "next/navigation";
 
 interface Product {
@@ -37,7 +37,7 @@ export default function EditProductPage() {
   const [productStatus, setProductStatus] = useState("draft");
   const [price, setPrice] = useState("0");
   const [currency, setCurrency] = useState("inr");
-  const [image, setImage] = useState("");
+  const [images, setImages] = useState<ProductImage[]>([]);
   // Maker and stock terms live in product metadata; they are editable here so
   // an existing work can be re-attributed without touching the database.
   const [artist, setArtist] = useState("");
@@ -89,7 +89,14 @@ export default function EditProductPage() {
         setPrice((loaded.total / 100).toString());
         setCurrency(loaded.currency_code || "inr");
         setCategoryId(loaded.category_id || "");
-        setImage(data.thumbnail || data.images?.[0]?.url || "");
+        const galleryUrls = ((data.images ?? []) as any[])
+          .map((item) => item?.url)
+          .filter(Boolean) as string[];
+        const ordered =
+          data.thumbnail && !galleryUrls.includes(data.thumbnail)
+            ? [data.thumbnail as string, ...galleryUrls]
+            : galleryUrls;
+        setImages(ordered.map((url) => ({ url })));
         // Artist and availability live in tags, because the Medusa store API
         // does not expose metadata. Reading metadata here left both fields blank
         // on every product created through the panel.
@@ -157,7 +164,7 @@ export default function EditProductPage() {
           total: price ? parseInt(price) * 100 : 0,
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
-          image,
+          images: images.map((item) => item.url),
           artist,
           stock_type: stockType,
           description,
@@ -218,7 +225,7 @@ export default function EditProductPage() {
                   Product image
                 </label>
                 <div className="max-w-[260px]">
-                  <ImageUpload value={image} onChange={setImage} />
+                  <ProductImages images={images} onChange={setImages} />
                 </div>
               </div>
 

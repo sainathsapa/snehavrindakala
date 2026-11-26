@@ -1041,6 +1041,97 @@ function accountCreated(
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * Contact form
+ * ------------------------------------------------------------------ */
+
+/** The studio's copy: everything a reply needs, in reading order. */
+function contactEnquiry(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const name = escapeHtml(String(data.name || "Someone"));
+  const email = escapeHtml(String(data.email || ""));
+  const phone = data.phone ? escapeHtml(String(data.phone)) : "";
+  const subject = data.subject ? escapeHtml(String(data.subject)) : "No subject given";
+  const message = escapeHtml(String(data.message || "")).replace(/\n/g, "<br>");
+  const orderRef = data.order_ref ? escapeHtml(String(data.order_ref)) : "";
+
+  const html = layout(
+    ctx,
+    "A message from the website",
+    paragraph(`<strong>${name}</strong> wrote to the studio.`) +
+      factsBlock("Name", name) +
+      factsBlock("Email", email) +
+      (phone ? factsBlock("Phone", phone) : "") +
+      (orderRef ? factsBlock("Order reference", orderRef) : "") +
+      factsBlock("Subject", subject) +
+      `<div style="margin:14px 0 0;padding:16px;border:1px solid #DCCBB4;background:#FFFBF4;">${message}</div>` +
+      button(ctx, `${ctx.storefrontUrl}/contact`, "Open the studio contact page"),
+    `Contact form: ${name} — ${subject}`
+  );
+
+  // A phone preview shows only the subject line, so the sender leads it.
+  return {
+    subject: `Contact form: ${String(data.subject || "website message")} — ${String(
+      data.name || ""
+    )}`.trim(),
+    html,
+    text: [
+      `From: ${data.name || ""} <${data.email || ""}>`,
+      data.phone ? `Phone: ${data.phone}` : "",
+      data.order_ref ? `Order: ${data.order_ref}` : "",
+      `Subject: ${data.subject || "(none)"}`,
+      "",
+      String(data.message || ""),
+    ]
+      .filter((line) => line !== "")
+      .join("\n"),
+  };
+}
+
+/** The visitor's copy: confirms receipt without repeating the whole letter. */
+function contactReceived(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const name = escapeHtml(String(data.name || ""));
+  const subject = data.subject ? escapeHtml(String(data.subject)) : "";
+  const message = escapeHtml(String(data.message || "")).replace(/\n/g, "<br>");
+
+  const html = layout(
+    ctx,
+    "Your message reached the studio",
+    paragraph(
+      `Thank you${name ? `, ${name}` : ""}. Your message is with us and will be read by a person, not a queue.`
+    ) +
+      (subject ? factsBlock("Subject", subject) : "") +
+      `<div style="margin:14px 0 0;padding:16px;border-left:3px solid #8F201D;background:#FFF7EC;">${message}</div>` +
+      muted(
+        "We answer by email, usually within two working days. If you wrote about a work already on its way to you, reply to this message and quote your order number."
+      ),
+    `We have your message${subject ? `: ${subject}` : ""}.`
+  );
+
+  return {
+    subject: "Your message reached SnehaVrinda Kala",
+    html,
+    text: [
+      `Thank you${data.name ? `, ${data.name}` : ""}.`,
+      "",
+      "Your message reached the studio and will be read by a person.",
+      data.subject ? `Subject: ${data.subject}` : "",
+      "",
+      "—",
+      String(data.message || ""),
+      "",
+      "We reply by email, usually within two working days.",
+    ]
+      .filter((line) => line !== "")
+      .join("\n"),
+  };
+}
+
 const RENDERERS: Record<string, Renderer> = {
   order_confirmation: orderConfirmation,
   order_placed: orderConfirmation,
@@ -1057,6 +1148,8 @@ const RENDERERS: Record<string, Renderer> = {
   commission_quote_sent: quoteSent,
   commission_status_changed: commissionStatusChanged,
   cart_reminder: cartReminder,
+  contact_enquiry: contactEnquiry,
+  contact_received: contactReceived,
 };
 
 export function hasTemplate(template: string): boolean {

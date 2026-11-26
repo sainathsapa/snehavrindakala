@@ -64,7 +64,7 @@ const LINK_GROUPS = [
       { key: "requestAPiece", href: "/custom-art" },
       { key: "howItWorks", href: "/custom-art#process" },
       { key: "ourStory", href: "/about" },
-      { key: "writeToUs", href: "mailto:hello@snehavrinda.in" },
+      { key: "writeToUs", href: "/contact" },
     ],
   },
   {

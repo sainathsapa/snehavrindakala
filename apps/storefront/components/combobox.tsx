@@ -110,9 +110,23 @@ export function Combobox({
   /** True once the buyer has typed since the last selection. */
   const [dirty, setDirty] = useState(false);
 
-  // Keep the field in step with an external change (a prefill, an address the
-  // buyer picked from their address book, the postal-code suggestion).
+  /**
+   * The last text this field itself produced.
+   *
+   * The address form mirrors every keystroke back into `value` (it has to: the
+   * province has to reach the cart as it is typed). Without this guard the echo
+   * arrived looking like a brand-new external value, which reset `dirty` and
+   * replaced the filtered list with the full one on every character — so the
+   * state and city pickers scrolled but never searched.
+   */
+  const echoed = useRef(value);
+
+  // Keep the field in step with a genuinely external change (a prefill, an
+  // address the buyer picked from their address book, the postal-code
+  // suggestion) and ignore the echo of our own typing.
   useEffect(() => {
+    if (value === echoed.current) return;
+    echoed.current = value;
     setText(value);
     setDirty(false);
   }, [value]);
@@ -135,6 +149,7 @@ export function Combobox({
   const commit = useCallback(
     (option: string) => {
       setText(option);
+      echoed.current = option;
       setDirty(false);
       setActiveIndex(-1);
       setOpenState(false);
@@ -145,6 +160,7 @@ export function Combobox({
 
   const handleChange = (next: string) => {
     setText(next);
+    echoed.current = next;
     setDirty(true);
     setActiveIndex(0);
     setOpenState(true);

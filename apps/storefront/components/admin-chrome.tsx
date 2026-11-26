@@ -14,6 +14,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { Icon, type IconName } from "@snehavrinda-kala/ui";
 import { NotificationBell } from "@/components/notification-bell";
+import { roleRank } from "@/lib/rbac";
 
 type Role = "super_admin" | "manager" | "support" | "viewer";
 
@@ -104,7 +105,17 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
   },
 ];
 
-const ROLE_ORDER: Record<string, number> = {
+/**
+ * Which role may see which nav item, using the RBAC matrix rather than a second
+ * copy of it.
+ *
+ * There used to be a local ROLE_ORDER table here keyed on `super_admin`. The
+ * session reports `platform_super_admin`, which was not a key, so every lookup
+ * returned 0 and the whole sidebar rendered empty — an owner signed in with the
+ * highest role and saw no navigation at all. `roleRank` in lib/rbac knows both
+ * the platform and the legacy names, so this cannot drift again.
+ */
+const ROLE_RANK: Record<Role, number> = {
   super_admin: 4,
   manager: 3,
   support: 2,
@@ -112,7 +123,7 @@ const ROLE_ORDER: Record<string, number> = {
 };
 
 function canAccess(userRole: string, required: Role): boolean {
-  return (ROLE_ORDER[userRole] ?? 0) >= (ROLE_ORDER[required] ?? 0);
+  return roleRank(userRole) >= (ROLE_RANK[required] ?? 0);
 }
 
 export function AdminChrome({

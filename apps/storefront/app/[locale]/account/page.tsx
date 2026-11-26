@@ -84,10 +84,10 @@ export default async function AccountPage({
             </h1>
             <p className="mt-1 font-sans text-muted-ink">{customer.email}</p>
           </div>
-          <form action={logoutAction}>
+          <form action={logoutAction} className="shrink-0">
             <button
               type="submit"
-              className="font-sans text-sm text-muted-ink transition-colors hover:text-sindoor"
+              className="flex min-h-11 items-center rounded-md border border-sand-border px-4 font-sans text-sm text-muted-ink transition-colors hover:border-sindoor hover:text-sindoor"
             >
               {t("signOut")}
             </button>
@@ -274,16 +274,16 @@ export default async function AccountPage({
                           {(order.items?.length ?? 0) === 1 ? "" : "s"}
                         </span>
                         <span>{formatPrice(order.total, order.currency_code)}</span>
-                        <div className="flex items-center gap-3">
+                        <div className="flex w-full items-center gap-2 sm:w-auto">
                           <Link
                             href={`/order/${order.id}`}
-                            className="text-xs font-medium text-sindoor hover:underline"
+                            className="flex min-h-11 flex-1 items-center justify-center rounded-md bg-sindoor px-3 font-sans text-xs font-medium text-rang-paper transition-colors hover:bg-sindoor/90 sm:flex-none"
                           >
                             {t("trackOrder")}
                           </Link>
                           <Link
                             href={`/account/returns?order_id=${order.id}`}
-                            className="rounded-md border border-sand-border px-3 py-1 text-xs font-medium text-sindoor transition-colors hover:bg-sindoor/10"
+                            className="flex min-h-11 flex-1 items-center justify-center rounded-md border border-sand-border px-3 font-sans text-xs font-medium text-sindoor transition-colors hover:bg-sindoor/10 sm:flex-none"
                           >
                             {t("returns")}
                           </Link>
@@ -294,6 +294,32 @@ export default async function AccountPage({
                   })}
                 </ul>
               )}
+            </CardContent>
+          </Card>
+
+          {/* ── Support ─────────────────────────────────────────────── */}
+          <Card elevated className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>{t("supportTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-sans text-sm leading-relaxed text-muted-ink">
+                {t("supportBody")}
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Link
+                  href="/account/support"
+                  className="flex min-h-11 items-center justify-center rounded-md bg-sindoor px-4 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor/90"
+                >
+                  {t("supportOpen")}
+                </Link>
+                <Link
+                  href="/contact"
+                  className="flex min-h-11 items-center justify-center rounded-md border border-sand-border px-4 font-sans text-sm text-muted-ink transition-colors hover:text-sindoor"
+                >
+                  {t("supportContact")}
+                </Link>
+              </div>
             </CardContent>
           </Card>
 
@@ -338,7 +364,7 @@ export default async function AccountPage({
                 </label>
                 <button
                   type="submit"
-                  className="mt-1 rounded-md border border-sand-border px-4 py-2 font-medium text-deep-ink transition-colors hover:border-sindoor hover:text-sindoor"
+                  className="mt-1 flex min-h-11 w-full items-center justify-center rounded-md bg-deep-ink px-4 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor sm:w-auto"
                 >
                   {t("changePassword")}
                 </button>

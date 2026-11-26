@@ -38,6 +38,7 @@ import { Link } from "@/i18n/routing";
 import { formatPrice } from "@/lib/medusa";
 import { taxLabel, type TaxBreakdown } from "@/lib/tax";
 import { RazorpayPayButton } from "./razorpay-checkout";
+import { PaymentProcessing } from "./checkout/payment-processing";
 import { PromoCode } from "./promo-code";
 import {
   AddressForm,
@@ -625,11 +626,7 @@ export function CheckoutClient({
                         };
                       }}
                     />
-                    {completing && (
-                      <p className="mt-3 text-center font-sans text-sm text-muted-ink">
-                        {t("completing")}
-                      </p>
-                    )}
+                    {completing && <PaymentProcessing />}
                     <p className="mt-3 text-center font-sans text-xs text-muted-ink">
                       {t("paySecure")}
                     </p>

@@ -282,6 +282,37 @@ export function canonicalPlatformRole(value: unknown): Role | null {
 }
 
 /** Unknown roles / permissions are always denied (fail closed). */
+/** Seniority, keyed on the four legacy/canonical names only. */
+const ROLE_RANK: Record<"super_admin" | "manager" | "support" | "viewer", number> = {
+  super_admin: 4,
+  manager: 3,
+  support: 2,
+  viewer: 1,
+};
+
+/**
+ * Rank for any role string the app can encounter.
+ *
+ * Sessions carry `platform_super_admin`; older rows carry `super_admin`. Both mean
+ * the same thing, and a lookup that knows only one of them silently returns zero
+ * — which is how a signed-in owner ended up with an entirely empty admin sidebar.
+ */
+export function roleRank(value: Role | string | null | undefined): number {
+  if (!value) return 0;
+  const normalised = String(value).trim().toLowerCase().replace(/^platform_/, "");
+  if (!isRole(normalised)) return 0;
+  const canonical =
+    normalised === "super_admin" ||
+    normalised === "manager" ||
+    normalised === "support" ||
+    normalised === "viewer"
+      ? normalised
+      : // Any remaining platform role ranks at manager: it is an operational
+        // role, not a viewer, and never an owner.
+        "manager";
+  return ROLE_RANK[canonical] ?? 0;
+}
+
 export function hasPermission(role: Role | string, permission: Permission): boolean {
   if (!isRole(role)) return false;
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;

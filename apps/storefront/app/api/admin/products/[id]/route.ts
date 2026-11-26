@@ -90,6 +90,7 @@ export async function PATCH(
       currency_code,
       category_id,
       image,
+    images,
       artist,
       stock_type,
       description,
@@ -127,10 +128,16 @@ export async function PATCH(
         mergeTags(currentValues, { artist, stock_type, specs, measured: measured === true })
       );
     }
-    // Image attach on an existing product. `thumbnail` drives the card and the
-    // first entry of `images` drives the detail gallery, so both are set from
-    // the one upload to keep them from drifting apart.
-    if (typeof image === "string") {
+    // Photographs on an existing product. The list is authoritative: the first
+    // entry is the card image. `image` remains accepted for callers that send a
+    // single URL, and `images: []` is a deliberate clear, not a no-op.
+    const gallery = Array.isArray(images)
+      ? images.map((url: unknown) => String(url ?? "").trim()).filter(Boolean)
+      : null;
+    if (gallery) {
+      update.thumbnail = gallery[0] ?? "";
+      update.images = gallery.map((url) => ({ url }));
+    } else if (typeof image === "string") {
       update.thumbnail = image.trim();
       update.images = image.trim() ? [{ url: image.trim() }] : [];
     }

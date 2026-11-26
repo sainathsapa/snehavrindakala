@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ImageUpload } from "@/components/image-upload";
+import { ProductImages, type ProductImage } from "@/components/product-images";
 
 interface Category {
   id: string;
@@ -16,7 +16,7 @@ export default function NewProductPage() {
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("inr");
   const [categoryId, setCategoryId] = useState("");
-  const [image, setImage] = useState("");
+  const [images, setImages] = useState<ProductImage[]>([]);
   // The maker and stock terms are product metadata on the Medusa record. They
   // were never editable here, so every product created through the admin fell
   // back to the house name and "ready to ship".
@@ -70,7 +70,7 @@ export default function NewProductPage() {
           total: price ? parseInt(price) * 100 : 0,
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
-          ...(image ? { image } : {}),
+          ...(images.length ? { images: images.map((item) => item.url) } : {}),
           artist,
           stock_type: stockType,
           description,
@@ -109,10 +109,10 @@ export default function NewProductPage() {
                   `thumbnail` is set. */}
               <div>
                 <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
-                  Product image
+                  Photographs
                 </label>
                 <div className="max-w-[260px]">
-                  <ImageUpload value={image} onChange={setImage} />
+                  <ProductImages images={images} onChange={setImages} />
                 </div>
               </div>
 

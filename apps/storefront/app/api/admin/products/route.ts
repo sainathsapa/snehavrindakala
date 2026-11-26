@@ -87,6 +87,7 @@ export async function POST(req: Request) {
       currency_code,
       category_id,
       image,
+    images,
       artist,
       stock_type,
       description,
@@ -138,12 +139,18 @@ export async function POST(req: Request) {
       payload.categories = [{ id: category_id }];
     }
 
-    // The product image. Medusa keeps `thumbnail` for the card and `images` for
-    // the gallery; setting only one leaves either the listing or the detail
-    // page blank. The URL is whatever the admin uploader returned.
-    if (typeof image === "string" && image.trim()) {
-      payload.thumbnail = image.trim();
-      payload.images = [{ url: image.trim() }];
+    // Photographs. Medusa keeps `thumbnail` for the card and `images` for the
+    // gallery; a work is usually several photographs — front, detail, the back
+    // with the signature — so the whole list is stored and the first one is the
+    // card. `image` is still accepted for older callers that send one.
+    const gallery = Array.isArray(images)
+      ? images.map((url: unknown) => String(url ?? "").trim()).filter(Boolean)
+      : [];
+    const single = typeof image === "string" ? image.trim() : "";
+    const all = gallery.length ? gallery : single ? [single] : [];
+    if (all.length) {
+      payload.thumbnail = all[0];
+      payload.images = all.map((url) => ({ url }));
     }
     if (amount > 0) {
       payload.options = [{ title: "Default", values: ["Default"] }];

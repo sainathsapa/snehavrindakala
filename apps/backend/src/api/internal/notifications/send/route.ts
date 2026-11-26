@@ -31,6 +31,10 @@ const STOREFRONT_SERVER_TEMPLATES = new Set([
   "order_cancelled",
   "order_confirmation",
   "shipment_confirmed",
+  // The contact form: an enquiry to the studio and an acknowledgement to the
+  // visitor. Both are triggered by a visitor, so both belong on this list.
+  "contact_enquiry",
+  "contact_received",
 ]);
 
 function authorized(header: string | null | undefined): boolean {
