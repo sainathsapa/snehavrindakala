@@ -2,7 +2,11 @@
  * POST /api/webhooks/shiprocket — shipment status callback.
  *
  * Refuses to run when SHIPROCKET_WEBHOOK_TOKEN is unset, and verifies the shared
- * token from either the x-webhook-token header or ?token= (carriers differ).
+ * token from either the header Shiprocket sends (x-api-key by default, configurable
+ * in their dashboard as "Auth Token Type") or a query string (?token= / ?key=).
+ *
+ * Shiprocket refuses webhook URLs containing shiprocket, kartrocket, sr or kr, so
+ * the URL they are given is /api/webhooks/courier (same handler, no banned word).
  * The lookup is by AWB first (the number buyers see) then by order id, and the
  * upsert is idempotent: a repeated callback updates the same shipment row.
  *
@@ -25,7 +29,13 @@ export async function POST(req: Request) {
   }
 
   const url = new URL(req.url);
-  const candidate = req.headers.get("x-webhook-token") || url.searchParams.get("token");
+  // Header names Shiprocket's "Auth Token Type" dropdown offers, plus our own.
+  const candidate =
+    req.headers.get("x-api-key") ||
+    req.headers.get("x-webhook-token") ||
+    req.headers.get("x-auth-token") ||
+    url.searchParams.get("token") ||
+    url.searchParams.get("key");
   if (!webhookTokenMatches(candidate, expected)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
