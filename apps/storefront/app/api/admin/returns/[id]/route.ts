@@ -41,7 +41,58 @@ export async function PATCH(
       return NextResponse.json({ error: "Return request not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ return: rows[0] });
+    // Approving a return is the moment the parcel has to come back, so the
+    // reverse pickup is booked here instead of being left for someone to arrange
+    // by hand. A courier failure does not fail the approval — the decision
+    // stands and the response says plainly that the pickup still needs booking.
+    let reverse: { booked: boolean; awb?: string | null; error?: string } | null = null;
+    const record = rows[0] as Record<string, any>;
+
+    if (status === "approved" && record.order_id) {
+      try {
+        const { getAdminOrder } = await import("@/lib/admin");
+        const { bookReversePickup } = await import("@/lib/shipping/reverse");
+        const { order } = await getAdminOrder(String(record.order_id));
+        const anyOrder = order as unknown as Record<string, any>;
+        const address = anyOrder.shipping_address ?? {};
+        const firstItem = (anyOrder.items ?? [])[0] ?? {};
+
+        const result = await bookReversePickup({
+          orderId: String(record.order_id),
+          displayId: anyOrder.display_id ?? null,
+          customer: {
+            name:
+              [address.first_name, address.last_name].filter(Boolean).join(" ") ||
+              "Customer",
+            email: String(anyOrder.email ?? record.customer_email ?? ""),
+            phone: String(address.phone ?? ""),
+          },
+          address: {
+            line1: String(address.address_1 ?? ""),
+            line2: String(address.address_2 ?? ""),
+            city: String(address.city ?? ""),
+            state: String(address.province ?? ""),
+            pincode: String(address.postal_code ?? ""),
+            country: "India",
+          },
+          item: {
+            name: String(firstItem.title ?? firstItem.product_title ?? "Returned work"),
+            sku: String(firstItem.variant_sku ?? firstItem.variant?.sku ?? "RETURN"),
+            units: Number(firstItem.quantity ?? 1),
+          },
+          reason: record.reason ?? null,
+        });
+
+        reverse = { booked: result.ok, awb: result.awb ?? null, error: result.error };
+      } catch (error) {
+        reverse = {
+          booked: false,
+          error: `The return is approved, but the pickup could not be booked: ${(error as Error).message.slice(0, 120)}`,
+        };
+      }
+    }
+
+    return NextResponse.json({ return: rows[0], reverse });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
