@@ -47,6 +47,7 @@ async function authenticateSystemAdmin(): Promise<string | null> {
         body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
       });
       if (!res.ok) {
+        lastAuthFailure = res.status >= 500 ? "unreachable" : "credentials";
         console.error("System admin auth failed:", await res.text());
         return null;
       }
@@ -54,6 +55,10 @@ async function authenticateSystemAdmin(): Promise<string | null> {
       adminToken = data?.token ?? data?.session?.token ?? null;
       return adminToken;
     } catch (err) {
+      // A dead or restarting backend lands here, and it is NOT a credential
+      // problem. Remember it so the caller can say "backend unreachable"
+      // instead of sending the owner to re-check a password that is fine.
+      lastAuthFailure = "unreachable";
       console.error("System admin auth error:", err);
       return null;
     }
@@ -61,6 +66,13 @@ async function authenticateSystemAdmin(): Promise<string | null> {
 
   return adminTokenPromise;
 }
+
+/**
+ * Why the last system-admin login failed: bad credentials, or a backend that
+ * never answered. Operators need the difference — one is a config typo, the
+ * other is a service that is down.
+ */
+let lastAuthFailure: "credentials" | "unreachable" | null = null;
 
 export async function getSystemAdminToken(): Promise<string | null> {
   return authenticateSystemAdmin();
@@ -72,7 +84,11 @@ async function adminRequest(
 ): Promise<Response> {
   let token = await authenticateSystemAdmin();
   if (!token) {
-    throw new Error("System admin authentication failed. Check ADMIN_EMAIL/ADMIN_PASSWORD.");
+    throw new Error(
+      lastAuthFailure === "unreachable"
+        ? "The store backend is unreachable. Not a credential problem: it did not answer in time."
+        : "System admin authentication failed. Check ADMIN_EMAIL/ADMIN_PASSWORD."
+    );
   }
 
   const perform = (authToken: string) => {
