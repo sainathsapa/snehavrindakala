@@ -61,7 +61,11 @@
     "letterAlready": "You are already on the list.",
     "letterInvalid": "That email address does not look complete.",
     "letterFailed": "We could not save that just now. Please try again.",
-    "followUs": "Follow us"
+    "followUs": "Follow us",
+    "links": {
+      "rooms": "Rooms",
+      "newsroom": "Newsroom"
+    }
   },
   "common": {
     "priceOnRequest": "Price on request",

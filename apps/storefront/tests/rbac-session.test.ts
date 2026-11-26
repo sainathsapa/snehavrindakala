@@ -107,3 +107,37 @@ describe("production secret fails closed", () => {
     expect(() => getAdminSessionSecret()).toThrow(/ Admin session secret|Admin session secret/);
   });
 });
+
+describe("support may add content, not change the shop", () => {
+  // The studio asked that support staff be able to add things. What they may add
+  // is content and product fixes; what stays out of reach is pricing, deletion
+  // and settings. That boundary is the reason `content:*` exists as its own
+  // permission instead of reusing `products:write`.
+  it("lets support write content and products", () => {
+    for (const permission of ["content:read", "content:write", "products:write"] as const) {
+      expect(hasPermission("platform_support", permission)).toBe(true);
+    }
+  });
+
+  it("keeps destructive and financial actions away from support", () => {
+    for (const permission of [
+      "products:delete",
+      "settings:write",
+      "users:write",
+      "refunds:approve",
+      "roles:write",
+    ] as const) {
+      expect(hasPermission("platform_support", permission)).toBe(false);
+    }
+  });
+
+  it("gives every admin-tier role content access, so the screens are not dead", () => {
+    for (const role of [
+      "platform_super_admin",
+      "platform_admin",
+      "platform_manager",
+    ] as const) {
+      expect(hasPermission(role, "content:write")).toBe(true);
+    }
+  });
+});

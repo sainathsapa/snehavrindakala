@@ -93,7 +93,8 @@ describe("schema deployment", () => {
       "order_gift_notes", "order_shipments", "product_review", "product_translation", "return_requests",
       "site_artist", "site_art_form", "site_featured_category", "site_hero_slide",
       "site_settings", "variant_stock", "stock_reservation", "processed_payments",
-      "site_testimonial", "support_tickets", "ticket_replies", "translations",
+      "site_testimonial", "site_room", "site_news", "support_tickets", "ticket_replies",
+      "translations",
     ]);
 
     const sql = read("db/schema.sql");

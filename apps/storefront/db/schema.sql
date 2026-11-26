@@ -573,3 +573,58 @@ CREATE TABLE IF NOT EXISTS processed_payments (
   PRIMARY KEY (payment_id)
 );
 CREATE INDEX IF NOT EXISTS idx_processed_payments_order ON processed_payments USING btree (order_id);
+
+-- ── Rooms and the newsroom ──────────────────────────────────────────────────
+-- Two content kinds the studio asked for, and that the schema did not have:
+--
+--   site_room   A named space that groups works — "The Monsoon Room", a season,
+--               an exhibition. It is a room rather than a tag because it has a
+--               title, a wall text and an order, and because a tag cannot be
+--               curated.
+--   site_news   The newsroom: press mentions, announcements and coverage. Each
+--               entry keeps the outlet and the outward link, because a newsroom
+--               that only quotes itself is a blog.
+--
+-- Both follow the other content tables: SERIAL id and a unique slug, so an entry
+-- can be edited from the admin without a migration each time.
+CREATE TABLE IF NOT EXISTS site_room (
+  id SERIAL NOT NULL,
+  position integer NOT NULL DEFAULT 0,
+  slug text NOT NULL,
+  title text NOT NULL,
+  kicker text NOT NULL DEFAULT ''::text,
+  subtitle text NOT NULL DEFAULT ''::text,
+  body text NOT NULL DEFAULT ''::text,
+  image text NOT NULL DEFAULT ''::text,
+  -- Collection handle whose products hang in this room, when there is one.
+  collection text NOT NULL DEFAULT ''::text,
+  published boolean NOT NULL DEFAULT true,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  title_hi text NOT NULL DEFAULT ''::text,
+  subtitle_hi text NOT NULL DEFAULT ''::text,
+  body_hi text NOT NULL DEFAULT ''::text,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS site_room_slug_key ON public.site_room USING btree (slug);
+
+CREATE TABLE IF NOT EXISTS site_news (
+  id SERIAL NOT NULL,
+  position integer NOT NULL DEFAULT 0,
+  slug text NOT NULL,
+  title text NOT NULL,
+  -- press | coverage | announcement
+  kind text NOT NULL DEFAULT 'announcement'::text,
+  outlet text NOT NULL DEFAULT ''::text,
+  url text NOT NULL DEFAULT ''::text,
+  summary text NOT NULL DEFAULT ''::text,
+  body text NOT NULL DEFAULT ''::text,
+  image text NOT NULL DEFAULT ''::text,
+  published_at timestamp with time zone NOT NULL DEFAULT now(),
+  published boolean NOT NULL DEFAULT true,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  title_hi text NOT NULL DEFAULT ''::text,
+  summary_hi text NOT NULL DEFAULT ''::text,
+  body_hi text NOT NULL DEFAULT ''::text,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS site_news_slug_key ON public.site_news USING btree (slug);

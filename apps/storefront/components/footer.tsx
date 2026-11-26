@@ -54,9 +54,10 @@ const LINK_GROUPS = [
     links: [
       { key: "allWorks", href: "/shop" },
       { key: "artForms", href: "/art-forms" },
+      { key: "rooms", href: "/rooms" },
       { key: "learn", href: "/learn" },
       { key: "journal", href: "/journal" },
-      { key: "artists", href: "/artists", platformOnly: true },
+      { key: "artists", href: "/artists" },
     ],
   },
   {
@@ -65,6 +66,7 @@ const LINK_GROUPS = [
       { key: "requestAPiece", href: "/custom-art" },
       { key: "howItWorks", href: "/custom-art#process" },
       { key: "ourStory", href: "/about" },
+      { key: "newsroom", href: "/newsroom" },
       { key: "writeToUs", href: "/contact" },
     ],
   },

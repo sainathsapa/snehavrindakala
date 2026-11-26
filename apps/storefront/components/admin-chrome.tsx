@@ -36,6 +36,10 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName; role: Role }[] =
     icon: "journal",
     role: "manager",
   },
+  // Rooms and the newsroom are content a support account is allowed to write
+  // (content:write), so they rank at support rather than manager.
+  { href: "/admin/rooms", label: "Rooms", icon: "view", role: "support" },
+  { href: "/admin/newsroom", label: "Newsroom", icon: "journal", role: "support" },
   { href: "/admin/orders", label: "Orders", icon: "orders", role: "viewer" },
   // A chosen work left in a cart is the closest thing to a warm lead this shop
   // has; it had no list and no way back to the buyer.

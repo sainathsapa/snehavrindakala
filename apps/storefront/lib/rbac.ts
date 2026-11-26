@@ -72,7 +72,12 @@ export type Permission =
   | "tickets:read" | "tickets:write" | "tickets:assign"
   | "users:read" | "users:write" | "users:delete"
   | "roles:read" | "roles:write"
-  | "settings:read" | "settings:write";
+  | "settings:read" | "settings:write"
+  // Editorial surfaces the studio writes directly: rooms (curated groupings of
+  // work) and the newsroom. They are not products, so they get their own
+  // permission — a support account that may add a press mention should not have
+  // to be able to reprice a product to do it.
+  | "content:read" | "content:write";
 
 const ALL: Permission[] = [
   "orders:read", "orders:write", "orders:delete",
@@ -89,6 +94,7 @@ const ALL: Permission[] = [
   "users:read", "users:write", "users:delete",
   "roles:read", "roles:write",
   "settings:read", "settings:write",
+  "content:read", "content:write",
 ];
 
 const ADMIN: Permission[] = [
@@ -105,6 +111,7 @@ const ADMIN: Permission[] = [
   "tickets:read", "tickets:write", "tickets:assign",
   "users:read", "roles:read",
   "settings:read", "settings:write",
+  "content:read", "content:write",
 ];
 
 const MANAGER: Permission[] = [
@@ -118,6 +125,7 @@ const MANAGER: Permission[] = [
   "shipments:write",
   "refunds:read", "refunds:write",
   "tickets:read",
+  "content:read", "content:write",
 ];
 
 const OPERATIONS: Permission[] = [
@@ -146,6 +154,14 @@ const SUPPORT: Permission[] = [
   "customers:read", "customers:write",
   "refunds:read", "refunds:write",
   "tickets:read", "tickets:write", "tickets:assign",
+  // Support staff answer the phone about a work that is wrongly described, or
+  // are asked to add a press mention after a call from a journalist. Both are
+  // content, so both are here — but product pricing, deletion and settings stay
+  // out of reach, which is the point of a separate permission.
+  "products:read", "products:write",
+  "categories:read",
+  "inventory:read",
+  "content:read", "content:write",
 ];
 
 const PARTNER_SCOPED: Permission[] = [
