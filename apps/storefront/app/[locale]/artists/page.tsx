@@ -5,6 +5,7 @@ import { Link } from "@/i18n/routing";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { getPlatformModeFromEnv } from "@/lib/settings";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +18,17 @@ export const metadata = {
 
 export default async function ArtistsPage() {
   const t = await getTranslations("artists");
-  // This page used to 404 in single-brand mode on the argument that a house is
-  // the only seller. That was wrong in practice: an art house that names its
-  // makers cannot send people to a 404 from its own footer. The directory now
-  // renders in both modes, and when no maker has a profile yet it says so
-  // honestly instead of disappearing.
-  const marketplace = getPlatformModeFromEnv() === "platform";
+  // One makers page, not two.
+  //
+  // This directory reads the artist module: portraits, disciplines, commissioned
+  // status, a profile page each. That works for a marketplace, where makers are
+  // onboarded into records. A single-brand house has no such records — the count
+  // here was zero — so the page rendered an empty directory while /makers built
+  // the same list from the catalogue's own `artist:` tags and filled it.
+  //
+  // Two pages answering "who made this?" is exactly the confusion a nav is
+  // supposed to end. Outside platform mode this one now forwards to /makers.
+  if (getPlatformModeFromEnv() !== "platform") redirect("/makers");
 
   let artists: any[] = [];
   try {
@@ -93,9 +99,9 @@ export default async function ArtistsPage() {
                 {t("empty")}
               </p>
               <p className="mt-2 font-sans text-sm text-muted-ink">
-                {marketplace
-                  ? "Makers join by application, and each profile is written with the artist."
-                  : "The studio works with a small circle of makers across Rajasthan and beyond. Every work in the collection names the hands that made it."}
+                Makers join by application, and each profile is written with the
+                artist. In the meantime, the collection names every maker on the
+                work itself.
               </p>
               <Link
                 href="/shop"

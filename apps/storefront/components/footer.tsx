@@ -48,6 +48,31 @@ import { GA_MEASUREMENT_ID } from "@/lib/analytics";
  * every line of address says so.
  */
 
+/** The flat index. Kept beside LINK_GROUPS so a new page is added in one place,
+ *  and so the footer never drifts out of step with the nav. */
+const INDEX_LINKS = [
+  { label: "Shop", href: "/shop" },
+  { label: "Rooms", href: "/rooms" },
+  { label: "Art forms", href: "/art-forms" },
+  { label: "Learn", href: "/learn" },
+  { label: "The makers", href: "/makers" },
+  { label: "Journal", href: "/journal" },
+  { label: "Newsroom", href: "/newsroom" },
+  { label: "Custom art", href: "/custom-art" },
+  { label: "Partners", href: "/partners" },
+  { label: "Sell with us", href: "/sell" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Track an order", href: "/track" },
+  { label: "Your account", href: "/account" },
+  { label: "Shipping", href: "/policies/shipping" },
+  { label: "Returns", href: "/policies/returns" },
+  { label: "Privacy", href: "/policies/privacy" },
+  { label: "Terms", href: "/policies/terms" },
+  { label: "Cookies", href: "/policies/cookie" },
+];
+
 const LINK_GROUPS = [
   {
     heading: "look",
@@ -157,23 +182,31 @@ export function Footer({
           full-strength paper white, with a heading that names what the strip is
           for. */}
       <div className="border-b border-rang-paper/10">
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-between gap-x-8 gap-y-4 px-5 py-5 sm:px-8 lg:px-12">
-          <p className="max-w-[34ch] font-sans text-[11px] leading-relaxed text-rang-paper/50">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-5 py-6 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-12">
+          <p className="max-w-[36ch] font-sans text-[12.5px] leading-relaxed text-rang-paper/65">
             {tLang("stripHeading")}
           </p>
-          <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper/70">
+
+          {/* Two settings, one row, each named once. The labels used to be
+              stacked above the fields while the fields also carried their own
+              screen-reader labels and a drawn symbol — so the strip read
+              "Language / Language / Currency / Currency£". A label sits left of
+              its field now, in sentence case, and the field holds only the
+              value. */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <label className="flex items-center gap-2.5">
+              <span className="font-sans text-[12px] uppercase tracking-[0.14em] text-rang-paper/55">
                 {tLang("language")}
               </span>
-              <LanguageSwitcher tone="paper" size="md" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper/70">
+              <LanguageSwitcher tone="paper" size="md" showIcon={false} hideLabel />
+            </label>
+            <span aria-hidden="true" className="hidden h-5 w-px bg-rang-paper/15 sm:block" />
+            <label className="flex items-center gap-2.5">
+              <span className="font-sans text-[12px] uppercase tracking-[0.14em] text-rang-paper/55">
                 {tLang("label")}
               </span>
-              <CurrencySwitcher current={currency} tone="paper" size="md" />
-            </div>
+              <CurrencySwitcher current={currency} tone="paper" size="md" showSymbol={false} hideLabel />
+            </label>
           </div>
         </div>
       </div>
@@ -455,7 +488,7 @@ export function Footer({
                 {socials.length > 0 ? (
                   // Icons, not names: a row of platform wordmarks reads as a
                   // list of words. The network name stays for screen readers.
-                  <ul aria-label={t("followUs")} className="flex flex-wrap items-center gap-2">
+                  <ul aria-label={t("followUs")} className="flex flex-nowrap items-center gap-1.5">
                     {socials.map((social) => (
                       <li key={social.id}>
                         <a
@@ -463,7 +496,7 @@ export function Footer({
                           target="_blank"
                           rel="noopener noreferrer me"
                           title={social.label}
-                          className="grid h-11 w-11 place-items-center rounded-full border border-rang-paper/20 text-rang-paper/70 transition-colors hover:border-haldi hover:text-haldi focus:outline-none focus-visible:ring-2 focus-visible:ring-haldi"
+                          className="grid h-10 w-10 place-items-center rounded-full border border-rang-paper/20 text-rang-paper/70 transition-colors hover:border-haldi hover:text-haldi focus:outline-none focus-visible:ring-2 focus-visible:ring-haldi"
                         >
                           <SocialIcon name={social.id} className="h-4 w-4" />
                           <span className="sr-only">{social.label}</span>
@@ -485,6 +518,42 @@ export function Footer({
               </div>
             </div>
           </nav>
+        </div>
+      </div>
+
+      {/* ── The site index ────────────────────────────────────────────────
+          Every page, one line each, before the inscription.
+
+          The four galleries are grouped by what a person is doing, which is
+          right for browsing and useless for finding a page you already know
+          exists. This is the index at the back of the book. The XML sitemap is
+          the same list for a crawler and is linked here so it can be checked by
+          hand. */}
+      <div className="relative mx-auto mt-14 max-w-[1400px] px-5 sm:px-8 lg:px-12">
+        <div className="border-t border-rang-paper/12 pt-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-haldi/80">
+              {t("everyPage")}
+            </h2>
+            <a
+              href="/sitemap.xml"
+              className="font-sans text-[10px] uppercase tracking-[0.18em] text-rang-paper/45 transition-colors hover:text-haldi"
+            >
+              sitemap.xml
+            </a>
+          </div>
+          <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+            {INDEX_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="font-sans text-[12.5px] text-rang-paper/70 transition-colors hover:text-haldi"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 

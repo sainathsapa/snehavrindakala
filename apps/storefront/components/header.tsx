@@ -39,7 +39,6 @@ const navLinks = [
   //   Studio      who makes it and how to reach them — story, makers, press, contact
   //   Commission  ask for a piece — the one action worth its own slot
   { key: "discover", href: "/shop", menu: "shop" as const },
-  { key: "rooms", href: "/rooms" },
   { key: "learn", href: "/learn", menu: "learn" as const },
   { key: "studio", href: "/about", menu: "studio" as const },
   // Trade buyers had no way in: the application form existed at /partner/apply
@@ -47,6 +46,9 @@ const navLinks = [
   // apply, application status, the portal — now hangs off this one item.
   { key: "partners", href: "/partners", menu: "partners" as const },
   { key: "request", href: "/custom-art" },
+  // Last, and not in a menu: a room is a deliberate place to go rather than a
+  // thing to browse, so it sits at the end where the eye finishes.
+  { key: "rooms", href: "/rooms" },
 ];
 
 const typeIcons: Record<string, string> = {
@@ -246,23 +248,23 @@ export function Header({
                   ? artForms
                   : link.menu === "learn"
                     ? [
-                        { label: "The words", href: "/learn/words" },
-                        { label: "The materials", href: "/learn/materials" },
-                        { label: "The history", href: "/learn/history" },
+                        { label: "The words", href: "/learn/words", desc: "Sixteen terms, untranslated", numeral: "01" },
+                        { label: "The materials", href: "/learn/materials", desc: "What the work is made of", numeral: "02" },
+                        { label: "The history", href: "/learn/history", desc: "Six centuries, in ranges", numeral: "03" },
                       ]
                     : link.menu === "studio"
                       ? [
-                          { label: "Our story", href: "/about" },
-                          { label: "The journal", href: "/journal" },
-                          { label: "Newsroom", href: "/newsroom" },
-                          { label: "Contact", href: "/contact" },
+                          { label: "Our story", href: "/about", desc: "How the house began" },
+                          { label: "The journal", href: "/journal", desc: "Notes from the studio" },
+                          { label: "Newsroom", href: "/newsroom", desc: "Press and announcements" },
+                          { label: "Contact", href: "/contact", desc: "A person reads every letter" },
                         ]
                       : link.menu === "partners"
                         ? [
-                            { label: "The makers", href: "/makers" },
-                            { label: "Apply to partner", href: "/partner/apply" },
-                            { label: "Application status", href: "/partner/status" },
-                            { label: "Partner sign in", href: "/partner/login" },
+                            { label: "The makers", href: "/makers", desc: "Every hand behind the work" },
+                            { label: "Apply to partner", href: "/partner/apply", desc: "Galleries, studios, trade" },
+                            { label: "Application status", href: "/partner/status", desc: "Where your application stands" },
+                            { label: "Partner sign in", href: "/partner/login", desc: "Orders, stock, settlements" },
                           ]
                         : [];
 
@@ -397,14 +399,23 @@ export function Header({
                               <Link
                                 href={entry.href}
                                 onClick={() => setOpenMenu(null)}
-                                className="flex items-baseline justify-between gap-3 px-4 py-2 font-sans text-[13.5px] text-deep-ink/85 transition-colors hover:bg-rang-paper/70 hover:text-kumkum"
+                                className="group/item flex items-start gap-3 border-l-2 border-transparent px-4 py-2.5 transition-colors hover:border-haldi hover:bg-rang-paper/70"
                               >
-                                <span className="truncate">{entry.label}</span>
-                                {entry.meta && (
-                                  <span className="shrink-0 font-sans text-[11px] text-muted-ink">
-                                    {entry.meta}
+                                {entry.numeral ? (
+                                  <span className="mt-0.5 shrink-0 font-serif text-[11px] text-sindoor/50 group-hover/item:text-sindoor">
+                                    {entry.numeral}
                                   </span>
-                                )}
+                                ) : null}
+                                <span className="min-w-0">
+                                  <span className="block truncate font-sans text-[13.5px] font-medium text-deep-ink group-hover/item:text-kumkum">
+                                    {entry.label}
+                                  </span>
+                                  {entry.desc ? (
+                                    <span className="mt-0.5 block truncate font-sans text-[11.5px] leading-snug text-muted-ink">
+                                      {entry.desc}
+                                    </span>
+                                  ) : null}
+                                </span>
                               </Link>
                             </li>
                           ))}
@@ -470,12 +481,12 @@ export function Header({
                   onFocus={() => setSearchOpen(searchQuery.length >= 2)}
                   onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
                   onKeyDown={handleSearchKeyDown}
-                  className="w-28 rounded-full border border-sand-border bg-surface/70 py-1.5 pl-8 pr-3 font-sans text-[13px] text-deep-ink transition-[width] placeholder:text-muted-ink/70 focus:w-52 focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50"
+                  className="h-9 w-40 rounded-full border border-sand-border bg-surface/70 pl-9 pr-3 font-sans text-[13px] text-deep-ink transition-[width] placeholder:text-muted-ink/70 focus:w-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50"
                 />
                 <Icon
                   name="search"
                   size={14}
-                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-ink"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-ink"
                 />
               </form>
 
@@ -484,7 +495,7 @@ export function Header({
                   id="header-search-results"
                   role="listbox"
                   aria-label="Search results"
-                  className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border border-sand-border bg-surface shadow-lifted"
+                  className="absolute left-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border border-sand-border bg-surface shadow-lifted"
                 >
                   {searchResults.map((result, index) => (
                     <button

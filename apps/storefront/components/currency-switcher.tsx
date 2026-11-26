@@ -29,6 +29,8 @@ export function CurrencySwitcher({
   compact = false,
   tone = "ink",
   size = "sm",
+  showSymbol = true,
+  hideLabel = false,
 }: {
   current: string;
   /**
@@ -50,6 +52,15 @@ export function CurrencySwitcher({
    * part of the footer's ornament rather than as something you can operate.
    */
   size?: "sm" | "md";
+  /**
+   * The symbol is drawn inside the field only when the field is wide enough to
+   * hold it and the code. In the footer it is off: the symbol sat inside the
+   * select's own text box, which is how "Currency£" came to read as one word.
+   */
+  showSymbol?: boolean;
+  /** Set when a visible label already names this control, so a screen reader
+   *  does not hear the word "Currency" twice. */
+  hideLabel?: boolean;
 }) {
   const [value, setValue] = useState(current);
   const [pending, startTransition] = useTransition();
@@ -74,24 +85,26 @@ export function CurrencySwitcher({
 
   return (
     <label className="group relative inline-flex items-center">
-      <span className="sr-only">{t("label")}</span>
+      {hideLabel ? null : <span className="sr-only">{t("label")}</span>}
       {/* The unit mark reads as a currency before the select is opened — the
           select alone showed an abbreviation and nothing else. */}
-      <span
-        aria-hidden="true"
-        className={`pointer-events-none absolute left-2 font-serif text-[13px] leading-none ${
-          dark ? "text-haldi/80" : "text-terracotta/80"
-        }`}
-      >
-        {CURRENCIES.find((c) => c.code === value)?.symbol ?? "₹"}
-      </span>
+      {showSymbol ? (
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute left-2.5 font-serif text-[13px] leading-none ${
+            dark ? "text-haldi/80" : "text-terracotta/80"
+          }`}
+        >
+          {CURRENCIES.find((c) => c.code === value)?.symbol ?? "₹"}
+        </span>
+      ) : null}
       <select
         value={value}
         onChange={(e) => change(e.target.value)}
         disabled={pending}
         className={`cursor-pointer appearance-none rounded-sm border bg-transparent font-sans transition-colors focus:outline-none disabled:opacity-60 ${
           big
-            ? "py-1.5 pl-7 pr-8 text-[13px] font-medium tracking-[0.02em]"
+            ? `${showSymbol ? "pl-7" : "pl-3"} py-2 pr-8 text-[13.5px] font-medium tracking-[0.02em]`
             : "py-1 pl-6 pr-6 text-[11px] font-medium uppercase tracking-[0.12em]"
         } ${
           dark

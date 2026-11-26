@@ -9,7 +9,7 @@ import { soldHandles } from "@/lib/sold-works";
 import { listArtists } from "@/lib/site-content";
 import { slugify } from "@/lib/slugs";
 import { getPlatformModeFromEnv } from "@/lib/settings";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 /**
  * The Makers page — what a single-brand art house shows where a marketplace
@@ -42,9 +42,11 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function MakersPage() {
-  // A marketplace already has /artists; two overlapping directories would be
-  // the duplication this site is trying to avoid.
-  if (getPlatformModeFromEnv() === "platform") notFound();
+  // In platform mode /artists is the richer directory — real artist records with
+  // portraits and profiles — so this page hands over rather than competing with
+  // it. It used to 404, which left the nav's "The makers" pointing at a dead
+  // page in that mode.
+  if (getPlatformModeFromEnv() === "platform") redirect("/artists");
 
   const t = await getTranslations("makers");
   const locale = await getLocale();

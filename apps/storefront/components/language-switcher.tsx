@@ -28,6 +28,8 @@ import {
 export function LanguageSwitcher({
   tone = "ink",
   size = "sm",
+  showIcon = true,
+  hideLabel = false,
 }: {
   tone?: "ink" | "paper";
   /**
@@ -36,6 +38,12 @@ export function LanguageSwitcher({
    * part of the footer's ornament rather than as something you can operate.
    */
   size?: "sm" | "md";
+  /** The globe earns its place beside two bare selects; under a visible heading
+   *  it is decoration, so the footer turns it off. */
+  showIcon?: boolean;
+  /** Set when a visible label already names this control, so a screen reader
+   *  does not hear the word "Language" twice. */
+  hideLabel?: boolean;
 }) {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
@@ -47,10 +55,10 @@ export function LanguageSwitcher({
 
   return (
     <label className="group relative inline-flex items-center">
-      <span className="sr-only">{t("language")}</span>
+      {hideLabel ? null : <span className="sr-only">{t("language")}</span>}
       {/* A globe rather than nothing: two adjacent selects with only
           abbreviations in them were indistinguishable at a glance. */}
-      <svg
+      {showIcon ? <svg
         aria-hidden="true"
         viewBox="0 0 16 16"
         className={`pointer-events-none absolute left-2 h-3 w-3 ${
@@ -62,7 +70,7 @@ export function LanguageSwitcher({
       >
         <circle cx="8" cy="8" r="6.2" />
         <path d="M1.8 8h12.4M8 1.8c1.7 1.7 2.5 3.9 2.5 6.2S9.7 12.5 8 14.2C6.3 12.5 5.5 10.3 5.5 8S6.3 3.5 8 1.8z" />
-      </svg>
+      </svg> : null}
       <select
         value={locale}
         onChange={(e) => {
@@ -73,7 +81,7 @@ export function LanguageSwitcher({
         }}
         className={`cursor-pointer appearance-none rounded-sm border bg-transparent font-sans transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
           big
-            ? "py-1.5 pl-7 pr-8 text-[13px] font-medium tracking-[0.02em]"
+            ? `${showIcon ? "pl-7" : "pl-3"} py-2 pr-8 text-[13.5px] font-medium tracking-[0.02em]`
             : "py-1 pl-6 pr-6 text-[11px] font-medium uppercase tracking-[0.12em]"
         } ${
           dark
