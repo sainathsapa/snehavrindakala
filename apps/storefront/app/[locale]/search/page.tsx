@@ -68,6 +68,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     product: "products",
     category: "categories",
     artist: "partners",
+    room: "home",
+    story: "journal",
   };
 
   return (

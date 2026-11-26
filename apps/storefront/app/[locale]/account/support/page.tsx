@@ -33,7 +33,7 @@ const STATUS_TONE: Record<string, string> = {
  */
 export default async function SupportPage() {
   const customer = await getCurrentCustomer();
-  if (!customer?.email) redirect("/login?next=/account/support");
+  if (!customer?.email) redirect("/account/login?next=/account/support");
 
   const t = await getTranslations("support");
 

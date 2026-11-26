@@ -67,7 +67,11 @@
     "rooms": "Rooms",
     "newsroom": "Newsroom",
     "partners": "Partners",
-    "everyPage": "Every page"
+    "everyPage": "Every page",
+    "quickTrack": "Track an order",
+    "quickContact": "Write to the studio",
+    "quickReturns": "Shipping & returns",
+    "quickAccount": "Your account"
   },
   "common": {
     "priceOnRequest": "Price on request",

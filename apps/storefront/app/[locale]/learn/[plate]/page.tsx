@@ -25,6 +25,10 @@ function asPlate(value: string): PlateId | null {
   return (PLATE_IDS as string[]).includes(value) ? (value as PlateId) : null;
 }
 
+// Rendered per request. Prerendering these plates produced a page that threw a
+// 500 for Hindi while the English twin was served from the build output.
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return PLATE_IDS.map((plate) => ({ plate }));
 }
@@ -54,9 +58,9 @@ export async function generateMetadata({
 export default async function PlatePage({
   params,
 }: {
-  params: Promise<{ plate: string }>;
+  params: Promise<{ locale: string; plate: string }>;
 }) {
-  const { plate } = await params;
+  const { locale, plate } = await params;
   const id = asPlate(plate);
   if (!id) notFound();
 
@@ -64,7 +68,10 @@ export default async function PlatePage({
   const entries = entriesFor(id);
   const languages = languagesFor(id);
   const grouped = entries.some((entry) => Boolean(entry.era));
-  const t = await getTranslations("plates");
+  // The locale comes from the route rather than from the request. A request-
+  // scoped lookup only resolves when the middleware has run, which is not true
+  // of every render path this page takes.
+  const t = await getTranslations({ locale, namespace: "plates" });
 
   return (
     <main className="bg-rang-paper">

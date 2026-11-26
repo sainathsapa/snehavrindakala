@@ -67,7 +67,11 @@
     "rooms": "कक्ष",
     "newsroom": "समाचार",
     "partners": "साझेदार",
-    "everyPage": "सभी पृष्ठ"
+    "everyPage": "सभी पृष्ठ",
+    "quickTrack": "ऑर्डर ट्रैक करें",
+    "quickContact": "स्टूडियो को लिखें",
+    "quickReturns": "शिपिंग और वापसी",
+    "quickAccount": "आपका खाता"
   },
   "common": {
     "priceOnRequest": "कीमत पूछें",

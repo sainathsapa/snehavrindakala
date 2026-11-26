@@ -55,6 +55,9 @@ const typeIcons: Record<string, string> = {
   product: "products",
   category: "categories",
   artist: "partners",
+  // A room is a place in the house; a story is something the studio wrote.
+  room: "home",
+  story: "journal",
 };
 
 export function Header({

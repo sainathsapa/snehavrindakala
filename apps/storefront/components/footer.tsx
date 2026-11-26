@@ -2,6 +2,7 @@
 
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
+import { Icon } from "@snehavrinda-kala/ui";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LetterForm } from "@/components/letter-form";
@@ -50,27 +51,20 @@ import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 
 /** The flat index. Kept beside LINK_GROUPS so a new page is added in one place,
  *  and so the footer never drifts out of step with the nav. */
+// The pages the four galleries above do not already list.
+//
+// A footer that lists "Shop" twice is not more complete, it is noisier, and the
+// gallery columns already carry the shopping, learning, studio and policy links.
+// What was genuinely unreachable from the footer is the handful below, so the
+// index stays short on purpose.
 const INDEX_LINKS = [
-  { label: "Shop", href: "/shop" },
-  { label: "Rooms", href: "/rooms" },
-  { label: "Art forms", href: "/art-forms" },
-  { label: "Learn", href: "/learn" },
+  { label: "Every work", href: "/shop" },
   { label: "The makers", href: "/makers" },
-  { label: "Journal", href: "/journal" },
-  { label: "Newsroom", href: "/newsroom" },
-  { label: "Custom art", href: "/custom-art" },
-  { label: "Partners", href: "/partners" },
   { label: "Sell with us", href: "/sell" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-  { label: "FAQ", href: "/faq" },
-  { label: "Track an order", href: "/track" },
+  { label: "Partner portal", href: "/partner/login" },
   { label: "Your account", href: "/account" },
-  { label: "Shipping", href: "/policies/shipping" },
-  { label: "Returns", href: "/policies/returns" },
-  { label: "Privacy", href: "/policies/privacy" },
-  { label: "Terms", href: "/policies/terms" },
-  { label: "Cookies", href: "/policies/cookie" },
+  { label: "Create an account", href: "/account/register" },
+  { label: "Search", href: "/search" },
 ];
 
 const LINK_GROUPS = [
@@ -209,6 +203,39 @@ export function Footer({
             </label>
           </div>
         </div>
+      </div>
+
+      {/* ── Four errands ─────────────────────────────────────────────────
+          The footer knew where everything was and told nobody. Someone who has
+          just read to the bottom is usually here for one of four things: where
+          their parcel is, how to reach a person, what the terms actually say, or
+          their own account. Each gets a whole tap target rather than a 12px
+          link in a list. */}
+      <div className="relative mx-auto max-w-[1400px] px-5 pb-2 sm:px-8 lg:px-12">
+        <ul className="grid grid-cols-2 gap-3 border-t border-rang-paper/12 pt-6 lg:grid-cols-4">
+          {[
+            { href: "/track", key: "quickTrack", icon: "clock" },
+            { href: "/contact", key: "quickContact", icon: "mail" },
+            { href: "/policies/returns", key: "quickReturns", icon: "check" },
+            { href: "/account", key: "quickAccount", icon: "user" },
+          ].map((action) => (
+            <li key={action.href}>
+              <Link
+                href={action.href}
+                className="group flex items-center gap-3 border border-rang-paper/15 px-4 py-3.5 transition-colors hover:border-haldi/50 hover:bg-rang-paper/[0.04]"
+              >
+                <Icon
+                  name={action.icon as never}
+                  size={16}
+                  className="shrink-0 text-haldi/70 transition-colors group-hover:text-haldi"
+                />
+                <span className="font-sans text-[12.5px] leading-snug text-rang-paper/80 transition-colors group-hover:text-rang-paper">
+                  {t(action.key)}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* ═══ 1. THE GALLERY ═══════════════════════════════════════════════
@@ -404,7 +431,11 @@ export function Footer({
                     </span>
                     <div className="relative px-1">
                       <h3 className="font-sans text-[9px] font-semibold uppercase tracking-[0.26em] text-haldi">
-                        {group.heading}
+                        {/* The heading is a message key, so it has to be
+                            translated. It was rendered raw, which is why Hindi
+                            readers saw LOOK · MAKE · HELP · CARE in English
+                            above four columns of Hindi links. */}
+                        {t(group.heading)}
                       </h3>
                       {/* The italic sub-line that used to sit here repeated the
                           heading back at the reader — "Look / The work",
@@ -522,13 +553,9 @@ export function Footer({
       </div>
 
       {/* ── The site index ────────────────────────────────────────────────
-          Every page, one line each, before the inscription.
-
-          The four galleries are grouped by what a person is doing, which is
-          right for browsing and useless for finding a page you already know
-          exists. This is the index at the back of the book. The XML sitemap is
-          the same list for a crawler and is linked here so it can be checked by
-          hand. */}
+          The pages the galleries above do not carry: the account, the partner
+          door, search, and the makers page. Short by design — a second copy of
+          the same four columns would be a longer footer, not a more useful one. */}
       <div className="relative mx-auto mt-14 max-w-[1400px] px-5 sm:px-8 lg:px-12">
         <div className="border-t border-rang-paper/12 pt-6">
           <div className="flex flex-wrap items-baseline justify-between gap-3">

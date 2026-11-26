@@ -32,6 +32,8 @@ export interface SearchResult {
     | "maker"
     | "art-form"
     | "journal"
+    | "room"
+    | "story"
     | "glossary"
     | "page";
   id: string;
@@ -62,6 +64,10 @@ export const TYPE_RANK: Record<SearchResult["type"], number> = {
   category: 2,
   "art-form": 3,
   journal: 4,
+  // A room is a place in the house and a story is something the studio wrote;
+  // both are editorial, so they sit beside the journal rather than above it.
+  room: 4,
+  story: 4,
   glossary: 5,
   page: 6,
 };

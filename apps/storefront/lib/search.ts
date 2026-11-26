@@ -386,6 +386,86 @@ export async function universalSearch(
   results.push(...productHits, ...categoryHits, ...artistHits);
   results.push(...artFormHits, ...journalHits);
 
+  // Rooms and newsroom entries. Both are written by the studio and neither was
+  // reachable from the search field: a visitor who read about a room in the
+  // nav could not find it again by typing its name.
+  //
+  // Read with both languages in the row so a Hindi query matches and a Hindi
+  // title still scores; `listRooms`/`listNews` collapse the pair to one locale,
+  // which is right for a page and wrong for a matcher.
+  try {
+    const { listRooms, listNews } = await import("./rooms-news");
+    const [rooms, stories] = await Promise.all([
+      listRooms("en", { all: false }),
+      listNews("en", { all: false }),
+    ]);
+
+    type Bilingual = { title_hi?: string; subtitle_hi?: string; body_hi?: string; summary_hi?: string };
+
+    for (const room of rooms as (typeof rooms[number] & Bilingual)[]) {
+      const haystack = [
+        room.title,
+        room.title_hi,
+        room.kicker,
+        room.subtitle,
+        room.subtitle_hi,
+        room.body_hi,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      if (!matchesQuery(haystack)) continue;
+      const score = scoreFor(
+        [room.title, room.title_hi].filter(Boolean).join(" "),
+        [room.subtitle, room.subtitle_hi, room.kicker].filter(Boolean).join(" "),
+        needles
+      );
+      if (score === 0) continue;
+      results.push({
+        type: "room",
+        id: room.slug,
+        title: room.title,
+        description: room.subtitle || room.kicker || "",
+        image: room.image,
+        handle: room.slug,
+        url: `/rooms/${room.slug}`,
+        matchScore: score,
+      });
+    }
+
+    for (const story of stories as (typeof stories[number] & Bilingual)[]) {
+      const haystack = [
+        story.title,
+        story.title_hi,
+        story.summary,
+        story.summary_hi,
+        story.outlet,
+        story.body_hi,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      if (!matchesQuery(haystack)) continue;
+      const score = scoreFor(
+        [story.title, story.title_hi].filter(Boolean).join(" "),
+        [story.summary, story.summary_hi, story.outlet].filter(Boolean).join(" "),
+        needles
+      );
+      if (score === 0) continue;
+      results.push({
+        type: "story",
+        id: story.slug,
+        title: story.title,
+        description: story.summary || "",
+        image: story.image,
+        handle: story.slug,
+        url: `/newsroom/${story.slug}`,
+        matchScore: score,
+      });
+    }
+  } catch (err) {
+    // Search must survive an empty or unmigrated content table.
+    console.error("Room and newsroom search failed:", err);
+  }
+
   const seenHandles = new Set(productHits.map((p) => p.handle));
 
   // Products, matched here rather than by Medusa.

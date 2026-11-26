@@ -29,6 +29,10 @@ function asPlate(value: string): PlateId | null {
   return (PLATE_IDS as string[]).includes(value) ? (value as PlateId) : null;
 }
 
+// Rendered per request. Prerendering these plates produced a page that threw a
+// 500 for Hindi while the English twin was served from the build output.
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return ENTRIES.map((entry) => ({ plate: entry.plate, slug: entry.slug }));
 }
@@ -66,9 +70,9 @@ export async function generateMetadata({
 export default async function EntryPage({
   params,
 }: {
-  params: Promise<{ plate: string; slug: string }>;
+  params: Promise<{ locale: string; plate: string; slug: string }>;
 }) {
-  const { plate, slug } = await params;
+  const { locale, plate, slug } = await params;
   const plateId = asPlate(plate);
   if (!plateId) notFound();
 
@@ -77,7 +81,10 @@ export default async function EntryPage({
 
   const found = PLATES.find((item) => item.id === plateId)!;
   const [t, related, nav] = await Promise.all([
-    getTranslations("plates"),
+    // Locale from the route, not from the request: a statically generated page
+    // has no middleware behind it to resolve one, which is what made every
+    // Hindi entry page fail in production while its English twin was fine.
+    getTranslations({ locale, namespace: "plates" }),
     Promise.resolve(relatedEntries(entry)),
     Promise.resolve(neighbours(entry)),
   ]);

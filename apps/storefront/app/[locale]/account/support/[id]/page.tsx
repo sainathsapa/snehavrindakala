@@ -25,7 +25,7 @@ export default async function ThreadPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const customer = await getCurrentCustomer();
-  if (!customer?.email) redirect("/login?next=/account/support");
+  if (!customer?.email) redirect("/account/login?next=/account/support");
 
   const { id } = await params;
   const t = await getTranslations("support");

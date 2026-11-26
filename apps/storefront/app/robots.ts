@@ -26,7 +26,6 @@ export default function robots(): MetadataRoute.Robots {
     "/checkout",
     "/order/",
     "/commission-status/",
-    "/login",
     "/_next/",
     "/search",
     // A tracking lookup is a form, not a page: crawling it produces nothing and

@@ -184,6 +184,18 @@ function isLocalizedPartnerPath(pathname: string): boolean {
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ── Locale prefix in front of a portal path ─────────────────────────────
+  // `/hi/partner/login` has no page: the portal deliberately lives outside the
+  // [locale] tree. Left to the locale handler it fell through to a 404, so a
+  // Hindi visitor who followed a link into the portal was told the page did not
+  // exist. Send them to the real one instead, keeping the rest of the path.
+  const prefixedPortal = /^\/(?:hi|en)(\/partner(?:\/.*)?)$/.exec(pathname);
+  if (prefixedPortal && !isLocalizedPartnerPath(prefixedPortal[1])) {
+    const target = new URL(prefixedPortal[1], request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target, 308);
+  }
+
   // ── Partner portal ──────────────────────────────────────────────────────
   // Serve it directly, with the same locale/path headers the intl handler
   // stamps, so `app/partner/layout.tsx` can still tell a signed-out screen
