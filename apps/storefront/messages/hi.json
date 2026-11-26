@@ -904,7 +904,8 @@
     "save": "सहेजें",
     "saved": "सहेजा गया",
     "viewFullSize": "पूरा आकार देखें",
-    "swipeCount": "{current} / {count} · देखने के लिए स्वाइप करें"
+    "swipeCount": "{current} / {count} · देखने के लिए स्वाइप करें",
+    "askOnWhatsapp": "व्हाट्सएप पर पूछें"
   },
   "policies": {
     "shippingTitle": "शिपिंग और डिलीवरी",

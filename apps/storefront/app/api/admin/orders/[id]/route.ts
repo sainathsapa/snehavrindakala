@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
 import { getSystemAdminToken } from "@/lib/admin";
 import { getGiftForOrder } from "@/lib/gift";
+import { orderRefIfAny } from "@/lib/order-ref";
 
 async function adminFetch(
   backendUrl: string,
@@ -67,7 +68,7 @@ export async function GET(
       console.error("Could not read the gift note", err);
     }
 
-    return NextResponse.json({ ...order, gift });
+    return NextResponse.json({ ...order, gift, trackRef: await orderRefIfAny(order?.id ?? id) });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

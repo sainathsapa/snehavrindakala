@@ -904,7 +904,8 @@
     "save": "Save",
     "saved": "Saved",
     "viewFullSize": "View full size",
-    "swipeCount": "{current} of {count} · swipe to browse"
+    "swipeCount": "{current} of {count} · swipe to browse",
+    "askOnWhatsapp": "Ask on WhatsApp"
   },
   "policies": {
     "shippingTitle": "Shipping & delivery",

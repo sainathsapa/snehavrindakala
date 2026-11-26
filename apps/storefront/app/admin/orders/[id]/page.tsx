@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Icon } from "@snehavrinda-kala/ui";
+import { WhatsAppPanel } from "@/components/admin/whatsapp-panel";
 
 interface OrderLineItem {
   id: string;
@@ -53,6 +54,11 @@ interface Order {
   /** Written by the buyer at checkout; read on the packing bench. */
   gift?: { note: string; wrap: boolean } | null;
 }
+
+/** The public address, for links written into a WhatsApp message. */
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_STOREFRONT_URL || "https://snehavrinda.in"
+).replace(/\/+$/, "");
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -420,11 +426,33 @@ export default function OrderDetailPage() {
               </div>
             )}
 
+            {/* Support writes to the buyer from the page where the facts already
+                are: the number, the reference and the invoice. A message should
+                need no lookup and no second tab. */}
+            <WhatsAppPanel
+              phone={order.shipping_address?.phone || order.customer?.phone || null}
+              firstName={
+                order.shipping_address?.first_name ||
+                order.customerName?.split(" ")[0] ||
+                ""
+              }
+              orderNumber={`#${order.display_id ?? order.id.slice(-6)}`}
+              orderUrl={`${SITE_URL}/order/${order.id}`}
+              trackRef={(order as any).trackRef ?? null}
+              trackingUrl={shipment?.tracking_url ?? null}
+              items={
+                order.items
+                  .slice(0, 3)
+                  .map((item: any) => item.title || item.product_title)
+                  .filter(Boolean)
+                  .join(", ") || "your work"
+              }
+            />
+
             <div className="rounded-xl border border-sand-border bg-surface p-6">
               <h3 className="text-sm font-sans font-semibold text-muted-ink uppercase tracking-wider mb-4">
                 Shipping
               </h3>
-
               {shipment ? (
                 <div className="space-y-3 text-sm font-sans">
                   <div className="flex justify-between">

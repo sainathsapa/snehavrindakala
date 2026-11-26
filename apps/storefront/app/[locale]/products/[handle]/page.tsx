@@ -5,6 +5,7 @@ import {
   medusa,
 } from "@/lib/medusa";
 import { localeAlternates } from "@/lib/seo";
+import { whatsappLink, mailtoLink } from "@/lib/contact-links";
 import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
@@ -192,6 +193,14 @@ export default async function ProductDetailPage({
     null;
   const t = await getTranslations("productDetail");
   const artFormMessages = await getTranslations("artForm");
+
+  // The buyer's question, written for them: the work, its price and its link.
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_STOREFRONT_URL || "https://snehavrinda.in"
+  ).replace(/\/+$/, "");
+  const whatsappHref = whatsappLink(
+    `Hello — I would like to ask about "${catalogueTitle}" (${siteUrl}/products/${handle}).`
+  );
 
   const reviewData = await medusa.listReviews(product.id).catch(() => null);
   const customer = await getCurrentCustomer().catch(() => null);
@@ -568,6 +577,23 @@ export default async function ProductDetailPage({
                 >
                   {t("commissionSecondary")} →
                 </Link>
+                {/* A question about one specific work is the most common reason
+                    somebody writes before buying. WhatsApp opens with the work
+                    already named, so the studio does not have to ask which one.
+                    No Business API: the buyer presses send, not a bot. */}
+                {whatsappHref && (
+                  <>
+                    <span aria-hidden="true" className="text-sand-border">·</span>
+                    <a
+                      href={whatsappHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-sans text-sm text-terracotta underline-offset-4 transition-colors hover:text-kumkum hover:underline"
+                    >
+                      {t("askOnWhatsapp")}
+                    </a>
+                  </>
+                )}
               </div>
             )}
 
