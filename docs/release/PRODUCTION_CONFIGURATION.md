@@ -18,7 +18,7 @@ value is missing in production rather than silently disabling a feature.
 - [ ] `SHIPROCKET_*` production credentials + webhook token.
 
 ## Infrastructure
-- [ ] Production domain + DNS + TLS (Caddy config in `deploy/Caddyfile`).
+- [ ] Production domain + DNS + TLS (nginx config in `deploy/nginxfile`).
 - [ ] `COOKIE_SECRET` / `JWT_SECRET` (admin session HMAC — required in prod, no fallback).
 - [ ] `DATABASE_URL`, managed Postgres, verified backups + restore drill.
 - [ ] `MEDUSA_ADMIN_EMAIL` / `MEDUSA_ADMIN_PASSWORD` / `ADMIN_EMAIL` / `ADMIN_PASSWORD`.

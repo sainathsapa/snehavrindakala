@@ -31,9 +31,9 @@ shop is being monitored in production.
   applied to all four services. Unbounded logs otherwise fill a small VM disk.
 
 ### TLS at the edge
-- `deploy/Caddyfile` terminates TLS for two hostnames (`{$STOREFRONT_DOMAIN}` →
+- `deploy/nginxfile` terminates TLS for two hostnames (`{$STOREFRONT_DOMAIN}` →
   `storefront:3000`, `{$API_DOMAIN}` → `backend:9000`). Bare hostnames (no
-  `http://`) make Caddy obtain and renew certificates automatically; there is no
+  `http://`) make nginx obtain and renew certificates automatically; there is no
   `auto_https off`.
 - `proxy` service (profile `proxy`) publishes `443:443` and `443:443/udp`, and
   persists certificates in the `caddy_data` volume across recreations. DB/Redis
@@ -67,7 +67,7 @@ shop is being monitored in production.
 - All secret settings in `docker-compose.yml` are interpolated from `.env`
   (`${VAR:...}`), never hardcoded. No provider key formats (`AKIA…`, `sk_live_`,
   `rzp_live_`, GitHub/XOX tokens), no private-key headers and no long raw hex
-  blobs appear in compose, the Caddyfile or any `docs/release/*.md`. `.env` is
+  blobs appear in compose, the nginxfile or any `docs/release/*.md`. `.env` is
   gitignored (only the placeholder-only `.env.example` is tracked).
 
 ### Audit logging
@@ -88,7 +88,7 @@ supplied they are **UNCONFIGURED** and the corresponding outcome does not happen
 | Item | Owner input (env / field) | Why it blocks |
 | --- | --- | --- |
 | Error alerting | `SENTRY_DSN`, `MONITORING_CONFIG`, `FEATURE_MONITORING` | No error/alert sink: exceptions go only to local stdout. `.env` ships `SENTRY_DSN=` empty. Without a DSN nothing pages anyone. |
-| Domain, DNS & TLS | `STOREFRONT_DOMAIN`, `API_DOMAIN`, `DOMAIN_DNS_TLS`, `NEXT_PUBLIC_STOREFRONT_URL`, `STORE_CORS` / `ADMIN_CORS` / `AUTH_CORS` | Caddy auto-TLS needs real DNS records pointed at the host and ports 80/443 reachable. Defaults are `*.example.com`; no real certificate can be issued until replaced. |
+| Domain, DNS & TLS | `STOREFRONT_DOMAIN`, `API_DOMAIN`, `DOMAIN_DNS_TLS`, `NEXT_PUBLIC_STOREFRONT_URL`, `STORE_CORS` / `ADMIN_CORS` / `AUTH_CORS` | nginx auto-TLS needs real DNS records pointed at the host and ports 80/443 reachable. Defaults are `*.example.com`; no real certificate can be issued until replaced. |
 | Backup destination & restore drill | `BACKUP_DESTINATION`, `BACKUP_OFFSITE_TARGET`, `BACKUP_RETENTION_DAYS` | Nightly `pg_dump` runs, but offsite copy prints "not configured"; dumps exist only on this machine. Restore drill window must be scheduled and a restore actually performed. |
 | Production identity & secrets | `COOKIE_SECRET` / `JWT_SECRET`, `ADMIN_EMAIL` + `ADMIN_PASSWORD` (or Medusa pair), `DATABASE_URL`, `STOREFRONT_BASE_URL` | Required by `assertProductionConfig`; with `NODE_ENV=production` the gate fails closed until these are present. Generate HMAC secrets with `openssl rand -hex 32`. |
 | Enabled-integration credentials | Razorpay / SES / Shiprocket secrets as applicable | Same gate requires these when a feature is on — a half-wired integration is an enabled one and blocks bootstrap. |

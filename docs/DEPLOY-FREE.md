@@ -8,7 +8,7 @@ webhook URL.
 | Cost | ~$4–6/mo (Hetzner/DigitalOcean) | ₹0 |
 | Card needed | yes | **no** |
 | Time to live | ~30 min | ~2–3 hours |
-| Uses | the repo's existing `docker-compose.yml` + `deploy/Caddyfile` | Neon + Upstash + Render + Cloudflare |
+| Uses | the repo's existing `docker-compose.yml` + `deploy/nginxfile` | Neon + Upstash + Render + Cloudflare |
 | Commercial use | fine | fine (avoids Vercel Hobby's non-commercial rule) |
 | Downsides | costs money | backend sleeps after 15 min idle (30–60 s cold start), two services to keep wired |
 
@@ -31,7 +31,7 @@ If you already pay for any host (even the AWS account the CD workflow targets),
 7. Shiprocket dashboard → webhook URL `https://www.snehavrinda.in/api/webhooks/courier`,
    `Auth Token Type: x-api-key`, token = `SHIPROCKET_WEBHOOK_TOKEN` from `.env`.
 
-`deploy/Caddyfile` already terminates TLS; no certificate work needed.
+`deploy/nginxfile` already terminates TLS; no certificate work needed.
 
 ---
 

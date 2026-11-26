@@ -11,7 +11,7 @@
 
 ## 1. Deployment topology and real paths
 
-- Single compose file: `docker-compose.yml`. Front door: `deploy/Caddyfile`
+- Single compose file: `docker-compose.yml`. Front door: `deploy/nginxfile`
   (two hostnames — `STOREFRONT_DOMAIN` → storefront:3000, `API_DOMAIN` →
   backend:9000; automatic TLS). See `docs/DEPLOY.md`.
 - Services and enforced start order (`docker-compose.yml`):
@@ -19,7 +19,7 @@
   idempotently, then serves :9000) → `storefront` (waits for backend healthy,
   applies its own tables, reads the publishable key at start, then serves :3000).
 - Postgres, Redis, backend and storefront are published on `127.0.0.1` only;
-  only the Caddy `proxy` profile binds :80/:443. Never expose Redis publicly.
+  only the nginx `proxy` profile binds :80/:443. Never expose Redis publicly.
 - Secrets live in `.env` (gitignored) or an external secrets manager — never in
   tracked files. Presence-only checks: `GET /api/admin/config-status`
   (`apps/storefront/app/api/admin/config-status/route.ts`) and
@@ -52,7 +52,7 @@
    working business workflow — do not treat presence as a PASS.
 5. TLS front door (owner supplies DNS/domain): set public URLs in `.env` and run
    `docker compose --profile proxy up -d` (see `docs/DEPLOY.md` and
-   `deploy/Caddyfile`). Quote any `.env` value containing `#`.
+   `deploy/nginxfile`). Quote any `.env` value containing `#`.
 
 ## 3. Health checks (what to watch)
 
@@ -136,7 +136,7 @@ Admin surfaces (`apps/storefront/app/admin/...`):
 ## 6. Monitoring and alerts
 
 - Watch container health (`docker compose ps`), `docker compose logs` for backend,
-  storefront, seed, backup, cron, and the Caddy proxy.
+  storefront, seed, backup, cron, and the nginx proxy.
 - Alert on: repeated webhook failures, payment/delivery status stuck, shipment
   creation failures, settlement batches stuck before `payment_completed`, and any
   `skipped` notification surge. Reconcile missed payment events idempotently from

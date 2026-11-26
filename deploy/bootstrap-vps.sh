@@ -115,7 +115,16 @@ grep -q '^STOREFRONT_BASE_URL=https://' "$ENV_FILE" ||
 
 say "5/7 starting the stack"
 cd "$APP_DIR"
-$DOCKER compose up -d --build postgres redis backend storefront proxy
+$DOCKER compose up -d --build postgres redis backend storefront
+
+# The public front door is nginx on 80/443, and it only starts once certificates
+# exist — so TLS is provisioned before the proxy is brought up. This step needs
+# the domain to resolve here already.
+if [ -x ./deploy/tls-init.sh ]; then
+  say "5b/7 requesting TLS certificates (needs DNS pointing here)"
+  ./deploy/tls-init.sh "${LE_EMAIL:-hello@${STOREFRONT_DOMAIN#www.}}" || \
+    printf '!! TLS not provisioned; run deploy/tls-init.sh once DNS points here\n' >&2
+fi
 
 say "6/7 waiting for Postgres, then running migrations"
 for i in $(seq 1 60); do
@@ -132,7 +141,7 @@ token=$(grep '^SHIPROCKET_WEBHOOK_TOKEN=' "$ENV_FILE" | cut -d= -f2- | tr -d '"'
 shop_domain=$(grep '^STOREFRONT_DOMAIN=' "$ENV_FILE" | cut -d= -f2- | tr -d '"')
 api_domain=$(grep '^API_DOMAIN=' "$ENV_FILE" | cut -d= -f2- | tr -d '"')
 [ -n "$shop_domain" ] && [ -n "$api_domain" ] ||
-  die "STOREFRONT_DOMAIN and API_DOMAIN must both be set, or Caddy asks for a certificate for example.com and the site never comes up."
+  die "STOREFRONT_DOMAIN and API_DOMAIN must both be set, or nginx asks for a certificate for example.com and the site never comes up."
 echo "   shop: https://$shop_domain   api: https://$api_domain"
 echo "   (TLS needs DNS pointed here first; a 000 below usually means DNS)"
 
@@ -156,7 +165,7 @@ Live at: $base
 
 Still to do by hand:
   1. Point DNS at this box: A record $shop_domain -> <this IP>, and
-     $api_domain -> same IP. Caddy issues the two TLS certificates on its own
+     $api_domain -> same IP. Run deploy/tls-init.sh to obtain the two certificates
      once both resolve.
   2. Shiprocket dashboard -> Settings -> Webhooks:
        URL   $base/api/webhooks/courier

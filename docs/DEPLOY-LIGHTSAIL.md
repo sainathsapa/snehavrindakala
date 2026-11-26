@@ -1,7 +1,7 @@
 # Lightsail 2 GB — the exact clicks
 
 $12/month, no ALB, no NAT gateway, no RDS. One instance runs the whole
-`docker-compose.yml` (Postgres, Redis, Medusa, storefront, Caddy) exactly as it
+`docker-compose.yml` (Postgres, Redis, Medusa, storefront, nginx) exactly as it
 runs on a laptop. Everything here has already been verified in the repo except
 the parts that need your AWS account.
 
@@ -38,14 +38,14 @@ Lightsail → instance → **Networking** → IPv4 Firewall:
 | HTTPS | 443 | Anywhere |
 | SSH | 22 | **your IP only** |
 
-80 is not optional: Caddy uses it for the Let's Encrypt HTTP challenge.
+80 is not optional: nginx uses it for the Let's Encrypt HTTP challenge.
 
 ## 4. DNS — keep it in Cloudflare
 
 Your domain's nameservers are already Cloudflare. Add two records, both
 **DNS only (grey cloud)** — proxying to a host that terminates its own TLS
 through Cloudflare's proxy gives you 525/526 errors and hides the real client IP
-from Caddy:
+from nginx:
 
 ```
 A   www   → <static IP>   DNS only
@@ -83,7 +83,7 @@ webhook, no token        HTTP 401   (expect 401)
 webhook, correct token   HTTP 200   (expect 200)
 ```
 
-A `000` instead of a number means DNS has not propagated yet — Caddy cannot get
+A `000` instead of a number means DNS has not propagated yet — nginx cannot get
 a certificate until `www` and `api` both resolve to the static IP.
 
 ## 6. Point Shiprocket at it

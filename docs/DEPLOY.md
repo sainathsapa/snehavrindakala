@@ -66,7 +66,7 @@ Then sign in to the storefront admin at `/admin` with `ADMIN_EMAIL` /
 
    docker compose --profile proxy up -d
    ```
-   Caddy fetches and renews certificates on its own (see `deploy/Caddyfile`).
+   nginx fetches and renews certificates on its own (see `deploy/nginxfile`).
    Two hostnames because the shop's `/admin/*` pages and Medusa's `/admin/*` API
    cannot share one origin.
 4. **Public URL is baked at build time.** `NEXT_PUBLIC_STOREFRONT_URL` is inlined
@@ -143,7 +143,7 @@ forms, a redirect for a plain form post — the limit is never a silent loss).
 `rate_limit_hits` is pruned as it goes. The limiter **fails open**: if Postgres
 is briefly unavailable a signup is still accepted, because losing a real
 customer to guard against a hypothetical script is the wrong trade at this size.
-Behind the Caddy profile the client address comes from `x-forwarded-for`; if you
+Behind the nginx profile the client address comes from `x-forwarded-for`; if you
 put another proxy in front, make sure it sets that header or every visitor looks
 like the proxy.
 

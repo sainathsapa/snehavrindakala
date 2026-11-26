@@ -1,0 +1,175 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SnehaVrinda Kala — virtual hosts
+#
+# Rendered by the official nginx image's envsubst step from
+# /etc/nginx/templates/*.template. Only variables that exist in the environment
+# are substituted, so nginx's own $host / $uri / $request_uri stay intact.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Upstreams are resolved per request, not at startup.
+#
+# A static `upstream { server storefront:3000; }` is resolved when nginx reads
+# its configuration — so if the storefront container is still booting, nginx
+# exits with "host not found in upstream" and the whole front door stays down.
+# Asking Docker's internal DNS at request time instead means nginx starts
+# immediately and picks the service up as soon as it answers.
+resolver 127.0.0.11 valid=10s ipv6=off;
+
+# A small in-memory store for the API rate limiter's edge guard. The application
+# still enforces its own limits; this only stops a flood from reaching the node
+# process at all.
+limit_req_zone $binary_remote_addr zone=api_edge:10m rate=30r/s;
+limit_req_zone $binary_remote_addr zone=auth_edge:10m rate=5r/s;
+limit_req_status 429;
+
+# ── :80 — ACME challenge, then everything to TLS ─────────────────────────────
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name ${STOREFRONT_DOMAIN} www.${STOREFRONT_DOMAIN} ${API_DOMAIN};
+
+    # Let's Encrypt must reach this over plain HTTP, so it is served before the
+    # redirect. Everything under /.well-known/ is static from a shared volume.
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type "text/plain";
+        try_files $uri =404;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ── :443 — the shop ─────────────────────────────────────────────────────────
+server {
+    listen      443 ssl;
+    listen      [::]:443 ssl;
+    http2       on;
+    server_name ${STOREFRONT_DOMAIN} www.${STOREFRONT_DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${STOREFRONT_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${STOREFRONT_DOMAIN}/privkey.pem;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+    ssl_stapling        on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # The app sets its own CSP; this is the fallback for anything served here.
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    access_log /var/log/nginx/storefront.access.log main;
+    set $storefront_backend http://storefront:3000;
+
+    # Next.js hashed build output never changes, so it can be cached forever.
+    location /_next/static/ {
+        proxy_pass $storefront_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_cache_valid 200 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # Customer-uploaded and admin-uploaded media.
+    location /uploads/ {
+        proxy_pass $storefront_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        add_header Cache-Control "public, max-age=604800";
+    }
+
+    location / {
+        proxy_pass $storefront_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        $connection_upgrade;
+
+        # Streaming pages and PDF invoices: generous response timeout, short
+        # connect timeout so a dead container fails fast instead of hanging.
+        proxy_connect_timeout 5s;
+        proxy_send_timeout    120s;
+        proxy_read_timeout    120s;
+        proxy_buffering       off;
+    }
+}
+
+# ── :443 — the API ──────────────────────────────────────────────────────────
+server {
+    listen      443 ssl;
+    listen      [::]:443 ssl;
+    http2       on;
+    server_name ${API_DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${API_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${API_DOMAIN}/privkey.pem;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    access_log /var/log/nginx/api.access.log main;
+    set $api_backend http://backend:9000;
+
+    # Login and password-reset attempts are the ones worth throttling at the
+    # edge: a burst here is a credential-stuffing run, not a browser.
+    location ~ ^/(auth|admin/auth|store/customers/me/auth) {
+        limit_req zone=auth_edge burst=10 nodelay;
+        proxy_pass $api_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection        "";
+    }
+
+    location / {
+        limit_req zone=api_edge burst=40 nodelay;
+        proxy_pass $api_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection        "";
+
+        proxy_connect_timeout 5s;
+        proxy_send_timeout    60s;
+        proxy_read_timeout    60s;
+    }
+}
+
+# ── anything else ───────────────────────────────────────────────────────────
+# A request for an IP address or an unconfigured hostname gets nothing: no
+# certificate to serve and no route to guess. This also hides the server from
+# scanners that ask for a bare address.
+server {
+    listen      443 ssl default_server;
+    listen      [::]:443 ssl default_server;
+    server_name _;
+
+    ssl_certificate     /etc/letsencrypt/live/${STOREFRONT_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${STOREFRONT_DOMAIN}/privkey.pem;
+
+    return 444;
+}
