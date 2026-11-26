@@ -9,12 +9,27 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Artists & Makers",
-  description:
-    "Meet the Indian artists and craft partners behind SnehaVrinda Kala — their traditions, techniques, and whether they are currently taking commissions.",
-  alternates: localeAlternates("/artists"),
-};
+/**
+ * Per-locale metadata.
+ *
+ * A static `metadata` object cannot see the locale, so the canonical was
+ * always the English URL — on a Hindi page that says "index the English
+ * version instead", and the Hindi page never ranks despite correct
+ * hreflang. Reading `params` fixes it.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+      title: "Artists & Makers",
+      description:
+        "Meet the Indian artists and craft partners behind SnehaVrinda Kala — their traditions, techniques, and whether they are currently taking commissions.",
+      alternates: localeAlternates("/artists", locale),
+  };
+}
 
 export default async function ArtistsPage() {
   const t = await getTranslations("artists");

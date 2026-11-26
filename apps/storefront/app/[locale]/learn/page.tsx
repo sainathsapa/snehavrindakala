@@ -24,12 +24,17 @@ import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
 import { listArtForms } from "@/lib/site-content";
 import { deepHref, countFor } from "@/lib/learn/bridge";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("learn");
   return {
     title: t("crumb"),
     description: t("intro"),
-    alternates: localeAlternates("/learn"),
+    alternates: localeAlternates("/learn", locale),
   };
 }
 

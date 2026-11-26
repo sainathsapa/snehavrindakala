@@ -7,12 +7,17 @@ import { ButiField, PaperGrain } from "@/components/grounds";
 import { listTestimonials } from "@/lib/site-content";
 
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("authenticity");
   return {
     title: t("crumb"),
     description: t("intro"),
-    alternates: localeAlternates("/authenticity"),
+    alternates: localeAlternates("/authenticity", locale),
   };
 }
 

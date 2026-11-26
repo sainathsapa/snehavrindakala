@@ -10,12 +10,27 @@ import { newsroomCopy } from "@/lib/page-copy";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Newsroom · SnehaVrinda Kala",
-  description:
-    "Press releases, coverage and announcements from the studio — each one with the outlet it appeared in and a link to the original.",
-  alternates: localeAlternates("/newsroom"),
-};
+/**
+ * Per-locale metadata.
+ *
+ * A static `metadata` object cannot see the locale, so the canonical was
+ * always the English URL — on a Hindi page that says "index the English
+ * version instead", and the Hindi page never ranks despite correct
+ * hreflang. Reading `params` fixes it.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+      title: "Newsroom · SnehaVrinda Kala",
+      description:
+        "Press releases, coverage and announcements from the studio — each one with the outlet it appeared in and a link to the original.",
+      alternates: localeAlternates("/newsroom", locale),
+  };
+}
 
 /** Kind labels come from the page copy, so Hindi gets Hindi names. */
 function kindLabel(kind: string, c: ReturnType<typeof newsroomCopy>): string {

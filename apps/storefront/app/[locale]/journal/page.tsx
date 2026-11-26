@@ -8,12 +8,17 @@ import { ButiField, PaperGrain } from "@/components/grounds";
 import { listJournalPosts, type JournalListItem } from "@/lib/journal";
 import { getTranslations, getLocale } from "next-intl/server";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("journal");
   return {
     title: t("crumb"),
     description: t("intro"),
-    alternates: localeAlternates("/journal"),
+    alternates: localeAlternates("/journal", locale),
   };
 }
 

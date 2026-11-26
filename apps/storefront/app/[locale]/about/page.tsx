@@ -7,12 +7,17 @@ import { PageHeader } from "@/components/page-header";
 import { BotanicalRule, KalamBorder } from "@/components/ornaments";
 import { ButiField, PaperGrain, JaaliField } from "@/components/grounds";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("about");
   return {
     title: t("crumb"),
     description: t("intro"),
-    alternates: localeAlternates("/about"),
+    alternates: localeAlternates("/about", locale),
   };
 };
 

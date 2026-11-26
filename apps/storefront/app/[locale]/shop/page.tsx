@@ -16,12 +16,17 @@ import { soldHandles } from "@/lib/sold-works";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("shop");
   return {
     title: t("title"),
     description: t("intro"),
-    alternates: localeAlternates("/shop"),
+    alternates: localeAlternates("/shop", locale),
   };
 }
 

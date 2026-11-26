@@ -10,12 +10,27 @@ import { roomsCopy } from "@/lib/page-copy";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Rooms · SnehaVrinda Kala",
-  description:
-    "The rooms of the house: work gathered by season and theme, with the wall text that explains why these pieces were made together.",
-  alternates: localeAlternates("/rooms"),
-};
+/**
+ * Per-locale metadata.
+ *
+ * A static `metadata` object cannot see the locale, so the canonical was
+ * always the English URL — on a Hindi page that says "index the English
+ * version instead", and the Hindi page never ranks despite correct
+ * hreflang. Reading `params` fixes it.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+      title: "Rooms · SnehaVrinda Kala",
+      description:
+        "The rooms of the house: work gathered by season and theme, with the wall text that explains why these pieces were made together.",
+      alternates: localeAlternates("/rooms", locale),
+  };
+}
 
 export default async function RoomsIndex() {
   const locale = await getLocale();

@@ -8,12 +8,17 @@ import { Link } from "@/i18n/routing";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("customArt");
   return {
     title: t("crumb"),
     description: t("intro"),
-    alternates: localeAlternates("/custom-art"),
+    alternates: localeAlternates("/custom-art", locale),
   };
 }
 
