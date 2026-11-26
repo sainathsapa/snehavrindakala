@@ -905,7 +905,12 @@
     "saved": "Saved",
     "viewFullSize": "View full size",
     "swipeCount": "{current} of {count} · swipe to browse",
-    "askOnWhatsapp": "Ask on WhatsApp"
+    "askOnWhatsapp": "Ask on WhatsApp",
+    "share": "Pass it on",
+    "shareWhatsapp": "WhatsApp",
+    "shareFacebook": "Facebook",
+    "shareCopy": "Copy link",
+    "shareCopied": "Link copied"
   },
   "policies": {
     "shippingTitle": "Shipping & delivery",

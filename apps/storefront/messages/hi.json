@@ -905,7 +905,12 @@
     "saved": "सहेजा गया",
     "viewFullSize": "पूरा आकार देखें",
     "swipeCount": "{current} / {count} · देखने के लिए स्वाइप करें",
-    "askOnWhatsapp": "व्हाट्सएप पर पूछें"
+    "askOnWhatsapp": "व्हाट्सएप पर पूछें",
+    "share": "आगे भेजें",
+    "shareWhatsapp": "व्हाट्सएप",
+    "shareFacebook": "फ़ेसबुक",
+    "shareCopy": "लिंक कॉपी करें",
+    "shareCopied": "लिंक कॉपी हो गया"
   },
   "policies": {
     "shippingTitle": "शिपिंग और डिलीवरी",

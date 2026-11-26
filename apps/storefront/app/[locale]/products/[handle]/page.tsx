@@ -5,7 +5,8 @@ import {
   medusa,
 } from "@/lib/medusa";
 import { localeAlternates } from "@/lib/seo";
-import { whatsappLink, mailtoLink } from "@/lib/contact-links";
+import { whatsappLink } from "@/lib/contact-links";
+import { ShareRow } from "@/components/share-row";
 import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
@@ -596,6 +597,19 @@ export default async function ProductDetailPage({
                 )}
               </div>
             )}
+
+            {/* Passing a work on. Copy covers Instagram, which has no intent. */}
+            <ShareRow
+              url={`${siteUrl}/products/${handle}`}
+              title={catalogueTitle}
+              labels={{
+                share: t("share"),
+                whatsapp: t("shareWhatsapp"),
+                facebook: t("shareFacebook"),
+                copy: t("shareCopy"),
+                copied: t("shareCopied"),
+              }}
+            />
 
             {/* 4 — The facts, in the open. Not behind a tab. */}
             {Object.keys(specs).length > 0 && (
