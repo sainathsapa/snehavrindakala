@@ -8,6 +8,7 @@ import { listAccountOrders } from "@/lib/account-orders";
 import { getOrderShipment } from "@/lib/shipping/store";
 import { shipmentStatusLabel, shipmentStatusClasses } from "@/lib/shipping/status-label";
 import { CancelOrderForm } from "./cancel-form";
+import { ReorderForm } from "./reorder-form";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,12 @@ export const metadata: Metadata = {
  * one action they are entitled to take themselves — cancel, while nothing has
  * shipped.
  */
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const customer = await getCurrentCustomer();
   const token = await getAuthToken();
   if (!customer?.email || !token) {
@@ -140,6 +146,12 @@ export default async function OrdersPage() {
                   >
                     {t("track")}
                   </Link>
+                  <ReorderForm
+                    orderId={order.id}
+                    locale={locale}
+                    labels={{ reorder: t("reorder"), working: t("reordering") }}
+                    disabled={String(order.status || "").toLowerCase() === "canceled"}
+                  />
                   <CancelOrderForm
                     orderId={order.id}
                     cancellable={!shipment?.awb_code}

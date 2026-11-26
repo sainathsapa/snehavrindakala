@@ -1288,6 +1288,8 @@
     "track": "Track",
     "cancel": "Cancel this order",
     "cancelling": "Cancelling…",
-    "cancelConfirm": "Cancel this order? If you have already paid, the studio will return the payment."
+    "cancelConfirm": "Cancel this order? If you have already paid, the studio will return the payment.",
+    "reorder": "Buy these again",
+    "reordering": "Adding…"
   }
 }
