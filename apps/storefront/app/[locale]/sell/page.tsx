@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
-import { notFound } from "next/navigation";
 import { SectionHeading, Card, CardContent } from "@snehavrinda-kala/ui";
 import { Badge } from "@snehavrinda-kala/ui";
 import { getPlatformModeFromEnv } from "@/lib/settings";
@@ -21,9 +20,65 @@ export async function generateMetadata({
 }
 
 export default function SellPage() {
-  // Only meaningful in marketplace mode: in single-brand mode there is nobody
-  // to onboard, so the page is a dead end and must not be indexed.
-  if (getPlatformModeFromEnv() !== "platform") notFound();
+  // In marketplace mode this is the seller pitch. In single-brand mode there is
+  // no roster to join, but a house that says "sell with us" nowhere is a house
+  // that never hears from a maker — so the same URL answers the question a
+  // craftsman actually has: how do I work with you?
+  if (getPlatformModeFromEnv() !== "platform") {
+    return (
+      <main className="bg-rang-paper py-12">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <p className="font-sans text-[11px] uppercase tracking-[0.3em] text-sindoor">
+            Work with the studio
+          </p>
+          <h1 className="mt-4 font-serif text-4xl leading-tight text-deep-ink">
+            We do not take consignments online
+          </h1>
+          <p className="mt-4 font-sans text-base leading-relaxed text-muted-ink">
+            SnehaVrinda Kala is a single studio, not a marketplace: the works here
+            are made by the house and by makers it works with directly. There is
+            no listing fee and no catalogue to upload, because there is no open
+            roster.
+          </p>
+
+          <div className="mt-8 space-y-4 border-t border-sand-border pt-6 font-sans text-[15px] leading-relaxed text-deep-ink/90">
+            <p>
+              <strong className="font-serif text-lg">If you make work</strong> and
+              want it considered, write to the studio with photographs, dimensions,
+              the materials you use and where you learned the practice. A person
+              reads every letter, and a reply comes either way.
+            </p>
+            <p>
+              <strong className="font-serif text-lg">If you are a gallery or
+              institution</strong>, the same address reaches the studio directly.
+            </p>
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/partner/apply"
+              className="rounded-full bg-sindoor px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor/90"
+            >
+              Apply to work with us
+            </Link>
+            <Link
+              href="/contact"
+              className="rounded-full border border-sand-border px-6 py-3 font-sans text-sm text-deep-ink transition-colors hover:border-sindoor hover:text-sindoor"
+            >
+              Write to the studio
+            </Link>
+            <Link
+              href="/learn"
+              className="rounded-full px-4 py-3 font-sans text-sm text-muted-ink transition-colors hover:text-sindoor"
+            >
+              How these traditions are made →
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

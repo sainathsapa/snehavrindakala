@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LetterForm } from "@/components/letter-form";
+import { SocialIcon } from "@/components/social-icons";
 import {
   LotusRosette,
   DiyaMotif,
@@ -449,16 +450,20 @@ export function Footer({
               <div className="mt-5 flex flex-col gap-5 border-t border-rang-paper/12 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <PaymentMarks />
                 {socials.length > 0 ? (
-                  <ul aria-label="Social" className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  // Icons, not names: a row of platform wordmarks reads as a
+                  // list of words. The network name stays for screen readers.
+                  <ul aria-label={t("followUs")} className="flex flex-wrap items-center gap-2">
                     {socials.map((social) => (
                       <li key={social.id}>
                         <a
                           href={social.href}
                           target="_blank"
                           rel="noopener noreferrer me"
-                          className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-rang-paper/55 transition-colors hover:text-haldi"
+                          title={social.label}
+                          className="grid h-11 w-11 place-items-center rounded-full border border-rang-paper/20 text-rang-paper/70 transition-colors hover:border-haldi hover:text-haldi focus:outline-none focus-visible:ring-2 focus-visible:ring-haldi"
                         >
-                          {social.label}
+                          <SocialIcon name={social.id} className="h-4 w-4" />
+                          <span className="sr-only">{social.label}</span>
                         </a>
                       </li>
                     ))}

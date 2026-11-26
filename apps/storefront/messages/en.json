@@ -60,7 +60,8 @@
     "letterThanks": "Thank you — your first letter will find you.",
     "letterAlready": "You are already on the list.",
     "letterInvalid": "That email address does not look complete.",
-    "letterFailed": "We could not save that just now. Please try again."
+    "letterFailed": "We could not save that just now. Please try again.",
+    "followUs": "Follow us"
   },
   "common": {
     "priceOnRequest": "Price on request",
@@ -538,7 +539,8 @@
   "auth": {
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "orders": "Your orders"
+    "orders": "Your orders",
+    "forgotPassword": "Forgotten your password?"
   },
   "errors": {
     "notFound": "This page could not be found",
@@ -951,7 +953,8 @@
     "backToSignIn": "Back to sign in",
     "forgotIntroOffline": "Tell us the email on your account. Email sending is not switched on yet, so the studio resets passwords by hand — write to us if you would rather do that now.",
     "requestReset": "Ask the studio to reset it",
-    "resetFailed": "We could not record that request. Please write to the studio directly."
+    "resetFailed": "We could not record that request. Please write to the studio directly.",
+    "forgotPassword": "Forgotten your password?"
   },
   "searchPage": {
     "backToShop": "← Back to shop",

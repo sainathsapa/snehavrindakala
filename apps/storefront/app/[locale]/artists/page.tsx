@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 import { medusa } from "@/lib/medusa";
 import { localeAlternates } from "@/lib/seo";
 import { Link } from "@/i18n/routing";
-import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { getPlatformModeFromEnv } from "@/lib/settings";
@@ -18,10 +17,12 @@ export const metadata = {
 
 export default async function ArtistsPage() {
   const t = await getTranslations("artists");
-  // The artists directory is a marketplace feature. In single-brand mode the
-  // house is the only seller, so this route is a dead end — and a crawler must
-  // not index it. 404 rather than render an empty directory.
-  if (getPlatformModeFromEnv() !== "platform") notFound();
+  // This page used to 404 in single-brand mode on the argument that a house is
+  // the only seller. That was wrong in practice: an art house that names its
+  // makers cannot send people to a 404 from its own footer. The directory now
+  // renders in both modes, and when no maker has a profile yet it says so
+  // honestly instead of disappearing.
+  const marketplace = getPlatformModeFromEnv() === "platform";
 
   let artists: any[] = [];
   try {
@@ -92,8 +93,9 @@ export default async function ArtistsPage() {
                 {t("empty")}
               </p>
               <p className="mt-2 font-sans text-sm text-muted-ink">
-                In the meantime, the collection names every maker on the work
-                itself.
+                {marketplace
+                  ? "Makers join by application, and each profile is written with the artist."
+                  : "The studio works with a small circle of makers across Rajasthan and beyond. Every work in the collection names the hands that made it."}
               </p>
               <Link
                 href="/shop"

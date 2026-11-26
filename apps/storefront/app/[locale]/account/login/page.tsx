@@ -64,6 +64,14 @@ export default async function LoginPage({
               >
                 {t("signIn")}
               </button>
+              {/* The reset flow existed but was unreachable from here: a person
+                  who had forgotten their password could only register again. */}
+              <Link
+                href="/account/forgot-password"
+                className="mt-1 block text-center text-sm font-sans text-muted-ink underline-offset-4 hover:text-sindoor hover:underline"
+              >
+                {t("forgotPassword")}
+              </Link>
             </form>
             <p className="mt-6 text-sm text-muted-ink font-sans">
               {t("newHere")}{" "}
