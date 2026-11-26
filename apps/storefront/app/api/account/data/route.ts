@@ -14,6 +14,7 @@ import { randomUUID } from "crypto";
 import { getAuthToken } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { medusa } from "@/lib/medusa";
+import { listAccountOrders } from "@/lib/account-orders";
 import { listWishlistFor } from "@/lib/wishlist-server";
 import { ensureNewsletterTable } from "@/lib/newsletter";
 
@@ -56,7 +57,10 @@ export async function GET() {
     await Promise.all([
       bestEffort(
         "orders",
-        () => medusa.listCustomerOrders(token, { limit: 100, offset: 0 }).then((r) => r.orders || []),
+        async () => {
+          const result = await medusa.listCustomerOrders(token, { limit: 100, offset: 0 });
+          return listAccountOrders(result.orders || [], email, 100);
+        },
         [] as any[]
       ),
       bestEffort("wishlist", () => listWishlistFor(customer.id), [] as any[]),

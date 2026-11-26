@@ -91,6 +91,24 @@ export default async function LearnPage() {
           page scannable, which a glossary of sixteen terms badly needs. */}
       <section className="relative border-b border-sand-border/60">
         <BelButi className="pointer-events-none absolute inset-x-0 top-0 h-4 w-full text-terracotta/20" />
+        {/* The section had no image at all above the fold: a reference page about
+            things made by hand that opened onto nothing but type. */}
+        <figure className="relative mx-auto mt-8 max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <div className="relative aspect-[16/6] w-full overflow-hidden bg-surface">
+            <Image
+              src="/plates/hero.jpg"
+              alt="A half-painted cloth with a fish motif in black ink, a clay bowl of ochre and a brush resting across it"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-deep-ink/10"
+            />
+          </div>
+        </figure>
         <div className="mx-auto max-w-[1400px] px-5 py-10 sm:px-8 lg:px-12">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
             <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.3em] text-terracotta">
@@ -176,8 +194,8 @@ export default async function LearnPage() {
           <figure className="mt-12 overflow-hidden">
             <div className="relative aspect-[21/9] w-full overflow-hidden bg-surface">
               <Image
-                src="/images/artforms/painting.jpg"
-                alt="Detail of a hand-painted work, showing pigment on the surface"
+                src="/plates/materials.jpg"
+                alt="Indigo pigment, tamarind-seed paste, brushes and myrobalan seeds laid out on handmade paper"
                 fill
                 sizes="100vw"
                 className="object-cover"
@@ -189,8 +207,8 @@ export default async function LearnPage() {
             </div>
             <figcaption className="mt-3 flex flex-wrap items-baseline gap-x-3">
               <span className="font-serif text-[13px] italic text-muted-ink">
-                Pigment, ground and brushwork: the three decisions every
-                tradition makes differently.
+                Pigment, binder and brush: the three decisions every tradition
+                makes differently — here indigo, tamarind seed and squirrel hair.
               </span>
             </figcaption>
           </figure>

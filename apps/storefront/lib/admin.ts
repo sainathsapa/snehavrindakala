@@ -212,11 +212,15 @@ export async function listAdminOrders(params?: {
   limit?: number;
   offset?: number;
   status?: string;
+  /** Explicit field list. A caller that only needs an id and an email should say
+   *  so rather than pull whole order objects across the wire. */
+  fields?: string;
 }): Promise<{ orders: AdminOrder[]; count: number }> {
   const searchParams = new URLSearchParams();
   searchParams.set("limit", String(params?.limit ?? 50));
   searchParams.set("offset", String(params?.offset ?? 0));
   if (params?.status) searchParams.set("status", params.status);
+  if (params?.fields) searchParams.set("fields", params.fields);
 
   const res = await adminRequest(`/admin/orders?${searchParams.toString()}`);
   if (!res.ok) {

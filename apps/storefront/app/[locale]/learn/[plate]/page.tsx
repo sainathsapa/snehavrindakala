@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { localeAlternates } from "@/lib/seo";
@@ -119,7 +120,35 @@ export default async function PlatePage({
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 pb-20 sm:px-6 lg:px-8">
+      {/* The plate's own illustration. It has been part of the plate data since
+          the section was built and was never rendered, so the one picture a
+          reader most needs — what these things actually look like — was missing
+          from the page that describes them. */}
+      {found.image ? (
+        <section className="mx-auto max-w-5xl px-4 pt-10 sm:px-6 lg:px-8">
+          <figure className="overflow-hidden">
+            <div className="relative aspect-[3/2] w-full overflow-hidden bg-surface">
+              <Image
+                src={found.image.src}
+                alt={found.image.alt}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                className="object-cover"
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-deep-ink/10"
+              />
+            </div>
+            <figcaption className="mt-3 font-serif text-[13px] italic text-muted-ink">
+              {found.image.alt}
+            </figcaption>
+          </figure>
+        </section>
+      ) : null}
+
+      <section className="mx-auto max-w-5xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
         <PlateBrowser
           plate={id}
           entries={entries}

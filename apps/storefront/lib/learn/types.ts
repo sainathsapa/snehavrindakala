@@ -69,6 +69,10 @@ export const PLATES: Plate[] = [
       "Every material here is chosen for a reason that can be stated. A tradition that used rice paste did so because a household already had rice — not because rice is picturesque.",
     howToRead:
       "Ask the same three questions of every entry: what is it, why this and not something cheaper, and what fails inside a year if it is skipped.",
+    image: {
+      src: "/plates/materials.jpg",
+      alt: "Indigo pigment, tamarind-seed paste, brushes and myrobalan seeds laid out on handmade paper",
+    },
   },
   {
     id: "history",
@@ -79,6 +83,10 @@ export const PLATES: Plate[] = [
       "Nine moments, in ranges rather than single years — because the dates are argued about, and pretending otherwise would be a lie told in the service of tidiness.",
     howToRead:
       "Read in order the first time; the later entries assume the earlier ones. Every date is a range because the evidence is a wall, a colophon, or a traveller's note.",
+    image: {
+      src: "/plates/history.jpg",
+      alt: "A palm-leaf manuscript fragment, a gold miniature border and a carved sandstone lotus",
+    },
   },
 ];
 

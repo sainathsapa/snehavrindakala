@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
 import { KalashMark } from "@/components/grounds";
 import { medusa, formatPrice } from "@/lib/medusa";
+import { listAccountOrders } from "@/lib/account-orders";
 import { getOrderShipment } from "@/lib/shipping/store";
 import { shipmentStatusClasses, shipmentStatusLabel } from "@/lib/shipping/status-label";
 import { trackingLink } from "@/lib/shipping/notify";
@@ -43,9 +44,12 @@ export default async function AccountPage({
   let addresses: any[] = [];
   let shipments: Awaited<ReturnType<typeof getOrderShipment>>[] = [];
   if (token) {
+    // Guest orders carry no `customer_id`, so Medusa's "my orders" list never
+    // includes them. The buyer's own address is the bridge: an order under this
+    // email that belongs to nobody yet is theirs to see.
     try {
-      const result = await medusa.listCustomerOrders(token, { limit: 20 });
-      orders = result.orders ?? [];
+      const result = await medusa.listCustomerOrders(token, { limit: 50 });
+      orders = await listAccountOrders(result.orders ?? [], customer.email || "", 50);
     } catch (error) {
       console.error("Failed to load orders", error);
     }

@@ -62,10 +62,8 @@
     "letterInvalid": "यह ईमेल पता पूरा नहीं लगता।",
     "letterFailed": "अभी सहेजा नहीं जा सका। कृपया फिर से प्रयास करें।",
     "followUs": "हमें फ़ॉलो करें",
-    "links": {
-      "rooms": "कक्ष",
-      "newsroom": "समाचार"
-    }
+    "rooms": "कक्ष",
+    "newsroom": "समाचार"
   },
   "common": {
     "priceOnRequest": "कीमत पूछें",
