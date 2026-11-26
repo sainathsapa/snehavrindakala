@@ -5,6 +5,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { newsBySlug, safeExternalUrl } from "@/lib/rooms-news";
 import { localeAlternates } from "@/lib/seo";
+import { newsroomCopy } from "@/lib/page-copy";
 
 export const revalidate = 300;
 
@@ -23,11 +24,15 @@ export async function generateMetadata({
   };
 }
 
-const KIND_LABEL: Record<string, string> = {
-  press: "Press release",
-  coverage: "Coverage",
-  announcement: "Announcement",
-};
+/** Kind labels come from the page copy, so Hindi gets Hindi names. */
+function kindLabel(kind: string, c: ReturnType<typeof newsroomCopy>): string {
+  const map: Record<string, string> = {
+    press: c.kinds.press,
+    coverage: c.kinds.coverage,
+    announcement: c.kinds.announcement,
+  };
+  return map[kind] ?? c.kinds.news;
+}
 
 export default async function NewsItemPage({
   params,
@@ -37,6 +42,7 @@ export default async function NewsItemPage({
   const { locale, slug } = await params;
   const item = await newsBySlug(slug, locale);
   if (!item) notFound();
+  const c = newsroomCopy(locale);
 
   const paragraphs = item.body.split(/\n{2,}/).filter(Boolean);
   const external = safeExternalUrl(item.url);
@@ -53,7 +59,7 @@ export default async function NewsItemPage({
     <main className="bg-rang-paper pb-24">
       <article className="mx-auto max-w-3xl px-5 pt-12 sm:px-8">
         <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.24em] text-sindoor">
-          {KIND_LABEL[item.kind] || "News"}
+          {kindLabel(item.kind, c)}
           {item.outlet ? ` · ${item.outlet}` : ""}
         </p>
         <h1 className="mt-3 font-serif text-3xl leading-tight text-deep-ink sm:text-5xl">
@@ -98,7 +104,7 @@ export default async function NewsItemPage({
               rel="noopener noreferrer"
               className="text-sindoor underline underline-offset-4"
             >
-              {item.outlet ? `Read the original at ${item.outlet}` : "Read the original"} ↗
+              {item.outlet ? `${c.readOriginal} · ${item.outlet}` : c.readOriginal} ↗
             </a>
           </p>
         ) : item.url ? (
@@ -109,7 +115,7 @@ export default async function NewsItemPage({
 
         <p className="mt-12 border-t border-sand-border pt-6 font-sans text-sm">
           <Link href="/newsroom" className="text-sindoor underline underline-offset-4">
-            ← Newsroom
+            ← {c.backToNewsroom}
           </Link>
         </p>
       </article>

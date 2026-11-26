@@ -6,6 +6,7 @@ import { getLocale } from "next-intl/server";
 import { listRooms, roomBySlug } from "@/lib/rooms-news";
 import { listCatalogueFor } from "@/lib/catalogue";
 import { localeAlternates } from "@/lib/seo";
+import { roomsCopy } from "@/lib/page-copy";
 
 export const revalidate = 300;
 
@@ -42,6 +43,7 @@ export default async function RoomPage({
   if (!room) notFound();
 
   const works = room.collection ? await listCatalogueFor([room.collection], locale) : [];
+  const c = roomsCopy(locale);
   const paragraphs = room.body.split(/\n{2,}/).filter(Boolean);
 
   return (
@@ -97,20 +99,18 @@ export default async function RoomPage({
 
         <div className="mt-14 border-t border-sand-border pt-8">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="font-serif text-2xl text-deep-ink">In this room</h2>
+            <h2 className="font-serif text-2xl text-deep-ink">{c.inThisRoom}</h2>
             <span className="font-sans text-xs uppercase tracking-[0.16em] text-muted-ink">
-              {works.length} {works.length === 1 ? "work" : "works"}
+              {works.length} {works.length === 1 ? c.work : c.works}
             </span>
           </div>
 
           {works.length === 0 ? (
             <p className="mt-5 font-sans text-sm leading-relaxed text-muted-ink">
-              The room is being hung. Work for it is either still at the bench or not yet
-              photographed —{" "}
+              {c.hangingTitle} {c.hangingBody}{" "}
               <Link href="/contact" className="text-sindoor underline underline-offset-4">
-                write to the studio
-              </Link>{" "}
-              if you would like to be told when it opens.
+                {c.hangingCta}
+              </Link>
             </p>
           ) : (
             <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
@@ -140,7 +140,7 @@ export default async function RoomPage({
                         }).format(work.price / 100)}
                       </p>
                     ) : (
-                      <p className="font-sans text-xs text-muted-ink">Enquire</p>
+                      <p className="font-sans text-xs text-muted-ink">{c.enquire}</p>
                     )}
                   </Link>
                 </li>
@@ -151,7 +151,7 @@ export default async function RoomPage({
 
         <p className="mt-12 font-sans text-sm">
           <Link href="/rooms" className="text-sindoor underline underline-offset-4">
-            ← All rooms
+            ← {c.allRooms}
           </Link>
         </p>
       </div>

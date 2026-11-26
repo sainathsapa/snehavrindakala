@@ -4,6 +4,8 @@ import { SectionHeading, Card, CardContent } from "@snehavrinda-kala/ui";
 import { Badge } from "@snehavrinda-kala/ui";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 import { localeAlternates } from "@/lib/seo";
+import { sellCopy } from "@/lib/page-copy";
+import { getLocale } from "next-intl/server";
 
 export async function generateMetadata({
   params,
@@ -11,46 +13,55 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  const c = sellCopy(locale);
+  // The title and description were English in both languages, so /hi/sell showed
+  // a Hindi page under an English tab title and an English search snippet.
   return {
-    title: "Sell with SnehaVrinda Kala",
+    title:
+      getPlatformModeFromEnv() === "platform"
+        ? locale === "hi"
+          ? "स्नेहवृंद कला के साथ बेचिए"
+          : "Sell with SnehaVrinda Kala"
+        : c.title,
     description:
-      "A curated home for handmade, made-to-order and commissioned work by Indian makers.",
+      getPlatformModeFromEnv() === "platform"
+        ? locale === "hi"
+          ? "भारतीय कारीगरों के हाथ से बने, ऑर्डर पर बने और कमीशन किए काम के लिए एक चुना हुआ ठिकाना।"
+          : "A curated home for handmade, made-to-order and commissioned work by Indian makers."
+        : c.intro,
     alternates: localeAlternates("/sell", locale),
   };
 }
 
-export default function SellPage() {
+export default async function SellPage() {
   // In marketplace mode this is the seller pitch. In single-brand mode there is
   // no roster to join, but a house that says "sell with us" nowhere is a house
   // that never hears from a maker — so the same URL answers the question a
   // craftsman actually has: how do I work with you?
   if (getPlatformModeFromEnv() !== "platform") {
+    const c = sellCopy(await getLocale());
+
     return (
       <main className="bg-rang-paper py-12">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <p className="font-sans text-[11px] uppercase tracking-[0.3em] text-sindoor">
-            Work with the studio
+            {c.eyebrow}
           </p>
           <h1 className="mt-4 font-serif text-4xl leading-tight text-deep-ink">
-            We do not take consignments online
+            {c.title}
           </h1>
           <p className="mt-4 font-sans text-base leading-relaxed text-muted-ink">
-            SnehaVrinda Kala is a single studio, not a marketplace: the works here
-            are made by the house and by makers it works with directly. There is
-            no listing fee and no catalogue to upload, because there is no open
-            roster.
+            {c.intro}
           </p>
 
           <div className="mt-8 space-y-4 border-t border-sand-border pt-6 font-sans text-[15px] leading-relaxed text-deep-ink/90">
             <p>
-              <strong className="font-serif text-lg">If you make work</strong> and
-              want it considered, write to the studio with photographs, dimensions,
-              the materials you use and where you learned the practice. A person
-              reads every letter, and a reply comes either way.
+              <strong className="font-serif text-lg">{c.makerHeading}</strong>{" "}
+              {c.makerBody}
             </p>
             <p>
-              <strong className="font-serif text-lg">If you are a gallery or
-              institution</strong>, the same address reaches the studio directly.
+              <strong className="font-serif text-lg">{c.galleryHeading}</strong>{" "}
+              {c.galleryBody}
             </p>
           </div>
 
@@ -59,19 +70,19 @@ export default function SellPage() {
               href="/partner/apply"
               className="rounded-full bg-sindoor px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor/90"
             >
-              Apply to work with us
+              {c.apply}
             </Link>
             <Link
               href="/contact"
               className="rounded-full border border-sand-border px-6 py-3 font-sans text-sm text-deep-ink transition-colors hover:border-sindoor hover:text-sindoor"
             >
-              Write to the studio
+              {c.contact}
             </Link>
             <Link
               href="/learn"
               className="rounded-full px-4 py-3 font-sans text-sm text-muted-ink transition-colors hover:text-sindoor"
             >
-              How these traditions are made →
+              {c.learn} →
             </Link>
           </div>
         </div>

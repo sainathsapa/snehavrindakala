@@ -29,12 +29,24 @@ import { redirect } from "next/navigation";
  * In platform mode `/artists` is the richer destination, so this page steps
  * aside and redirects there rather than competing with it.
  */
-export const metadata = {
-  title: "The makers",
-  description:
-    "The artists and craftspeople whose work is available through SnehaVrinda Kala. Every published work names the hand that made it.",
-  alternates: localeAlternates("/makers"),
-};
+/**
+ * Localised, because a static `metadata` object cannot read the locale: every
+ * visitor saw the English title in their tab, and `/hi/makers` shipped an
+ * English <title> under a Hindi heading.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations("makers");
+  return {
+    title: t("title"),
+    description: t("intro"),
+    alternates: localeAlternates("/makers", locale),
+  };
+}
 
 // Derived from the catalogue, which reads the currency cookie for pricing — so
 // this page must stay per-request. Making it static would freeze prices at

@@ -6,6 +6,7 @@ import { listNews, safeExternalUrl } from "@/lib/rooms-news";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { localeAlternates } from "@/lib/seo";
+import { newsroomCopy } from "@/lib/page-copy";
 
 export const revalidate = 300;
 
@@ -16,11 +17,15 @@ export const metadata: Metadata = {
   alternates: localeAlternates("/newsroom"),
 };
 
-const KIND_LABEL: Record<string, string> = {
-  press: "Press release",
-  coverage: "Coverage",
-  announcement: "Announcement",
-};
+/** Kind labels come from the page copy, so Hindi gets Hindi names. */
+function kindLabel(kind: string, c: ReturnType<typeof newsroomCopy>): string {
+  const map: Record<string, string> = {
+    press: c.kinds.press,
+    coverage: c.kinds.coverage,
+    announcement: c.kinds.announcement,
+  };
+  return map[kind] ?? c.kinds.news;
+}
 
 function dateLabel(value: string, locale: string) {
   const date = new Date(value);
@@ -35,15 +40,16 @@ function dateLabel(value: string, locale: string) {
 export default async function NewsroomPage() {
   const locale = await getLocale();
   const items = await listNews(locale);
+  const c = newsroomCopy(locale);
   const [lead, ...rest] = items;
 
   return (
     <main className="bg-rang-paper pb-24">
       <PageHeader
-        eyebrow="Newsroom"
-        title="What has been written, and what we have said"
-        intro="Coverage keeps its outlet and a link to the original. Announcements are the studio's own words."
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Newsroom" }]}
+        eyebrow={c.eyebrow}
+        title={c.title}
+        intro={c.intro}
+        breadcrumb={[{ label: c.crumbHome, href: "/" }, { label: c.crumbNewsroom }]}
       />
 
       <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
@@ -51,17 +57,16 @@ export default async function NewsroomPage() {
           <div className="flex flex-col items-center py-20 text-center">
             <BotanicalRule className="mb-6 text-terracotta" />
             <p className="max-w-md font-serif text-xl leading-relaxed text-deep-ink">
-              The newsroom is quiet for now.
+              {c.emptyTitle}
             </p>
             <p className="mt-2 max-w-md font-sans text-sm leading-relaxed text-muted-ink">
-              Press enquiries are answered by the studio directly — the address on the
-              contact page reaches a person, not a form queue.
+              {c.emptyBody}
             </p>
             <Link
               href="/contact"
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
             >
-              Press enquiries <span aria-hidden>→</span>
+              {c.pressCta} <span aria-hidden>→</span>
             </Link>
           </div>
         ) : (
@@ -83,7 +88,7 @@ export default async function NewsroomPage() {
                 ) : null}
                 <div>
                   <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.24em] text-sindoor">
-                    {KIND_LABEL[lead.kind] || "News"}
+                    {kindLabel(lead.kind, c)}
                     {lead.outlet ? ` · ${lead.outlet}` : ""}
                   </p>
                   <h2 className="mt-3 font-serif text-3xl leading-tight text-deep-ink sm:text-4xl">
@@ -104,7 +109,7 @@ export default async function NewsroomPage() {
                       href={`/newsroom/${lead.slug}`}
                       className="font-sans text-sm text-sindoor underline underline-offset-4"
                     >
-                      Read
+                      {c.read}
                     </Link>
                     {safeExternalUrl(lead.url) ? (
                       <a
@@ -113,7 +118,7 @@ export default async function NewsroomPage() {
                         rel="noopener noreferrer"
                         className="font-sans text-sm text-muted-ink underline underline-offset-4 hover:text-sindoor"
                       >
-                        {lead.outlet ? `Read at ${lead.outlet}` : "Read the original"} ↗
+                        {lead.outlet ? `${c.readAt} ${lead.outlet}` : c.readOriginal} ↗
                       </a>
                     ) : null}
                   </div>
@@ -131,7 +136,7 @@ export default async function NewsroomPage() {
                       </p>
                       <div className="min-w-0">
                         <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-sindoor">
-                          {KIND_LABEL[item.kind] || "News"}
+                          {kindLabel(item.kind, c)}
                           {item.outlet ? ` · ${item.outlet}` : ""}
                         </p>
                         <h3 className="mt-1 font-serif text-xl leading-snug text-deep-ink">

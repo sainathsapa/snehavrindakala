@@ -6,6 +6,7 @@ import { listRooms } from "@/lib/rooms-news";
 import { PageHeader } from "@/components/page-header";
 import { BotanicalRule } from "@/components/ornaments";
 import { localeAlternates } from "@/lib/seo";
+import { roomsCopy } from "@/lib/page-copy";
 
 export const revalidate = 300;
 
@@ -19,14 +20,15 @@ export const metadata: Metadata = {
 export default async function RoomsIndex() {
   const locale = await getLocale();
   const rooms = await listRooms(locale);
+  const c = roomsCopy(locale);
 
   return (
     <main className="bg-rang-paper pb-24">
       <PageHeader
-        eyebrow="Rooms"
-        title="Work gathered the way a house gathers it"
-        intro="Each room is a season, an idea or an exhibition — pieces that answer one another, with the text that hangs beside them on the wall."
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Rooms" }]}
+        eyebrow={c.eyebrow}
+        title={c.title}
+        intro={c.intro}
+        breadcrumb={[{ label: c.crumbHome, href: "/" }, { label: c.crumbRooms }]}
       />
 
       <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
@@ -34,16 +36,16 @@ export default async function RoomsIndex() {
           <div className="flex flex-col items-center py-20 text-center">
             <BotanicalRule className="mb-6 text-terracotta" />
             <p className="max-w-md font-serif text-xl leading-relaxed text-deep-ink">
-              The first rooms are being hung.
+              {c.emptyTitle}
             </p>
             <p className="mt-2 max-w-sm font-sans text-sm text-muted-ink">
-              Until then the collection is arranged by tradition and by material.
+              {c.emptyBody}
             </p>
             <Link
               href="/shop"
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-kumkum px-6 py-3 font-sans text-sm font-medium text-rang-paper transition-colors hover:bg-sindoor"
             >
-              Browse the collection <span aria-hidden>→</span>
+              {c.browse} <span aria-hidden>→</span>
             </Link>
           </div>
         ) : (
@@ -63,7 +65,7 @@ export default async function RoomsIndex() {
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <span className="font-serif text-sm italic text-muted-ink/60">
-                          Room to open
+                          {c.roomToOpen}
                         </span>
                       </div>
                     )}
