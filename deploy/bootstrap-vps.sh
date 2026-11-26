@@ -174,8 +174,18 @@ echo "   webhook, correct token:   HTTP ${with_key}  (expect 200)"
 # than discovered on the day it is needed.
 if command -v crontab >/dev/null 2>&1; then
   CRON_LINE="15 2 * * * cd $ROOT && bash scripts/backup-db.sh >> /var/log/snehavrinda-backup.log 2>&1"
-  ( crontab -l 2>/dev/null | grep -v "backup-db.sh"; echo "$CRON_LINE" ) | crontab -
-  echo "   nightly database backup scheduled (02:15 server time)"
+  # The two keepers of a customer relationship that nothing ever ran: a cart left
+  # behind, and a work saved to a wishlist whose price has moved. Hourly for the
+  # cart (the reminder is timed in hours) and daily for prices (they move rarely
+  # and a slow mail is better than a noisy one).
+  CART_LINE="20 * * * * cd $ROOT && node scripts/abandoned-cart-sequence.mjs >> /var/log/snehavrinda-carts.log 2>&1"
+  WISH_LINE="40 6 * * * cd $ROOT && node scripts/wishlist-price-drop.mjs >> /var/log/snehavrinda-wishlist.log 2>&1"
+  ( crontab -l 2>/dev/null \
+      | grep -v "backup-db.sh" \
+      | grep -v "abandoned-cart-sequence" \
+      | grep -v "wishlist-price-drop" \
+      ; echo "$CRON_LINE"; echo "$CART_LINE"; echo "$WISH_LINE" ) | crontab -
+  echo "   nightly backup (02:15), hourly cart reminders, daily price-drop checks"
 fi
 
 say "done"
