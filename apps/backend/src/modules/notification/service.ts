@@ -280,6 +280,12 @@ export class NotificationService {
         process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
         "hello@snehavrinda.in",
       currency: process.env.MEDUSA_CURRENCY_CODE?.toUpperCase() || "INR",
+      // Legal identity for the footer. Indian e-invoicing rules expect the seller
+      // name and place of supply on customer-facing documents, and the same block
+      // appears on an order email, so it comes from one place.
+      sellerName: process.env.SELLER_LEGAL_NAME || undefined,
+      sellerAddress: process.env.SELLER_ADDRESS || undefined,
+      sellerState: process.env.SELLER_HOME_STATE || undefined,
     };
   }
 

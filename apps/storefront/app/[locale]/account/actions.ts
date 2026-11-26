@@ -1,11 +1,22 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { localeRedirect } from "@/lib/locale-redirect";
 import { getLocale } from "next-intl/server";
 import { medusa } from "@/lib/medusa";
 import { AUTH_COOKIE } from "@/lib/auth";
 import { claimCartForCustomer } from "@/lib/cart";
+import { describeClient, sendAccountEmail } from "@/lib/email/send";
+
+/** User agent of the request currently being handled, for the sign-in alert. */
+async function currentUserAgent(): Promise<string | null> {
+  try {
+    return (await headers()).get("user-agent");
+  } catch {
+    return null;
+  }
+}
 
 export async function loginAction(formData: FormData): Promise<void> {
   const email = String(formData.get("email") || "").trim();
@@ -35,6 +46,18 @@ export async function loginAction(formData: FormData): Promise<void> {
 
   // Give the basket to the account so it follows them to another device.
   await claimCartForCustomer(token);
+
+  // New device, new session: tell the owner. Sent after the cookie is set and
+  // awaited so a serverless freeze cannot drop it, but it never blocks sign-in.
+  await sendAccountEmail({
+    to: email,
+    template: "login_alert",
+    data: {
+      signed_in_at: new Date().toISOString(),
+      device: describeClient(await currentUserAgent()),
+    },
+    eventKey: `login_alert:${email}:${new Date().toISOString().slice(0, 10)}`,
+  });
 
   localeRedirect("/account", await getLocale());
 }
@@ -82,6 +105,13 @@ export async function registerAction(formData: FormData): Promise<void> {
 
   // A new account should keep whatever they had in the basket while signing up.
   await claimCartForCustomer(token);
+
+  await sendAccountEmail({
+    to: email,
+    template: "welcome",
+    data: { first_name: firstName || null },
+    eventKey: `welcome:${email}`,
+  });
 
   localeRedirect("/account", await getLocale());
 }

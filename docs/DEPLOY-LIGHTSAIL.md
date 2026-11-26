@@ -97,6 +97,46 @@ Settings → Webhooks:
 | Token | value of `SHIPROCKET_WEBHOOK_TOKEN` in `.env` |
 | Connection | ENABLED |
 
+## 6b. Email — Resend
+
+Transactional email runs on Resend (`RESEND_API_KEY`); SES is still supported as a
+fallback. Sender: `no-reply@snehavrinda.in` (`FROM_EMAIL`), display name
+`SnehaVrinda Kala` (`FROM_NAME`).
+
+| Template | Trigger |
+|---|---|
+| `order_confirmation` | payment captured |
+| `shipment_confirmed` | order fulfilled — courier, AWB, ETA, tracking button |
+| `order_cancelled` | cancellation, with the amount going back |
+| `refund_processed` | refund recorded |
+| `welcome` | account created |
+| `login_alert` | new sign-in |
+| `password_reset` | reset requested — the `auth.password_reset` subscriber mails Medusa's token |
+| `password_changed` | password changed successfully |
+| `cart_reminder` | scheduled cron |
+
+Account emails travel storefront → backend on
+`POST /internal/notifications/send`, guarded by `INTERNAL_NOTIFY_SECRET`. They are
+deliberately **not** on the public `/store/notifications/send` route: that route is
+reachable with the publishable key that ships in the browser bundle, and a
+publicly triggerable password-reset email is a phishing tool.
+
+If mail stops arriving:
+
+```bash
+# is the transport configured and selected?
+docker compose exec backend node -e \
+  'console.log(!!process.env.RESEND_API_KEY, process.env.FROM_EMAIL)'
+# what did the last notifications record?
+docker compose exec postgres psql -U postgres -d medusa -c \
+  "select template, status, error_message, created_at from app_notification order by created_at desc limit 5;"
+```
+
+A 403 from Resend means the sending domain is not verified in that account:
+Resend → Domains → `snehavrinda.in` → add the DKIM/SPF records it shows in
+Cloudflare (DNS only). `sent` in the table means the provider accepted the
+message — it is not proof of delivery.
+
 ## 7. Backups — do this before the first order
 
 Two independent layers, because a Lightsail instance dying takes its own disk

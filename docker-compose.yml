@@ -113,8 +113,17 @@ x-backend-environment: &backend-environment
   AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID:-}
   AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY:-}
   AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
+  # Resend is the preferred transport when this is set: one key, one HTTPS call,
+  # and a provider message id. Without it the module falls back to SES.
+  RESEND_API_KEY: ${RESEND_API_KEY:-}
   FROM_EMAIL: ${FROM_EMAIL:-}
   FROM_NAME: ${FROM_NAME:-SnehaVrinda Kala}
+  # Seller identity for the legal footer of transactional email. Read by the
+  # notification module's template context; without it the footer omits the line
+  # rather than inventing a company name.
+  SELLER_LEGAL_NAME: ${SELLER_LEGAL_NAME:-}
+  SELLER_ADDRESS: ${SELLER_ADDRESS:-}
+  SELLER_HOME_STATE: ${SELLER_HOME_STATE:-}
   # Notification retry policy + verified SES->SNS delivery events. Bounded,
   # fail-safe defaults; owner may tune max attempts and suppression policy.
   NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-5}
@@ -276,9 +285,12 @@ services:
       # reminders, order confirmations). Without these the storefront records
       # every message as `skipped` even when SES works for the backend.
       FROM_EMAIL: ${FROM_EMAIL:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       AWS_SES_REGION: ${AWS_SES_REGION:-ap-south-1}
       AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID:-}
       AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY:-}
+      AWS_SES_ROLE_ARN: ${AWS_SES_ROLE_ARN:-}
+      AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: ${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI:-}
       AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
       # Notification retry + verified SES->SNS delivery events (see backend anchor).
       NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-5}

@@ -110,13 +110,18 @@ describe("missing SES configuration is honest", () => {
 
   it("transport skips (never sends) when sender config or credentials are absent", () => {
     const src = transportSrc();
-    // FROM_EMAIL is the verified SES sender; null config means unconfigured.
+    // FROM_EMAIL is the verified sender; null config means unconfigured.
     expect(src).toMatch(/if \(!fromEmail \|\| !isValidEmail\(fromEmail\)\) return null;/);
-    // No config OR no credentials => a logged preview, status skipped, no MessageId.
-    expect(src).toMatch(/if \(!config \|\| !hasCredentials\(env\)\)/);
+    // No config, or SES chosen with no credentials => a logged preview,
+    // status skipped, no MessageId. Resend needs no separate credential check
+    // because the key itself is what selects that provider.
+    expect(src).toMatch(/if \(!config \|\| \(config\.provider === "ses" && !hasCredentials\(env\)\)\)/);
     expect(src).toMatch(/return \{ status: "skipped", messageId: null \};/);
-    // A genuine send only happens after both checks, and returns SES's MessageId.
+    // A genuine send only happens after those checks, and returns the provider's id.
     expect(src).toMatch(/return \{ status: "sent", messageId: result\.MessageId \|\| null \};/);
+    // Resend is preferred when configured, and carries its own provider id.
+    expect(src).toMatch(/if \(resendKey\) \{/);
+    expect(src).toMatch(/return \{ status: "sent", messageId: body\?\.id \|\| null \};/);
   });
 
   it("a skipped transport outcome is stored as 'skipped', never 'sent'", () => {

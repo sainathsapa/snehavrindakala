@@ -20,6 +20,10 @@ export interface TemplateContext {
   storefrontUrl: string;
   contactEmail: string;
   currency?: string;
+  /** Seller identity for the legal footer. Comes from SELLER_* in .env. */
+  sellerName?: string;
+  sellerAddress?: string;
+  sellerState?: string;
 }
 
 /* ------------------------------------------------------------------ *
@@ -58,35 +62,63 @@ function layout(
   bodyHtml: string,
   preheader = ""
 ): string {
+  // Table-based, inline CSS only: this has to survive Gmail, Outlook and the
+  // phone clients that strip <style> blocks. No web fonts, no external images —
+  // a blocked image must never leave a hole in the design.
+  const seller = [ctx.sellerName, ctx.sellerAddress, ctx.sellerState]
+    .filter(Boolean)
+    .map((part) => escapeHtml(part))
+    .join(" · ");
+
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
 <title>${escapeHtml(heading)}</title>
 </head>
 <body style="margin:0;padding:0;background:#FFF7E8;font-family:Helvetica,Arial,sans-serif;color:#2B211E;">
   <div style="display:none;font-size:1px;color:#FFF7E8;max-height:0;overflow:hidden;">${escapeHtml(
     preheader
   )}</div>
-  <div style="max-width:600px;margin:0 auto;padding:32px 20px;">
-    <div style="text-align:center;padding-bottom:24px;">
-      <span style="font-family:Georgia,serif;font-size:22px;font-weight:bold;color:#2B211E;">SnehaVrinda</span>
-      <span style="font-family:Georgia,serif;font-size:22px;font-weight:bold;color:#C84636;">Kala</span>
+  <div style="max-width:600px;margin:0 auto;padding:28px 18px 40px;">
+
+    <!-- masthead -->
+    <div style="text-align:center;padding-bottom:18px;">
+      <div style="display:inline-block;border:1px solid #DCCBB4;border-radius:999px;padding:6px 14px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#675A52;">
+        Bikaner · Rajasthan
+      </div>
+      <div style="padding-top:14px;">
+        <span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;letter-spacing:0.02em;color:#2B211E;">SnehaVrinda</span>
+        <span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#C84636;"> Kala</span>
+      </div>
+      <div style="padding-top:10px;">
+        <div style="height:2px;width:56px;margin:0 auto;background:#C9A227;"></div>
+      </div>
     </div>
-    <div style="background:#FFFCF5;border:1px solid #DCCBB4;border-radius:12px;padding:32px;">
-      <h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:24px;font-weight:600;color:#2B211E;">${escapeHtml(
+
+    <!-- card -->
+    <div style="background:#FFFCF5;border:1px solid #DCCBB4;border-radius:14px;padding:30px 28px;">
+      <h1 style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:23px;line-height:1.3;font-weight:600;color:#2B211E;">${escapeHtml(
         heading
       )}</h1>
+      <div style="height:1px;width:100%;background:#E8DCC8;margin:0 0 18px;"></div>
       ${bodyHtml}
     </div>
-    <div style="text-align:center;padding-top:24px;font-size:12px;color:#675A52;">
-      <p style="margin:0 0 6px;">Questions? Write to <a href="mailto:${escapeHtml(
+
+    <!-- footer -->
+    <div style="text-align:center;padding-top:22px;font-size:12px;line-height:1.7;color:#675A52;">
+      <p style="margin:0 0 4px;">Questions? Write to <a href="mailto:${escapeHtml(
         ctx.contactEmail
-      )}" style="color:#C84636;">${escapeHtml(ctx.contactEmail)}</a></p>
-      <p style="margin:0;"><a href="${escapeHtml(
+      )}" style="color:#C84636;text-decoration:none;">${escapeHtml(
+    ctx.contactEmail
+  )}</a></p>
+      <p style="margin:0 0 10px;"><a href="${escapeHtml(
         ctx.storefrontUrl
-      )}" style="color:#C84636;">snehavrinda.in</a></p>
+      )}" style="color:#C84636;text-decoration:none;">snehavrinda.in</a></p>
+      ${seller ? `<p style="margin:0 0 6px;color:#8A7B70;">${seller}</p>` : ""}
+      <p style="margin:0;color:#8A7B70;">This is a transactional message about your order or account.</p>
     </div>
   </div>
 </body>
@@ -107,6 +139,18 @@ function paragraph(text: string): string {
 
 function muted(text: string): string {
   return `<p style="margin:0 0 14px;font-size:13px;line-height:1.5;color:#675A52;">${text}</p>`;
+}
+
+/** A framed facts block: tracking number, order reference, expiry notice. */
+function factsBlock(label: string, value: string): string {
+  return `<div style="margin:20px 0;padding:16px;background:#FFF7E8;border:1px solid #DCCBB4;border-left:3px solid #C9A227;border-radius:8px;">
+    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#C84636;">${escapeHtml(
+      label
+    )}</p>
+    <p style="margin:0;font-family:'Courier New',monospace;font-size:16px;color:#2B211E;word-break:break-all;">${escapeHtml(
+      value
+    )}</p>
+  </div>`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -285,41 +329,51 @@ function shipmentConfirmed(
 ): RenderedEmail {
   const tracking = data.tracking_number || data.awb_code;
   const courier = data.courier_name;
+  const eta = data.etd || data.expected_delivery;
+  const trackingUrl = tracking
+    ? String(data.tracking_url ||
+        `https://shiprocket.co/tracking/${encodeURIComponent(String(tracking))}`)
+    : null;
+  const orderRef = data.display_id ?? data.order_id;
 
   const html = layout(
     ctx,
-    "Your order has shipped",
+    "Your order is on its way",
     paragraph(
-      `Good news — your piece is on its way${
+      `Good news — your piece has left the studio${
         courier ? ` with ${escapeHtml(String(courier))}` : ""
       }.`
     ) +
+      (orderRef ? muted(`Order reference: #${escapeHtml(String(orderRef))}`) : "") +
       (tracking
-        ? `<div style="margin:20px 0;padding:16px;background:#FFF7E8;border:1px solid #DCCBB4;border-radius:8px;">
-            <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#C84636;">Tracking number</p>
-            <p style="margin:0;font-family:monospace;font-size:16px;color:#2B211E;">${escapeHtml(
-              String(tracking)
-            )}</p>
-          </div>` +
-          button(
-            ctx,
-            `https://shiprocket.co/tracking/${encodeURIComponent(
-              String(tracking)
-            )}`,
-            "Track your parcel"
-          )
+        ? factsBlock("Tracking number", String(tracking)) +
+          (courier ? muted(`Courier: ${escapeHtml(String(courier))}`) : "") +
+          (eta ? muted(`Expected delivery: ${escapeHtml(String(eta))}`) : "") +
+          (trackingUrl ? button(ctx, trackingUrl, "Track your parcel") : "")
         : muted(
-            "Tracking details will follow shortly if they are not shown here."
+            "The courier has not issued a tracking number yet. We will follow up as soon as it does."
           )),
     `Your order has shipped${tracking ? ` — tracking ${tracking}` : ""}.`
   );
 
+  const text = [
+    `Your SnehaVrinda Kala order has shipped${courier ? ` with ${courier}` : ""}.`,
+    orderRef ? `Order reference: #${orderRef}` : "",
+    tracking ? `Tracking number: ${tracking}` : "Tracking number: not issued yet",
+    eta ? `Expected delivery: ${eta}` : "",
+    trackingUrl ? `Track: ${trackingUrl}` : "",
+    "",
+    `Questions? ${ctx.contactEmail}`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+
   return {
-    subject: `Your SnehaVrinda Kala order has shipped`,
+    subject: orderRef
+      ? `Order #${orderRef} has shipped — SnehaVrinda Kala`
+      : "Your SnehaVrinda Kala order has shipped",
     html,
-    text: `Your order has shipped${courier ? ` with ${courier}` : ""}.${
-      tracking ? `\n\nTracking number: ${tracking}\nhttps://shiprocket.co/tracking/${tracking}` : ""
-    }\n\nQuestions? ${ctx.contactEmail}`,
+    text,
   };
 }
 
@@ -574,11 +628,219 @@ type Renderer = (
   data: Record<string, any>
 ) => RenderedEmail;
 
+/* ------------------------------------------------------------------ *
+ * Order cancelled
+ * ------------------------------------------------------------------ */
+
+function orderCancelled(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const order: OrderLike = data.order || data;
+  const currency = order.currency_code || ctx.currency || "INR";
+  const reference =
+    order.display_id ?? (order.id ? String(order.id).slice(-6) : "your order");
+  const refunded = data.refund_amount ?? order.total;
+  const reason = data.reason ? String(data.reason) : null;
+
+  const body =
+    paragraph(
+      `Order #${escapeHtml(
+        String(reference)
+      )} has been cancelled and will not be shipped.`
+    ) +
+    (reason ? muted(`Reason given: ${escapeHtml(reason)}`) : "") +
+    factsBlock(
+      "Amount to be returned",
+      formatMoney(refunded, currency)
+    ) +
+    muted(
+      "Refunds are returned to the original payment method. Banks usually take 5–7 working days to show it; if it has not appeared after that, reply to this email and we will chase it."
+    ) +
+    button(ctx, `${ctx.storefrontUrl}/account`, "View your orders");
+
+  return {
+    subject: `Order #${reference} cancelled — SnehaVrinda Kala`,
+    html: layout(
+      ctx,
+      "Your order was cancelled",
+      body,
+      `Order #${reference} is cancelled; ${formatMoney(
+        refunded,
+        currency
+      )} is on its way back.`
+    ),
+    text: [
+      `Order #${reference} has been cancelled.`,
+      reason ? `Reason: ${reason}` : "",
+      `Amount to be returned: ${formatMoney(refunded, currency)}`,
+      "Refunds reach the original payment method in 5–7 working days.",
+      "",
+      `${ctx.storefrontUrl}/account`,
+      `Questions? ${ctx.contactEmail}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * Account lifecycle
+ * ------------------------------------------------------------------ */
+
+function welcome(ctx: TemplateContext, data: Record<string, any>): RenderedEmail {
+  const name = String(data.first_name || "").trim();
+  const greeting = name ? `Welcome, ${escapeHtml(name)}` : "Welcome to SnehaVrinda Kala";
+
+  return {
+    subject: "Welcome to SnehaVrinda Kala",
+    html: layout(
+      ctx,
+      greeting,
+      paragraph(
+        "Your account is ready. Every piece in the shop is made by hand in our Bikaner studio — the account keeps your orders, addresses and tracking in one place."
+      ) +
+        paragraph(
+          "A few things worth knowing: each artwork carries a signed certificate of authenticity, pieces ship insured, and you can write to us any time about a commission made to your measurements."
+        ) +
+        button(ctx, `${ctx.storefrontUrl}/shop`, "Browse the collection") +
+        muted(
+          `If you did not create this account, reply to this email or write to ${escapeHtml(
+            ctx.contactEmail
+          )} and we will remove it.`
+        ),
+      greeting
+    ),
+    text: [
+      greeting,
+      "",
+      "Your account is ready. Orders, addresses and tracking all live in one place.",
+      `Browse the collection: ${ctx.storefrontUrl}/shop`,
+      `If you did not create this account, write to ${ctx.contactEmail}.`,
+    ].join("\n"),
+  };
+}
+
+function passwordReset(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const token = String(data.token || "");
+  const email = String(data.email || "");
+  const ttlMinutes = Number(data.expires_in_minutes || 60);
+  const link = `${ctx.storefrontUrl}/account/reset-password?token=${encodeURIComponent(
+    token
+  )}&email=${encodeURIComponent(email)}`;
+
+  return {
+    subject: "Reset your SnehaVrinda Kala password",
+    html: layout(
+      ctx,
+      "Set a new password",
+      paragraph(
+        "Someone asked to reset the password for this account. If that was you, use the button below."
+      ) +
+        button(ctx, link, "Choose a new password") +
+        muted(
+          `The link works once and expires in ${ttlMinutes} minutes. If the button does not open, paste this address into your browser:`
+        ) +
+        `<p style="margin:0 0 16px;font-size:12px;word-break:break-all;color:#675A52;">${escapeHtml(
+          link
+        )}</p>` +
+        muted(
+          "If you did not ask for this, you can ignore this email — your password has not changed."
+        ),
+      "Reset link inside, valid for one hour."
+    ),
+    text: [
+      "Reset your SnehaVrinda Kala password",
+      "",
+      `Open this link to choose a new password (valid ${ttlMinutes} minutes, single use):`,
+      link,
+      "",
+      "If you did not ask for this, ignore this email — your password has not changed.",
+    ].join("\n"),
+  };
+}
+
+function passwordChanged(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const when = String(data.changed_at || new Date().toISOString());
+
+  return {
+    subject: "Your SnehaVrinda Kala password was changed",
+    html: layout(
+      ctx,
+      "Your password was changed",
+      paragraph(
+        "The password on your SnehaVrinda Kala account has just been changed, and every other signed-in device has been asked to sign in again."
+      ) +
+        muted(`Changed at: ${escapeHtml(when)}`) +
+        muted(
+          `If this was not you, write to ${escapeHtml(
+            ctx.contactEmail
+          )} immediately so we can lock the account.`
+        ) +
+        button(ctx, `${ctx.storefrontUrl}/account/login`, "Sign in"),
+      "Your password was changed."
+    ),
+    text: [
+      "Your SnehaVrinda Kala password was changed.",
+      `Changed at: ${when}`,
+      `If this was not you, write to ${ctx.contactEmail} immediately.`,
+      `${ctx.storefrontUrl}/account/login`,
+    ].join("\n"),
+  };
+}
+
+function loginAlert(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const when = String(data.signed_in_at || new Date().toISOString());
+  const device = data.device ? String(data.device) : null;
+
+  return {
+    subject: "New sign-in to your SnehaVrinda Kala account",
+    html: layout(
+      ctx,
+      "New sign-in",
+      paragraph(
+        "Your account was signed in to. If this was you, there is nothing to do."
+      ) +
+        muted(`When: ${escapeHtml(when)}`) +
+        (device ? muted(`Device: ${escapeHtml(device)}`) : "") +
+        muted(
+          `If this was not you, change your password now and write to ${escapeHtml(
+            ctx.contactEmail
+          )}.`
+        ) +
+        button(ctx, `${ctx.storefrontUrl}/account`, "Review your account"),
+      "New sign-in to your account."
+    ),
+    text: [
+      "New sign-in to your SnehaVrinda Kala account.",
+      `When: ${when}`,
+      device ? `Device: ${device}` : "",
+      `If this was not you, change your password and write to ${ctx.contactEmail}.`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  };
+}
+
 const RENDERERS: Record<string, Renderer> = {
   order_confirmation: orderConfirmation,
   order_placed: orderConfirmation,
   refund_processed: refundProcessed,
   shipment_confirmed: shipmentConfirmed,
+  order_cancelled: orderCancelled,
+  welcome: welcome,
+  password_reset: passwordReset,
+  password_changed: passwordChanged,
+  login_alert: loginAlert,
   new_commission_request: newCommissionRequest,
   commission_request_received: commissionReceived,
   commission_quote_sent: quoteSent,

@@ -10,3 +10,7 @@ export {
   default as integrationEventRetrySubscriber,
   config as integrationEventRetryConfig,
 } from "./integration-event-retry.subscriber";
+export {
+  default as passwordResetSubscriber,
+  config as passwordResetConfig,
+} from "./password-reset.subscriber";

@@ -11,7 +11,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { recordResetRequest } from "@/lib/password-reset";
+import { recordResetRequest, looksLikeEmail } from "@/lib/password-reset";
+import { medusa } from "@/lib/medusa";
 import { emailStatus } from "@/lib/config-status";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -61,6 +62,19 @@ export async function POST(req: Request) {
     }
     const origin = new URL(req.url).origin;
     return NextResponse.redirect(`${origin}/en/account/forgot-password?error=failed`, 303);
+  }
+
+  // Step two: ask Medusa to mint a single-use reset token. It never returns the
+  // token over HTTP — the `auth.password_reset` subscriber mails it — so an
+  // unknown address simply produces nothing, which is also the non-enumerable
+  // answer. Failure here is not surfaced either: a "that address exists but mail
+  // failed" response would be an oracle.
+  if (emailConfigured && typeof email === "string" && looksLikeEmail(email)) {
+    try {
+      await medusa.requestPasswordReset(email.trim());
+    } catch (error) {
+      console.error("[forgot-password] reset request did not go through", error);
+    }
   }
 
   if (wantsJson) {

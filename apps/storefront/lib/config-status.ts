@@ -73,35 +73,41 @@ export function paymentStatus(source: Env = env()): ConfigItem {
 /** Email: rendered by the backend, sent only when a transport exists. */
 export function emailStatus(source: Env = env()): ConfigItem {
   const from = has(source, "FROM_EMAIL");
+  const resend = has(source, "RESEND_API_KEY");
   const sesKey = has(source, "AWS_SES_ACCESS_KEY_ID") && has(source, "AWS_SES_SECRET_ACCESS_KEY");
   const sesRole = has(source, "AWS_SES_ROLE_ARN");
 
-  if (!from && !sesKey && !sesRole) {
+  if (!from && !resend && !sesKey && !sesRole) {
     return {
       id: "email",
       label: "Email",
       level: "missing",
-      detail: "No sender address and no SES credentials, so nothing is sent.",
+      detail: "No sender address and no transport credentials, so nothing is sent.",
       impact:
         "Order confirmations, quote emails and cart reminders are rendered, logged as skipped, and never delivered.",
-      keys: ["FROM_EMAIL", "AWS_SES_ACCESS_KEY_ID", "AWS_SES_SECRET_ACCESS_KEY"],
+      keys: ["FROM_EMAIL", "RESEND_API_KEY"],
     };
   }
-  if (!from || (!sesKey && !sesRole)) {
+  // The sender address is what every transport needs; the credential half is
+  // satisfied by Resend or by SES (static keys, or a task role).
+  const transportReady = resend || sesKey || sesRole;
+  if (!from || !transportReady) {
     return {
       id: "email",
       label: "Email",
       level: "partial",
-      detail: "Some email configuration is present but incomplete.",
+      detail: from
+        ? "A sender address is set but no transport credentials are."
+        : "A transport credential is set but no sender address (FROM_EMAIL) is.",
       impact: "Messages are still recorded as skipped until both halves are set.",
-      keys: ["FROM_EMAIL", "AWS_SES_ACCESS_KEY_ID", "AWS_SES_SECRET_ACCESS_KEY"],
+      keys: ["FROM_EMAIL", "RESEND_API_KEY", "AWS_SES_ACCESS_KEY_ID"],
     };
   }
   return {
     id: "email",
     label: "Email",
     level: "ready",
-    detail: "Sender address and SES credentials are present.",
+    detail: `Sender address and ${resend ? "Resend" : "SES"} credentials are present.`,
   };
 }
 
