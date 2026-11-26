@@ -71,7 +71,7 @@ export default async function OrderPage({
   // falls back to the studio's own milestones.
   let live: Awaited<ReturnType<typeof liveTracking>> = null;
   if (shipment?.awb_code) {
-    live = await liveTracking(shipment.awb_code);
+    live = await liveTracking(shipment.awb_code, shipment.shiprocket_order_id);
   }
 
   const buyerTimeline = order

@@ -21,13 +21,33 @@ let tokenCache: { token: string; expiresAt: number } | null = null;
 
 // Credentials are read from the environment only. A hard-coded fallback here
 // would ship a live account password inside the build artifact.
+//
+// Shiprocket's docs are specific about which credentials these are
+// (apidocs.shiprocket.in → Getting Started): a *separate API user*, created in
+// Settings → API → Add New API User, whose password is mailed to the account's
+// registered address. A normal account email and password will not authenticate —
+// the login answers 403 "Invalid email and password combination" — which is the
+// single most common way this integration looks broken when nothing is wrong.
 const SHIPROCKET_EMAIL = process.env.SHIPROCKET_EMAIL || "";
 const SHIPROCKET_PASSWORD = process.env.SHIPROCKET_PASSWORD || "";
 
+/**
+ * A token issued by the panel, when one exists.
+ *
+ * Shiprocket also hands out a long-lived API token, which is accepted as a
+ * bearer credential without a login round trip. When it is present it is used
+ * directly: one fewer call, and one fewer place for a password to live.
+ */
+const SHIPROCKET_STATIC_TOKEN = (process.env.SHIPROCKET_API_TOKEN || "").trim();
+
 async function getAuthToken(): Promise<string> {
+  if (SHIPROCKET_STATIC_TOKEN) {
+    return SHIPROCKET_STATIC_TOKEN;
+  }
+
   if (!SHIPROCKET_EMAIL || !SHIPROCKET_PASSWORD) {
     throw new Error(
-      "Shiprocket is not configured. Set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD."
+      "Shiprocket is not configured. Set SHIPROCKET_API_TOKEN, or SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD for an API user."
     );
   }
 
@@ -47,7 +67,13 @@ async function getAuthToken(): Promise<string> {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Shiprocket auth failed: ${res.status} ${text}`);
+    // 403 here almost always means "not an API user", not "wrong password".
+    // Saying so in the error is the difference between twenty minutes and a day.
+    const hint =
+      res.status === 403 || res.status === 401
+        ? " Shiprocket only accepts an API *user* here — create one in Settings → API → Add New API User; its password is emailed to the account address. An ordinary account login will not work."
+        : "";
+    throw new Error(`Shiprocket auth failed: ${res.status} ${text.slice(0, 200)}${hint}`);
   }
 
   const data = await res.json();
@@ -56,15 +82,20 @@ async function getAuthToken(): Promise<string> {
     throw new Error("Shiprocket auth returned no token");
   }
 
-  // Token is valid ~30 days; refresh with a 1-day safety margin.
-  tokenCache = { token, expiresAt: now + 60 * 60 * 24 * 29 * 1000 };
+  // Shiprocket's own helpsheet is explicit: "Auth token is valid for 240 hours
+  // (10 days), which means it needs to be refreshed/regenerated after 240
+  // hours." The cache used to hold a token for 29 days, so from day 10 to day
+  // 29 every shipment and tracking call failed with 401 and nothing recovered
+  // until the process restarted. Nine days leaves a day of slack.
+  tokenCache = { token, expiresAt: now + 9 * 24 * 60 * 60 * 1000 };
   return token;
 }
 
 async function shiprocketRequest(
   path: string,
   body?: any,
-  method: "GET" | "POST" = "POST"
+  method: "GET" | "POST" = "POST",
+  retryOnAuth = true
 ) {
   const token = await getAuthToken();
   const init: RequestInit = {
@@ -80,6 +111,15 @@ async function shiprocketRequest(
   }
 
   const res = await fetch(`${SHIPROCKET_BASE_URL}${path}`, init);
+
+  // A 401 means the token died early (a logout elsewhere, a password change, or
+  // the ten-day clock running out between calls). Refresh once and retry: the
+  // alternative is that every shipment silently fails until a deploy restarts
+  // the process.
+  if ((res.status === 401 || res.status === 403) && retryOnAuth && !SHIPROCKET_STATIC_TOKEN) {
+    tokenCache = null;
+    return shiprocketRequest(path, body, method, false);
+  }
 
   const text = await res.text();
   let data: any = null;
@@ -358,12 +398,39 @@ export async function createShipment(
   };
 }
 
-export async function trackShipment(awbCode: string) {
-  return shiprocketRequest(
-    `/courier/track?awb_code=${encodeURIComponent(awbCode)}`,
-    undefined,
-    "GET"
-  );
+/**
+ * Tracking for one parcel.
+ *
+ * The documented endpoint is `GET /v1/external/track/{order_id}`, where the id is
+ * Shiprocket's own order id (`shiprocket_order_id` on our shipment row) — not the
+ * AWB. The older AWB query still answers, so it is the fallback for rows created
+ * before the id was stored, and for a parcel booked outside the panel.
+ */
+export async function trackShipment(awbCode: string, shiprocketOrderId?: string | null) {
+  const awb = String(awbCode ?? "").trim();
+
+  // Shiprocket's helpsheet gives this exact route for tracking:
+  // GET /v1/external/courier/track/awb/{awb_code} — keyed on the AWB, which is
+  // what we store and what the buyer is given. The query form is kept as a
+  // fallback for older accounts where the path variant 404s.
+  if (awb) {
+    try {
+      return await shiprocketRequest(
+        `/courier/track/awb/${encodeURIComponent(awb)}`,
+        undefined,
+        "GET"
+      );
+    } catch {
+      // Fall through to the query form.
+    }
+  }
+
+  const orderId = String(shiprocketOrderId ?? "").trim();
+  if (orderId) {
+    return shiprocketRequest(`/courier/track?order_id=${encodeURIComponent(orderId)}`, undefined, "GET");
+  }
+
+  return shiprocketRequest(`/courier/track?awb_code=${encodeURIComponent(awb)}`, undefined, "GET");
 }
 
 export { SHIPROCKET_BASE_URL };

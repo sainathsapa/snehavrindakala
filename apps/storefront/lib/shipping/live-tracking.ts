@@ -82,7 +82,10 @@ function normalise(awb: string, raw: any): LiveTracking | null {
  * inside shiprocket.ts has its own timeout, and any rejection here is swallowed
  * because the page has a stored status to fall back on.
  */
-export async function liveTracking(awb: string): Promise<LiveTracking | null> {
+export async function liveTracking(
+  awb: string,
+  shiprocketOrderId?: string | null
+): Promise<LiveTracking | null> {
   const code = String(awb || "").trim();
   if (!code) return null;
 
@@ -90,7 +93,7 @@ export async function liveTracking(awb: string): Promise<LiveTracking | null> {
   if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
 
   try {
-    const raw = await trackShipment(code);
+    const raw = await trackShipment(code, shiprocketOrderId);
     const value = normalise(code, raw);
     cache.set(code, { at: Date.now(), value });
     return value;

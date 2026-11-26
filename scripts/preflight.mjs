@@ -164,10 +164,26 @@ if (value("SELLER_GSTIN")) {
 
 section("Shipping");
 
-if (value("SHIPROCKET_EMAIL") && value("SHIPROCKET_PASSWORD")) {
-  pass("Shiprocket credentials", "email/password login");
-} else if (value("SHIPROCKET_API_TOKEN")) {
-  pass("Shiprocket API token");
+// Presence is not authentication. This check used to pass on a pair of values
+// that Shiprocket rejects with 403, so the one thing preflight exists to catch —
+// "will shipping work on launch day?" — was the one thing it did not test.
+if (value("SHIPROCKET_API_TOKEN")) {
+  const status = await shiprocketProbe({ token: value("SHIPROCKET_API_TOKEN") });
+  if (status.ok) {
+    pass("Shiprocket API token", `accepted (${status.detail})`);
+  } else {
+    fail("Shiprocket API token", status.detail);
+  }
+} else if (value("SHIPROCKET_EMAIL") && value("SHIPROCKET_PASSWORD")) {
+  const status = await shiprocketProbe({
+    email: value("SHIPROCKET_EMAIL"),
+    password: value("SHIPROCKET_PASSWORD"),
+  });
+  if (status.ok) {
+    pass("Shiprocket login", `authenticated (${status.detail})`);
+  } else {
+    fail("Shiprocket login", status.detail);
+  }
 } else {
   warn("Shiprocket credentials", "unset — AWB and tracking must be entered by hand");
 }
@@ -190,6 +206,60 @@ if (!storefrontUrl) {
 }
 
 section("Runtime reachability");
+
+/**
+ * Ask Shiprocket whether these credentials actually work.
+ *
+ * The docs are explicit that the email/password pair must belong to an API
+ * *user* created in Settings → API, not the shop's ordinary login — an ordinary
+ * account gets 403 "Invalid email and password combination", which reads like a
+ * wrong password and is not. When the call fails this says which of the two it
+ * is, because a launch-blocking message that misdiagnoses itself costs a day.
+ */
+async function shiprocketProbe(creds) {
+  const base = (value("SHIPROCKET_BASE_URL") || "https://apiv2.shiprocket.in/v1/external").replace(/\/+$/, "");
+
+  if (creds.token) {
+    try {
+      const res = await fetch(`${base}/settings/company/pickup`, {
+        headers: { Authorization: `Bearer ${creds.token}`, Accept: "application/json" },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (res.ok) return { ok: true, detail: `token accepted (${res.status})` };
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, detail: `token rejected (${res.status}) — regenerate it in Settings → API` };
+      }
+      return { ok: true, detail: `reachable (${res.status})` };
+    } catch (error) {
+      return { ok: false, detail: `could not reach Shiprocket: ${String(error.message).slice(0, 60)}` };
+    }
+  }
+
+  try {
+    const res = await fetch(`${base}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: creds.email, password: creds.password }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return body?.token
+        ? { ok: true, detail: "token issued" }
+        : { ok: false, detail: "answered 200 without a token" };
+    }
+    if (res.status === 401 || res.status === 403) {
+      return {
+        ok: false,
+        detail:
+          "rejected — this must be an API user (Settings → API → Add New API User), not the shop's normal login",
+      };
+    }
+    return { ok: false, detail: `login failed (${res.status})` };
+  } catch (error) {
+    return { ok: false, detail: `could not reach Shiprocket: ${String(error.message).slice(0, 60)}` };
+  }
+}
 
 async function checkHttp(url, label, expectOk = true) {
   try {

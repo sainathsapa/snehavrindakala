@@ -156,7 +156,7 @@ export async function trackOrder(
   // buyer asking "where is it" needs both.
   let live: LiveTracking | null = null;
   if (shipment?.awb_code) {
-    live = await liveTracking(shipment.awb_code);
+    live = await liveTracking(shipment.awb_code, shipment.shiprocket_order_id);
   }
 
   return {
