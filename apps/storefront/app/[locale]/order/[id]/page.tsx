@@ -116,8 +116,15 @@ export default async function OrderPage({
     console.error("Could not load the gift note for the order", error);
   }
 
-  // The invoice link keeps the guest's signed order token, so a buyer without a
-  // session can still fetch their own PDF.
+  // NOTE on the hand-off: Medusa only assigns `customer_id` when an order has no
+  // email and a customer is later created from it (see updateOrderWorkflow). A
+  // guest order therefore keeps `customer_id: null`, so this order will not
+  // appear in the new account's order list even though the account exists. The
+  // copy below says the account is ready rather than claiming the order is in
+  // it, because the second part would be untrue. Linking retroactively means
+  // either a raw write into Medusa's order table (which is what upgrades break)
+  // or a supported workflow that does not exist yet — a decision for the owner,
+  // not something to fake in a banner.
   const invoiceHref =
     `/api/orders/${order.id}/invoice` +
     (guestToken ? `?t=${encodeURIComponent(guestToken)}` : "");
@@ -174,7 +181,7 @@ export default async function OrderPage({
           <RedirectToOrders
             href="/account"
             seconds={8}
-            message="Taking you to your orders in {seconds}s — they are saved to your account."
+            message="Taking you to your account in {seconds}s — it is ready, and the password is in your inbox."
             stayLabel="Stay here"
             goLabel="Go now"
           />
