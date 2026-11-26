@@ -193,6 +193,37 @@ export default async function CheckoutPage() {
           </Link>
         </nav>
 
+        {/* Three steps, one of which is already done. It tells a first-time
+            buyer how much is left without turning the page into a wizard. */}
+        <ol className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 font-sans text-[11px] uppercase tracking-[0.18em]">
+          {[
+            { label: "Bag", done: true },
+            { label: "Delivery", done: addressSaved },
+            { label: "Payment", done: false },
+          ].map((step, index) => (
+            <li key={step.label} className="flex items-center gap-3">
+              <span
+                className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
+                  step.done
+                    ? "border-leaf/50 bg-leaf/10 text-leaf"
+                    : "border-sand-border text-muted-ink"
+                }`}
+                aria-hidden="true"
+              >
+                {step.done ? "✓" : index + 1}
+              </span>
+              <span className={step.done ? "text-leaf" : "text-muted-ink"}>
+                {step.label}
+              </span>
+              {index < 2 && (
+                <span aria-hidden="true" className="text-sand-border">
+                  —
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+
         <header className="mb-10 border-b border-sand-border/70 pb-6">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
             {t("secureCheckoutEyebrow")}

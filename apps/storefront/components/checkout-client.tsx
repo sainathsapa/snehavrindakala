@@ -655,6 +655,51 @@ export function CheckoutClient({
       >
         <div className="lg:border-t-2 lg:border-kumkum/70 lg:pt-5">
           <h2 className="sr-only">{t("orderSummary")}</h2>
+
+          {/* What is actually being paid for. Collapsed, because the totals are
+              the question the buyer came here with; expandable, because paying
+              for something you can no longer see is unnerving. */}
+          <details className="mb-4 border-b border-sand-border/60 pb-4" open>
+            <summary className="flex cursor-pointer items-baseline justify-between gap-3 font-sans text-sm text-deep-ink">
+              <span className="font-medium">
+                {lines.reduce((sum, line) => sum + (line.quantity || 0), 0)} item
+                {lines.reduce((sum, line) => sum + (line.quantity || 0), 0) === 1
+                  ? ""
+                  : "s"}
+              </span>
+              <span className="text-xs text-muted-ink underline underline-offset-4">
+                show / hide
+              </span>
+            </summary>
+            <ul className="mt-3 space-y-3">
+              {lines.map((line) => (
+                <li key={line.id} className="flex items-start gap-3">
+                  {line.thumbnail ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={line.thumbnail}
+                      alt=""
+                      className="h-12 w-10 shrink-0 rounded border border-sand-border object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="h-12 w-10 shrink-0 rounded border border-dashed border-sand-border/70" />
+                  )}
+                  <div className="min-w-0 flex-1 font-sans text-[13px] leading-snug">
+                    <p className="truncate text-deep-ink">{line.title}</p>
+                    <p className="text-xs text-muted-ink">
+                      {line.variant_title ? `${line.variant_title} · ` : ""}×
+                      {line.quantity}
+                    </p>
+                  </div>
+                  <span className="shrink-0 whitespace-nowrap font-sans text-[13px] text-deep-ink">
+                    {formatPrice(line.total, currency)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+
           <dl className="space-y-3 font-sans text-sm">
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-muted-ink">{t("subtotal")}</dt>
