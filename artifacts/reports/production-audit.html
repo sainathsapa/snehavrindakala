@@ -100,7 +100,7 @@
       <tr><td>Orders</td><td>List, detail, invoice, shipment booking, cancel and refund all guarded by <code>requireAdmin</code>/<code>requirePermission</code>. Shipment booking is idempotent (an existing AWB returns <code>existing: true</code> instead of double-booking).</td><td><span class="tag ok">Works</span></td></tr>
       <tr><td>Inventory</td><td>Stock locations, levels and adjustments exist with audit writes. <em>Gap:</em> no low-stock alert reaches the owner — a painting can sell out silently while a second buyer is mid-checkout.</td><td><span class="tag warn">Gap</span></td></tr>
       <tr><td>Products</td><td>Product management covers create/edit/media/categories/tags/collections. <em>Gap:</em> dimensions and weight are optional, which is the same defect that breaks courier quotes.</td><td><span class="tag warn">Gap</span></td></tr>
-      <tr><td>Reviews</td><td>Submitted reviews are stored but not moderated — nothing distinguishes a real buyer from anyone with the URL.</td><td><span class="tag warn">Gap</span></td></tr>
+      <tr><td>Reviews</td><td>Reviews arrive as <code>pending</code> and only <code>approved</code> rows are ever served to the public store, so nothing appears without staff approval. Corrected after re-reading the module: this was wrongly listed as a gap.</td><td><span class="tag ok">Works</span></td></tr>
       <tr><td>Tickets / support</td><td>Local ticket system works alongside Zoho SalesIQ (chat on the website only), as requested.</td><td><span class="tag ok">Works</span></td></tr>
     </table>
 
@@ -129,7 +129,7 @@
       <div>
         <h3>Still open by design</h3>
         <ul>
-          <li><code>/currency</code>, <code>/notifications/read</code> — cheap, session-scoped</li>
+          <li><code>/currency</code> — whitelisted value written to a cookie only</li><li><code>/notifications/read</code> — already behind the admin session guard</li>
           <li><code>/webhooks/razorpay</code>, <code>/webhooks/ses</code> — signature-verified, so limiting them would only drop real events</li>
           <li><code>/webhooks/courier</code> — shared-secret header, neutral path (Shiprocket bans <code>shiprocket</code> in webhook URLs)</li>
         </ul>
@@ -185,7 +185,7 @@
       <tr><td>3</td><td>Switch Razorpay to live keys and set the webhook to <code>https://www.snehavrinda.in/api/webhooks/razorpay</code>.</td><td><span class="tag info">Unblocks money</span></td></tr>
       <tr><td>4</td><td>Enter dimensions and weight for every piece still missing them, then set <code>PRODUCT_DIMENSIONS_CONFIRMED=true</code>.</td><td><span class="tag info">Correct quotes</span></td></tr>
       <tr><td>5</td><td>Place one real low-value order, and follow it through: confirmation email → label → tracking email → delivered status in the account.</td><td><span class="tag info">End-to-end proof</span></td></tr>
-      <tr><td>6</td><td>Then the three gaps: low-stock alerts, review moderation, required dimensions in product management.</td><td><span class="tag info">Polish</span></td></tr>
+      <tr><td>6</td><td>Then the two remaining gaps: low-stock alerts and required dimensions in product management.</td><td><span class="tag info">Polish</span></td></tr>
     </table>
   </section>
 

@@ -233,7 +233,7 @@ Nightly backups are a compose service rather than cron: see
   usable for admin-created fulfilments, while order shipments are still created
   by `lib/shipping/create-order-shipment.ts` in the storefront.
 * **Email is a no-op until SES is configured.** `FROM_EMAIL` plus
-  `AWS_SES_*` credentials make it real; without them messages are rendered,
+  `RESEND_API_KEY` makes it real; without it messages are rendered,
   recorded as `skipped`, and nothing is sent.
 * **Backend → storefront notifications need a matching secret.** The backend
   posts to the storefront's `/api/internal/notifications` with

@@ -127,7 +127,7 @@ Then in the Shiprocket dashboard: URL
 token = `SHIPROCKET_WEBHOOK_TOKEN`, and toggle the connection to ENABLED.
 
 ## Still unconfigured after deploy (not blockers)
-- **Email**: `FROM_EMAIL` + `AWS_SES_*` empty → confirmations and cart reminders
+- **Email**: set `RESEND_API_KEY` + `FROM_EMAIL`; without them confirmations and cart reminders
   are logged as skipped, never sent.
 - **Razorpay**: keys are `rzp_test_…` → no real payments until swapped for
   `rzp_live_…` (and the webhook secret re-issued in live mode).

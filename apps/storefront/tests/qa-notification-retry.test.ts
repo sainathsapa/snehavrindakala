@@ -7,29 +7,19 @@
  * that any real email was delivered — `sent` means "provider accepted".
  */
 
-import { createSign, generateKeyPairSync } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   NOTIFICATION_MAX_ATTEMPTS_DEFAULT,
-  applyVerifiedSesEvent,
   claimDueRetries,
   classifyNotificationError,
   notificationBackoffDelayMs,
   notificationMaxAttempts,
-  parseSesEvent,
   planNotificationRetry,
-  precheckSnsMessage,
   processNotificationRetries,
-  processVerifiedSnsNotification,
-  shouldSuppressSesEvent,
-  snsCanonicalString,
-  verifySnsSignature,
   type RetrySendResult,
-  type SesEvent,
-  type SnsMessage,
 } from "@/lib/notifications";
 
 const CERT_URL = "https://sns.ap-south-1.amazonaws.com/SimpleNotificationService/abc123def456.pem";
@@ -368,165 +358,11 @@ describe("notification retry — idempotency and lease", () => {
   });
 });
 
-/* ── SNS signature helpers ────────────────────────────────────────────────── */
-
-const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
-const certPem = publicKey.export({ type: "spki", format: "pem" }).toString();
-let messageCounter = 0;
-
-function sesPayload(eventType: string, messageId: string, extra: Record<string, any> = {}) {
-  return {
-    eventType,
-    mail: { messageId, timestamp: "2026-11-23T00:00:00.000Z" },
-    ...extra,
-  };
-}
-
-function signedNotification(payload: any, tamper = false): SnsMessage {
-  const message: SnsMessage = {
-    Type: "Notification",
-    MessageId: `sns-${++messageCounter}`,
-    TopicArn: TOPIC_ARN,
-    Message: JSON.stringify(payload),
-    Timestamp: "2026-11-23T00:01:00.000Z",
-    SignatureVersion: "1",
-    Signature: "",
-    SigningCertURL: CERT_URL,
-  };
-  const canonical = snsCanonicalString(message, "1")!;
-  const signature = createSign("RSA-SHA1").update(canonical).end().sign(privateKey).toString("base64");
-  message.Signature = signature;
-  if (tamper) message.MessageId = `sns-tampered-${messageCounter}`;
-  return message;
-}
-
-/* ── 7–8: duplicate provider event / invalid signature ───────────────────── */
-
-describe("SES events — authenticity and dedupe", () => {
-  it("rejects an invalid SES event signature and writes nothing", async () => {
-    const good = signedNotification(sesPayload("Delivery", "ses-1"));
-    const bad = signedNotification(sesPayload("Delivery", "ses-2"), true);
-
-    expect(verifySnsSignature(good, certPem)).toBe(true);
-    expect(verifySnsSignature(bad, certPem)).toBe(false);
-    expect(precheckSnsMessage(bad, { topicArn: TOPIC_ARN }).ok).toBe(true);
-
-    const result = await processVerifiedSnsNotification(bad, certPem, {
-      query: db.query,
-      env: {} as NodeJS.ProcessEnv,
-    });
-    expect(result).toMatchObject({ applied: false, reason: "invalid_signature" });
-    expect(db.events.size).toBe(0);
-  });
-
-  it("fail-closed: untrusted cert URL and wrong topic are rejected before verify", () => {
-    const message = signedNotification(sesPayload("Delivery", "ses-3"));
-    expect(isTrustedCertCheck(message)).toBe(true);
-    const evil = { ...message, SigningCertURL: "https://evil.example.com/cert.pem" };
-    expect(precheckSnsMessage(evil, {}).ok).toBe(false);
-    expect(precheckSnsMessage(message, { topicArn: "arn:aws:sns:ap-south-1:1:other" }).ok).toBe(false);
-  });
-
-  it("a redelivered provider event cannot write a second effect", async () => {
-    db.seed({ provider_message_id: "ses-dedupe" });
-    const message = signedNotification(sesPayload("Delivery", "ses-dedupe"));
-    const first = await processVerifiedSnsNotification(message, certPem, {
-      query: db.query,
-      env: {} as NodeJS.ProcessEnv,
-    });
-    const second = await processVerifiedSnsNotification(message, certPem, {
-      query: db.query,
-      env: {} as NodeJS.ProcessEnv,
-    });
-    expect(first.applied).toBe(true);
-    expect(second).toMatchObject({ applied: false, reason: "duplicate_event" });
-    expect(db.events.size).toBe(1);
-  });
-});
-
-// Local helper: direct check of the cert-URL trust rule used by precheck.
-function isTrustedCertCheck(message: SnsMessage): boolean {
-  return /^https:\/\/sns\.[a-z0-9-]+\.amazonaws\.com\/SimpleNotificationService\/[0-9a-f]+\.pem$/.test(
-    message.SigningCertURL || ""
-  );
-}
-
-/* ── 9–11: verified delivery / bounce / complaint ────────────────────────── */
-
-describe("SES events — verified state changes and suppression", () => {
-  it("valid delivery event marks the row delivered", async () => {
-    const row = db.seed({ provider_message_id: "ses-deliver" });
-    const message = signedNotification(sesPayload("Delivery", "ses-deliver"));
-    const event = parseSesEvent(message);
-    expect(event).toMatchObject({ eventType: "delivery", messageId: "ses-deliver" });
-    // No recipient address is carried in the parsed event.
-    expect(JSON.stringify(event)).not.toMatch(/buyer@example\.test/);
-
-    const result = await applyVerifiedSesEvent(event!, { query: db.query, env: {} as any });
-    expect(result.applied).toBe(true);
-    expect(result.deliveryStatus).toBe("delivered");
-    expect(row.delivery_status).toBe("delivered");
-    expect(row.status).toBe("delivered");
-    expect(row.suppressed).toBe(false);
-  });
-
-  it("hard bounce marks bounced and suppresses by default", async () => {
-    const row = db.seed({ provider_message_id: "ses-bounce" });
-    const message = signedNotification(
-      sesPayload("Bounce", "ses-bounce", { bounce: { bounceType: "Permanent" } })
-    );
-    const event = parseSesEvent(message)!;
-    expect(shouldSuppressSesEvent(event, {} as any)).toEqual({ suppress: true, reason: "hard_bounce" });
-
-    const result = await applyVerifiedSesEvent(event, { query: db.query, env: {} as any });
-    expect(result.suppressed).toBe(true);
-    expect(row.delivery_status).toBe("bounced");
-    expect(row.status).toBe("bounced");
-    expect(row.suppressed).toBe(true);
-    expect(db.suppressions).toEqual([{ recipient: "buyer@example.test", reason: "hard_bounce" }]);
-  });
-
-  it("soft bounce does NOT suppress; complaint suppresses by default", async () => {
-    const soft = parseSesEvent(
-      signedNotification(sesPayload("Bounce", "ses-soft", { bounce: { bounceType: "Transient" } }))
-    )!;
-    expect(shouldSuppressSesEvent(soft, {} as any).suppress).toBe(false);
-
-    const row = db.seed({ provider_message_id: "ses-complaint" });
-    const complaint = parseSesEvent(
-      signedNotification(sesPayload("Complaint", "ses-complaint"))
-    )!;
-    expect(shouldSuppressSesEvent(complaint, {} as any)).toEqual({ suppress: true, reason: "complaint" });
-
-    const result = await applyVerifiedSesEvent(complaint, { query: db.query, env: {} as any });
-    expect(result.suppressed).toBe(true);
-    expect(row.delivery_status).toBe("complained");
-    // `status` keeps its legacy CHECK vocabulary — only delivered/bounced are mapped.
-    expect(row.status).toBe("failed");
-    expect(db.suppressions).toEqual([{ recipient: "buyer@example.test", reason: "complaint" }]);
-  });
-
-  it("owner flags can disable the default suppression policy", () => {
-    const hard = parseSesEvent(
-      signedNotification(sesPayload("Bounce", "ses-x", { bounce: { bounceType: "Permanent" } }))
-    )!;
-    const complaint = parseSesEvent(signedNotification(sesPayload("Complaint", "ses-y")))!;
-    const env = {
-      SES_SUPPRESS_ON_BOUNCE: "false",
-      SES_SUPPRESS_ON_COMPLAINT: "false",
-    } as unknown as NodeJS.ProcessEnv;
-    expect(shouldSuppressSesEvent(hard, env).suppress).toBe(false);
-    expect(shouldSuppressSesEvent(complaint, env).suppress).toBe(false);
-  });
-});
-
-/* ── Static wiring checks (no weakened existing assertions) ──────────────── */
-
 describe("wiring — migration, webhook and backend send path", () => {
   const migration = () =>
     readFileSync(join(__dirname, "../db/migrations/005_notification_retry.sql"), "utf8");
   const route = () =>
-    readFileSync(join(__dirname, "../app/api/webhooks/ses/route.ts"), "utf8");
+    readFileSync(join(__dirname, "../app/api/webhooks/resend/route.ts"), "utf8");
   const service = () =>
     readFileSync(
       join(__dirname, "../../backend/src/modules/notification/service.ts"),
@@ -553,25 +389,13 @@ describe("wiring — migration, webhook and backend send path", () => {
     expect(sql).not.toMatch(/\bDELETE FROM\b/i);
   });
 
-  it("webhook verifies the signature before applying any event", () => {
+  it("webhook verifies the signature before it writes anything", () => {
     const src = route();
-    // The route prechecks the envelope, then delegates verification+apply to a
-    // helper that verifies BEFORE it writes anything.
-    expect(src).toMatch(/processVerifiedSnsNotification/);
-    expect(src.indexOf("precheckSnsMessage")).toBeLessThan(src.indexOf("processVerifiedSnsNotification"));
-    expect(src).toMatch(/SES_SNS_TOPIC_ARN/);
-    expect(src).toMatch(/getSnsCertificate/);
-
-    const lib = readFileSync(join(__dirname, "../lib/notifications.ts"), "utf8");
-    const helper = lib.slice(lib.indexOf("export async function processVerifiedSnsNotification"));
-    expect(helper).toMatch(/verifySnsSignature/);
-    expect(helper.indexOf("verifySnsSignature")).toBeLessThan(helper.indexOf("applyVerifiedSesEvent"));
-  });
-
-  it("backend send path records attempts/delivery_status and never logs the recipient", () => {
-    const src = service();
-    expect(src).toMatch(/planNotificationFailure/);
-    expect(src).toMatch(/delivery_status/);
-    expect(src).toMatch(/recipient withheld/);
+    // Signature check first, database write second. Reversing that would let an
+    // unauthenticated caller forge a bounce.
+    expect(src).toMatch(/verifySvixSignature/);
+    expect(src.indexOf("verifySvixSignature")).toBeLessThan(src.indexOf("UPDATE notifications"));
+    // No AWS anywhere: the SNS certificate path is gone with the SES transport.
+    expect(src).not.toMatch(/getSnsCertificate|SES_SNS_TOPIC_ARN/);
   });
 });

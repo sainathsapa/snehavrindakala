@@ -134,16 +134,25 @@ describe("transport configuration", () => {
     expect(readTransportConfig({ FROM_EMAIL: "not-an-email" } as any)).toBeNull();
   });
 
-  it("reads region and sender when configured", () => {
+  it("reads the sender and key when configured", () => {
     const config = readTransportConfig({
       FROM_EMAIL: "orders@snehavrinda.in",
-      AWS_SES_REGION: "ap-south-1",
+      RESEND_API_KEY: "re_test_key",
       FROM_NAME: "SnehaVrinda Kala",
     } as any);
     expect(config).toMatchObject({
+      provider: "resend",
       fromEmail: "orders@snehavrinda.in",
-      region: "ap-south-1",
     });
+  });
+
+  it("is unconfigured without a key, so nothing is sent silently", () => {
+    // FROM_EMAIL alone used to be enough when SES credentials existed. Resend is
+    // the only transport now, so a key is required — otherwise the module logs a
+    // preview and records `skipped` instead of pretending to send.
+    expect(
+      readTransportConfig({ FROM_EMAIL: "orders@snehavrinda.in" } as any)
+    ).toBeNull();
   });
 });
 
@@ -165,8 +174,7 @@ describe("sendEmail", () => {
         { to: "nope", subject: "hi", html: "<p>hi</p>", text: "hi" },
         {
           FROM_EMAIL: "orders@snehavrinda.in",
-          AWS_SES_ACCESS_KEY_ID: "key",
-          AWS_SES_SECRET_ACCESS_KEY: "secret",
+          RESEND_API_KEY: "re_test_key",
         } as any
       )
     ).rejects.toThrow(/Invalid recipient/);

@@ -298,20 +298,20 @@ export function __resetForTests(): void {
 }
 
 /* ================================================================== *
- * GAP-05 / GAP-07 — retry scheduling + verified SES delivery events
+ * GAP-05 / GAP-07 — retry scheduling + verified delivery events
  * ------------------------------------------------------------------
  * Everything below is pure or adapter-only (an injectable query/send/cert
- * fetch). It never contacts SES/SNS in a test. The SQL lives in migration
+ * fetch). It never contacts a mail provider in a test. The SQL lives in migration
  * 005_notification_retry.sql; the HTTP entry point is
- * app/api/webhooks/ses/route.ts. The historical manual retry in lib/outbox.ts
+ * app/api/webhooks/resend/route.ts. The historical manual retry in lib/outbox.ts
  * is left untouched on purpose (it mints a fresh key and is an operator tool);
  * the automated worker below is a separate, counted, leased state machine.
  *
- * HONEST LIMITATION: SES SendEmail has no provider-side idempotency token. The
+ * HONEST LIMITATION: the Resend send has no provider-side idempotency token. The
  * guards here are (1) a stable logical event_key, (2) an atomic lease so two
  * workers cannot process one row, and (3) a provider_message_id check so an
- * already-accepted message is never re-sent. An ambiguous timeout where SES
- * accepted but the receipt was lost cannot be deduped by SES itself — enabling
+ * already-accepted message is never re-sent. An ambiguous timeout where the
+ * provider accepted but the receipt was lost cannot be deduped by them — enabling
  * automated retries in production is owner-gated and should be paired with
  * delivery-event reconciliation. This is never presented as a PASS.
  * ================================================================== */
@@ -370,7 +370,7 @@ const RETRYABLE_ERROR_PATTERNS: Array<[RegExp, string]> = [
 ];
 
 /**
- * Distinguish transient failures (timeout / SES throttling / provider 5xx) from
+ * Distinguish transient failures (timeout / provider throttling / provider 5xx) from
  * terminal ones (invalid recipient, auth failure, permanent rejection).
  * Unknown errors default to RETRYABLE — never discard a message on a guess.
  */
@@ -614,7 +614,7 @@ export async function processNotificationRetries(
   for (const row of rows) {
     const attempts = Math.max(0, Number(row.attempts) || 0);
 
-    // IDEMPOTENCY: a recorded provider id means SES already accepted this
+    // IDEMPOTENCY: a recorded provider id means the provider already accepted this
     // message. Re-sending would risk a duplicate customer email, so we only
     // reconcile the row and release the lease.
     if (row.provider_message_id) {
@@ -656,7 +656,7 @@ export async function processNotificationRetries(
 
     if (outcome.status === "sent") {
       // "accepted by the provider", NOT delivered — delivery is only set by a
-      // verified SES event (GAP-07).
+      // verified provider event (GAP-07).
       await patchClaimedRow(run, row.id, owner, {
         status: "sent",
         delivery_status: "accepted",
@@ -712,7 +712,7 @@ export async function processNotificationRetries(
   return result;
 }
 
-/** Production send adapter: reuse the backend's templates and SES transport. */
+/** Production send adapter: reuse the backend's templates and the Resend transport. */
 async function sendRetryViaBackend(payload: RetrySendPayload): Promise<RetrySendResult> {
   const backendUrl = (
     process.env.MEDUSA_BACKEND_URL ||
@@ -809,393 +809,4 @@ export async function notificationRetryStats(
     delivered: Number(r.delivered || 0),
     suppressed: Number(r.suppressed || 0),
   };
-}
-
-/* ── SNS signature verification (pure) ────────────────────────────────────── */
-
-export interface SnsMessage {
-  Type?: string;
-  MessageId?: string;
-  Token?: string;
-  TopicArn?: string;
-  Subject?: string;
-  Message?: string;
-  Timestamp?: string;
-  SignatureVersion?: string;
-  Signature?: string;
-  SigningCertURL?: string;
-  SubscribeURL?: string;
-  [key: string]: any;
-}
-
-export function isSnsMessage(value: unknown): value is SnsMessage {
-  if (!value || typeof value !== "object") return false;
-  const m = value as SnsMessage;
-  return (
-    typeof m.Type === "string" &&
-    typeof m.MessageId === "string" &&
-    typeof m.Message === "string" &&
-    typeof m.Timestamp === "string" &&
-    typeof m.TopicArn === "string" &&
-    typeof m.Signature === "string" &&
-    typeof m.SigningCertURL === "string"
-  );
-}
-
-/** Reject SSRF: only SNS's own HTTPS certificate host and path are trusted. */
-export function isTrustedSnsCertUrl(raw: string): boolean {
-  try {
-    const u = new URL(raw);
-    if (u.protocol !== "https:" || u.username || u.password || u.search || u.hash) return false;
-    const host = u.hostname.toLowerCase();
-    if (!/^sns\.[a-z0-9-]+\.amazonaws\.com(\.cn)?$/.test(host) && host !== "sns.amazonaws.com") {
-      return false;
-    }
-    return /^\/SimpleNotificationService\/[0-9a-f]+\.pem$/.test(u.pathname);
-  } catch {
-    return false;
-  }
-}
-
-/** Subscription confirmation must call SNS itself, never an arbitrary URL. */
-export function isTrustedSnsSubscribeUrl(raw: string): boolean {
-  try {
-    const u = new URL(raw);
-    if (u.protocol !== "https:" || u.username || u.password) return false;
-    const host = u.hostname.toLowerCase();
-    if (!/^sns\.[a-z0-9-]+\.amazonaws\.com(\.cn)?$/.test(host) && host !== "sns.amazonaws.com") {
-      return false;
-    }
-    return /Action=ConfirmSubscription/i.test(u.search);
-  } catch {
-    return false;
-  }
-}
-
-/** The exact signed string for SNS SignatureVersion 1 and 2. */
-export function snsCanonicalString(message: SnsMessage, version: string): string | null {
-  const v = String(version || "").trim();
-  if (v !== "1" && v !== "2") return null;
-  const type = message.Type;
-  if (
-    type !== "Notification" &&
-    type !== "SubscriptionConfirmation" &&
-    type !== "UnsubscribeConfirmation"
-  ) {
-    return null;
-  }
-  const body = message.Message;
-  const id = message.MessageId;
-  const timestamp = message.Timestamp;
-  const topicArn = message.TopicArn;
-  if (typeof body !== "string" || !id || !timestamp || !topicArn) return null;
-
-  if (v === "1") {
-    if (type === "Notification") {
-      const subject = message.Subject;
-      return typeof subject === "string" && subject.length
-        ? `Message\n${body}\nMessageId\n${id}\nSubject\n${subject}\nTimestamp\n${timestamp}\nTopicArn\n${topicArn}\n`
-        : `Message\n${body}\nMessageId\n${id}\nTimestamp\n${timestamp}\nTopicArn\n${topicArn}\n`;
-    }
-    if (!message.Token) return null;
-    return `Message\n${body}\nMessageId\n${id}\nTimestamp\n${timestamp}\nTopicArn\n${topicArn}\nToken\n${message.Token}\n`;
-  }
-
-  // Version 2: name/value pairs in SNS's documented order, each newline-ended.
-  const fields: string[] = ["Message", body, "MessageId", id];
-  if (type === "Notification" && typeof message.Subject === "string" && message.Subject.length) {
-    fields.push("Subject", message.Subject);
-  }
-  fields.push("Timestamp", timestamp, "TopicArn", topicArn);
-  if (type !== "Notification") {
-    if (!message.Token) return null;
-    fields.push("Token", message.Token);
-  }
-  fields.push("Type", type);
-  return fields.map((field) => `${field}\n`).join("");
-}
-
-/** Verify the SNS signature against a trusted certificate. Never trust raw JSON. */
-export function verifySnsSignature(message: SnsMessage, certPem: string): boolean {
-  try {
-    if (!isSnsMessage(message) || typeof certPem !== "string" || !certPem.trim()) return false;
-    const version = String(message.SignatureVersion || "").trim();
-    const canonical = snsCanonicalString(message, version);
-    if (!canonical || typeof message.Signature !== "string" || !message.Signature.trim()) {
-      return false;
-    }
-    let key;
-    try {
-      key = new X509Certificate(certPem).publicKey;
-    } catch {
-      key = createPublicKey(certPem);
-    }
-    const verifier = createVerify(version === "1" ? "RSA-SHA1" : "RSA-SHA256");
-    verifier.update(canonical, "utf8");
-    verifier.end();
-    const signature = Buffer.from(message.Signature, "base64");
-    return signature.length > 0 && verifier.verify(key, signature);
-  } catch {
-    return false;
-  }
-}
-
-/** Cheap fail-closed checks before paying the cost of fetching a certificate. */
-export function precheckSnsMessage(
-  message: unknown,
-  options: { topicArn?: string; headerType?: string } = {}
-): { ok: boolean; reason?: string } {
-  if (!isSnsMessage(message)) return { ok: false, reason: "malformed_envelope" };
-  if (options.headerType && message.Type !== options.headerType) {
-    return { ok: false, reason: "type_mismatch" };
-  }
-  if (options.topicArn && message.TopicArn !== options.topicArn) {
-    return { ok: false, reason: "topic_mismatch" };
-  }
-  if (!isTrustedSnsCertUrl(message.SigningCertURL || "")) {
-    return { ok: false, reason: "untrusted_cert_url" };
-  }
-  return { ok: true };
-}
-
-/** Fetch and cache an SNS signing certificate; only trusted URLs are fetched. */
-const snsCertCache = new Map<string, { pem: string; fetchedAt: number }>();
-
-async function fetchSnsCertificate(url: string): Promise<string | null> {
-  if (!isTrustedSnsCertUrl(url)) return null;
-  const cached = snsCertCache.get(url);
-  if (cached && Date.now() - cached.fetchedAt < 3_600_000) return cached.pem;
-  const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
-  if (!res.ok) return null;
-  const pem = await res.text();
-  if (!pem || pem.length > 100_000 || !/BEGIN CERTIFICATE/.test(pem)) return null;
-  snsCertCache.set(url, { pem, fetchedAt: Date.now() });
-  return pem;
-}
-
-/* ── SES event mapping + suppression policy (pure) ────────────────────────── */
-
-export type SesEventType = "delivery" | "bounce" | "complaint" | "reject" | "delivery_delay";
-
-export interface SesEvent {
-  eventType: SesEventType;
-  /** SES MessageId — joined to app_notification.provider_message_id. */
-  messageId: string | null;
-  bounceType: string | null;
-  timestamp: string | null;
-  snsMessageId: string;
-}
-
-const SES_EVENT_TYPES: Record<string, SesEventType> = {
-  Delivery: "delivery",
-  Bounce: "bounce",
-  Complaint: "complaint",
-  Reject: "reject",
-  DeliveryDelay: "delivery_delay",
-};
-
-/** Parse an SES event from an SNS Notification. No recipient address is kept. */
-export function parseSesEvent(message: SnsMessage): SesEvent | null {
-  if (!message || message.Type !== "Notification" || typeof message.Message !== "string") {
-    return null;
-  }
-  let payload: any;
-  try {
-    payload = JSON.parse(message.Message);
-  } catch {
-    return null;
-  }
-  const eventType = SES_EVENT_TYPES[String(payload?.eventType || "").trim()];
-  if (!eventType) return null;
-  return {
-    eventType,
-    messageId: typeof payload?.mail?.messageId === "string" ? payload.mail.messageId : null,
-    bounceType: typeof payload?.bounce?.bounceType === "string" ? payload.bounce.bounceType : null,
-    timestamp:
-      typeof payload?.mail?.timestamp === "string"
-        ? payload.mail.timestamp
-        : typeof payload?.bounce?.timestamp === "string"
-          ? payload.bounce.timestamp
-          : null,
-    snsMessageId: String(message.MessageId || ""),
-  };
-}
-
-export function sesEventDeliveryStatus(type: SesEventType): string {
-  switch (type) {
-    case "delivery": return "delivered";
-    case "bounce": return "bounced";
-    case "complaint": return "complained";
-    case "reject": return "rejected";
-    case "delivery_delay": return "delivery_delayed";
-  }
-}
-
-/**
- * Only delivery/bounce fit the legacy six-value `status` CHECK; the other
- * events are recorded in `delivery_status` without rewriting `status`.
- */
-export function sesEventLegacyStatus(type: SesEventType): "delivered" | "bounced" | null {
-  if (type === "delivery") return "delivered";
-  if (type === "bounce") return "bounced";
-  return null;
-}
-
-export interface SuppressionDecision {
-  suppress: boolean;
-  reason: "hard_bounce" | "complaint" | null;
-}
-
-/**
- * Conservative DEFAULT policy — no external business rules invented:
- *   - hard bounce (bounceType "Permanent") → suppress
- *   - complaint → suppress
- *   - soft bounce, delivery delay, reject, delivery → no suppression
- * Owner-configurable with SES_SUPPRESS_ON_BOUNCE / SES_SUPPRESS_ON_COMPLAINT
- * ("false" disables each). This is a default, not a legal/compliance decision.
- */
-export function shouldSuppressSesEvent(
-  event: SesEvent,
-  env: NodeJS.ProcessEnv = process.env
-): SuppressionDecision {
-  const bounceEnabled = String(env.SES_SUPPRESS_ON_BOUNCE ?? "true").toLowerCase() !== "false";
-  const complaintEnabled = String(env.SES_SUPPRESS_ON_COMPLAINT ?? "true").toLowerCase() !== "false";
-  if (
-    event.eventType === "bounce" &&
-    bounceEnabled &&
-    /^permanent$/i.test(event.bounceType || "")
-  ) {
-    return { suppress: true, reason: "hard_bounce" };
-  }
-  if (event.eventType === "complaint" && complaintEnabled) {
-    return { suppress: true, reason: "complaint" };
-  }
-  return { suppress: false, reason: null };
-}
-
-/* ── Verified event application (adapter) ─────────────────────────────────── */
-
-export interface SesEventApplyResult {
-  applied: boolean;
-  reason?: string;
-  notificationId?: string | null;
-  deliveryStatus?: string;
-  suppressed?: boolean;
-}
-
-/**
- * Apply ONE verified SES event. The caller MUST have verified the SNS signature
- * first; this function never parses or trusts raw request JSON. Dedupe is by
- * SNS MessageId, so a redelivered event cannot write a second effect.
- */
-export async function applyVerifiedSesEvent(
-  event: SesEvent,
-  deps: { query?: QueryExecutor; env?: NodeJS.ProcessEnv } = {}
-): Promise<SesEventApplyResult> {
-  const run = deps.query ?? runQuery;
-  const env = deps.env ?? process.env;
-  if (!event.snsMessageId) return { applied: false, reason: "missing_event_id" };
-
-  const inserted = await run<{ id: string }>(
-    `INSERT INTO "notification_event"
-       ("provider", "provider_event_id", "event_type", "message_id", "bounce_type")
-     VALUES ('ses', $1, $2, $3, $4)
-     ON CONFLICT ("provider", "provider_event_id") DO NOTHING
-     RETURNING "id"`,
-    [event.snsMessageId, event.eventType, event.messageId, event.bounceType]
-  );
-  if (inserted.length === 0) return { applied: false, reason: "duplicate_event" };
-
-  let notificationId: string | null = null;
-  if (event.messageId) {
-    const rows = await run<{ id: string }>(
-      `SELECT "id" FROM "app_notification"
-        WHERE "provider_message_id" = $1 AND "deleted_at" IS NULL
-        ORDER BY "created_at" DESC LIMIT 1`,
-      [event.messageId]
-    );
-    notificationId = rows[0]?.id ?? null;
-  }
-
-  const decision = shouldSuppressSesEvent(event, env);
-  const deliveryStatus = sesEventDeliveryStatus(event.eventType);
-  const legacy = sesEventLegacyStatus(event.eventType);
-
-  if (notificationId) {
-    const assignments: string[] = [
-      '"delivery_status" = $2',
-      '"last_delivery_event_at" = now()',
-      '"updated_at" = now()',
-    ];
-    const params: any[] = [notificationId, deliveryStatus];
-    if (legacy) {
-      assignments.push('"status" = $3');
-      params.push(legacy);
-    }
-    if (decision.suppress) assignments.push('"suppressed" = true');
-    await run(
-      `UPDATE "app_notification" SET ${assignments.join(", ")} WHERE "id" = $1`,
-      params
-    );
-
-    if (decision.suppress && decision.reason) {
-      // The recipient is selected inside SQL and is never logged here.
-      await run(
-        `INSERT INTO "notification_suppression" ("recipient", "reason")
-         SELECT "recipient", $2 FROM "app_notification"
-          WHERE "id" = $1 AND "recipient" IS NOT NULL
-         ON CONFLICT DO NOTHING`,
-        [notificationId, decision.reason]
-      ).catch(() => undefined);
-    }
-  }
-
-  await run(
-    `UPDATE "notification_event" SET "notification_id" = $2, "received_at" = now() WHERE "id" = $1`,
-    [inserted[0].id, notificationId]
-  );
-
-  return {
-    applied: true,
-    notificationId,
-    deliveryStatus,
-    suppressed: decision.suppress,
-  };
-}
-
-/** Verify + apply an SNS delivery notification end to end (route helper). */
-export async function processVerifiedSnsNotification(
-  message: SnsMessage,
-  certPem: string,
-  deps: { query?: QueryExecutor; env?: NodeJS.ProcessEnv } = {}
-): Promise<SesEventApplyResult> {
-  if (!precheckSnsMessage(message, { topicArn: deps.env?.SES_SNS_TOPIC_ARN }).ok) {
-    return { applied: false, reason: "untrusted_envelope" };
-  }
-  if (!verifySnsSignature(message, certPem)) {
-    return { applied: false, reason: "invalid_signature" };
-  }
-  const event = parseSesEvent(message);
-  if (!event) return { applied: false, reason: "unrecognised_event" };
-  return applyVerifiedSesEvent(event, deps);
-}
-
-/** The running webhook needs the certificate bytes; kept as an injectable seam. */
-export async function getSnsCertificate(url: string): Promise<string | null> {
-  return fetchSnsCertificate(url);
-}
-
-/** Confirm an SNS subscription only after its signature and URL are verified. */
-export async function confirmSnsSubscription(
-  message: SnsMessage,
-  certPem: string,
-  fetchImpl: typeof fetch = fetch
-): Promise<boolean> {
-  if (message.Type !== "SubscriptionConfirmation" || !message.Token) return false;
-  if (!isTrustedSnsCertUrl(message.SigningCertURL || "")) return false;
-  if (!verifySnsSignature(message, certPem)) return false;
-  const url = message.SubscribeURL || "";
-  if (!isTrustedSnsSubscribeUrl(url)) return false;
-  const res = await fetchImpl(url, { signal: AbortSignal.timeout(10_000) });
-  return res.ok;
 }

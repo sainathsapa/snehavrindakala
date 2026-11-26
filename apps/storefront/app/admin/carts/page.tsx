@@ -48,7 +48,7 @@ export default async function AbandonedCartsPage() {
   }
 
   const mailConfigured = Boolean(
-    process.env.FROM_EMAIL && process.env.AWS_SES_REGION
+    process.env.FROM_EMAIL && process.env.RESEND_API_KEY
   );
   const waiting = carts.filter((cart) => !cart.reminded_at);
   const value = waiting.reduce((sum, cart) => sum + cart.subtotal, 0);
@@ -71,8 +71,8 @@ export default async function AbandonedCartsPage() {
           <p className="mb-6 border-l-2 border-terracotta bg-terracotta/5 px-3 py-2 font-sans text-sm text-terracotta">
             Email is not configured on this deployment, so a reminder will be
             recorded as <strong>skipped</strong> rather than sent. Set{" "}
-            <code>FROM_EMAIL</code> and the <code>AWS_SES_*</code> credentials to
-            make these real.
+            <code>FROM_EMAIL</code> and <code>RESEND_API_KEY</code> to make these
+            real.
           </p>
         )}
 

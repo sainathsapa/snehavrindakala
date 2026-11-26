@@ -109,13 +109,10 @@ x-backend-environment: &backend-environment
   # Transactional email. Without FROM_EMAIL plus SES credentials the notification
   # module still runs, but every message is rendered and recorded as `skipped`
   # instead of sent — order confirmations never leave the server.
-  AWS_SES_REGION: ${AWS_SES_REGION:-ap-south-1}
-  AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID:-}
-  AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY:-}
-  AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
-  # Resend is the preferred transport when this is set: one key, one HTTPS call,
-  # and a provider message id. Without it the module falls back to SES.
+  # Resend is the only transport: one key, one HTTPS call, a provider message id.
   RESEND_API_KEY: ${RESEND_API_KEY:-}
+  # Svix signing secret for /api/webhooks/resend (delivered / bounced events).
+  RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
   FROM_EMAIL: ${FROM_EMAIL:-}
   FROM_NAME: ${FROM_NAME:-SnehaVrinda Kala}
   # Seller identity for the legal footer of transactional email. Read by the
@@ -297,16 +294,11 @@ services:
       SITE_CONTENT_QUIET: ${SITE_CONTENT_QUIET:-}
       # Transactional email sent by the storefront itself (letters, cart
       # reminders, order confirmations). Without these the storefront records
-      # every message as `skipped` even when SES works for the backend.
+      # every message as `skipped` even when Resend works for the backend.
       FROM_EMAIL: ${FROM_EMAIL:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      AWS_SES_REGION: ${AWS_SES_REGION:-ap-south-1}
-      AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID:-}
-      AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY:-}
-      AWS_SES_ROLE_ARN: ${AWS_SES_ROLE_ARN:-}
-      AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: ${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI:-}
-      AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-}
-      # Notification retry + verified SES->SNS delivery events (see backend anchor).
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      # Notification retry + verified delivery events (see backend anchor).
       NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-5}
       SES_SNS_TOPIC_ARN: ${SES_SNS_TOPIC_ARN:-}
       SES_SUPPRESS_ON_BOUNCE: ${SES_SUPPRESS_ON_BOUNCE:-true}

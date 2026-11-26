@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { requireAdmin } from "@/app/admin/actions";
 
 /**
  * A ticket can carry the work it is about. `support_tickets.product_handle` is
@@ -17,6 +18,12 @@ import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 
 export async function GET(req: Request) {
+  // The list is every customer's name, email and message. It was readable by
+  // anyone who knew the URL — no session, no secret. Customers never call it;
+  // the work-inquiry form only POSTs. Staff do, so staff only.
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");

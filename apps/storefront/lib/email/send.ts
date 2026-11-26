@@ -47,15 +47,14 @@ function internalSecret(): string | null {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** True when a transport is configured, i.e. the mail will not be skipped. */
+/**
+ * True when mail will actually be sent rather than skipped.
+ *
+ * Resend is the only transport, so this is exactly "a key and a sender exist" —
+ * there is no second provider whose credentials could make it true.
+ */
 export function mailConfigured(): boolean {
-  return Boolean(
-    process.env.RESEND_API_KEY ||
-      (process.env.FROM_EMAIL &&
-        (process.env.AWS_SES_ACCESS_KEY_ID ||
-          process.env.AWS_SES_ROLE_ARN ||
-          process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI))
-  );
+  return Boolean(process.env.RESEND_API_KEY && process.env.FROM_EMAIL);
 }
 
 export async function sendAccountEmail({

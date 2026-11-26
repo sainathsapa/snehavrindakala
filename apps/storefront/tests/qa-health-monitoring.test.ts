@@ -275,7 +275,6 @@ describe("FINAL GO monitoring: no secret values in tracked config/docs", () => {
       "RAZORPAY_WEBHOOK_SECRET",
       "SHIPROCKET_PASSWORD",
       "SHIPROCKET_WEBHOOK_TOKEN",
-      "AWS_SES_SECRET_ACCESS_KEY",
       "AWS_S3_SECRET_ACCESS_KEY",
       "CRON_SECRET",
       "INTERNAL_NOTIFY_SECRET",

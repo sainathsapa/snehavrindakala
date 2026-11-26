@@ -108,20 +108,18 @@ describe("missing SES configuration is honest", () => {
     expect(message).toMatch(/not proof that mail is working/i);
   });
 
-  it("transport skips (never sends) when sender config or credentials are absent", () => {
+  it("transport skips (never sends) when the sender or key is absent", () => {
     const src = transportSrc();
     // FROM_EMAIL is the verified sender; null config means unconfigured.
-    expect(src).toMatch(/if \(!fromEmail \|\| !isValidEmail\(fromEmail\)\) return null;/);
-    // No config, or SES chosen with no credentials => a logged preview,
-    // status skipped, no MessageId. Resend needs no separate credential check
-    // because the key itself is what selects that provider.
-    expect(src).toMatch(/if \(!config \|\| \(config\.provider === "ses" && !hasCredentials\(env\)\)\)/);
+    expect(src).toMatch(/if \(!resendKey \|\| !fromEmail \|\| !isValidEmail\(fromEmail\)\) return null;/);
+    // No config at all => a logged preview, status skipped, no provider id.
+    expect(src).toMatch(/if \(!config\) \{/);
     expect(src).toMatch(/return \{ status: "skipped", messageId: null \};/);
-    // A genuine send only happens after those checks, and returns the provider's id.
-    expect(src).toMatch(/return \{ status: "sent", messageId: result\.MessageId \|\| null \};/);
-    // Resend is preferred when configured, and carries its own provider id.
-    expect(src).toMatch(/if \(resendKey\) \{/);
+    // Resend is the only transport, and carries its own provider id.
+    expect(src).toMatch(/provider: "resend"/);
     expect(src).toMatch(/return \{ status: "sent", messageId: body\?\.id \|\| null \};/);
+    // SES is gone for good: no AWS SDK, no credentials branch.
+    expect(src).not.toMatch(/client-sesv2|SESv2Client|AWS_SES/);
   });
 
   it("a skipped transport outcome is stored as 'skipped', never 'sent'", () => {
@@ -214,9 +212,9 @@ describe("delivery confirmation vocabulary (not a delivery proof)", () => {
     expect(DELIVERY_CONFIRMATION_STATUSES).toContain("delivered");
     expect(DELIVERY_CONFIRMATION_STATUSES).toContain("bounced");
     const src = transportSrc();
-    // A03 shipped the verified SES→SNS event route: delivery states are written
-    // there, never by the send path, and `sent` is still not a delivery proof.
-    expect(src).toMatch(/written only by the verified SES→SNS event/);
+    // Delivery states are written by the verified Resend webhook, never by the
+    // send path: `sent` is still not a delivery proof.
+    expect(src).toMatch(/written only by the verified Resend webhook/);
     expect(src).toMatch(/never by this send/);
     expect(src).toMatch(/Do not read a `sent` row as proof of delivery/i);
   });
