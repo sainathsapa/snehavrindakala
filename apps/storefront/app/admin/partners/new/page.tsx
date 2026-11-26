@@ -1,14 +1,16 @@
 "use client";
 
-"use client";
-
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@snehavrinda-kala/ui";
+import { slugify } from "@/lib/slug";
 
 export default function PartnerCreatePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  /** Once the address is typed, the name stops overwriting it. */
+  const [slugTouched, setSlugTouched] = useState(false);
 
   const [form, setForm] = useState({
     display_name: "",
@@ -95,7 +97,14 @@ export default function PartnerCreatePage() {
                   name="display_name"
                   type="text"
                   value={form.display_name}
-                  onChange={(e) => setForm({ ...form, display_name: e.target.value })}
+                  onChange={(e) => {
+                    const display_name = e.target.value;
+                    setForm((f) => ({
+                      ...f,
+                      display_name,
+                      slug: slugTouched ? f.slug : slugify(display_name),
+                    }));
+                  }}
                   placeholder="e.g. Aanya Desai"
                   required
                   className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
@@ -109,7 +118,10 @@ export default function PartnerCreatePage() {
                   name="slug"
                   type="text"
                   value={form.slug}
-                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  onChange={(e) => {
+                    setSlugTouched(true);
+                    setForm({ ...form, slug: slugify(e.target.value) });
+                  }}
                   placeholder="e.g. aanya-desai"
                   required
                   className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"

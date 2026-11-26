@@ -295,6 +295,14 @@ services:
       # Transactional email sent by the storefront itself (letters, cart
       # reminders, order confirmations). Without these the storefront records
       # every message as `skipped` even when Resend works for the backend.
+      # Social profiles. Read at build time by the footer and by the Organization
+      # structured data; a missing one renders nothing rather than a dead icon.
+      NEXT_PUBLIC_SOCIAL_INSTAGRAM: ${NEXT_PUBLIC_SOCIAL_INSTAGRAM:-}
+      NEXT_PUBLIC_SOCIAL_YOUTUBE: ${NEXT_PUBLIC_SOCIAL_YOUTUBE:-}
+      NEXT_PUBLIC_SOCIAL_FACEBOOK: ${NEXT_PUBLIC_SOCIAL_FACEBOOK:-}
+      NEXT_PUBLIC_SOCIAL_PINTEREST: ${NEXT_PUBLIC_SOCIAL_PINTEREST:-}
+      NEXT_PUBLIC_SOCIAL_LINKEDIN: ${NEXT_PUBLIC_SOCIAL_LINKEDIN:-}
+      NEXT_PUBLIC_SOCIAL_X: ${NEXT_PUBLIC_SOCIAL_X:-}
       FROM_EMAIL: ${FROM_EMAIL:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}

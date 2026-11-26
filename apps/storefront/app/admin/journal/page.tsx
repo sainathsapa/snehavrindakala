@@ -1,5 +1,6 @@
 "use client";
 
+import { slugify } from "@/lib/slug";
 import { useState, useEffect, useCallback } from "react";
 import { ImageUpload } from "@/components/image-upload";
 
@@ -27,6 +28,8 @@ export default function JournalPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  /** True once the slug has been typed: the title stops overwriting it. */
+  const [slugTouched, setSlugTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -230,12 +233,11 @@ export default function JournalPage() {
                     setForm((f) => ({
                       ...f,
                       title,
-                      slug:
-                        f.slug ||
-                        title
-                          .toLowerCase()
-                          .replace(/[^a-z0-9]+/g, "-")
-                          .replace(/^-|-$/g, ""),
+                      // The address follows the title until it is edited, then
+                      // it is the writer's. The old version only filled an empty
+                      // slug, so a title typed in two passes froze a slug made
+                      // from the first word.
+                      slug: slugTouched ? f.slug : slugify(title),
                     }));
                   }}
                   className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
@@ -248,9 +250,17 @@ export default function JournalPage() {
                 <input
                   required
                   value={form.slug}
-                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-sans text-sm text-deep-ink"
+                  onChange={(e) => {
+                    setSlugTouched(true);
+                    setForm({ ...form, slug: slugify(e.target.value) });
+                  }}
+                  className="w-full rounded-md border border-sand-border bg-white px-3 py-2 font-mono text-sm text-deep-ink"
                 />
+                <span className="mt-1 block font-sans text-[11px] text-muted-ink">
+                  {slugTouched
+                    ? "Your address. Changing it after the post is live breaks links."
+                    : "Filled from the title; edit it and it stops following."}
+                </span>
               </label>
               <label className="block">
                 <span className="mb-1 block text-xs font-sans font-medium uppercase tracking-wider text-muted-ink">

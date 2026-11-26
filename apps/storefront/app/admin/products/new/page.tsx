@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ProductImages, type ProductImage } from "@/components/product-images";
+import { SlugField, useAutoSlug } from "@/components/admin/slug-field";
 
 interface Category {
   id: string;
@@ -11,7 +12,7 @@ interface Category {
 
 export default function NewProductPage() {
   const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
+  const slugState = useAutoSlug();
   const [status, setStatus] = useState("draft");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("inr");
@@ -65,7 +66,7 @@ export default function NewProductPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
-          slug,
+          slug: slugState.value,
           status,
           total: price ? parseInt(price) * 100 : 0,
           currency_code: currency,
@@ -241,19 +242,7 @@ export default function NewProductPage() {
                     className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
-                    Slug
-                  </label>
-                  <input
-                    type="text"
-                    name="slug"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
-                  />
-                </div>
+                <SlugField slug={slugState} title={title} prefix="/products/" />
                 <div>
                   <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
                     Category
@@ -274,6 +263,17 @@ export default function NewProductPage() {
                       ))
                     )}
                   </select>
+                  {/* A missing category used to mean abandoning the form to go
+                      make one. This opens the category screen in a new tab, so
+                      the work being entered is still there on the way back. */}
+                  <a
+                    href="/admin/categories/new"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block font-sans text-[11px] text-sindoor underline-offset-2 hover:underline"
+                  >
+                    + Add a new category
+                  </a>
                 </div>
                 <div>
                   <label className="block text-sm font-sans font-medium text-deep-ink mb-2">

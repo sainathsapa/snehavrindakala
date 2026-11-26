@@ -107,3 +107,13 @@ export function uniqueHandle(base: string, taken: Set<string>): string {
   while (taken.has(`${base}-${n}`)) n += 1;
   return `${base}-${n}`;
 }
+
+/**
+ * True when a value is usable as a URL segment.
+ *
+ * The admin forms use this to refuse a half-typed address before it reaches
+ * Medusa, where a bad handle surfaces as a 500 rather than as a field error.
+ */
+export function isValidSlug(value: string): boolean {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(value || ""));
+}

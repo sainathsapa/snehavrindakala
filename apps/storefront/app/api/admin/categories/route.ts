@@ -69,7 +69,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const body = await req.json();
+    const raw = await req.json();
+    // Medusa calls a category's address `handle`. The admin form calls it a
+    // slug (people search for "slug"), so the two are reconciled here rather
+    // than sending a field Medusa does not know and getting a 400 back.
+    const { slug, ...rest } = raw as Record<string, unknown>;
+    const handle = String(raw.handle ?? slug ?? "").trim();
+    const body = {
+      ...rest,
+      ...(handle ? { handle } : {}),
+    };
     const BACKEND_URL =
       process.env.MEDUSA_BACKEND_URL ||
       process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||

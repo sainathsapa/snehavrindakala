@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@snehavrinda-kala/ui";
+import { SlugField, useAutoSlug } from "@/components/admin/slug-field";
 
 export default function CategoryCreatePage() {
   const [saving, setSaving] = useState(false);
@@ -12,6 +13,10 @@ export default function CategoryCreatePage() {
     name: "",
     description: "",
   });
+  // The category's address. It was previously not asked for at all, so Medusa
+  // invented a handle — usually the raw id — and /shop/<something-unreadable>
+  // was the result.
+  const slug = useAutoSlug();
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -23,6 +28,8 @@ export default function CategoryCreatePage() {
         body: JSON.stringify({
           name: form.name,
           description: form.description,
+          slug: slug.value,
+          handle: slug.value,
           is_active: true,
           is_internal: false,
         }),
@@ -91,6 +98,8 @@ export default function CategoryCreatePage() {
                   className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
                 />
               </div>
+              <SlugField slug={slug} title={form.name} prefix="/shop/" />
+
               <div>
                 <label className="block text-sm font-sans font-medium text-deep-ink">
                   Description
