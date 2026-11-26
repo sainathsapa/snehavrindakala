@@ -215,7 +215,17 @@ export default async function AccountPage({
           {/* ── Orders ──────────────────────────────────────────────── */}
           <Card elevated className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>{t("ordersLink")}</CardTitle>
+              <div className="flex items-baseline justify-between gap-3">
+                <CardTitle>{t("ordersLink")}</CardTitle>
+                {/* The block below shows the most recent orders; this is where
+                    a buyer with history goes to see all of them. */}
+                <Link
+                  href="/account/orders"
+                  className="font-sans text-sm text-sindoor hover:underline"
+                >
+                  {t("ordersLink")} →
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {orders.length === 0 ? (

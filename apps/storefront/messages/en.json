@@ -1271,5 +1271,18 @@
     "threadFooter": "A reply reopens a closed thread, so nothing gets lost if the question returns.",
     "fasterFooter": "For a question that is not about a specific order, the contact page is quicker:",
     "contactLink": "write to the studio"
+  },
+  "accountOrders": {
+    "back": "Back to your account",
+    "title": "Your orders",
+    "intro": "Everything you have bought, where each one has got to, and the one thing you can do yourself — cancel, while nothing has shipped.",
+    "empty": "No orders yet.",
+    "emptyHint": "When you buy a work it appears here with its journey, certificate and tracking.",
+    "browse": "Look at the works",
+    "view": "View order",
+    "track": "Track",
+    "cancel": "Cancel this order",
+    "cancelling": "Cancelling…",
+    "cancelConfirm": "Cancel this order? If you have already paid, the studio will return the payment."
   }
 }
