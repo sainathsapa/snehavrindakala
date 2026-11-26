@@ -51,6 +51,9 @@ if [ "$mem_mb" -lt 3000 ] && ! swapon --show | grep -q '/swapfile'; then
   $SUDO swapon /swapfile
   grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | $SUDO tee -a /etc/fstab >/dev/null
   echo "   swap active: $(free -h | awk '/Swap/ {print $2}')"
+  # Prefer RAM; swap here exists for build spikes, not steady-state paging.
+  $SUDO sysctl -q vm.swappiness=10
+  grep -q '^vm.swappiness' /etc/sysctl.conf || echo 'vm.swappiness=10' | $SUDO tee -a /etc/sysctl.conf >/dev/null
 fi
 
 say "2/7 installing Docker"
@@ -160,8 +163,10 @@ Still to do by hand:
        Type  x-api-key
        Token (from SHIPROCKET_WEBHOOK_TOKEN in .env)
      Then toggle the connection to ENABLED.
-  3. Backups: docker compose --profile ops up -d backup
-     and run scripts/restore-drill.sh once against a real dump.
+  3. Backups, before the first order:
+       docker compose --profile ops up -d backup
+       bash scripts/restore-drill.sh
+     and enable Lightsail automatic snapshots (instance -> Snapshots).
   4. Razorpay is still in test mode (rzp_test_...). Swap in live keys before
      taking money: RAZORPAY_KEY_ID, NEXT_PUBLIC_RAZORPAY_KEY_ID,
      RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET, then rebuild the storefront
