@@ -40,6 +40,19 @@ if ! command -v curl >/dev/null; then die "curl is missing: apt-get install -y c
 
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
+# Medusa and Next both compile in this box; on a 2 GB instance the linker gets
+# killed by the OOM reaper halfway through the storefront build. Swap costs
+# nothing but disk and turns "build fails at 80%" into a slow success.
+if [ "$mem_mb" -lt 3000 ] && ! swapon --show | grep -q '/swapfile'; then
+  say "2a/7 adding 2 GB swap (RAM is ${mem_mb} MB, builds need headroom)"
+  $SUDO fallocate -l 2G /swapfile || $SUDO dd if=/dev/zero of=/swapfile bs=1M count=2048
+  $SUDO chmod 600 /swapfile
+  $SUDO mkswap /swapfile >/dev/null
+  $SUDO swapon /swapfile
+  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | $SUDO tee -a /etc/fstab >/dev/null
+  echo "   swap active: $(free -h | awk '/Swap/ {print $2}')"
+fi
+
 say "2/7 installing Docker"
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
   echo "   already installed: $(docker --version)"
