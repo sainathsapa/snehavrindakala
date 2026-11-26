@@ -124,6 +124,10 @@ x-backend-environment: &backend-environment
   SELLER_LEGAL_NAME: ${SELLER_LEGAL_NAME:-}
   SELLER_ADDRESS: ${SELLER_ADDRESS:-}
   SELLER_HOME_STATE: ${SELLER_HOME_STATE:-}
+  # Contact details printed in the email footer and on invoices.
+  SELLER_PHONE: ${SELLER_PHONE:-}
+  SELLER_WEBSITE: ${SELLER_WEBSITE:-}
+  SELLER_EMAIL: ${SELLER_EMAIL:-}
   # Notification retry policy + verified SES->SNS delivery events. Bounded,
   # fail-safe defaults; owner may tune max attempts and suppression policy.
   NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-5}
@@ -261,6 +265,11 @@ services:
       # treated as tax-inclusive. Both were read by lib/tax-server.ts but never
       # passed into the container, so the split silently fell back to defaults.
       SELLER_HOME_STATE: ${SELLER_HOME_STATE:-Karnataka}
+      SELLER_CITY: ${SELLER_CITY:-}
+      SELLER_POSTCODE: ${SELLER_POSTCODE:-}
+      SELLER_PHONE: ${SELLER_PHONE:-}
+      SELLER_WEBSITE: ${SELLER_WEBSITE:-}
+      SELLER_EMAIL: ${SELLER_EMAIL:-}
       GST_RATE: ${GST_RATE:-5}
       # GST-02: seller identity and tax configuration. These are owner/CA data,
       # never invented. Empty by default: the invoice stays an order statement

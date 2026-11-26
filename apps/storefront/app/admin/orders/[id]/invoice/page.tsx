@@ -98,32 +98,16 @@ export default async function InvoicePage({
           </button>
         </div>
 
-        {!statutory && (
-          <div
-            role="status"
-            className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm font-sans text-amber-900 print:border-amber-400"
-          >
-            <p className="font-semibold mb-2">
-              Not a statutory tax invoice.
-            </p>
-            <p className="mb-2">
-              Seller legal identity, GSTIN, address and HSN/SAC must be supplied
-              and verified by the owner and a qualified accountant before this
-              document can be issued as a tax invoice. No such values are filled
-              in automatically.
-            </p>
-            {gst.missing.length > 0 && (
-              <p className="text-xs">
-                Missing configuration: {gst.missing.join(", ")}.
-              </p>
-            )}
-            {gst.invalid.length > 0 && (
-              <p className="text-xs">
-                Invalid configuration: {gst.invalid.join(", ")}.
-              </p>
-            )}
-          </div>
-        )}
+        {/* No disclaimer banner.
+            The document used to open with a warning that it could not serve as a
+            tax invoice, and call itself an ORDER STATEMENT, whenever the seller
+            had not supplied a GSTIN. That is a legal state, not an error, and
+            printing it on every invoice reads as a defect to the customer.
+            Registration details are now simply present or absent: supply
+            SELLER_GSTIN (or the admin settings field) and the same document
+            becomes a TAX INVOICE with the number shown. Missing tax
+            configuration is still reported to the owner, in the config
+            checklist rather than on the buyer's copy. */}
 
         {/* Invoice document */}
         <div className="print:invoice max-w-none">
@@ -136,27 +120,26 @@ export default async function InvoicePage({
                 <span className="text-xl font-serif font-bold text-terracotta tracking-tight">
                   Kala
                 </span>
-                {statutory && (
-                  <div className="mt-2 text-xs font-sans text-deep-ink">
-                    <p className="font-semibold">{process.env.SELLER_LEGAL_NAME}</p>
-                    <p className="whitespace-pre-line">{process.env.SELLER_ADDRESS}</p>
+                <div className="mt-2 text-xs font-sans text-deep-ink">
+                  <p className="font-semibold">{process.env.SELLER_LEGAL_NAME}</p>
+                  <p className="whitespace-pre-line">{process.env.SELLER_ADDRESS}</p>
+                  <p>
+                    {[process.env.SELLER_PHONE, process.env.SELLER_EMAIL, process.env.SELLER_WEBSITE]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  {process.env.SELLER_GSTIN ? (
                     <p>GSTIN: {process.env.SELLER_GSTIN}</p>
-                  </div>
-                )}
+                  ) : null}
+                </div>
               </div>
               <div className="text-right">
                 <h1 className="text-2xl font-serif font-bold text-deep-ink mb-1">
-                  {statutory ? "TAX INVOICE" : "ORDER STATEMENT"}
+                  {statutory ? "TAX INVOICE" : "INVOICE"}
                 </h1>
                 <p className="text-sm text-muted-ink font-sans">
-                  {statutory ? "Invoice" : "Statement"} #
-                  {order.display_id ?? order.id.slice(-6)}
+                  Invoice #{order.display_id ?? order.id.slice(-6)}
                 </p>
-                {!statutory && (
-                  <p className="text-xs text-amber-700 font-sans">
-                    Not valid as a tax invoice
-                  </p>
-                )}
               </div>
             </div>
             <p className="mt-2 text-sm text-muted-ink font-sans">

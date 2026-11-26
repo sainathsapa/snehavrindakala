@@ -24,6 +24,9 @@ export interface TemplateContext {
   sellerName?: string;
   sellerAddress?: string;
   sellerState?: string;
+  sellerPhone?: string;
+  sellerWebsite?: string;
+  sellerEmail?: string;
 }
 
 /* ------------------------------------------------------------------ *
@@ -108,17 +111,35 @@ function layout(
     </div>
 
     <!-- footer -->
-    <div style="text-align:center;padding-top:22px;font-size:12px;line-height:1.7;color:#675A52;">
-      <p style="margin:0 0 4px;">Questions? Write to <a href="mailto:${escapeHtml(
-        ctx.contactEmail
-      )}" style="color:#C84636;text-decoration:none;">${escapeHtml(
-    ctx.contactEmail
-  )}</a></p>
-      <p style="margin:0 0 10px;"><a href="${escapeHtml(
-        ctx.storefrontUrl
-      )}" style="color:#C84636;text-decoration:none;">snehavrinda.in</a></p>
-      ${seller ? `<p style="margin:0 0 6px;color:#8A7B70;">${seller}</p>` : ""}
-      <p style="margin:0;color:#8A7B70;">This is a transactional message about your order or account.</p>
+    <div style="text-align:center;padding-top:24px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.7;color:#675A52;">
+      ${seller ? `<p style="margin:0 0 6px;font-size:12.5px;color:#2B211E;letter-spacing:0.01em;">${seller}</p>` : ""}
+      <p style="margin:0 0 6px;">
+        ${
+          ctx.sellerPhone
+            ? `<a href="tel:${escapeHtml(
+                String(ctx.sellerPhone).replace(/[^+\d]/g, "")
+              )}" style="color:#675A52;text-decoration:none;">${escapeHtml(
+                ctx.sellerPhone
+              )}</a>`
+            : ""
+        }${ctx.sellerPhone ? " &nbsp;·&nbsp; " : ""}<a href="mailto:${escapeHtml(
+          ctx.sellerEmail || ctx.contactEmail
+        )}" style="color:#675A52;text-decoration:none;">${escapeHtml(
+          ctx.sellerEmail || ctx.contactEmail
+        )}</a>
+      </p>
+      <p style="margin:0 0 10px;">
+        <a href="${escapeHtml(
+          ctx.storefrontUrl
+        )}" style="color:#C84636;text-decoration:none;font-weight:600;">${
+          ctx.sellerWebsite || "snehavrinda.in"
+        }</a>
+      </p>
+      <div style="height:1px;width:44px;margin:0 auto 10px;background:#DCCBB4;"></div>
+      <p style="margin:0;font-size:11px;color:#8A7B70;">
+        Hand-made in Bikaner, Rajasthan · This is a transactional message about
+        your order or account.
+      </p>
     </div>
   </div>
 </body>

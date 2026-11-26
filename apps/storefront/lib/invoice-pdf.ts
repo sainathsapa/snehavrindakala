@@ -33,7 +33,11 @@ export interface InvoiceFacts {
     name: string;
     addressLines: string[];
     state?: string | null;
+    /** Printed only when the seller is registered; never faked or announced. */
     gstin?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    website?: string | null;
   };
   buyer: {
     name: string;
@@ -136,21 +140,54 @@ function buildPages(facts: InvoiceFacts): string[] {
     return op.y;
   };
 
+  /**
+   * Draw text that must not run past `maxWidth`, one line at a time, and return
+   * the next y.
+   *
+   * Without this, a long seller address simply kept going and collided with the
+   * INVOICE / No. / Date block on the right — visible in the very first real
+   * invoice this printer produced.
+   */
+  const pushWrapped = (
+    x: number,
+    startY: number,
+    size: number,
+    text: string,
+    maxWidth: number,
+    bold = false
+  ): number => {
+    let cursor = startY;
+    for (const line of wrap(text, maxWidth, size)) {
+      push({ x, y: cursor, size, text: line, bold });
+      cursor -= size + 3;
+    }
+    return cursor;
+  };
+
   const sym = facts.currencySymbol || "Rs.";
 
-  // Masthead
+  // Masthead. The left column is capped so it can never reach the metadata
+  // block on the right, however long the registered address is.
   push({ x: MARGIN, y, size: 18, bold: true, text: facts.seller.name || "Seller" });
   y -= 22;
   for (const line of facts.seller.addressLines.slice(0, 2)) {
-    push({ x: MARGIN, y, size: 9, text: line });
-    y -= 12;
+    y = pushWrapped(MARGIN, y, 9, line, 300);
+  }
+  // Contact details are what a customer actually needs from the masthead. The
+  // GSTIN line appears only when the seller is registered: printing "not
+  // registered" on every invoice is a disclaimer, not information.
+  const contactBits = [
+    facts.seller.phone ? `Tel ${facts.seller.phone}` : "",
+    facts.seller.email || "",
+    facts.seller.website || "",
+  ].filter(Boolean);
+  if (contactBits.length) {
+    y = pushWrapped(MARGIN, y, 8.5, contactBits.join("  ·  "), 300);
+    y -= 2;
   }
   if (facts.seller.gstin) {
-    push({ x: MARGIN, y, size: 9, text: `GSTIN: ${facts.seller.gstin}` });
-    y -= 12;
-  } else {
-    push({ x: MARGIN, y, size: 9, text: "GSTIN: not registered" });
-    y -= 12;
+    push({ x: MARGIN, y, size: 8.5, text: `GSTIN: ${facts.seller.gstin}` });
+    y -= 11;
   }
 
   // Document title, right aligned block
@@ -169,8 +206,7 @@ function buildPages(facts: InvoiceFacts): string[] {
   push({ x: MARGIN, y, size: 10, bold: true, text: facts.buyer.name || "Customer" });
   y -= 13;
   for (const line of facts.buyer.addressLines.slice(0, 3)) {
-    push({ x: MARGIN, y, size: 9, text: line, maxWidth: 250 });
-    y -= 12;
+    y = pushWrapped(MARGIN, y, 9, line, 300);
   }
   if (facts.buyer.phone) {
     push({ x: MARGIN, y, size: 9, text: `Phone: ${facts.buyer.phone}` });
@@ -237,7 +273,8 @@ function buildPages(facts: InvoiceFacts): string[] {
   }
 
   pages.push(ops);
-  return pages.map((pageOps) => {
+
+  return pages.map((pageOps, pageIndex) => {
     const parts: string[] = [];
     for (const op of pageOps) {
       if (op.text === "__RULE__") {
@@ -251,6 +288,28 @@ function buildPages(facts: InvoiceFacts): string[] {
         )}) Tj ET`
       );
     }
+
+    // Footer on every page: a printed or forwarded invoice should still say
+    // where it came from and which page of the document it is.
+    const footerY = MARGIN - 14;
+    parts.push(
+      `0.86 0.80 0.71 RG 0.5 w ${MARGIN} ${footerY + 10} m ${PAGE_WIDTH - MARGIN} ${footerY + 10} l S`
+    );
+    const footerLeft = [facts.seller.name, facts.seller.website, facts.seller.phone]
+      .filter(Boolean)
+      .join("  ·  ");
+    const footerRight = `Page ${pageIndex + 1} of ${pages.length}`;
+    if (footerLeft) {
+      parts.push(
+        `BT /F1 7.5 Tf 0.45 0.40 0.36 rg 1 0 0 1 ${MARGIN} ${footerY} Tm (${escapePdfText(footerLeft)}) Tj ET`
+      );
+    }
+    parts.push(
+      `BT /F1 7.5 Tf 0.45 0.40 0.36 rg 1 0 0 1 ${PAGE_WIDTH - MARGIN - 52} ${footerY} Tm (${escapePdfText(
+        footerRight
+      )}) Tj ET`
+    );
+
     return parts.join("\n");
   });
 }

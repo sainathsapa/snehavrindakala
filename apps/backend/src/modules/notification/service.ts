@@ -292,6 +292,9 @@ export class NotificationService {
       sellerName: process.env.SELLER_LEGAL_NAME || undefined,
       sellerAddress: process.env.SELLER_ADDRESS || undefined,
       sellerState: process.env.SELLER_HOME_STATE || undefined,
+      sellerPhone: process.env.SELLER_PHONE || undefined,
+      sellerWebsite: process.env.SELLER_WEBSITE || undefined,
+      sellerEmail: process.env.SELLER_EMAIL || undefined,
     };
   }
 

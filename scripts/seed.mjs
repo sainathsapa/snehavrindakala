@@ -40,40 +40,51 @@ async function request(path, options = {}) {
 }
 
 async function adminLogin() {
-  const { status, body } = await request("/auth/admin/emailpass", {
+  // Medusa 2.x moved admin sign-in from /auth/admin/emailpass (v1) to
+  // /auth/user/emailpass. The old path answers 404, which this function used to
+  // report as "login failed" and then skip every admin-only step — so a fresh
+  // database got a working backend and an empty catalogue, with one warning line
+  // as the only clue.
+  const { status, body } = await request("/auth/user/emailpass", {
     method: "POST",
     body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
   });
-  if (status !== 200 && status !== 201) {
+  if ((status !== 200 && status !== 201) || !body?.token) {
     console.warn(
       `⚠ Medusa admin login failed (${status}). Admin-only seeding skipped. `
-        + "Use the Medusa Admin UI at /admin to create regions, products, etc."
+        + "Check ADMIN_EMAIL/ADMIN_PASSWORD in .env against the admin user in the "
+        + "database, or create one with `medusa user`."
     );
     adminToken = null;
     return;
   }
-  // Medusa v2 admin auth uses session cookies, not bearer tokens.
-  // Admin-only seeding (regions, products, etc.) must be done via Medusa Admin UI.
-  adminToken = null;
-  console.warn(
-    "⚠ Medusa v2 admin auth uses session cookies. Admin-only seeding skipped. "
-      + "Create catalogue data via the Medusa Admin UI at /admin instead."
-  );
+
+  // v2 returns a JWT that the admin API accepts as a bearer token.
+  adminToken = body.token;
 }
 
 async function getList(path) {
   const { status, body } = await request(path);
   if (!status || !body) return [];
-  // Handle Medusa v2 admin API response shapes
+
+  // Medusa 2.x wraps every collection in its own key: { regions }, { api_keys },
+  // { product_categories }, { products }. Enumerating the keys by hand meant the
+  // first two shapes were known and the rest fell through to an empty list, so
+  // every run tried to create records that already existed ("Product category
+  // with handle ... already exists") and the script stopped halfway.
   if (Array.isArray(body)) return body;
-  if (body?.result && Array.isArray(body.result)) return body.result;
-  if (body?.regions && Array.isArray(body.regions)) return body.regions;
-  if (body?.sales_channels && Array.isArray(body.sales_channels))
-    return body.sales_channels;
-  if (body?.artists && Array.isArray(body.artists)) return body.artists;
-  if (body?.data && Array.isArray(body.data)) return body.data;
-  if (body?.items && Array.isArray(body.items)) return body.items;
-  console.warn(`⚠ Unexpected response shape from ${path}: ${JSON.stringify(body).slice(0, 200)}`);
+  if (Array.isArray(body.result)) return body.result;
+  if (Array.isArray(body.data)) return body.data;
+
+  const collections = Object.values(body).filter(Array.isArray);
+  if (collections.length === 1) return collections[0];
+  // More than one array in the payload: the list is the longest one, since the
+  // others are summaries (counts, links) that never carry the records.
+  if (collections.length > 1) {
+    return collections.sort((a, b) => b.length - a.length)[0];
+  }
+
+  console.warn(`⚠ No list found in the response from ${path}: ${JSON.stringify(body).slice(0, 200)}`);
   return [];
 }
 
@@ -180,9 +191,11 @@ async function ensurePublishableKey(salesChannelId) {
     console.log(`✓ Publishable key exists`);
     return existing.token;
   }
+  // Medusa 2.x dropped `sales_channel_id` from this body: the link is its own
+  // resource now. Sending it the old way answers 400 "Unrecognized fields",
+  // which is what stopped this script halfway through a fresh database.
   const { status, body } = await post("/admin/api-keys", {
     title: "Storefront publishable key",
-    sales_channel_id: salesChannelId,
     type: "publishable",
   });
   if (status !== 200 && status !== 201) {
@@ -190,7 +203,22 @@ async function ensurePublishableKey(salesChannelId) {
       `Create API key failed (${status}): ${JSON.stringify(body)}`
     );
   }
+
+  const keyId = body?.api_key?.id || body?.id;
   const token = body?.api_key?.token || body?.token;
+
+  if (keyId && salesChannelId) {
+    const link = await post(`/admin/api-keys/${keyId}/sales-channels`, {
+      add: [salesChannelId],
+    });
+    if (link.status !== 200 && link.status !== 201) {
+      console.warn(
+        `⚠ Publishable key created but not linked to the sales channel (${link.status}). ` +
+          `Link it in the admin UI so storefront requests see the catalogue.`
+      );
+    }
+  }
+
   console.log(`✓ Created publishable key`);
   return token;
 }
@@ -259,13 +287,15 @@ async function ensureArtists() {
 }
 
 async function ensureProducts(categoryIds) {
-  const products = await getList("/store/products");
+  // /store/products requires the publishable key header; the admin list is
+  // what this script is authenticated for.
+  const products = await getList("/admin/products");
   const seedProducts = [
     {
       title: "Indigo Mineral Study",
       handle: "indigo-mineral-study",
       description: "A layered indigo and mineral-inspired painting on handmade paper.",
-      category_id: categoryIds[0],
+      categories: categoryIds[0] ? [{ id: categoryIds[0] }] : [],
       status: "published",
       options: [{ title: "Size", values: ["Small", "Medium", "Large"] }],
       variants: [
@@ -277,7 +307,7 @@ async function ensureProducts(categoryIds) {
       title: "Handloom Throw — Natural Dye",
       handle: "handloom-throw-natural-dye",
       description: "Woven textile throw in natural dye, made in Kerala.",
-      category_id: categoryIds[2],
+      categories: categoryIds[2] ? [{ id: categoryIds[2] }] : [],
       status: "published",
       options: [{ title: "Colour", values: ["Indigo", "Terracotta", "Leaf"] }],
       variants: [

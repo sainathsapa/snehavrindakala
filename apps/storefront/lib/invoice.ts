@@ -50,6 +50,33 @@ export interface OrderLikeForInvoice {
   payment_collections?: { payments?: { id?: string }[] }[] | null;
 }
 
+/**
+ * The registered address, laid out for the masthead.
+ *
+ * The owner writes SELLER_ADDRESS as one free-form line and usually includes the
+ * city, state and postcode in it. Appending a composed "city, state, postcode"
+ * line printed the same place twice on the invoice, so the second line is only
+ * added when the address does not already carry the postcode.
+ */
+function sellerAddressLines(): string[] {
+  const address = (process.env.SELLER_ADDRESS || "").trim();
+  if (!address) return [];
+
+  const postcode = (process.env.SELLER_POSTCODE || "").trim();
+  if (postcode && address.includes(postcode)) return [address];
+
+  const tail = [
+    process.env.SELLER_CITY,
+    process.env.SELLER_HOME_STATE,
+    process.env.SELLER_POSTCODE,
+  ]
+    .map((part) => (part || "").trim())
+    .filter(Boolean)
+    .join(", ");
+
+  return tail ? [address, tail] : [address];
+}
+
 function nameOf(address: any): string {
   if (!address) return "";
   return [address.first_name, address.last_name].filter(Boolean).join(" ");
@@ -71,7 +98,10 @@ function paymentReference(order: OrderLikeForInvoice): string | null {
 export function invoiceNumberFor(order: OrderLikeForInvoice): string {
   const reference = order.display_id ?? order.id ?? "0";
   const year = order.created_at ? new Date(order.created_at).getFullYear() : new Date().getFullYear();
-  return `SVK-${year}-${String(reference).slice(-6)}`;
+  // Padded: an invoice number should look like a document reference, not like
+  // the order sequence "2".
+  const serial = String(reference).replace(/\D/g, "").slice(-6).padStart(5, "0");
+  return `SVK-${year}-${serial || "00000"}`;
 }
 
 export function invoiceFactsFromOrder(
@@ -103,12 +133,12 @@ export function invoiceFactsFromOrder(
     orderReference: String(order.display_id ?? order.id ?? ""),
     seller: {
       name: process.env.SELLER_LEGAL_NAME || "SnehaVrinda Kala",
-      addressLines: [
-        process.env.SELLER_ADDRESS || "",
-        [process.env.SELLER_HOME_STATE || ""].filter(Boolean).join(", "),
-      ].filter(Boolean),
+      addressLines: sellerAddressLines(),
       state: process.env.SELLER_HOME_STATE || null,
       gstin: gstin || null,
+      phone: process.env.SELLER_PHONE || null,
+      email: process.env.SELLER_EMAIL || process.env.CONTACT_EMAIL || null,
+      website: process.env.SELLER_WEBSITE || null,
     },
     buyer: {
       name: nameOf(shippingAddress) || String(order.email || "Customer"),
@@ -122,13 +152,13 @@ export function invoiceFactsFromOrder(
     shipping,
     discount,
     total,
-    // While the seller is unregistered this says so plainly; nothing pretends to
-    // be a tax invoice, which is what an unregistered seller must not issue.
+    // Only a registered seller prints a tax note. An unregistered one issues a
+    // plain invoice, and the document stays silent about the absence.
     taxNote: gstin
       ? tax
-        ? `Includes GST at ${tax.gst_rate}% (CGST ${tax.cgst / 100}, SGST ${tax.sgst / 100}, IGST ${tax.igst / 100}).`
+        ? `GST at ${tax.gst_rate}% is included in the total (CGST Rs. ${(tax.cgst / 100).toFixed(2)}, SGST Rs. ${(tax.sgst / 100).toFixed(2)}, IGST Rs. ${(tax.igst / 100).toFixed(2)}).`
         : null
-      : "GSTIN not registered. This is an order statement, not a tax invoice.",
+      : null,
     paymentReference: paymentReference(order),
     notes: ["Thank you for supporting hand-made work from Bikaner."],
   };
