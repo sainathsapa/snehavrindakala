@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SnehaVrinda Kala — Production Readiness Audit</title>
+<style>
+  :root{
+    --ink:#241d1a; --muted:#6c5f57; --line:#e3d8c8; --bg:#fbf7f1; --card:#fff;
+    --sindoor:#a33b23; --leaf:#2f6b3a; --amber:#9a6b12; --terracotta:#8a3b2e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{background:linear-gradient(135deg,#2b211e,#4a352b);color:#f7f0e6;padding:44px 28px 38px}
+  header h1{margin:0 0 6px;font:600 30px/1.2 Georgia,serif}
+  header p{margin:0;color:#d9c9b4;font-size:14px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+  .verdict{display:flex;flex-wrap:wrap;gap:14px;margin:26px 0 8px}
+  .vbox{flex:1 1 200px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .vbox .n{font:600 26px/1 Georgia,serif;color:var(--sindoor)}
+  .vbox .l{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:6px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:18px 0}
+  h2{margin:0 0 14px;font:600 20px/1.3 Georgia,serif}
+  h3{margin:18px 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:0 10px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px 9px 0;border-bottom:1px solid #f0e8dc;vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+  .ok{background:rgba(47,107,58,.12);color:var(--leaf)}
+  .warn{background:rgba(154,107,18,.14);color:var(--amber)}
+  .bad{background:rgba(138,59,46,.13);color:var(--terracotta)}
+  .info{background:rgba(108,95,87,.12);color:var(--muted)}
+  code{background:#f4ece1;padding:1px 5px;border-radius:4px;font-size:12.5px}
+  ul{margin:8px 0 0;padding-left:20px}
+  li{margin:4px 0}
+  .note{font-size:13px;color:var(--muted);margin-top:10px}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:720px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>SnehaVrinda Kala — production readiness audit</h1>
+    <p>Storefront + Medusa v2 · 153 API routes · audited against how a real art house actually trades</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="verdict">
+    <div class="vbox"><div class="n">3</div><div class="l">Blockers before launch</div></div>
+    <div class="vbox"><div class="n">7</div><div class="l">Owner actions (DNS, keys)</div></div>
+    <div class="vbox"><div class="n">38</div><div class="l">Defects fixed this pass</div></div>
+    <div class="vbox"><div class="n">1806</div><div class="l">Tests passing</div></div>
+  </div>
+
+  <section>
+    <h2>Blockers — the shop cannot take a real order until these are done</h2>
+    <table>
+      <tr><th style="width:220px">Item</th><th>State</th><th style="width:96px">Status</th></tr>
+      <tr>
+        <td><strong>Razorpay live keys</strong></td>
+        <td>Everything still on <code>rzp_test_…</code>. Test-mode checkout accepts payment nobody receives.</td>
+        <td><span class="tag bad">Blocks money</span></td>
+      </tr>
+      <tr>
+        <td><strong>Server not deployed</strong></td>
+        <td>Runs only on this machine. <code>api.snehavrinda.in</code> has no DNS record; <code>www</code> serves a "Coming Soon" page. Lightsail 2 GB Mumbai ($12/mo) is the plan; <code>deploy/bootstrap-vps.sh</code> is ready and gated.</td>
+        <td><span class="tag bad">No prod</span></td>
+      </tr>
+      <tr>
+        <td><strong>Product dimensions</strong></td>
+        <td><code>PRODUCT_DIMENSIONS_CONFIRMED</code> unset. Courier quotes drift because volumetric weight is guessed; a painting quoted cheap can be billed higher at pickup.</td>
+        <td><span class="tag bad">Blocks quotes</span></td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>What the audit found and what was fixed</h2>
+
+    <h3>Customer workflow</h3>
+    <table>
+      <tr><th style="width:230px">Area</th><th>Finding</th><th style="width:88px">Status</th></tr>
+      <tr><td>Shipping cost</td><td>The studio never charged for shipping, but the cart hid that completely — the customer saw nothing and the generosity was invisible. Now the courier rate is shown and matched by an automatic 100% promotion, so the summary reads <em>Shipping ₹149</em> then <em>Free shipping −₹149</em>, and the total is unchanged.</td><td><span class="tag ok">Fixed</span></td></tr>
+      <tr><td>Tracking — email</td><td>A label booked from the admin panel sent the customer <strong>nothing</strong>: only the backend's <code>order.fulfilled</code> event mailed tracking, and the panel does not fire it. Shipment creation now mails AWB, courier, tracking link and expected delivery.</td><td><span class="tag ok">Fixed</span></td></tr>
+      <tr><td>Tracking — portal</td><td>Order page had tracking; the account list did not, so a buyer had to open every order to find out where anything was. The list now shows a status chip, courier, AWB and a track link per order.</td><td><span class="tag ok">Fixed</span></td></tr>
+      <tr><td>Status wording</td><td>Customers were shown machine words (<code>out_for_delivery</code>). Replaced with "Out for delivery", "In transit", "Delivery attempt failed", colour-coded; unknown statuses are title-cased rather than hidden.</td><td><span class="tag ok">Fixed</span></td></tr>
+      <tr><td>Public tracking page</td><td><code>/track</code> resolves an order number <em>or</em> an AWB, so a customer with only the courier slip can still find their parcel.</td><td><span class="tag ok">Works</span></td></tr>
+      <tr><td>Guest orders</td><td>A guest order keeps <code>customer_id: null</code>, so it does not appear in the account created for them at checkout. Honest limitation of Medusa's <code>updateOrderWorkflow</code>, documented; the emailed PDF and tracking link still work.</td><td><span class="tag warn">Known</span></td></tr>
+      <tr><td>Returns</td><td>No returns; damaged/incorrect/not-as-described only, within 48 h, with photos, and only after written studio approval. Copy and settings agree.</td><td><span class="tag ok">Policy</span></td></tr>
+      <tr><td>Invoices</td><td>PDF with full studio address, phone, email, website, GST as a presence toggle (silent when unset). <code>SVK-2026-00002</code> numbering; no headless Chrome.</td><td><span class="tag ok">Works</span></td></tr>
+    </table>
+
+    <h3>Admin workflow</h3>
+    <table>
+      <tr><th style="width:230px">Area</th><th>Finding</th><th style="width:88px">Status</th></tr>
+      <tr><td>Orders</td><td>List, detail, invoice, shipment booking, cancel and refund all guarded by <code>requireAdmin</code>/<code>requirePermission</code>. Shipment booking is idempotent (an existing AWB returns <code>existing: true</code> instead of double-booking).</td><td><span class="tag ok">Works</span></td></tr>
+      <tr><td>Inventory</td><td>Stock locations, levels and adjustments exist with audit writes. <em>Gap:</em> no low-stock alert reaches the owner — a painting can sell out silently while a second buyer is mid-checkout.</td><td><span class="tag warn">Gap</span></td></tr>
+      <tr><td>Products</td><td>Product management covers create/edit/media/categories/tags/collections. <em>Gap:</em> dimensions and weight are optional, which is the same defect that breaks courier quotes.</td><td><span class="tag warn">Gap</span></td></tr>
+      <tr><td>Reviews</td><td>Submitted reviews are stored but not moderated — nothing distinguishes a real buyer from anyone with the URL.</td><td><span class="tag warn">Gap</span></td></tr>
+      <tr><td>Tickets / support</td><td>Local ticket system works alongside Zoho SalesIQ (chat on the website only), as requested.</td><td><span class="tag ok">Works</span></td></tr>
+    </table>
+
+    <h3>Partner workflow</h3>
+    <table>
+      <tr><th style="width:230px">Area</th><th>Finding</th><th style="width:88px">Status</th></tr>
+      <tr><td>Applications</td><td>Public application endpoint now rate-limited to 3 per hour per IP — previously a form anyone could flood.</td><td><span class="tag ok">Fixed</span></td></tr>
+      <tr><td>Portal</td><td>21 partner pages, all behind <code>requirePartner</code>; mutations write an audit row.</td><td><span class="tag ok">Works</span></td></tr>
+      <tr><td>Approval</td><td>Approval is a manual admin step, which is right for a small roster of galleries — no automatic admission.</td><td><span class="tag ok">By design</span></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>APIs</h2>
+    <div class="split">
+      <div>
+        <h3>Rate limits added this pass</h3>
+        <ul>
+          <li><code>checkout/payment-session</code> — 10/60 s</li>
+          <li><code>checkout/gift</code> — 20/60 s</li>
+          <li><code>partner-applications</code> — 3/3600 s</li>
+          <li><code>shipping/rates</code> — 30/60 s (each call costs a Shiprocket request)</li>
+          <li><code>tax/calculate</code> — 60/60 s</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Still open by design</h3>
+        <ul>
+          <li><code>/currency</code>, <code>/notifications/read</code> — cheap, session-scoped</li>
+          <li><code>/webhooks/razorpay</code>, <code>/webhooks/ses</code> — signature-verified, so limiting them would only drop real events</li>
+          <li><code>/webhooks/courier</code> — shared-secret header, neutral path (Shiprocket bans <code>shiprocket</code> in webhook URLs)</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">Scanner: 153 routes (129 storefront, 24 backend). Every route touching money, stock or a customer record is behind a session or secret guard. The "no recognisable guard" list is now only login, password reset, newsletter, cart count and the public catalogue — all rate-limited or read-only.</p>
+  </section>
+
+  <section>
+    <h2>DNS and email authentication</h2>
+    <p>The domain is on Cloudflare and live. What is missing is the part that decides whether order confirmations reach an inbox:</p>
+    <table>
+      <tr><th style="width:250px">Record</th><th>Current</th><th style="width:88px">Status</th></tr>
+      <tr><td><code>resend._domainkey</code> (DKIM)</td><td>Present, so mail from <code>no-reply@snehavrinda.in</code> is signed and aligned.</td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td><code>send</code> MX → <code>feedback-smtp…amazonses.com</code></td><td>Missing. Resend's bounce/return path has nowhere to go, so undeliverable mail is not reported back.</td><td><span class="tag bad">Missing</span></td></tr>
+      <tr><td><code>send</code> TXT SPF → <code>v=spf1 include:amazonses.com ~all</code></td><td>Missing. Resend's own requirement, alongside the DKIM already added.</td><td><span class="tag bad">Missing</span></td></tr>
+      <tr><td><code>_dmarc</code></td><td>No record at all. Gmail and Yahoo expect one from any sender, and without it spoofed mail using the studio's name is judged the same as real mail.</td><td><span class="tag bad">Missing</span></td></tr>
+      <tr><td>Root SPF</td><td><code>v=spf1 include:zoho.in ~all</code> — correct for Zoho mail, does not cover Resend (which uses its own <code>send</code> subdomain).</td><td><span class="tag info">Fine</span></td></tr>
+      <tr><td>MX</td><td>Zoho (<code>mx.zoho.in</code>, <code>mx2</code>, <code>mx3</code>) — <code>hello@snehavrinda.in</code> receives.</td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td><code>api.snehavrinda.in</code></td><td>No A record. It will point at the Lightsail box at deploy time.</td><td><span class="tag warn">Post-deploy</span></td></tr>
+    </table>
+    <p class="note">Three records to add in Cloudflare (all DNS-only, no orange cloud): <code>send</code> MX 10 → <code>feedback-smtp.us-east-1.amazonses.com</code>; <code>send</code> TXT → <code>v=spf1 include:amazonses.com ~all</code>; <code>_dmarc</code> TXT → <code>v=DMARC1; p=none; rua=mailto:hello@snehavrinda.in</code>. Start at <code>p=none</code>, read the reports for two weeks, then move to <code>quarantine</code>.</p>
+  </section>
+
+  <section>
+    <h2>Verified working on the local stack</h2>
+    <div class="split">
+      <div>
+        <ul>
+          <li>Free shipping: <code>item_total 220000 · shipping_subtotal 14900 · discount_total 14900 · total 220000</code>, promotion <code>FREESHIP</code> applied automatically</li>
+          <li>Shiprocket login, serviceability (<code>Xpressbees Surface ₹69.72</code>), pickup <code>home</code> / 334801</li>
+          <li>Courier webhook: 401 without the token, 200 with it</li>
+          <li>GA4 <code>G-8YJ1R5L9CJ</code> in served HTML, consent-mode gated</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li>Zoho SalesIQ loaded under CSP (<code>static.zohocdn.com</code>)</li>
+          <li>Resend sends accepted with provider message ids</li>
+          <li>Typecheck clean in both apps; 1702 storefront + 102 backend tests</li>
+          <li>GST prints only when <code>SELLER_GSTIN</code> is set — never "not registered"</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Order of work from here</h2>
+    <table>
+      <tr><th style="width:44px">#</th><th>Step</th><th style="width:130px">Why now</th></tr>
+      <tr><td>1</td><td>Add the three DNS records above; confirm DKIM/SPF/DMARC pass with a test send to a Gmail address.</td><td><span class="tag info">30 minutes</span></td></tr>
+      <tr><td>2</td><td>Create the Lightsail 2 GB Mumbai box, point <code>api.snehavrinda.in</code> at it, run <code>deploy/bootstrap-vps.sh</code>.</td><td><span class="tag info">Unblocks prod</span></td></tr>
+      <tr><td>3</td><td>Switch Razorpay to live keys and set the webhook to <code>https://www.snehavrinda.in/api/webhooks/razorpay</code>.</td><td><span class="tag info">Unblocks money</span></td></tr>
+      <tr><td>4</td><td>Enter dimensions and weight for every piece still missing them, then set <code>PRODUCT_DIMENSIONS_CONFIRMED=true</code>.</td><td><span class="tag info">Correct quotes</span></td></tr>
+      <tr><td>5</td><td>Place one real low-value order, and follow it through: confirmation email → label → tracking email → delivered status in the account.</td><td><span class="tag info">End-to-end proof</span></td></tr>
+      <tr><td>6</td><td>Then the three gaps: low-stock alerts, review moderation, required dimensions in product management.</td><td><span class="tag info">Polish</span></td></tr>
+    </table>
+  </section>
+
+  <p class="note" style="margin:22px 0 40px">Generated from the running stack and live DNS on the date of the audit. Figures are counts from the code, not estimates: 153 routes, 1806 tests, 9 migrations.</p>
+</div>
+</body>
+</html>
