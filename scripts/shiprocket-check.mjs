@@ -17,6 +17,12 @@
  */
 
 import { readFileSync } from "node:fs";
+import {
+  cooldownStatus,
+  describeCooldown,
+  recordAuthFailure,
+  recordAuthSuccess,
+} from "./lib/shiprocket-cooldown.mjs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -64,6 +70,14 @@ if (!email) {
   process.exit(1);
 }
 
+// Before anything touches the network: has a recent failure already tripped the
+// lock? Shiprocket's limit is two hours and it says so in an email, not an API.
+const cooldown = cooldownStatus();
+if (cooldown.locked) {
+  console.error(describeCooldown(cooldown));
+  process.exit(1);
+}
+
 async function jsonFetch(path, init) {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
@@ -97,6 +111,7 @@ for (const [index, candidate] of attempts.entries()) {
   // 400 for as long as the block lasts. Retrying makes it worse and longer, so
   // this stops immediately rather than trying the trimmed variant.
   if (/blocked/i.test(message)) {
+    recordAuthFailure("Shiprocket reported the account blocked");
     console.error(`
 ✗ auth        ${res.status} ${message}
 
@@ -114,6 +129,7 @@ Do not run this script in a loop against a blocked account.`);
 
   if (res.ok && res.body?.token) {
     token = res.body.token;
+    recordAuthSuccess();
     console.log(`\n✓ auth        token issued (${label}), ${token.length} chars`);
     break;
   }

@@ -492,6 +492,67 @@ export default function OrderDetailPage() {
                       {shipmentError}
                     </p>
                   )}
+
+                  {/* Booked it another way? The parcel still has to be marked
+                      shipped and the buyer still needs a number to follow. This
+                      is the path that works when the courier API is down,
+                      unconfigured or locked out. */}
+                  <details className="rounded-md border border-sand-border p-3">
+                    <summary className="cursor-pointer font-sans text-xs font-medium text-muted-ink">
+                      Shipped it another way — enter the tracking number
+                    </summary>
+                    <form
+                      className="mt-3 space-y-2"
+                      onSubmit={async (event) => {
+                        event.preventDefault();
+                        const form = new FormData(event.currentTarget);
+                        setCreatingShipment(true);
+                        setShipmentError("");
+                        try {
+                          const res = await fetch(`/api/admin/orders/${id}/shipment`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              manual: true,
+                              awb: String(form.get("awb") || ""),
+                              trackingUrl: String(form.get("trackingUrl") || ""),
+                            }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || "Could not save the shipment");
+                          setShipment(data.shipment ?? null);
+                        } catch (err: any) {
+                          setShipmentError(err.message);
+                        } finally {
+                          setCreatingShipment(false);
+                        }
+                      }}
+                    >
+                      <input
+                        name="awb"
+                        required
+                        placeholder="Tracking number"
+                        className="w-full rounded-md border border-sand-border px-3 py-2 font-sans text-sm"
+                      />
+                      <input
+                        name="trackingUrl"
+                        type="url"
+                        placeholder="Tracking link (optional)"
+                        className="w-full rounded-md border border-sand-border px-3 py-2 font-sans text-sm"
+                      />
+                      <button
+                        type="submit"
+                        disabled={creatingShipment}
+                        className="w-full rounded-md border border-sindoor px-4 py-2 font-sans text-sm font-medium text-sindoor hover:bg-sindoor/5 disabled:opacity-50"
+                      >
+                        {creatingShipment ? "Saving…" : "Mark as shipped"}
+                      </button>
+                      <p className="font-sans text-[11px] text-muted-ink">
+                        The buyer is emailed the number and sees it on their order
+                        page. The courier&apos;s name stays internal.
+                      </p>
+                    </form>
+                  </details>
                 </div>
               )}
 

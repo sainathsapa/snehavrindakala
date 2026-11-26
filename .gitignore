@@ -84,3 +84,6 @@ opencode.json
 
 # Local screenshot scratch
 .shots/
+
+# Shiprocket auth cooldown state (local, not shared)
+.shiprocket-lockout.json

@@ -24,6 +24,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PROD = process.argv.includes("--prod");
 
+const {
+  cooldownStatus: srCooldown,
+  describeCooldown: srDescribe,
+  recordAuthFailure: srFailure,
+  recordAuthSuccess: srSuccess,
+} = await import("./lib/shiprocket-cooldown.mjs");
+
 let fails = 0;
 let warns = 0;
 
@@ -217,6 +224,11 @@ section("Runtime reachability");
  * is, because a launch-blocking message that misdiagnoses itself costs a day.
  */
 async function shiprocketProbe(creds) {
+  const cooldown = srCooldown();
+  if (cooldown.locked) {
+    return { ok: false, detail: srDescribe(cooldown) };
+  }
+
   const base = (value("SHIPROCKET_BASE_URL") || "https://apiv2.shiprocket.in/v1/external").replace(/\/+$/, "");
 
   if (creds.token) {
@@ -225,7 +237,10 @@ async function shiprocketProbe(creds) {
         headers: { Authorization: `Bearer ${creds.token}`, Accept: "application/json" },
         signal: AbortSignal.timeout(15000),
       });
-      if (res.ok) return { ok: true, detail: `token accepted (${res.status})` };
+      if (res.ok) {
+        srSuccess();
+        return { ok: true, detail: `token accepted (${res.status})` };
+      }
       if (res.status === 401 || res.status === 403) {
         return { ok: false, detail: `token rejected (${res.status}) — regenerate it in Settings → API` };
       }
@@ -244,11 +259,14 @@ async function shiprocketProbe(creds) {
     });
     if (res.ok) {
       const body = await res.json().catch(() => ({}));
-      return body?.token
-        ? { ok: true, detail: "token issued" }
-        : { ok: false, detail: "answered 200 without a token" };
+      if (body?.token) {
+        srSuccess();
+        return { ok: true, detail: "token issued" };
+      }
+      return { ok: false, detail: "answered 200 without a token" };
     }
     if (res.status === 401 || res.status === 403) {
+      srFailure("Shiprocket rejected the credentials");
       return {
         ok: false,
         detail:
@@ -258,6 +276,7 @@ async function shiprocketProbe(creds) {
     if (res.status === 400) {
       const body = await res.text().catch(() => "");
       if (/blocked/i.test(body)) {
+        srFailure("Shiprocket blocked the account after failed logins");
         // Repeated login attempts from this check are what blocks an account.
         // Say so plainly and stop: a deploy loop that re-probes would keep the
         // lockout alive.
