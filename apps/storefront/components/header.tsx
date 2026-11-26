@@ -24,33 +24,25 @@ import { KalamBorder } from "./ornaments";
  * utility icons on the right.
  */
 const navLinks = [
-  // Four entries. A visitor should be able to hold the whole site in their
-  // head: browse the work, read about the traditions, ask for a commission,
-  // understand who we are. Artists and Sell are marketplace concepts and only
-  // appear in platform mode.
+  // Four entries, and every page on the site is at most one click behind one of
+  // them. The nav had grown to ten — Shop, Rooms, Art Forms, Learn, Request,
+  // Journal, Contact, Studio, Artists, Sell — and half of those repeated a link
+  // that already lived inside another menu: the journal was in both the bar and
+  // the studio menu, contact was in both (as a mailto: in one of them), and
+  // "art forms" sat beside a menu that was a gallery of exactly those forms.
   //
-  // "Discover" carries the only browse menu — a small gallery of the six
-  // traditions, each linking to its shelf in the shop. "Art Forms" is a plain
-  // link to the traditions index, which is where you read about them instead.
-  // They were once two dropdowns over the same taxonomy, showing the same
-  // pictures under different names, which is just a decision a visitor has to
-  // make for no reason.
-  { key: "discover", href: "/shop", menu: "discover" as const },
-  // Rooms sit beside the shop, not under it: they are the way the collection is
-  // arranged when someone else has already done the choosing.
+  // A visitor should be able to hold the whole site in their head, so this is
+  // grouped by what a person is trying to do:
+  //
+  //   Shop        browse and buy — the traditions, rooms, the full catalogue
+  //   Learn       read about the work — the three plates
+  //   Studio      who makes it and how to reach them — story, makers, press, contact
+  //   Commission  ask for a piece — the one action worth its own slot
+  { key: "discover", href: "/shop", menu: "shop" as const },
   { key: "rooms", href: "/rooms" },
-  { key: "artForms", href: "/art-forms" },
-  { key: "learn", href: "/learn" },
-  { key: "request", href: "/custom-art" },
-  { key: "journal", href: "/journal" },
-  // A shop with no contact page sends people to a mailto: link; this is the
-  // address the terms, invoice and every policy point at.
-  { key: "contact", href: "/contact" },
+  { key: "learn", href: "/learn", menu: "learn" as const },
   { key: "studio", href: "/about", menu: "studio" as const },
-  // Both render in single-brand mode now — a house that names its makers should
-  // not hide them, and "work with us" is a question makers actually ask.
-  { key: "artists", href: "/artists" },
-  { key: "sell", href: "/sell" },
+  { key: "request", href: "/custom-art" },
 ];
 
 const typeIcons: Record<string, string> = {
@@ -81,7 +73,7 @@ export function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Which dropdown is open. CSS-only hover menus cannot be reached by keyboard
   // or touch, so the menu is explicitly state-driven with click and Escape.
-  const [openMenu, setOpenMenu] = useState<null | "discover" | "studio">(null);
+  const [openMenu, setOpenMenu] = useState<null | "shop" | "learn" | "studio">(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -241,21 +233,29 @@ export function Header({
           </Link>
 
           {/* Centred links. Hidden below lg; the mobile sheet carries them. */}
-          <nav ref={menuRef} className="mx-auto hidden items-center gap-7 lg:flex">
+          <nav ref={menuRef} className="mx-auto hidden items-center gap-9 lg:flex">
             {visibleLinks.map((link) => {
               const menuId = link.menu ? `nav-menu-${link.menu}` : undefined;
               const isOpen = Boolean(link.menu && openMenu === link.menu);
               const entries =
-                link.menu === "discover"
+                link.menu === "shop"
                   ? artForms
-                  : link.menu === "studio"
+                  : link.menu === "learn"
                     ? [
-                        { label: "Our story", href: "/about" },
-                        { label: "The journal", href: "/journal" },
-                        { label: "Request a piece", href: "/custom-art" },
-                        { label: "Contact", href: "mailto:hello@snehavrinda.in" },
+                        { label: "The words", href: "/learn/words" },
+                        { label: "The materials", href: "/learn/materials" },
+                        { label: "The history", href: "/learn/history" },
                       ]
-                    : [];
+                    : link.menu === "studio"
+                      ? [
+                          { label: "Our story", href: "/about" },
+                          { label: "The makers", href: "/artists" },
+                          { label: "The journal", href: "/journal" },
+                          { label: "Newsroom", href: "/newsroom" },
+                          { label: "Work with us", href: "/sell" },
+                          { label: "Contact", href: "/contact" },
+                        ]
+                      : [];
 
               if (!link.menu) {
                 // A nav item stays active on its own sub-pages: /shop should
@@ -270,7 +270,7 @@ export function Header({
                     key={link.href}
                     href={link.href}
                     aria-current={active ? "page" : undefined}
-                    className={`group relative flex items-center gap-1.5 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                    className={`group relative flex items-center gap-1.5 whitespace-nowrap py-1 font-sans text-[14.5px] font-medium tracking-[0.01em] transition-colors ${
                       active
                         ? "text-kumkum"
                         : "text-deep-ink/85 hover:text-kumkum"
@@ -297,7 +297,7 @@ export function Header({
                     aria-expanded={isOpen}
                     aria-controls={menuId}
                     aria-haspopup="true"
-                    className={`group flex items-center gap-1 whitespace-nowrap font-sans text-[13.5px] font-medium transition-colors ${
+                    className={`group flex items-center gap-1 whitespace-nowrap py-1 font-sans text-[14.5px] font-medium tracking-[0.01em] transition-colors ${
                       isOpen || pathname.startsWith(link.href)
                         ? "text-kumkum"
                         : "text-deep-ink/85 hover:text-kumkum"
@@ -317,9 +317,9 @@ export function Header({
                     <div
                       id={menuId}
                       className={`absolute left-1/2 top-full z-50 mt-3 -translate-x-1/2 overflow-hidden border border-sand-border bg-surface shadow-lifted ${
-                        link.menu === "discover"
+                        link.menu === "shop"
                           ? "w-[440px] rounded-sm sm:w-[560px]"
-                          : "w-72 rounded-lg"
+                          : "w-64 rounded-lg"
                       }`}
                     >
                       {/* The art-forms menu is a small gallery: each tradition
@@ -327,7 +327,7 @@ export function Header({
                           name set as a plate caption. A dropdown of bare words
                           gives a visitor nothing to recognise — but an image
                           of a Madhubani border is instantly a Madhubani border. */}
-                      {link.menu === "discover" ? (
+                      {link.menu === "shop" ? (
                         <>
                           <div className="flex items-center justify-between border-b border-sand-border/70 px-4 py-2.5">
                             <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-terracotta">
@@ -402,16 +402,35 @@ export function Header({
                         </ul>
                       )}
                       <div className="border-t border-sand-border/70 bg-rang-paper/50 px-4 py-2.5">
+                        {/* The studio panel's own heading already opens /about,
+                            so a footer link to the same page was the one
+                            duplicate left in the menu. */}
+                        {link.menu === "studio" ? null : (
                         <Link
                           href={link.href}
                           onClick={() => setOpenMenu(null)}
                           className="font-sans text-xs font-medium text-terracotta hover:text-kumkum"
                         >
-                          {link.menu === "discover"
+                          {link.menu === "shop"
                             ? "Browse every work"
-                            : "About the studio"}{" "}
+                            : link.menu === "learn"
+                              ? "All three plates"
+                              : "About the studio"}{" "}
                           →
                         </Link>
+                        )}
+                        {link.menu === "shop" ? (
+                          <>
+                            <span className="mx-2 text-sand-border">|</span>
+                            <Link
+                              href="/art-forms"
+                              onClick={() => setOpenMenu(null)}
+                              className="font-sans text-xs text-muted-ink hover:text-kumkum"
+                            >
+                              All traditions
+                            </Link>
+                          </>
+                        ) : null}
                       </div>
                     </div>
                   )}
@@ -575,16 +594,36 @@ export function Header({
                 {/* Sub-links are listed inline rather than behind a toggle: on a
                     phone there is room, and an extra tap to reveal five links is
                     friction for no gain. */}
-                {link.menu === "discover" && artForms.length > 0 && (
+                {link.menu && (
                   <div className="mb-1 border-l border-sand-border pl-3">
-                    {artForms.map((form) => (
+                    {(link.menu === "shop"
+                      ? [
+                          { label: "Every work", href: "/shop" },
+                          ...artForms,
+                          { label: "All traditions", href: "/art-forms" },
+                        ]
+                      : link.menu === "learn"
+                        ? [
+                            { label: "The words", href: "/learn/words" },
+                            { label: "The materials", href: "/learn/materials" },
+                            { label: "The history", href: "/learn/history" },
+                          ]
+                        : [
+                            { label: "Our story", href: "/about" },
+                            { label: "The makers", href: "/artists" },
+                            { label: "The journal", href: "/journal" },
+                            { label: "Newsroom", href: "/newsroom" },
+                            { label: "Work with us", href: "/sell" },
+                            { label: "Contact", href: "/contact" },
+                          ]
+                    ).map((entry: any) => (
                       <Link
-                        key={form.href}
-                        href={form.href}
+                        key={entry.href}
+                        href={entry.href}
                         onClick={() => setMobileMenuOpen(false)}
                         className="block py-1.5 font-sans text-[13px] text-muted-ink hover:text-kumkum"
                       >
-                        {form.label}
+                        {entry.label}
                       </Link>
                     ))}
                   </div>
