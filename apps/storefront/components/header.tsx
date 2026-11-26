@@ -89,6 +89,13 @@ export function Header({
   // keeps focus and Enter submits the full search instead of an option.
   const [searchActiveIndex, setSearchActiveIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // The name said `debouncedSearch` and there was no debounce: every keystroke
+  // fired a request, and because they could land out of order an old answer
+  // sometimes replaced a new one — type "fish", see the results for "fi".
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequest = useRef<AbortController | null>(null);
+  /** The query whose results are on screen, so a late reply can be ignored. */
+  const searchSeq = useRef(0);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -123,26 +130,42 @@ export function Header({
 
   const debouncedSearch = async (query: string) => {
     if (!query || query.length < 2) {
+      searchRequest.current?.abort();
       setSearchResults([]);
       setSearchOpen(false);
       return;
     }
-    setSearchLoading(true);
-    try {
-      const res = await fetch(
-        `/api/store/search?q=${encodeURIComponent(query)}&limit=8`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data.results || []);
-        setSearchActiveIndex(-1);
-        setSearchOpen(true);
+
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(async () => {
+      // A new query cancels the one in flight; only the newest may write state.
+      searchRequest.current?.abort();
+      const controller = new AbortController();
+      searchRequest.current = controller;
+      const seq = ++searchSeq.current;
+
+      setSearchLoading(true);
+      try {
+        const res = await fetch(
+          `/api/store/search?q=${encodeURIComponent(query)}&limit=8`,
+          { signal: controller.signal }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (seq !== searchSeq.current) return;
+          setSearchResults(data.results || []);
+          setSearchActiveIndex(-1);
+          setSearchOpen(true);
+        }
+      } catch (err) {
+        // An aborted request is the expected path, not a failure to report.
+        if ((err as Error)?.name !== "AbortError") {
+          console.error("Search failed:", err);
+        }
+      } finally {
+        if (seq === searchSeq.current) setSearchLoading(false);
       }
-    } catch (err) {
-      console.error("Search failed:", err);
-    } finally {
-      setSearchLoading(false);
-    }
+    }, 250);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -462,7 +485,7 @@ export function Header({
 
           {/* Utilities: thin-line icons, per the reference. */}
           <div className="ml-auto flex shrink-0 items-center gap-4 lg:ml-0">
-            <div className="relative hidden md:block">
+            <div className="relative">
               <form onSubmit={handleSearchSubmit} role="search">
                 <input
                   ref={searchInputRef}
@@ -481,7 +504,7 @@ export function Header({
                   onFocus={() => setSearchOpen(searchQuery.length >= 2)}
                   onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
                   onKeyDown={handleSearchKeyDown}
-                  className="h-9 w-40 rounded-full border border-sand-border bg-surface/70 pl-9 pr-3 font-sans text-[13px] text-deep-ink transition-[width] placeholder:text-muted-ink/70 focus:w-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50"
+                  className="h-9 w-24 rounded-full border border-sand-border bg-surface/70 pl-9 pr-3 font-sans text-[13px] text-deep-ink transition-[width] placeholder:text-muted-ink/70 focus:w-44 focus:outline-none focus-visible:ring-2 focus-visible:ring-kumkum/50 sm:w-40 sm:focus:w-60"
                 />
                 <Icon
                   name="search"

@@ -8,6 +8,8 @@ interface Stats {
   total_products: number;
   total_customers: number;
   total_artists: number;
+  total_rooms?: number;
+  total_news?: number;
 }
 
 const CARDS: { key: keyof Stats; label: string; href: string }[] = [
@@ -15,6 +17,10 @@ const CARDS: { key: keyof Stats; label: string; href: string }[] = [
   { key: "total_products", label: "Total Products", href: "/admin/products" },
   { key: "total_customers", label: "Total Customers", href: "/admin/customers" },
   { key: "total_artists", label: "Total Artists", href: "/admin/partners" },
+  // Editorial surfaces. They were reachable only from the sidebar, so a room
+  // left as a draft had nothing on this page to say it existed.
+  { key: "total_rooms", label: "Rooms", href: "/admin/rooms" },
+  { key: "total_news", label: "Newsroom", href: "/admin/newsroom" },
 ];
 
 export default function AdminPage() {

@@ -282,23 +282,23 @@ export function Footer({
               as gold and turns into a smudge. */}
           <span
             aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-[#2A120C] to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-[#2A120C] to-transparent"
           />
           <span
             aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#2A120C] to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#2A120C] to-transparent"
           />
           {/* Gold hairline at the seam, where carving meets plaster. */}
           <span
             aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-haldi/45 to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-haldi/45 to-transparent"
           />
         </div>
 
         {/* The keystone rosette straddling the seam. */}
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 flex translate-y-1/2 justify-center"
+          className="pointer-events-none absolute inset-x-0 bottom-0 flex translate-y-1/2 justify-center"
         >
           <span className="flex h-16 w-16 items-center justify-center rounded-full border border-haldi/30 bg-[#2A120C] shadow-[0_0_0_7px_#2A120C] sm:h-20 sm:w-20">
             <LotusRosette className="h-8 w-8 text-haldi/90 sm:h-10 sm:w-10" />
@@ -598,12 +598,12 @@ export function Footer({
           />
           <span
             aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#2A120C] to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#2A120C] to-transparent"
           />
         </div>
 
         {/* The kalash, seated on the plinth. */}
-        <div className="absolute inset-x-0 bottom-0 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
           <div className="relative flex translate-y-[18%] flex-col items-center">
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2A120C] shadow-[0_0_0_1px_rgba(240,196,91,0.35)] sm:h-24 sm:w-24">
               <KalashMotif className="h-11 w-11 text-haldi/85 sm:h-14 sm:w-14" />

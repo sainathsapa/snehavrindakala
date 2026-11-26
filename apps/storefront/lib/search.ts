@@ -19,6 +19,7 @@ import {
   matchesAll,
   scoreFor,
 } from "./search-match";
+import { queryGroups, matchesGroups } from "./search-words";
 
 // Re-exported so importers that reached for the type here keep working.
 export type { SearchResult } from "./search-match";
@@ -172,6 +173,15 @@ export async function universalSearch(
 
   const needles = tokens(query);
   /**
+   * The same query, but each word carries its English alternatives.
+   *
+   * "मिट्टी" and "clay" are one group, so a terracotta vase matches either.
+   * Groups are still AND-ed between words: "चांदी बर्तन" wants a silver
+   * vessel, not every silver thing and every vessel.
+   */
+  const groups = queryGroups(query);
+  const matchesQuery = (haystack: string) => matchesGroups(haystack, groups);
+  /**
    * Slug of the query, used only to match category handles.
    *
    * `slugify` strips everything that is not a-z0-9, so a Devanagari query
@@ -296,7 +306,7 @@ export async function universalSearch(
             ]
               .filter(Boolean)
               .join(" ");
-            return matchesAll(haystack, needles);
+            return matchesQuery(haystack);
           })
           .slice(0, limit)
           .map(
@@ -343,7 +353,7 @@ export async function universalSearch(
             const haystack = [post.title, post.excerpt, h?.title, h?.excerpt]
               .filter(Boolean)
               .join(" ");
-            return matchesAll(haystack, needles);
+            return matchesQuery(haystack);
           })
           .slice(0, limit)
           .map(
@@ -376,19 +386,62 @@ export async function universalSearch(
   results.push(...productHits, ...categoryHits, ...artistHits);
   results.push(...artFormHits, ...journalHits);
 
+  const seenHandles = new Set(productHits.map((p) => p.handle));
+
+  // Products, matched here rather than by Medusa.
+  //
+  // Medusa's `q` only matches the literal string, so a Hindi word found nothing
+  // even when the English word it means was in the title: "मिट्टी" (clay) missed
+  // the terracotta vase, "चांदी" (silver) missed the filigree earrings. The
+  // catalogue is a few dozen works; filtering it against the same groups the
+  // rest of search uses costs one read and closes the gap.
+  if (groups.some((group) => group.length > 1)) {
+    try {
+      const items = await listCatalogue();
+      for (const item of items) {
+        if (seenHandles.has(item.handle)) continue;
+        const haystack = [
+          item.title,
+          item.artist,
+          item.collection,
+          item.specs?.medium,
+          item.stockType,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        if (!matchesQuery(haystack)) continue;
+        seenHandles.add(item.handle);
+        results.push({
+          type: "product",
+          id: `cat-${item.handle}`,
+          title: item.title,
+          subtitle: item.collection,
+          description: item.specs?.medium ?? null,
+          image: item.image,
+          price: item.price,
+          currency: item.currency,
+          handle: item.handle,
+          url: `/products/${item.handle}`,
+          matchScore: scoreFor(item.title, haystack, needles) || 1,
+        });
+      }
+    } catch (error) {
+      console.error("Catalogue search failed:", error);
+    }
+  }
+
   // Products found by their Hindi title.
   //
   // Medusa only searches the English catalogue, so "मधुबनी" reached the
   // tradition page but none of the paintings. The translations already exist in
   // product_translation; this resolves the ones that match back to real
   // products so Hindi shoppers get something they can buy, not just an essay.
-  const seenHandles = new Set(productHits.map((p) => p.handle));
-  if (needles.some((n) => /[^\x00-\x7F]/.test(n))) {
+  if (groups.some((group) => group.some((n) => /[^\x00-\x7F]/.test(n)))) {
     try {
       const hi = await productTranslationsFor("hi");
       const hits = [...hi.entries()].filter(([handle, tr]) =>
         !seenHandles.has(handle) &&
-        matchesAll(`${tr.title} ${tr.description ?? ""}`, needles)
+        matchesQuery(`${tr.title} ${tr.description ?? ""}`)
       );
       for (const [handle] of hits.slice(0, limit)) {
         try {
@@ -427,8 +480,10 @@ export async function universalSearch(
     const haystack = [term.term, term.meaning, term.language]
       .filter(Boolean)
       .join(" ");
+    // Hindi words reach a term through their English alternatives, so
+    // "मिट्टी" finds the glossary entry for terracotta.
+    if (!matchesQuery(haystack)) continue;
     const score = scoreFor(term.term, `${term.meaning ?? ""} ${term.language ?? ""}`, needles);
-    if (score === 0) continue;
     results.push({
       type: "glossary",
       id: `glossary-${slugify(term.term)}`,
@@ -440,6 +495,8 @@ export async function universalSearch(
   }
 
   for (const page of STATIC_PAGES) {
+    const pageHaystack = `${page.title} ${page.description} ${page.keywords.join(" ")}`;
+    if (!matchesQuery(pageHaystack)) continue;
     const score = scoreFor(
       page.title,
       `${page.description} ${page.keywords.join(" ")}`,
