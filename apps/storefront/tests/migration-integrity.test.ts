@@ -54,7 +54,7 @@ function fakeExecutor(state: FakeState = {}) {
 }
 
 describe("migration files", () => {
-  it("discovers migrations 002-010 in numeric filename order", () => {
+  it("discovers migrations 002-011 in numeric filename order", () => {
     expect(files.map((f) => f.id)).toEqual([
       "002_partner_marketplace",
       "003_marketplace_finance",
@@ -65,6 +65,7 @@ describe("migration files", () => {
       "008_finance_constraints",
       "009_reservation_hardening",
       "010_commercial_readiness_and_shipping",
+      "011_payment_event_amounts",
     ]);
     const orders = files.map((f) => f.order);
     expect([...orders].sort((a, b) => a - b)).toEqual(orders);

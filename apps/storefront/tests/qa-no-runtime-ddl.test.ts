@@ -113,7 +113,9 @@ describe("A08 — no runtime DDL in handlers or lib modules", () => {
     const migrationFiles = readdirSync(migrationsDir)
       .filter((f) => /^0\d{2}_.*\.sql$/.test(f))
       .sort();
-    expect(migrationFiles).toHaveLength(9); // 002..010, plus any migration added since
+    // Discovered, not pinned: a new migration must not require editing this
+    // test to keep the schema gate honest.
+    expect(migrationFiles.length).toBeGreaterThanOrEqual(9);
 
     const fromMigrations = new Set<string>();
     for (const file of migrationFiles) {

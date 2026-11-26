@@ -92,14 +92,16 @@ describe("A08 — no DDL in handlers or lib, schema coverage is complete", () =>
     expect(offenders).toEqual([]);
   });
 
-  it("schema.sql + migrations 002-010 define every EXPECTED_SCHEMA table", () => {
+  it("schema.sql + the migrations define every EXPECTED_SCHEMA table", () => {
     const verify = read("scripts/verify-schema.mjs");
     const expected = [...verify.matchAll(/^  ([a-z_]+):\s*\[/gm)].map((m) => m[1]);
     const migrationsDir = join(app, "db", "migrations");
     const files = readdirSync(migrationsDir)
       .filter((f) => /^0\d{2}_.*\.sql$/.test(f))
       .sort();
-    expect(files).toHaveLength(9); // 002..010
+    // One file per migration; the list is discovered, not pinned, so adding a
+    // migration does not have to edit this test as well.
+    expect(files.length).toBeGreaterThanOrEqual(9);
     const fromSql = definedTables(read("db/schema.sql"));
     for (const file of files) {
       for (const t of definedTables(readFileSync(join(migrationsDir, file), "utf8"))) {

@@ -1,4 +1,8 @@
--- What a payment event was worth.
+-- 011 — what a payment event was worth
+--
+-- Additive migration: two new nullable columns and two indexes; no existing
+-- column, row or constraint is altered, and no backfill is required because a
+-- row with no recorded amount simply reads as one.
 --
 -- `payment_event` recorded that something happened — captured, failed, refunded —
 -- but not how much. Anyone reconciling by hand could see six events and no
