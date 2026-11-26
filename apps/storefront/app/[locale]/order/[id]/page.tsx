@@ -6,6 +6,7 @@ import { getOrderShipment } from "@/lib/shipping/store";
 import { getAdminOrder } from "@/lib/admin";
 import { verifyOrderToken } from "@/lib/order-token";
 import { OrderNextSteps } from "@/components/order-next-steps";
+import { RedirectToOrders } from "@/components/redirect-to-orders";
 import { listCertificatesForOrder } from "@/lib/certificates";
 import { getGiftForOrder } from "@/lib/gift";
 import { getTranslations } from "next-intl/server";
@@ -115,6 +116,12 @@ export default async function OrderPage({
     console.error("Could not load the gift note for the order", error);
   }
 
+  // The invoice link keeps the guest's signed order token, so a buyer without a
+  // session can still fetch their own PDF.
+  const invoiceHref =
+    `/api/orders/${order.id}/invoice` +
+    (guestToken ? `?t=${encodeURIComponent(guestToken)}` : "");
+
   return (
     <main className="py-10">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -137,9 +144,40 @@ export default async function OrderPage({
         </div>
 
         {paid && (
-          <div className="mb-8 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 font-sans">
+          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 font-sans">
             {t18n("paidBanner")}
           </div>
+        )}
+
+        {/* Thank-you step: the invoice is downloadable here, and the page moves
+            on to the account's order list on its own. Both are links, so this
+            still works without JavaScript. */}
+        <div className="mb-8 flex flex-col gap-4 rounded-xl border border-sand-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="font-sans text-sm text-muted-ink">
+            <p className="font-medium text-deep-ink">Your invoice</p>
+            <p className="mt-1">
+              A PDF copy was emailed with your confirmation. You can open it here
+              too.
+            </p>
+          </div>
+          <a
+            href={invoiceHref}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-sindoor px-4 py-2 font-sans text-sm font-medium text-sindoor transition-colors hover:bg-sindoor hover:text-rang-paper"
+          >
+            Download invoice (PDF)
+          </a>
+        </div>
+
+        {paid && (
+          <RedirectToOrders
+            href="/account"
+            seconds={8}
+            message="Taking you to your orders in {seconds}s — they are saved to your account."
+            stayLabel="Stay here"
+            goLabel="Go now"
+          />
         )}
 
         <OrderNextSteps
