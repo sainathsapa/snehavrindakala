@@ -15,7 +15,19 @@ import type { GlossaryTerm } from "@/lib/art-reference";
  * language of origin. The language chips are built from the data rather than
  * hardcoded, so adding a term in a new language extends the filter on its own.
  */
-export function GlossaryExplorer({ entries }: { entries: GlossaryTerm[] }) {
+export function GlossaryExplorer({
+  entries,
+  hrefs = {},
+}: {
+  entries: GlossaryTerm[];
+  /**
+   * Long-form page per term, keyed by the term itself.
+   *
+   * A plain object rather than a callback: this is a client component, and a
+   * function cannot be passed across the server/client boundary.
+   */
+  hrefs?: Record<string, string>;
+}) {
   const t = useTranslations("learn");
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState<string | null>(null);
@@ -135,6 +147,18 @@ export function GlossaryExplorer({ entries }: { entries: GlossaryTerm[] }) {
                 <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-muted-ink">
                   {entry.note}
                 </p>
+                {(() => {
+                  const href = hrefs[entry.term];
+                  if (!href) return null;
+                  return (
+                    <a
+                      href={href}
+                      className="mt-2 inline-block font-sans text-[10px] uppercase tracking-[0.18em] text-terracotta/80 underline-offset-4 transition-colors hover:text-terracotta hover:underline"
+                    >
+                      Read the full entry →
+                    </a>
+                  );
+                })()}
               </dd>
             </div>
           ))}

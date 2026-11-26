@@ -63,7 +63,7 @@ export default async function PlatePage({
   const entries = entriesFor(id);
   const languages = languagesFor(id);
   const grouped = entries.some((entry) => Boolean(entry.era));
-  const t = await getTranslations("learn");
+  const t = await getTranslations("plates");
 
   return (
     <main className="bg-rang-paper">

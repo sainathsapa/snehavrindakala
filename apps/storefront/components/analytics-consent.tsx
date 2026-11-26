@@ -154,12 +154,16 @@ export function AnalyticsConsent() {
   if (!GA_MEASUREMENT_ID || !visible) return null;
 
   return (
-    <section
-      role="region"
-      aria-label={t("regionLabel")}
-      aria-live="polite"
-      className="fixed inset-x-0 bottom-0 z-[90] border-t border-haldi/30 bg-[#2A120C] px-5 py-4 text-rang-paper shadow-[0_-8px_30px_rgba(0,0,0,0.25)] sm:px-8"
-    >
+    <>
+      {/* The Zoho chat button floats at a very high z-index of its own, so the
+          banner sits above it: underneath, the copy is unreadable and the
+          buttons are unclickable. */}
+      <section
+        role="region"
+        aria-label={t("regionLabel")}
+        aria-live="polite"
+        className="fixed inset-x-0 bottom-0 z-[2147483000] border-t border-haldi/30 bg-[#2A120C] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-rang-paper shadow-[0_-8px_30px_rgba(0,0,0,0.25)] sm:px-8"
+      >
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-2xl">
           <h2 className="font-serif text-base font-semibold text-haldi">
@@ -199,10 +203,11 @@ export function AnalyticsConsent() {
           </button>
         </div>
       </div>
-      {choice === "denied" && (
-        <span className="sr-only">{t("deniedStatus")}</span>
-      )}
-    </section>
+        {choice === "denied" && (
+          <span className="sr-only">{t("deniedStatus")}</span>
+        )}
+      </section>
+    </>
   );
 }
 

@@ -35,7 +35,11 @@ const readRepo = (rel: string): string => readFileSync(join(repoRoot, rel), "utf
 const existsApp = (rel: string): boolean => existsSync(join(appRoot, rel));
 
 const compose = readRepo("docker-compose.yml");
-const caddyfile = readRepo("deploy/Caddyfile");
+// The front door is nginx now; the test reads the two files that make it up.
+const proxyConf = [
+  readRepo("deploy/nginx/nginx.conf"),
+  readRepo("deploy/nginx/templates/snehavrinda.conf.template"),
+].join("\n");
 
 /** Extract one top-level service block from compose (2-space indent). */
 function serviceBlock(name: string): string {
@@ -113,26 +117,35 @@ describe("FINAL GO health: docker-compose healthchecks", () => {
 /* ── 2. TLS at the edge (Caddy) ──────────────────────────────────────────── */
 
 describe("FINAL GO monitoring: TLS front door", () => {
-  it("Caddy terminates TLS for two hostnames with automatic certificates", () => {
-    expect(caddyfile).toMatch(/\{\$STOREFRONT_DOMAIN\}/);
-    expect(caddyfile).toMatch(/\{\$API_DOMAIN\}/);
-    // Bare hostnames (no scheme) make Caddy obtain/renew certs automatically.
-    // An explicit http:// or `auto_https off` would silently ship plaintext.
-    expect(caddyfile).not.toMatch(/\bhttp:\/\//);
-    expect(caddyfile).not.toMatch(/auto_https\s+off/);
+  it("nginx terminates TLS for the two hostnames, on real certificates", () => {
+    // Domains come from the environment, so a deployment cannot ship a
+    // placeholder hostname by accident.
+    expect(proxyConf).toMatch(/server_name \$\{STOREFRONT_DOMAIN\} www\.\$\{STOREFRONT_DOMAIN\}/);
+    expect(proxyConf).toMatch(/server_name \$\{API_DOMAIN\}/);
+    // TLS 1.2 is the floor; 1.0/1.1 would be a downgrade nobody asked for.
+    expect(proxyConf).toMatch(/ssl_protocols\s+TLSv1\.2 TLSv1\.3/);
+    expect(proxyConf).toMatch(/ssl_certificate\s+\/etc\/letsencrypt/);
+    // Plain HTTP is redirected, never served.
+    expect(proxyConf).toMatch(/return 301 https:\/\/\$host\$request_uri/);
   });
 
-  it("Caddy proxies the right origins and the proxy publishes 443", () => {
-    expect(caddyfile).toMatch(/reverse_proxy\s+storefront:3000/);
-    expect(caddyfile).toMatch(/reverse_proxy\s+backend:9000/);
+  it("nginx proxies the right origins and the proxy publishes 80 and 443", () => {
+    expect(proxyConf).toMatch(/storefront:3000/);
+    expect(proxyConf).toMatch(/backend:9000/);
 
     const proxy = serviceBlock("proxy");
     expect(proxy).not.toBe("");
     expect(proxy).toMatch(/"443:443"/);
-    expect(proxy).toMatch(/"443:443\/udp"/);
+    expect(proxy).toMatch(/"80:80"/);
     // Certificates survive container recreation.
-    expect(proxy).toMatch(/caddy_data:\/data/);
-    expect(compose).toMatch(/caddy_data:/);
+    expect(proxy).toMatch(/letsencrypt:\/etc\/letsencrypt/);
+    expect(compose).toMatch(/letsencrypt:/);
+  });
+
+  it("nothing is published straight to the app ports", () => {
+    // The whole point of the front door: 3000 and 9000 stay on loopback.
+    expect(compose).toMatch(/127\.0\.0\.1:\$\{STOREFRONT_PORT:-3000\}:3000/);
+    expect(compose).toMatch(/127\.0\.0\.1:\$\{BACKEND_PORT:-9000\}:9000/);
   });
 });
 
@@ -286,13 +299,13 @@ describe("FINAL GO monitoring: no secret values in tracked config/docs", () => {
     }
   });
 
-  it("compose, Caddyfile and release docs contain no real credential patterns", () => {
+  it("compose, proxy config and release docs contain no real credential patterns", () => {
     const mdFiles = readdirSync(join(repoRoot, "docs", "release")).filter((f) =>
       f.endsWith(".md")
     );
     const corpus = [
       compose,
-      caddyfile,
+      proxyConf,
       ...mdFiles.map((f) => readRepo(`docs/release/${f}`)),
     ].join("\n");
 

@@ -1,152 +1,370 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/routing";
 import { localeAlternates } from "@/lib/seo";
-import { ENTRIES, PLATES, plateCount, entriesFor } from "@/lib/learn";
-import { AmbiRule, ChakraWatermark, PlateSeal, PulliGrid } from "@/components/learn/motifs";
+import { getTranslations, getLocale } from "next-intl/server";
+import Image from "next/image";
+import { PageHeader } from "@/components/page-header";
+import { PlateNumber, RunningHead, Fleuron, PaintedRule } from "@/components/editorial";
+import {
+  LotusRosette,
+  BelButi,
+  MithilaBorder,
+  HamsaMotif,
+  PeacockEye,
+} from "@/components/indian-motifs";
+import {
+  GLOSSARY,
+  MATERIALS,
+  TIMELINE,
+  localiseGlossary,
+  localiseMaterials,
+  localiseTimeline,
+} from "@/lib/art-reference";
+import { GlossaryExplorer } from "@/components/glossary-explorer";
+import { JaaliField, PaperGrain, ButiField } from "@/components/grounds";
+import { listArtForms } from "@/lib/site-content";
+import { deepHref, countFor } from "@/lib/learn/bridge";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
+export async function generateMetadata() {
   const t = await getTranslations("learn");
   return {
-    title: t("title"),
+    title: t("crumb"),
     description: t("intro"),
-    alternates: localeAlternates("/learn", locale),
+    alternates: localeAlternates("/learn"),
   };
 }
 
+// Left dynamic: the root layout reads `headers()` to resolve the locale,
+// which makes every route under it request-scoped, so `revalidate` alone
+// cannot produce a cached render. Converting these routes to ISR needs the
+// locale to come from `params` instead of a request header — a change to the
+// layout that affects every page, and therefore out of scope for this phase.
+// Recorded here so the next attempt does not repeat the mistake of adding
+// `revalidate` and assuming it took effect: verify with the build output,
+// where an ISR route prints ● and a dynamic one prints ƒ.
+export const dynamic = "force-dynamic";
+
 /**
- * The contents spread.
+ * /learn — the reference section.
  *
- * Three plates, fifty entries, one reading order. It is a book's opening pages
- * rather than a feature grid: the point is that a reader can see how much there
- * is and where to start.
+ * Every art site sells; very few teach. This page exists so a visitor can find
+ * out what *kacni* means or why black pigment is made from lamp soot, without
+ * being sold anything and without a wall of prose. It is a glossary, a material
+ * index and a short timeline, in that order of usefulness.
+ *
+ * No products appear on this page at all. That is deliberate: the moment a
+ * reference page starts selling, it stops being a reference.
  */
 export default async function LearnPage() {
+  const locale = await getLocale();
+
+  // Built here, on the server: the explorer is a client component and cannot
+  // receive a function, only data.
+  const glossaryHrefs: Record<string, string> = {};
+  for (const term of GLOSSARY) {
+    const href = deepHref(term.term);
+    if (href) glossaryHrefs[term.term] = href;
+  }
   const t = await getTranslations("learn");
+  let forms: { name: string; slug: string; image: string }[] = [];
+  try {
+    const rows = await listArtForms(locale);
+    forms = rows.map((form) => ({
+      name: form.name,
+      slug: form.slug,
+      image: form.image,
+    }));
+  } catch {
+    // A reference page must render even if the content table is empty.
+  }
 
   return (
     <main className="bg-rang-paper">
-      {/* ── opening ──────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden border-b border-sand-border">
-        <PulliGrid className="pointer-events-none absolute inset-0 h-full w-full text-deep-ink/[0.07]" />
-        <ChakraWatermark className="pointer-events-none absolute -right-24 -top-24 h-[26rem] w-[26rem] text-sindoor/20" />
+      <PageHeader
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        intro={t("intro")}
+        breadcrumb={[{ label: t("home"), href: "/" }, { label: t("crumb") }]}
+      />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <p className="font-sans text-[11px] uppercase tracking-[0.32em] text-sindoor">
-            {t("kicker")}
-          </p>
-          <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-[1.05] text-deep-ink sm:text-5xl lg:text-6xl">
-            {t("title")}
-          </h1>
-          <p className="mt-6 max-w-2xl font-sans text-base leading-relaxed text-muted-ink">
-            {t("intro")}
-          </p>
-
-          <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 font-sans text-xs uppercase tracking-[0.16em] text-muted-ink">
-            <span>{ENTRIES.length} entries</span>
-            <span className="h-3 w-px bg-sand-border" />
-            <span>3 plates</span>
-            <span className="h-3 w-px bg-sand-border" />
-            <span>{t("everyEntryOwnPage")}</span>
+      {/* ── Contents ───────────────────────────────────────────────────────
+          A printed reference opens with its own contents. It also makes the
+          page scannable, which a glossary of sixteen terms badly needs. */}
+      <section className="relative border-b border-sand-border/60">
+        <BelButi className="pointer-events-none absolute inset-x-0 top-0 h-4 w-full text-terracotta/20" />
+        <div className="mx-auto max-w-[1400px] px-5 py-10 sm:px-8 lg:px-12">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+            <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.3em] text-terracotta">
+              {t("contents")}
+            </span>
+            <a href="#glossary" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
+              {t("tocWords")}
+            </a>
+            <a href="#materials" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
+              {t("tocMaterials")}
+            </a>
+            <a href="#timeline" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
+              {t("tocHistory")}
+            </a>
+            <a href="#traditions" className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum">
+              {t("tocTraditions")}
+            </a>
           </div>
         </div>
       </section>
 
-      {/* ── plates ───────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <div className="grid gap-10 lg:gap-16">
-          {PLATES.map((plate) => {
-            const entries = entriesFor(plate.id);
-            return (
-              <article
-                key={plate.id}
-                className="group grid gap-6 border-t border-sand-border pt-10 lg:grid-cols-[8rem_1fr_16rem] lg:gap-10"
+      {/* ── I. The glossary ─────────────────────────────────────────────── */}
+      <section id="glossary" className="relative scroll-mt-24 overflow-hidden py-16 lg:py-24">
+        <JaaliField style={{ opacity: 0.5 }} />
+        <PaperGrain />
+        <HamsaMotif className="pointer-events-none absolute right-4 top-10 hidden h-24 w-32 text-terracotta/[0.10] lg:block" />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <PlateNumber number={1} label={t("plateWords")} className="mb-8" />
+
+          <div className="grid gap-10 lg:grid-cols-[280px_1fr] lg:gap-16">
+            <div>
+              <h2 className="font-serif text-3xl font-semibold leading-[1.1] tracking-[-0.01em] text-deep-ink sm:text-[38px]">
+                {t("wordsTitle")}
+              </h2>
+              <p className="mt-5 max-w-xs font-serif text-base leading-relaxed text-muted-ink">
+                {t("wordsIntro")}
+              </p>
+              <MithilaBorder className="mt-7 h-3 w-32 text-terracotta/30" />
+              <a
+                href="/learn/words"
+                className="mt-6 inline-block border-b border-terracotta/40 pb-1 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-terracotta transition-colors hover:border-terracotta"
               >
-                <div className="flex items-start gap-4 lg:block">
-                  <PlateSeal
-                    numeral={plate.numeral}
-                    label={plate.id}
-                    className="h-20 w-20 shrink-0 text-deep-ink/70"
-                  />
-                  <span className="font-sans text-[11px] uppercase tracking-[0.22em] text-muted-ink lg:mt-3 lg:block">
-                    {plateCount(plate.id)} entries
-                  </span>
-                </div>
+                All {countFor("words")} entries, each on its own page →
+              </a>
+            </div>
 
-                <div>
-                  <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-sindoor">
-                    {plate.kicker}
-                  </p>
-                  <h2 className="mt-2 font-serif text-3xl leading-tight text-deep-ink sm:text-4xl">
-                    <Link href={`/learn/${plate.id}`} className="hover:text-sindoor">
-                      {plate.title}
-                    </Link>
-                  </h2>
-                  <p className="mt-4 max-w-2xl font-sans text-[15px] leading-relaxed text-muted-ink">
-                    {plate.intro}
-                  </p>
-                  <p className="mt-4 max-w-2xl border-l-2 border-sindoor/30 pl-4 font-serif text-[15px] italic leading-relaxed text-deep-ink/80">
-                    {plate.howToRead}
-                  </p>
-                </div>
-
-                <div className="flex flex-col justify-between gap-4">
-                  <ul className="space-y-1.5 font-sans text-sm">
-                    {entries.slice(0, 4).map((entry) => (
-                      <li key={entry.slug}>
-                        <Link
-                          href={`/learn/${entry.plate}/${entry.slug}`}
-                          className="text-muted-ink transition-colors hover:text-sindoor"
-                        >
-                          {entry.title}
-                        </Link>
-                      </li>
-                    ))}
-                    {entries.length > 4 && (
-                      <li className="text-muted-ink/60">
-                        + {entries.length - 4} more
-                      </li>
-                    )}
-                  </ul>
-                  <Link
-                    href={`/learn/${plate.id}`}
-                    className="inline-flex items-center gap-2 font-sans text-xs uppercase tracking-[0.18em] text-sindoor hover:underline"
-                  >
-                    Open plate {plate.numeral}
-                    <span aria-hidden>→</span>
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
+            <GlossaryExplorer
+              entries={localiseGlossary(GLOSSARY, locale)}
+              hrefs={glossaryHrefs}
+            />
+          </div>
         </div>
+      </section>
 
-        <AmbiRule className="mx-auto mt-16 h-6 w-60 text-sindoor/50" />
+      {/* ── II. The materials ───────────────────────────────────────────── */}
+      <section
+        id="materials"
+        className="relative scroll-mt-24 overflow-hidden border-y border-sand-border/60 bg-surface/40 py-16 lg:py-24"
+      >
+        <PeacockEye className="pointer-events-none absolute -left-2 top-16 hidden h-40 w-28 text-terracotta/[0.10] lg:block" />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <PlateNumber number={2} label={t("plateMaterials")} className="mb-8" />
 
-        {/* ── where to start ─────────────────────────────────────────── */}
-        <div className="mt-12 grid gap-8 border-t border-sand-border pt-10 sm:grid-cols-3">
-          <div>
-            <h3 className="font-serif text-lg text-deep-ink">{t("startWhere")}</h3>
-            <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
-              {t("startWhereBody")}
+          <div className="max-w-2xl">
+            <h2 className="font-serif text-3xl font-semibold leading-[1.1] tracking-[-0.01em] text-deep-ink sm:text-[38px]">
+              {t("materialsTitle")}
+            </h2>
+            <p className="mt-5 font-serif text-lg leading-relaxed text-muted-ink">
+              {t("materialsIntro")}
             </p>
+            <a
+              href="/learn/materials"
+              className="mt-5 inline-block border-b border-terracotta/40 pb-1 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-terracotta transition-colors hover:border-terracotta"
+            >
+              All {countFor("materials")} materials, searchable →
+            </a>
           </div>
-          <div>
-            <h3 className="font-serif text-lg text-deep-ink">{t("readSlowly")}</h3>
-            <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
-              {t("readSlowlyBody")}
-            </p>
+
+          {/* A reference page that never shows the work is a dictionary. This
+              plate breaks the text before the list, and pairs the one thing a
+              reader most needs to see — actual pigment on an actual surface —
+              with the prose that describes it. */}
+          <figure className="mt-12 overflow-hidden">
+            <div className="relative aspect-[21/9] w-full overflow-hidden bg-surface">
+              <Image
+                src="/images/artforms/painting.jpg"
+                alt="Detail of a hand-painted work, showing pigment on the surface"
+                fill
+                sizes="100vw"
+                className="object-cover"
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-deep-ink/10"
+              />
+            </div>
+            <figcaption className="mt-3 flex flex-wrap items-baseline gap-x-3">
+              <span className="font-serif text-[13px] italic text-muted-ink">
+                Pigment, ground and brushwork: the three decisions every
+                tradition makes differently.
+              </span>
+            </figcaption>
+          </figure>
+
+          <ul className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2">
+            {localiseMaterials(MATERIALS, locale).map((material) => (
+              <li key={material.material} className="border-t border-sand-border/70 pt-5">
+                <h3 className="font-serif text-xl font-semibold leading-tight text-deep-ink">
+                  {material.material}
+                </h3>
+                <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
+                  {material.what}
+                </p>
+                <p className="mt-3 border-l-2 border-terracotta/40 pl-3 font-serif text-[15px] italic leading-relaxed text-deep-ink/80">
+                  {material.why}
+                </p>
+                <p className="mt-3 flex flex-wrap gap-1.5">
+                  {material.usedIn.map((tag) => (
+                    <span
+                      key={tag}
+                      className="border border-sand-border/70 px-2 py-0.5 font-sans text-[9px] uppercase tracking-[0.14em] text-terracotta/80"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </p>
+                {(() => {
+                  const href = deepHref(material.material);
+                  if (!href) return null;
+                  return (
+                    <a
+                      href={href}
+                      className="mt-3 inline-block font-sans text-[10px] uppercase tracking-[0.18em] text-terracotta/80 underline-offset-4 transition-colors hover:text-terracotta hover:underline"
+                    >
+                      How it is made and why it survives →
+                    </a>
+                  );
+                })()}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── III. The timeline ───────────────────────────────────────────── */}
+      <section
+        id="timeline"
+        className="relative scroll-mt-24 overflow-hidden py-16 lg:py-24"
+      >
+        <ButiField style={{ opacity: 0.35 }} />
+        <PaperGrain />
+        <div className="relative mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <PlateNumber number={3} label={t("plateHistory")} className="mb-8" />
+
+          <div className="grid gap-10 lg:grid-cols-[280px_1fr] lg:gap-16">
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <h2 className="font-serif text-3xl font-semibold leading-[1.1] tracking-[-0.01em] text-deep-ink sm:text-[38px]">
+                A short
+                <br />
+                history
+              </h2>
+              <p className="mt-5 max-w-xs font-serif text-base leading-relaxed text-muted-ink">
+                {t("historyIntro")}
+              </p>
+              <Fleuron className="mt-7 justify-start" />
+              <a
+                href="/learn/history"
+                className="mt-6 inline-block border-b border-terracotta/40 pb-1 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-terracotta transition-colors hover:border-terracotta"
+              >
+                The full survey: {countFor("history")} moments →
+              </a>
+            </div>
+
+            <ol className="relative border-l border-terracotta/25 pl-6 sm:pl-8">
+              {localiseTimeline(TIMELINE, locale).map((entry, index) => (
+                <li key={entry.title} className="relative pb-10 last:pb-0">
+                  {/* A dot on the rule, like a marker in a printed timeline. */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute -left-[calc(1.5rem+1px)] top-2 h-2 w-2 rotate-45 bg-terracotta/60 sm:-left-[calc(2rem+1px)]"
+                  />
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+                    {entry.era}
+                  </span>
+                  <h3 className="mt-1.5 font-serif text-xl font-semibold leading-snug text-deep-ink sm:text-2xl">
+                    {entry.title}
+                  </h3>
+                  <p className="mt-2 max-w-xl font-serif text-[15px] leading-relaxed text-muted-ink">
+                    {entry.body}
+                  </p>
+                  {(() => {
+                    const href = deepHref(entry.title);
+                    if (!href) return null;
+                    return (
+                      <a
+                        href={href}
+                        className="mt-2 inline-block font-sans text-[10px] uppercase tracking-[0.18em] text-terracotta/80 underline-offset-4 transition-colors hover:text-terracotta hover:underline"
+                      >
+                        Read the moment →
+                      </a>
+                    );
+                  })()}
+                  {index === TIMELINE.length - 1 && (
+                    <PaintedRule className="mt-6 w-40" />
+                  )}
+                </li>
+              ))}
+            </ol>
           </div>
-          <div>
-            <h3 className="font-serif text-lg text-deep-ink">{t("keepGoing")}</h3>
-            <p className="mt-2 font-sans text-sm leading-relaxed text-muted-ink">
-              {t("keepGoingBody", { first: entriesFor("words")[0]?.title ?? "" })}
-            </p>
+        </div>
+      </section>
+
+      {/* ── IV. Into the traditions ─────────────────────────────────────── */}
+      <section
+        id="traditions"
+        className="relative scroll-mt-24 border-t border-sand-border/60 py-16 lg:py-24"
+      >
+        <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
+          <PlateNumber number={4} label={t("plateTraditions")} className="mb-8" />
+          <RunningHead left="Read the six forms" right="From the reference" />
+
+          <div className="mt-10 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            {forms.map((form) => (
+              <Link key={form.slug} href={`/art-forms/${form.slug}`} className="group block">
+                <div className="relative aspect-[4/3] overflow-hidden bg-surface ring-1 ring-sand-border/50">
+                  <Image
+                    src={form.image}
+                    alt=""
+                    fill
+                    sizes="(max-width: 640px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
+                  />
+                </div>
+                <h3 className="mt-3 border-t border-sand-border/60 pt-3 font-serif text-lg font-semibold leading-snug text-deep-ink transition-colors group-hover:text-kumkum">
+                  {form.name}
+                </h3>
+                <span className="mt-1 inline-flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.16em] text-terracotta">
+                  The tradition
+                  <span
+                    aria-hidden="true"
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          {forms.length === 0 && (
+            <div className="mt-10 flex flex-col items-center py-12 text-center">
+              <LotusRosette className="h-14 w-14 text-terracotta/30" />
+              <p className="mt-4 font-serif text-lg italic text-muted-ink">
+                {t("traditionsEmpty")}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-sand-border/60 pt-8">
+            <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.28em] text-terracotta">
+              {t("keepReading")}
+            </span>
+            <Link
+              href="/journal"
+              className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum"
+            >
+              {t("journalLink")}
+            </Link>
+            <Link
+              href="/art-forms"
+              className="font-serif text-[15px] text-deep-ink/80 transition-colors hover:text-kumkum"
+            >
+              {t("formsLink")}
+            </Link>
           </div>
         </div>
       </section>

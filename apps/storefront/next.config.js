@@ -12,6 +12,11 @@ const backendUrl = new URL(
 );
 
 const nextConfig = {
+  // The dev-mode indicator is a floating badge that sits over the bottom-left of
+  // every page — which is exactly where the cookie banner is. It never ships to
+  // production, but it does hide content in previews and screenshots, so it is
+  // switched off.
+  devIndicators: false,
   reactStrictMode: true,
   poweredByHeader: false,
   eslint: {

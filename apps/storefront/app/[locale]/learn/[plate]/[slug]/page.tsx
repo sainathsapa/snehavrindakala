@@ -77,7 +77,7 @@ export default async function EntryPage({
 
   const found = PLATES.find((item) => item.id === plateId)!;
   const [t, related, nav] = await Promise.all([
-    getTranslations("learn"),
+    getTranslations("plates"),
     Promise.resolve(relatedEntries(entry)),
     Promise.resolve(neighbours(entry)),
   ]);
