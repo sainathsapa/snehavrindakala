@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getAuthToken } from "@/lib/auth";
 import { medusa, formatPrice } from "@/lib/medusa";
 import { getOrderShipment } from "@/lib/shipping/store";
+import { shipmentStatusClasses, shipmentStatusLabel } from "@/lib/shipping/status-label";
+import { trackingLink } from "@/lib/shipping/notify";
 import { getAdminOrder } from "@/lib/admin";
 import { verifyOrderToken } from "@/lib/order-token";
 import { OrderNextSteps } from "@/components/order-next-steps";
@@ -393,8 +395,19 @@ export default async function OrderPage({
             <dl className="space-y-3 text-sm font-sans">
               <div className="flex justify-between">
                 <dt className="text-muted-ink">Status</dt>
-                <dd className="text-deep-ink font-medium capitalize">
-                  {shipment.status?.replace(/_/g, " ")}
+                <dd>
+                  {(() => {
+                    const status = shipmentStatusLabel(shipment.status);
+                    return (
+                      <span
+                        className={`rounded-full px-2 py-0.5 font-semibold uppercase tracking-wider text-[10px] ${shipmentStatusClasses(
+                          status.tone
+                        )}`}
+                      >
+                        {status.label}
+                      </span>
+                    );
+                  })()}
                 </dd>
               </div>
               {shipment.courier_name && (

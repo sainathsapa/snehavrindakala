@@ -11,6 +11,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { medusa } from "@/lib/medusa";
 import { getShippingRates } from "@/lib/shipping/shiprocket";
 import { selectShippingRate } from "@/lib/shipping/select-rate";
@@ -30,6 +31,21 @@ type ShippingRate = {
 };
 
 export async function POST(req: Request) {
+  // Public endpoint: bound it per IP so one caller cannot use it as a free
+  // proxy for our own costs (courier quotes, payment orders, file uploads).
+  const limit = await checkRateLimit({
+    route: "payment-session",
+    ip: clientIp(req.headers),
+    limit: 10,
+    windowSeconds: 60,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   try {
     const body = await req.json();
     const { cart_id, shipping_rate: requestedRate } = body;

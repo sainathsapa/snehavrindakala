@@ -8,10 +8,26 @@
  */
 
 import { NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { getGstRate } from "@/lib/tax-server";
 import { calculateTax } from "@/lib/tax";
 
 export async function POST(req: Request) {
+  // Public endpoint: bound it per IP so one caller cannot use it as a free
+  // proxy for our own costs (courier quotes, payment orders, file uploads).
+  const limit = await checkRateLimit({
+    route: "tax-calculate",
+    ip: clientIp(req.headers),
+    limit: 60,
+    windowSeconds: 60,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   try {
     const body = await req.json();
     const amount = Number(body.amount);

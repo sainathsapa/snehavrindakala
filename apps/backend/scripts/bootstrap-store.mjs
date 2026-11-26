@@ -36,6 +36,9 @@ import { CATEGORIES, PRODUCTS, inr } from "./catalogue-data.mjs";
 const require = createRequire(import.meta.url);
 const { Client } = require("pg");
 
+const FREE_SHIPPING_CODE = process.env.FREE_SHIPPING_CODE || "FREESHIP";
+/** Flat rate the customer sees before it is discounted to nothing. */
+const FLAT_SHIPPING_PAISE = Number(process.env.FLAT_SHIPPING_PAISE || 14900);
 const BACKEND = (
   process.env.MEDUSA_BACKEND_URL || "http://backend:9000"
 ).replace(/\/+$/, "");
@@ -165,6 +168,65 @@ async function listAll(path) {
     if (Array.isArray(body[key])) return body[key];
   }
   return Array.isArray(body) ? body : [];
+}
+
+
+// ── free shipping ───────────────────────────────────────────────────────────
+// The studio never charges for shipping, but a silent zero hides the value of
+// what is being given away. So the courier rate stays on the cart and an
+// automatic promotion discounts the shipping method to nothing: the customer
+// sees "Shipping ₹349" and "Free shipping −₹349", and pays neither.
+//
+// `is_automatic` means no code to type; `target_type: shipping_methods` with
+// 100% is Medusa's own mechanism for exactly this, so totals, refunds and
+// invoices all stay consistent with what the customer was shown.
+async function ensureFreeShippingPromotion() {
+  const promotions = await listAll("/admin/promotions");
+  const existing = promotions.find(
+    (promotion) => promotion.code === FREE_SHIPPING_CODE
+  );
+  if (existing) {
+    if (existing.status !== "active") {
+      const res = await api(`/admin/promotions/${existing.id}`, {
+        method: "POST",
+        body: { status: "active" },
+      });
+      if (!res.ok) warn(`could not reactivate ${FREE_SHIPPING_CODE}: ${res.status}`);
+      else ok(`free-shipping promotion reactivated (${FREE_SHIPPING_CODE})`);
+    } else {
+      ok(`free-shipping promotion present (${FREE_SHIPPING_CODE})`);
+    }
+    return;
+  }
+
+  const res = await api("/admin/promotions", {
+    method: "POST",
+    body: {
+      code: FREE_SHIPPING_CODE,
+      type: "standard",
+      status: "active",
+      is_automatic: true,
+      application_method: {
+        type: "percentage",
+        target_type: "shipping_methods",
+        // `each` requires max_quantity — Medusa rejects the request otherwise
+        // ("max_quantity is required when allocation is 'each OR once'"). One
+        // shipping method per order, so 1 is the honest value.
+        allocation: "each",
+        value: 100,
+        max_quantity: 1,
+        apply_to_quantity: 1,
+      },
+    },
+  });
+
+  if (!res.ok) {
+    // Non-fatal: a shop without the promotion still sells, it just quotes
+    // shipping. Say so instead of failing the whole bootstrap.
+    warn(`free-shipping promotion not created (${res.status}): ${JSON.stringify(res.body).slice(0, 200)}`);
+    return;
+  }
+  ok(`free-shipping promotion created (${FREE_SHIPPING_CODE})`);
 }
 
 // ── database probes ─────────────────────────────────────────────────────────
@@ -417,6 +479,7 @@ async function ensureFulfillment(channelId) {
   const options = await listAll("/admin/shipping-options");
   const existing = options.find((o) => o.name === "Standard delivery (India)");
   if (existing) {
+    await ensureShippingOptionPrice(existing);
     ok("shipping option ready");
     return;
   }
@@ -428,16 +491,67 @@ async function ensureFulfillment(channelId) {
       service_zone_id: zone.id,
       shipping_profile_id: profile.id,
       provider_id: providerId,
-      // The real courier charge is quoted from Shiprocket at checkout and
-      // collected there. This option exists so Medusa can complete the cart, so
-      // its own price is zero rather than a second shipping charge.
-      price_type: "flat",
-      type: { label: "Standard", description: "Pan-India delivery", code: "standard" },
-      prices: [{ currency_code: CURRENCY, amount: 0 }],
+      // A real rate, not zero: the studio gives shipping away, and the way to
+      // show that is a visible charge followed by an equal automatic discount
+      // (see ensureFreeShippingPromotion). A zero-priced option makes the
+      // generosity invisible and leaves the promotion nothing to discount.
+      prices: [{ currency_code: CURRENCY, amount: FLAT_SHIPPING_PAISE }],
     },
   });
   if (!res.ok) throw new Error(`create shipping option failed (${res.status}): ${JSON.stringify(res.body)}`);
-  ok(`shipping option created (${res.body.shipping_option?.id ?? "ok"})`);
+  ok(`shipping option created at ${FLAT_SHIPPING_PAISE / 100} ${CURRENCY.toUpperCase()}`);
+}
+
+/**
+ * Make sure the standard option carries the flat rate.
+ *
+ * Shops provisioned before this change have a zero-priced option, and the admin
+ * API has no single call that rewrites an option's price, so the option is
+ * removed and recreated at the right price. Only acts when the current price is
+ * zero, which keeps it idempotent.
+ */
+async function ensureShippingOptionPrice(option) {
+  const prices = Array.isArray(option?.prices) ? option.prices : [];
+  const inr = prices.find(
+    (price) => String(price.currency_code).toLowerCase() === CURRENCY
+  );
+  if (inr && Number(inr.amount) > 0) return;
+
+  const deleted = await api(`/admin/shipping-options/${option.id}`, {
+    method: "DELETE",
+  });
+  if (!deleted.ok) {
+    warn(
+      `could not reprice the shipping option (${deleted.status}); shipping will read as free rather than discounted`
+    );
+    return;
+  }
+
+  const zoneId = option?.service_zone_id;
+  const profileId = option?.shipping_profile_id;
+  const providerId = option?.provider_id;
+  if (!zoneId || !profileId) {
+    warn("shipping option removed but its zone/profile was not read back; contact setup needed");
+    return;
+  }
+
+  const res = await api("/admin/shipping-options", {
+    method: "POST",
+    body: {
+      name: "Standard delivery (India)",
+      service_zone_id: zoneId,
+      shipping_profile_id: profileId,
+      ...(providerId ? { provider_id: providerId } : {}),
+      price_type: "flat",
+      type: { label: "Standard", description: "Pan-India delivery", code: "standard" },
+      prices: [{ currency_code: CURRENCY, amount: FLAT_SHIPPING_PAISE }],
+    },
+  });
+  if (!res.ok) {
+    warn(`could not recreate the shipping option (${res.status})`);
+    return;
+  }
+  ok(`shipping option repriced to ${FLAT_SHIPPING_PAISE / 100}`);
 }
 
 // ── categories + tags ───────────────────────────────────────────────────────
@@ -593,6 +707,14 @@ async function main() {
     await ensureFulfillment(channel.id);
   } catch (err) {
     warn(`checkout wiring incomplete: ${err.message}`);
+  }
+
+  // Free on every order, displayed rather than hidden. Non-fatal for the same
+  // reason as the shipping option above.
+  try {
+    await ensureFreeShippingPromotion();
+  } catch (err) {
+    warn(`free shipping not configured: ${err.message}`);
   }
 
   if (SEED_CATALOGUE) {

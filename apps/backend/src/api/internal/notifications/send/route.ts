@@ -30,6 +30,7 @@ const STOREFRONT_SERVER_TEMPLATES = new Set([
   "password_changed",
   "order_cancelled",
   "order_confirmation",
+  "shipment_confirmed",
 ]);
 
 function authorized(header: string | null | undefined): boolean {

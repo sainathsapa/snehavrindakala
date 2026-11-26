@@ -730,10 +730,22 @@ export function CheckoutClient({
                 ) : shippingAmount === 0 ? (
                   <span className="font-medium text-leaf">{t("free")}</span>
                 ) : (
-                  formatPrice(shippingAmount, currency)
+                  <span className="text-deep-ink">{formatPrice(shippingAmount, currency)}</span>
                 )}
               </dd>
             </div>
+
+            {shippingAmount > 0 && (
+              // The rate is real, and the studio covers it as an automatic
+              // discount. Showing only "Free" would hide both the charge and the
+              // gift; showing only the charge would look like a coupon was missed.
+              <div className="flex items-baseline justify-between gap-4 text-leaf">
+                <dt>Free shipping (applied automatically)</dt>
+                <dd className="whitespace-nowrap font-medium">
+                  −{formatPrice(shippingAmount, currency)}
+                </dd>
+              </div>
+            )}
 
             {tax && (
               // Catalogue prices already include GST, so this is a disclosure of

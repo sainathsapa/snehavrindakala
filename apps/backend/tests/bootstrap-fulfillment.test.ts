@@ -41,12 +41,25 @@ describe("bootstrap fulfilment wiring", () => {
     expect(script).toMatch(/providers\.find\(\(p\) => p\.includes\("manual"\)\)/);
   });
 
-  it("creates the zero-priced cart-completion option against a manual provider", () => {
-    // Shiprocket quotes the real charge at checkout; a second priced option
-    // would charge shipping twice.
+  it("creates a priced cart-completion option that an automatic promotion discounts", () => {
+    // Shipping is free, but not by quoting zero: the customer sees the courier
+    // rate and then a matching automatic discount, so the generosity is visible
+    // and refunds/invoices stay consistent with the charge.
     expect(script).toMatch(/provider_id: providerId/);
     expect(script).toMatch(/price_type: "flat"/);
-    expect(script).toMatch(/prices: \[\{ currency_code: CURRENCY, amount: 0 \}\]/);
+    expect(script).toMatch(/amount: FLAT_SHIPPING_PAISE/);
+    expect(script).not.toMatch(/prices: \[\{ currency_code: CURRENCY, amount: 0 \}\]/);
+  });
+
+  it("provisions the free-shipping promotion the discounted rate depends on", () => {
+    expect(script).toMatch(/async function ensureFreeShippingPromotion/);
+    expect(script).toMatch(/is_automatic: true/);
+    expect(script).toMatch(/target_type: "shipping_methods"/);
+    // Medusa rejects `allocation: each` without max_quantity.
+    expect(script).toMatch(/allocation: "each"/);
+    expect(script).toMatch(/max_quantity: 1/);
+    // A stale discount would charge for shipping again after an edit.
+    expect(script).toMatch(/status: "active"/);
   });
 
   it("takes payment providers from what the modules registered, not from brand names", () => {

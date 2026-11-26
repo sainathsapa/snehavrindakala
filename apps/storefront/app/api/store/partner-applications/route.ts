@@ -7,12 +7,28 @@
  */
 
 import { NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { query } from "@/lib/db";
 import { recordAdminAction } from "@/lib/audit";
 import { correlationIdFrom } from "@/lib/partner-audit/audit";
 import { validateApplication } from "@/lib/partner-onboarding/validation";
 
 export async function POST(req: Request) {
+  // Public endpoint: bound it per IP so one caller cannot use it as a free
+  // proxy for our own costs (courier quotes, payment orders, file uploads).
+  const limit = await checkRateLimit({
+    route: "partner-application",
+    ip: clientIp(req.headers),
+    limit: 3,
+    windowSeconds: 3600,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

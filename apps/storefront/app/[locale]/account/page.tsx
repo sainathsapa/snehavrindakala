@@ -5,6 +5,9 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentCustomer, getAuthToken } from "@/lib/auth";
 import { KalashMark } from "@/components/grounds";
 import { medusa, formatPrice } from "@/lib/medusa";
+import { getOrderShipment } from "@/lib/shipping/store";
+import { shipmentStatusClasses, shipmentStatusLabel } from "@/lib/shipping/status-label";
+import { trackingLink } from "@/lib/shipping/notify";
 import { logoutAction } from "./actions";
 import { changePasswordAction, updateProfileAction } from "./address-actions";
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@snehavrinda-kala/ui";
@@ -38,12 +41,25 @@ export default async function AccountPage({
   const token = await getAuthToken();
   let orders: any[] = [];
   let addresses: any[] = [];
+  let shipments: Awaited<ReturnType<typeof getOrderShipment>>[] = [];
   if (token) {
     try {
       const result = await medusa.listCustomerOrders(token, { limit: 20 });
       orders = result.orders ?? [];
     } catch (error) {
       console.error("Failed to load orders", error);
+    }
+
+    // Where is it? Answered in the list, so a customer does not have to open
+    // every order to find out. A missing shipment simply renders nothing.
+    try {
+      shipments = await Promise.all(
+        orders.map((order: any) =>
+          getOrderShipment(order.id).catch(() => null)
+        )
+      );
+    } catch (error) {
+      console.error("Failed to load shipments", error);
     }
     try {
       addresses = await medusa.listCustomerAddresses(token);
@@ -202,19 +218,56 @@ export default async function AccountPage({
                 <p className="font-sans text-muted-ink">{t("noOrders")}</p>
               ) : (
                 <ul className="space-y-4">
-                  {orders.map((order: any) => (
+                  {orders.map((order: any, index: number) => {
+                    const shipment = shipments[index];
+                    const status = shipment?.status
+                      ? shipmentStatusLabel(shipment.status)
+                      : null;
+                    const track = shipment?.awb_code
+                      ? trackingLink(shipment.awb_code, shipment.tracking_url)
+                      : null;
+                    return (
                     <li
                       key={order.id}
                       className="flex flex-col gap-2 border-b border-sand-border pb-4 last:border-0 last:pb-0"
                     >
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-medium text-deep-ink">
-                          {order.display_id ?? order.id}
+                          #{order.display_id ?? order.id}
                         </span>
-                        <Badge variant="outline">
-                          {order.status ?? "processing"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {status ? (
+                            <span
+                              className={`rounded-full px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-wider ${shipmentStatusClasses(
+                                status.tone
+                              )}`}
+                            >
+                              {status.label}
+                            </span>
+                          ) : null}
+                          <Badge variant="outline">
+                            {order.status ?? "processing"}
+                          </Badge>
+                        </div>
                       </div>
+                      {shipment?.awb_code ? (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs text-muted-ink">
+                          {shipment.courier_name ? (
+                            <span>{shipment.courier_name}</span>
+                          ) : null}
+                          <span className="font-mono">{shipment.awb_code}</span>
+                          {track ? (
+                            <a
+                              href={track}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-medium text-sindoor hover:underline"
+                            >
+                              Track parcel →
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : null}
                       <div className="flex flex-wrap items-center justify-between gap-2 font-sans text-sm text-muted-ink">
                         <span>
                           {order.items?.length ?? 0} item
@@ -237,7 +290,8 @@ export default async function AccountPage({
                         </div>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </CardContent>

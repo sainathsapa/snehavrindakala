@@ -196,10 +196,12 @@ export default async function CartPage() {
                   )}
                   <div className="flex justify-between gap-4 text-muted-ink">
                     <span>Shipping</span>
-                    <span className="text-right text-xs leading-relaxed text-muted-ink">
-                      Calculated at checkout
+                    <span className="text-right text-xs leading-relaxed">
+                      <span className="font-medium text-leaf">Free on every order</span>
                       <br />
-                      from your pincode
+                      <span className="text-muted-ink">
+                        courier rate shown and discounted at checkout
+                      </span>
                     </span>
                   </div>
                 </div>

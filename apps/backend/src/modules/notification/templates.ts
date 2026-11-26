@@ -174,6 +174,54 @@ function factsBlock(label: string, value: string): string {
   </div>`;
 }
 
+/**
+ * Money lines under the item table.
+ *
+ * Shipping is free on every order, but it is free because an automatic
+ * promotion discounts the courier rate — not because the rate is zero. Printing
+ * the rate followed by the discount shows the customer what they were given;
+ * printing only the total would hide it.
+ */
+function totalsBlock(
+  order: Record<string, any>,
+  currency: string,
+  fallbackTotal?: unknown
+): string {
+  const line = (label: string, amount: number, free = false) =>
+    `<tr>
+      <td style="padding:4px 0;font-size:14px;color:${free ? "#2F6B3A" : "#675A52"};">${escapeHtml(
+        label
+      )}</td>
+      <td style="padding:4px 0;font-size:14px;text-align:right;white-space:nowrap;color:${
+        free ? "#2F6B3A" : "#2B211E"
+      };">${escapeHtml(formatMoney(amount, currency))}</td>
+    </tr>`;
+
+  const rows: string[] = [];
+  const itemTotal = Number(order.item_subtotal ?? order.subtotal ?? 0);
+  const shipping = Number(order.shipping_subtotal ?? 0);
+  const discount = Number(order.discount_total ?? 0);
+
+  if (itemTotal) rows.push(line("Subtotal", itemTotal));
+  if (shipping > 0) {
+    rows.push(line("Shipping", shipping));
+    rows.push(line("Free shipping (applied automatically)", -shipping, true));
+  } else if (discount > 0) {
+    rows.push(line("Discount", -discount, true));
+  }
+
+  return `<table style="width:100%;border-collapse:collapse;margin:14px 0 0;">${rows.join(
+    ""
+  )}
+    <tr>
+      <td style="padding:10px 0 0;border-top:1px solid #DCCBB4;font-size:16px;font-weight:600;color:#2B211E;">Total paid</td>
+      <td style="padding:10px 0 0;border-top:1px solid #DCCBB4;font-size:16px;font-weight:600;text-align:right;white-space:nowrap;color:#2B211E;">${escapeHtml(
+        formatMoney(order.total ?? fallbackTotal, currency)
+      )}</td>
+    </tr>
+  </table>`;
+}
+
 /* ------------------------------------------------------------------ *
  * Order confirmation
  * ------------------------------------------------------------------ */
@@ -252,10 +300,7 @@ function orderConfirmation(
       `We have received your payment and your order is being prepared.`
     ) +
       `<table style="width:100%;border-collapse:collapse;margin:16px 0;">${rows}</table>` +
-      `<p style="margin:0;font-size:16px;font-weight:600;color:#2B211E;text-align:right;">Total ${formatMoney(
-        order.total ?? data.amount,
-        currency
-      )}</p>` +
+      totalsBlock(order as Record<string, any>, currency, data.amount) +
       (addressLine
         ? `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #DCCBB4;">
             <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#C84636;">Delivering to</p>
