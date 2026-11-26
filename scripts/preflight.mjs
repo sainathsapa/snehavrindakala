@@ -255,6 +255,19 @@ async function shiprocketProbe(creds) {
           "rejected — this must be an API user (Settings → API → Add New API User), not the shop's normal login",
       };
     }
+    if (res.status === 400) {
+      const body = await res.text().catch(() => "");
+      if (/blocked/i.test(body)) {
+        // Repeated login attempts from this check are what blocks an account.
+        // Say so plainly and stop: a deploy loop that re-probes would keep the
+        // lockout alive.
+        return {
+          ok: false,
+          detail: "account blocked after failed logins — wait for it to clear or reset the API user's password",
+        };
+      }
+      return { ok: false, detail: `login refused (400): ${body.slice(0, 80)}` };
+    }
     return { ok: false, detail: `login failed (${res.status})` };
   } catch (error) {
     return { ok: false, detail: `could not reach Shiprocket: ${String(error.message).slice(0, 60)}` };

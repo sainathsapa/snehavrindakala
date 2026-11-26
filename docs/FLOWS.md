@@ -121,7 +121,7 @@ Status words mean exactly what they say:
 | No order placed with a real card on the production build | Razorpay's modal needs a human tap; automation reached the card form and stopped | someone pays ₹1 on a test card and reads the confirmation |
 | No live Razorpay keys | owner input | live key + secret + webhook secret supplied |
 | GST lines unproven | `SELLER_GSTIN` is empty — the studio is below the registration threshold | GSTIN supplied, or confirmed unregistered and the toggle left off |
-| Shiprocket is manual | no API user created | owner decides API user vs typing AWBs |
+| Shiprocket login is blocked | the account was locked after failed login attempts while diagnosing, and Shiprocket has no sandbox to test against | the block clears (or the password is reset), a fresh API user is created, and `node scripts/shiprocket-check.mjs` walks auth → pickup → rates → tracking |
 | No uptime alert | needs an external monitor account | point a monitor at `/api/health` |
 | No error-tracking service | a log line plus an optional webhook is what ships | an account, or `ERROR_WEBHOOK_URL` set to a Slack/Discord hook |
 | Never deployed to a host | no server, DNS or certificate yet | Lightsail box + A records, then `deploy/go-live.sh` |
