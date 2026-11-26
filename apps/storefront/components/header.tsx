@@ -60,8 +60,17 @@ const typeIcons: Record<string, string> = {
 export function Header({
   platformMode = "single-brand",
   artForms = [],
+  hasRooms = true,
 }: {
   platformMode?: "platform" | "single-brand";
+  /**
+   * Whether /rooms has anything published.
+   *
+   * A nav item that opens onto an empty room is worse than no nav item: it
+   * spends the visitor's attention on a promise the shop cannot keep yet. The
+   * page stays live and linkable — only the menu entry waits.
+   */
+  hasRooms?: boolean;
   // The currency switcher lives in the footer now; the header no longer needs
   // to know which currency is active.
   /** Art traditions, rendered as a small gallery inside the Discover menu. */
@@ -126,7 +135,9 @@ export function Header({
 
   // Nothing in the top nav is mode-gated any more: /artists and /sell render in
   // both modes, so the old platformOnly filter had no members left to hide.
-  const visibleLinks = navLinks;
+  const visibleLinks = navLinks.filter(
+    (link) => link.href !== "/rooms" || hasRooms
+  );
 
   const debouncedSearch = async (query: string) => {
     if (!query || query.length < 2) {

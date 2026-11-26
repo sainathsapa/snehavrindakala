@@ -892,7 +892,8 @@
       "dispatchReady": "Usually dispatches in 2–4 business days",
       "dispatchMadeToOrder": "Usually ships in 2–3 weeks",
       "dispatchCustom": "Timeline confirmed with your quote",
-      "dimensionsStated": "as stated by the studio, not yet measured"
+      "dimensionsStated": "as stated by the studio, not yet measured",
+      "dimensionsToConfirm": "To be confirmed — write to the studio"
     },
     "save": "Save",
     "saved": "Saved",

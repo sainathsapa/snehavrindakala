@@ -182,6 +182,15 @@ export default async function LocaleLayout({
   const activeCurrency = await getPreferredCurrency();
   const socials = socialLinks();
 
+  // Read once, server-side, so the menu can be honest about what exists.
+  let hasRooms = false;
+  try {
+    const { listRooms } = await import("@/lib/rooms-news");
+    hasRooms = (await listRooms(locale)).length > 0;
+  } catch {
+    // A missing content table must not take the header down with it.
+  }
+
   return (
     <NextIntlClientProvider locale={locale}>
       <>
@@ -189,6 +198,7 @@ export default async function LocaleLayout({
         <Header
           platformMode={getPlatformModeFromEnv()}
           artForms={navArtForms}
+          hasRooms={hasRooms}
         />
         {children}
         <Footer

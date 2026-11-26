@@ -17,6 +17,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -216,18 +217,114 @@ await checkHttp(`${local}/api/health`, `Storefront health (${local})`);
 const backendBase = value("MEDUSA_BACKEND_URL") || "http://127.0.0.1:9000";
 await checkHttp(`${backendBase}/health`, `Backend health (${backendBase})`);
 
-section("Content");
 
-// Rooms and the newsroom are empty states until the owner writes something. A
-// launch with both empty is a launch with two dead pages in the nav, so it is a
-// warning rather than a pass.
+/**
+ * Ask the database a question, through the running container.
+ *
+ * Two things the release genuinely needs to know live in the data, not in the
+ * environment: whether anything is on sale without a size, and whether the
+ * editorial sections the nav promises are empty. Neither is a reason to refuse
+ * to boot, and both are reasons to refuse to launch.
+ *
+ * psql through `docker compose exec` rather than a driver: preflight has no
+ * dependencies on purpose, so it can run on a fresh box before `pnpm install`.
+ * If Docker or the database is not there, the check reports itself as skipped
+ * instead of pretending to pass.
+ */
+function databaseUrl() {
+  return value("DATABASE_URL") || "";
+}
+
+function sql(dbUrl, statement) {
+  const match = /^postgres(?:ql)?:\/\/([^:]+):[^@]*@([^:/]+)(?::(\d+))?\/([^?]+)/.exec(
+    dbUrl.replace(/^["']|["']$/g, "")
+  );
+  if (!match) return { ok: false, reason: "DATABASE_URL is not a postgres URL" };
+  const [, user, , , database] = match;
+
+  try {
+    const out = execFileSync(
+      "docker",
+      [
+        "compose",
+        "exec",
+        "-T",
+        "postgres",
+        "psql",
+        "-U",
+        user,
+        "-d",
+        database,
+        "-tAc",
+        statement,
+      ],
+      { cwd: ROOT, encoding: "utf8", timeout: 15000, stdio: ["ignore", "pipe", "pipe"] }
+    ).trim();
+    return { ok: true, value: out };
+  } catch (error) {
+    return { ok: false, reason: (error.stderr || error.message || "").toString().slice(0, 90).trim() };
+  }
+}
+
+section("Content and data");
+
 try {
   const response = await fetch(`${local}/api/health?deep=1`, { cache: "no-store" });
-  if (response.ok) {
-    pass("Storefront reports ready");
-  }
+  if (response.ok) pass("Storefront reports ready");
 } catch {
   // Already reported above.
+}
+
+const db = databaseUrl();
+
+if (!db) {
+  warn("Data checks skipped", "no DATABASE_URL in the environment");
+} else {
+  // Works on sale with no size. The route refuses to publish one now, so any
+  // that exist predate the rule — they are live and a buyer cannot judge them.
+  const sizeless = sql(
+    db,
+    `SELECT coalesce(string_agg(p.title, ', '), '') FROM product p
+      WHERE p.status = 'published' AND p.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM product_tags pt
+          JOIN product_tag t ON t.id = pt.product_tag_id
+          WHERE pt.product_id = p.id AND t.value LIKE 'dimensions:%'
+        )`
+  );
+  if (!sizeless.ok) {
+    warn("Published works without a size", `could not check: ${sizeless.reason}`);
+  } else if (sizeless.value) {
+    // A warning, not a failure: the product page now states plainly that the
+    // measurement is pending and points the buyer at the studio, so this is a
+    // job outstanding rather than a shop that misleads.
+    warn(
+      "Published works without a size",
+      `${sizeless.value} — the page says "to be confirmed"; measure them when you can`
+    );
+  } else {
+    pass("Every published work states its size");
+  }
+
+  // The nav promises these sections. Empty is not a bug; shipping them empty is.
+  const rooms = sql(db, "SELECT count(*) FROM site_room WHERE published");
+  const news = sql(db, "SELECT count(*) FROM site_news WHERE published");
+  if (!rooms.ok || !news.ok) {
+    warn("Rooms and newsroom", "could not check");
+  } else {
+    const roomCount = Number(rooms.value || 0);
+    const newsCount = Number(news.value || 0);
+    if (roomCount === 0) {
+      warn("Rooms", "nothing published — /rooms is an empty state in the nav");
+    } else {
+      pass("Rooms", `${roomCount} published`);
+    }
+    if (newsCount === 0) {
+      warn("Newsroom", "nothing published — /newsroom is an empty state in the nav");
+    } else {
+      pass("Newsroom", `${newsCount} published`);
+    }
+  }
 }
 
 section("Summary");
