@@ -69,6 +69,12 @@ days). Use Neon instead.
 4. Note the service URL, e.g. `https://snehavrinda-medusa.onrender.com`.
    Free services sleep after 15 idle minutes — the first request wakes it.
 
+   Two hard limits, checked against Render's own docs: the free plan gives
+   **512 MB RAM** (no headroom for Medusa plus a database in one container) and
+   **750 instance hours per workspace per month — enough for exactly one
+   service**. Do not also put the storefront on Render free; it would need its
+   own 744 h. That is why the storefront goes to Cloudflare below.
+
 ### 4. Storefront — Cloudflare Workers (free, no card, commercial allowed)
 This is the only no-card host that permits commercial use *and* runs Next.js
 server routes. It needs the OpenNext adapter:
