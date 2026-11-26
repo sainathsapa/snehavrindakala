@@ -116,22 +116,30 @@ describe("validateProductionConfig — feature gates", () => {
     expect(result).toMatchObject({ ok: true, missing: [] });
   });
 
-  it("requires a sender and one SES credential path for e-mail", () => {
+  it("requires a sender and the Resend key for e-mail", () => {
     const result = validateProductionConfig({ ...baseline, FEATURE_EMAIL: "1" });
     expect(result.missing).toContain("FROM_EMAIL");
-    // With nothing set, the shortest complete alternative is the IAM role, so
-    // that is the one name reported. The static-key path is an equal alternative.
-    expect(result.missing).toEqual(["FROM_EMAIL", "AWS_SES_ROLE_ARN"]);
+    expect(result.missing).toContain("RESEND_API_KEY");
   });
 
-  it("accepts an SES role in place of static keys", () => {
-    const result = validateProductionConfig({
+  it("boots with Resend alone, and ignores leftover SES variables", () => {
+    const ok = validateProductionConfig({
+      ...baseline,
+      FEATURE_EMAIL: "1",
+      FROM_EMAIL: "orders@example.test",
+      RESEND_API_KEY: "re_test",
+    });
+    expect(ok).toMatchObject({ ok: true, missing: [] });
+
+    // SES was removed from the transport. Credentials for it must not satisfy
+    // the gate, or production starts a mail path that cannot send.
+    const stale = validateProductionConfig({
       ...baseline,
       FEATURE_EMAIL: "1",
       FROM_EMAIL: "orders@example.test",
       AWS_SES_ROLE_ARN: "arn:aws:iam::123456789012:role/ses",
     });
-    expect(result).toMatchObject({ ok: true, missing: [] });
+    expect(stale.missing).toContain("RESEND_API_KEY");
   });
 
   it("requires Shiprocket credentials when fulfilment is enabled", () => {

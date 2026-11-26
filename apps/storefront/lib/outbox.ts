@@ -54,7 +54,7 @@ export function reasonFor(status: string): OutboxReason {
 export function detailFor(reason: OutboxReason): string {
   switch (reason) {
     case "no-transport":
-      return "Not sent: no mail transport is configured. Set FROM_EMAIL and the AWS_SES_* credentials, then this message would have gone out.";
+      return "Not sent: no mail transport is configured. Set FROM_EMAIL and RESEND_API_KEY, then this message would have gone out.";
     case "transport-error":
       return "Not sent: the transport rejected it. The address may be wrong, or SES may be sandboxed or throttled.";
     default:

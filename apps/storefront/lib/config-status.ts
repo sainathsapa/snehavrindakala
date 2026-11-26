@@ -74,10 +74,8 @@ export function paymentStatus(source: Env = env()): ConfigItem {
 export function emailStatus(source: Env = env()): ConfigItem {
   const from = has(source, "FROM_EMAIL");
   const resend = has(source, "RESEND_API_KEY");
-  const sesKey = has(source, "AWS_SES_ACCESS_KEY_ID") && has(source, "AWS_SES_SECRET_ACCESS_KEY");
-  const sesRole = has(source, "AWS_SES_ROLE_ARN");
 
-  if (!from && !resend && !sesKey && !sesRole) {
+  if (!from && !resend) {
     return {
       id: "email",
       label: "Email",
@@ -88,9 +86,8 @@ export function emailStatus(source: Env = env()): ConfigItem {
       keys: ["FROM_EMAIL", "RESEND_API_KEY"],
     };
   }
-  // The sender address is what every transport needs; the credential half is
-  // satisfied by Resend or by SES (static keys, or a task role).
-  const transportReady = resend || sesKey || sesRole;
+  // Resend is the only transport, so the credential half is the one key.
+  const transportReady = resend;
   if (!from || !transportReady) {
     return {
       id: "email",
@@ -100,7 +97,7 @@ export function emailStatus(source: Env = env()): ConfigItem {
         ? "A sender address is set but no transport credentials are."
         : "A transport credential is set but no sender address (FROM_EMAIL) is.",
       impact: "Messages are still recorded as skipped until both halves are set.",
-      keys: ["FROM_EMAIL", "RESEND_API_KEY", "AWS_SES_ACCESS_KEY_ID"],
+      keys: ["FROM_EMAIL", "RESEND_API_KEY"],
     };
   }
   return {

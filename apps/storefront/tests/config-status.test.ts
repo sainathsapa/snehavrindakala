@@ -60,23 +60,19 @@ describe("emailStatus", () => {
   it("separates 'no transport at all' from 'half configured'", () => {
     expect(emailStatus({}).level).toBe("missing");
     expect(emailStatus({ FROM_EMAIL: "orders@shop.test" }).level).toBe("partial");
+    expect(emailStatus({ RESEND_API_KEY: "re_x" }).level).toBe("partial");
     expect(
-      emailStatus({ FROM_EMAIL: "orders@shop.test", AWS_SES_ACCESS_KEY_ID: "a" }).level
-    ).toBe("partial");
-    expect(
-      emailStatus({
-        FROM_EMAIL: "orders@shop.test",
-        AWS_SES_ACCESS_KEY_ID: "a",
-        AWS_SES_SECRET_ACCESS_KEY: "b",
-      }).level
+      emailStatus({ FROM_EMAIL: "orders@shop.test", RESEND_API_KEY: "re_x" }).level
     ).toBe("ready");
   });
 
-  it("accepts a role instead of static keys, because SES supports both", () => {
+  it("does not count SES variables, because that transport is gone", () => {
+    // The transport is Resend only. Reporting "ready" because AWS_SES_* exists
+    // would tell an operator mail works when nothing reads those variables.
     expect(
       emailStatus({ FROM_EMAIL: "orders@shop.test", AWS_SES_ROLE_ARN: "arn:aws:iam::1:role/x" })
         .level
-    ).toBe("ready");
+    ).toBe("partial");
   });
 });
 

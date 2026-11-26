@@ -94,16 +94,14 @@ describe("validateOwnerInputs — missing groups", () => {
     }
   });
 
-  it("accepts alternative env vars (public Razorpay key / JWT secret / SES role)", () => {
+  it("accepts alternative env vars (public Razorpay key / JWT secret / Resend key)", () => {
     const result = validateOwnerInputs({
       NEXT_PUBLIC_RAZORPAY_KEY_ID: "rzp_public",
       JWT_SECRET: "jwt-secret",
-      AWS_SES_ROLE_ARN: "arn:aws:iam::1:role/ses",
+      RESEND_API_KEY: "re_x",
     });
     expect(result.present.some((p) => p.key === "razorpayKeyId")).toBe(true);
     expect(result.present.some((p) => p.key === "sessionSecret")).toBe(true);
-    // The transport group accepts either provider; the key is named for the
-    // group rather than for SES, so Resend can satisfy it on its own.
     expect(result.present.some((p) => p.key === "emailTransport")).toBe(true);
   });
 

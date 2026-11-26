@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { verifySvixSignature } from "@/app/api/webhooks/resend/route";
+import { verifySvixSignature } from "@/lib/webhooks/svix";
 
 const SECRET = "whsec_" + Buffer.from("test-signing-key-32-bytes-long!!").toString("base64");
 

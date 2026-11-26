@@ -37,7 +37,7 @@ describe("detailFor", () => {
   it("names the variables to set when there is no transport", () => {
     const text = detailFor("no-transport");
     expect(text).toContain("FROM_EMAIL");
-    expect(text).toContain("AWS_SES_");
+    expect(text).toContain("RESEND_API_KEY");
   });
 
   it("does not blame the address when the reason is unknown", () => {

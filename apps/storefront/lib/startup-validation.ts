@@ -80,13 +80,7 @@ const RAZORPAY_INDICATORS = [
   "RAZORPAY_KEY_SECRET",
   "RAZORPAY_WEBHOOK_SECRET",
 ];
-const EMAIL_INDICATORS = [
-  "FROM_EMAIL",
-  "RESEND_API_KEY",
-  "AWS_SES_ACCESS_KEY_ID",
-  "AWS_SES_SECRET_ACCESS_KEY",
-  "AWS_SES_ROLE_ARN",
-];
+const EMAIL_INDICATORS = ["FROM_EMAIL", "RESEND_API_KEY"];
 const SHIPROCKET_INDICATORS = [
   "SHIPROCKET_EMAIL",
   "SHIPROCKET_PASSWORD",
@@ -126,19 +120,12 @@ function requiredNames(env: StartupEnv): {
     }
   }
 
-  // ── e-mail (Resend or SES) ──────────────────────────────────────────────
+  // ── e-mail (Resend only) ────────────────────────────────────────────────
+  // SES was removed from the transport entirely, so requiring its variables
+  // here would refuse to boot for a mail path that no longer exists.
   if (enabled(env, "FEATURE_EMAIL", EMAIL_INDICATORS)) {
     if (!has(env, "FROM_EMAIL")) missing.push("FROM_EMAIL");
-    // Either provider satisfies the credential half. Resend is a single key;
-    // SES needs a key pair or a task role.
-    if (!has(env, "RESEND_API_KEY")) {
-      missing.push(
-        ...missingFromPairs(env, [
-          ["AWS_SES_ACCESS_KEY_ID", "AWS_SES_SECRET_ACCESS_KEY"],
-          ["AWS_SES_ROLE_ARN"],
-        ])
-      );
-    }
+    if (!has(env, "RESEND_API_KEY")) missing.push("RESEND_API_KEY");
   }
 
   // ── fulfilment (Shiprocket) ─────────────────────────────────────────────

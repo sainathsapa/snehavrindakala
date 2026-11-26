@@ -135,17 +135,12 @@ export const OWNER_INPUT_FIELDS: Record<
       requiredFor: feature("FEATURE_SES"),
     },
     {
-      // Resend is a complete transport on its own: one key, one HTTPS call. SES
-      // stays supported for deployments that already have it, so either one
-      // satisfies this group instead of the checklist demanding AWS forever.
+      // Resend is the only transport: one key, one HTTPS call. SES was removed
+      // from the codebase, so offering its variables here would send an operator
+      // looking for credentials nothing reads.
       key: "emailTransport",
       envVar: "RESEND_API_KEY",
-      alternatives: [
-        "AWS_SES_ROLE_ARN",
-        "AWS_SES_ACCESS_KEY_ID",
-        "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
-      ],
-      label: "Email transport (Resend key, or SES role/keys)",
+      label: "Email transport (Resend API key)",
       requiredFor: ALWAYS,
     },
     {
