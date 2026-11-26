@@ -98,6 +98,20 @@ export async function POST(req: Request) {
     const productStatus = validStatuses.includes(status) ? status : "draft";
     const amount = Number(total) || 0;
 
+    // Enforced here as well as in the form. The form guard is a courtesy; this
+    // is the rule. A published work without a size is a work a buyer cannot
+    // judge, and the product page has nowhere to say "unknown" that reads as
+    // anything but an omission.
+    if (productStatus === "published") {
+      const size = specs && typeof specs === "object" ? String(specs.dimensions || "").trim() : "";
+      if (!size) {
+        return NextResponse.json(
+          { error: "A published work needs its dimensions. Save it as a draft until they are measured." },
+          { status: 400 }
+        );
+      }
+    }
+
     const payload: Record<string, unknown> = {
       title,
       handle: slug || undefined,

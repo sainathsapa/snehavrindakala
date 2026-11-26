@@ -24,6 +24,8 @@ export default function NewProductPage() {
   const [artist, setArtist] = useState("Sneha Sainath Sapa");
   const [stockType, setStockType] = useState("ready_to_ship");
   const [description, setDescription] = useState("");
+  /** What stopped the save. Shown beside the form, never only in the console. */
+  const [formError, setFormError] = useState<string | null>(null);
   // Whether the studio measured the work. Gates the certificate, not the page.
   const [measured, setMeasured] = useState(false);
   // The artwork's specifications. Stored as tags and rendered as the Details
@@ -59,6 +61,20 @@ export default function NewProductPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setFormError(null);
+
+    // A work may be drafted while its size is still to be measured — that is what
+    // a draft is for. It may not go live without one: the product page would ask
+    // a buyer to spend real money on a work whose size is blank, and every
+    // question about it becomes an email.
+    if (status === "published" && !String(specs.dimensions || "").trim()) {
+      setFormError(
+        "Add the dimensions before publishing. The work can stay a draft without them; it cannot go on sale without its size."
+      );
+      setSaving(false);
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch("/api/admin/products", {
@@ -327,6 +343,11 @@ export default function NewProductPage() {
                 >
                   {saving ? "Creating..." : "Create Product"}
                 </button>
+                {formError ? (
+                  <p role="alert" className="mt-3 font-sans text-sm text-sindoor">
+                    {formError}
+                  </p>
+                ) : null}
               </div>
             </form>
           </div>

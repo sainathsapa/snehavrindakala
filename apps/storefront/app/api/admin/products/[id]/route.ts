@@ -104,6 +104,27 @@ export async function PATCH(
     if (title !== undefined) update.title = title;
     if (slug !== undefined) update.handle = slug;
     if (validStatuses.includes(status)) update.status = status;
+
+    // Same rule as create: publishing needs a size. Checked against the incoming
+    // specs when they are sent, and against the stored tags when they are not —
+    // otherwise a PATCH that only flips the status would slip past the guard.
+    if (update.status === "published") {
+      const incoming = specs && typeof specs === "object" ? String(specs.dimensions || "").trim() : "";
+      let size = incoming;
+      if (!size) {
+        const { product: current } = await getAdminProduct(id);
+        size = ((current as any)?.tags ?? [])
+          .map((t: any) => (typeof t === "string" ? t : t?.value) ?? "")
+          .find((value: string) => value.startsWith("dimensions:"))
+          ?.slice("dimensions:".length) ?? "";
+      }
+      if (!size) {
+        return NextResponse.json(
+          { error: "A published work needs its dimensions. Save it as a draft until they are measured." },
+          { status: 400 }
+        );
+      }
+    }
     if (typeof description === "string") update.description = description;
 
     // Tags carry the maker, availability and the artwork's specifications: the

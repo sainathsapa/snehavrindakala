@@ -36,6 +36,9 @@ const navLinks = [
   // pictures under different names, which is just a decision a visitor has to
   // make for no reason.
   { key: "discover", href: "/shop", menu: "discover" as const },
+  // Rooms sit beside the shop, not under it: they are the way the collection is
+  // arranged when someone else has already done the choosing.
+  { key: "rooms", href: "/rooms" },
   { key: "artForms", href: "/art-forms" },
   { key: "learn", href: "/learn" },
   { key: "request", href: "/custom-art" },
@@ -44,10 +47,10 @@ const navLinks = [
   // address the terms, invoice and every policy point at.
   { key: "contact", href: "/contact" },
   { key: "studio", href: "/about", menu: "studio" as const },
-  { key: "artists", href: "/artists", platformOnly: true },
-  // Only meaningful in marketplace mode: in single-brand mode there is nobody
-  // to sell on the platform, so the page would be a dead end.
-  { key: "sell", href: "/sell", platformOnly: true },
+  // Both render in single-brand mode now — a house that names its makers should
+  // not hide them, and "work with us" is a question makers actually ask.
+  { key: "artists", href: "/artists" },
+  { key: "sell", href: "/sell" },
 ];
 
 const typeIcons: Record<string, string> = {
@@ -116,9 +119,9 @@ export function Header({
     return null;
   }
 
-  const visibleLinks = navLinks.filter(
-    (link) => !link.platformOnly || platformMode === "platform"
-  );
+  // Nothing in the top nav is mode-gated any more: /artists and /sell render in
+  // both modes, so the old platformOnly filter had no members left to hide.
+  const visibleLinks = navLinks;
 
   const debouncedSearch = async (query: string) => {
     if (!query || query.length < 2) {

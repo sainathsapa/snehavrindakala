@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { medusa } from "@/lib/medusa";
 import { artFormSlugs } from "@/lib/slugs";
 import { listArtForms, listFeaturedCategories } from "@/lib/site-content";
+import { listNews, listRooms } from "@/lib/rooms-news";
 import { listCatalogue } from "@/lib/catalogue";
 import { getPlatformModeFromEnv } from "@/lib/settings";
 
@@ -124,15 +125,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // ── Platform-only routes ─────────────────────────────────────────────────
-  // Only in platform mode: in single-brand mode /artists and /sell 404 by
-  // design, so listing them here would be a broken sitemap.
-  if (getPlatformModeFromEnv() === "platform") {
-    entries.push(
-      { url: `${baseUrl}/artists`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
-      { url: `${baseUrl}/sell`, changeFrequency: "monthly", priority: 0.4, lastModified: now }
-    );
+  // ── Rooms and the newsroom ───────────────────────────────────────────────
+  // Added after the pages shipped: an editorial section that no crawler is told
+  // about is a section nobody will ever find by search. Slugs come from the
+  // content tables, so a new room is listed without editing this file.
+  entries.push(
+    { url: `${baseUrl}/rooms`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
+    { url: `${baseUrl}/newsroom`, changeFrequency: "weekly", priority: 0.5, lastModified: now }
+  );
+  try {
+    for (const room of await listRooms("en")) {
+      entries.push({
+        url: `${baseUrl}/rooms/${room.slug}`,
+        changeFrequency: "monthly",
+        priority: 0.6,
+        lastModified: new Date(room.updated_at || now),
+      });
+    }
+    for (const item of await listNews("en")) {
+      entries.push({
+        url: `${baseUrl}/newsroom/${item.slug}`,
+        changeFrequency: "yearly",
+        priority: 0.4,
+        lastModified: new Date(item.published_at || now),
+      });
+    }
+  } catch {
+    // A content table that is missing must not take the sitemap down with it.
+  }
 
+  // ── Artist pages ─────────────────────────────────────────────────────────
+  // /artists and /sell used to 404 outside platform mode and were withheld here;
+  // both render in single-brand mode now, so they are always listed.
+  entries.push(
+    { url: `${baseUrl}/artists`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
+    { url: `${baseUrl}/sell`, changeFrequency: "monthly", priority: 0.4, lastModified: now }
+  );
+
+  if (getPlatformModeFromEnv() === "platform") {
     try {
       const artists = await medusa.listAllArtists({ limit: 500 });
       for (const artist of artists) {
