@@ -81,6 +81,42 @@ export async function POST(req: Request) {
       raw: { ...(found.raw ?? {}), last_webhook_status: update.status, last_webhook_at: new Date().toISOString() },
     });
 
+    // Delivered is the one status worth an email of its own, and only on the
+    // transition: Shiprocket resends, and a buyer should not be asked twice.
+    if (
+      update.status === "delivered" &&
+      String(found.status ?? "") !== "delivered"
+    ) {
+      try {
+        const { getAdminOrder } = await import("@/lib/admin");
+        const { sendAccountEmail } = await import("@/lib/email/send");
+        const { order } = await getAdminOrder(found.order_id);
+        const record = order as unknown as Record<string, any>;
+        const items = (record.items ?? []).map((item: any) => ({
+          title: item.title || item.product_title,
+          url: item.product_handle
+            ? `https://snehavrinda.in/products/${item.product_handle}#reviews`
+            : undefined,
+        }));
+        if (record.email) {
+          await sendAccountEmail({
+            to: record.email,
+            template: "review_request",
+            eventKey: `review_request:${found.order_id}`,
+            data: {
+              order_id: found.order_id,
+              display_id: record.display_id ?? null,
+              items,
+            },
+          });
+        }
+      } catch (error) {
+        // A delivered parcel must not be reported as failed because an email
+        // could not be sent.
+        console.error("[courier] review request not sent", error);
+      }
+    }
+
     return NextResponse.json({ applied: true, order_id: found.order_id, status: update.status });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

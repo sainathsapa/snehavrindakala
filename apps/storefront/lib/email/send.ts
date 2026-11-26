@@ -22,6 +22,7 @@ type Template =
   | "order_cancelled"
   | "order_confirmation"
   | "shipment_confirmed"
+  | "review_request"
   | "contact_enquiry"
   | "contact_received";
 

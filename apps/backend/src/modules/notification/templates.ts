@@ -415,6 +415,60 @@ function refundProcessed(
  * Shipment
  * ------------------------------------------------------------------ */
 
+/**
+ * Three days after a parcel is delivered, the only person who can say whether the
+ * work arrived well is the one holding it. Reviews rendered on the product page
+ * and nothing ever asked for one, so the page sat empty on the site's most
+ * convincing evidence.
+ *
+ * Written as a question rather than a demand: one work, one question, no stars to
+ * click in an email client that will not render them.
+ */
+function reviewRequest(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const items: any[] = Array.isArray(data.items) ? data.items : [];
+  const orderRef = data.display_id ?? data.order_id ?? "your order";
+
+  const rows = items
+    .map((item) => {
+      const url = item.url || `${ctx.storefrontUrl}/shop`;
+      return `<p style="margin:0 0 10px;font-size:14px;line-height:1.6;color:#2B211E;">
+        <a href="${escapeHtml(url)}" style="color:#C84636;text-decoration:none;">${escapeHtml(
+          item.title || "the work"
+        )}</a>
+      </p>`;
+    })
+    .join("");
+
+  const html = layout(
+    ctx,
+    "Did it arrive well?",
+    paragraph(
+      `Order #${escapeHtml(String(orderRef))} should be with you by now. If you have a minute, tell us how the work looks in your hands — it is the only review that helps the next person decide.`
+    ) +
+      `<div style="margin:18px 0;">${rows}</div>` +
+      paragraph(
+        `<span style="font-size:13px;color:#675A52;">If something is not right, reply to this email rather than leaving it to a form — a person reads these.</span>`
+      ) +
+      button(ctx, `${ctx.storefrontUrl}/account/orders`, "See your order"),
+    `Order #${orderRef}: did it arrive well?`
+  );
+
+  const text = [
+    `Order #${orderRef} should be with you by now.`,
+    "",
+    "Tell us how it looks in your hands:",
+    ...items.map((item) => `- ${item.title || "the work"}: ${item.url || ctx.storefrontUrl}`),
+    "",
+    "If something is not right, reply to this email.",
+    ctx.contactEmail,
+  ].join("\n");
+
+  return { subject: "Did your work arrive well? — SnehaVrinda Kala", html, text };
+}
+
 function shipmentConfirmed(
   ctx: TemplateContext,
   data: Record<string, any>
@@ -1163,6 +1217,7 @@ const RENDERERS: Record<string, Renderer> = {
   order_placed: orderConfirmation,
   refund_processed: refundProcessed,
   shipment_confirmed: shipmentConfirmed,
+  review_request: reviewRequest,
   order_cancelled: orderCancelled,
   welcome: welcome,
   account_created: accountCreated,
