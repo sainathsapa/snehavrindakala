@@ -12,6 +12,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { reportError } from "@/lib/error-report";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { medusa } from "@/lib/medusa";
@@ -59,6 +60,8 @@ function verifySignature(
 }
 
 export async function POST(req: Request) {
+  /** Declared outside the try so a failure can still name the cart it happened on. */
+  let cartRef: string | undefined;
   try {
     const body = await req.json();
     const {
@@ -71,6 +74,7 @@ export async function POST(req: Request) {
     } = body;
 
     const paymentId = razorpay_payment_id || payment_id;
+    cartRef = typeof cart_id === "string" ? cart_id : undefined;
 
     // The signature and the Razorpay order id are MANDATORY. An earlier version
     // only checked them when the client happened to send them, which let anyone
@@ -382,6 +386,10 @@ export async function POST(req: Request) {
     // verbatim hands an unauthenticated caller a map of the backend, so it is
     // logged and replaced with a sentence the buyer can act on.
     console.error("Checkout completion failed", err);
+    // A payment that cannot be completed is the one failure that has to reach a
+    // human: the buyer's card may already be charged. Dedicated scope so it can
+    // be alerted on separately from ordinary noise.
+    reportError(err, { scope: "checkout/complete", detail: { cart: cartRef } });
     return NextResponse.json(
       {
         error:

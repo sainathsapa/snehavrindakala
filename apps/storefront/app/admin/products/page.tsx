@@ -18,6 +18,8 @@ interface Product {
   measured?: boolean;
   /** States a size nobody has confirmed: the certificate will omit it. */
   needsMeasuring?: boolean;
+  /** Published with no size at all — live, and impossible for a buyer to judge. */
+  missingDimensions?: boolean;
   /** The listing image is a generated illustration, not a photograph of the work. */
   standInPhoto?: boolean;
   category?: { id: string; name: string };
@@ -62,6 +64,7 @@ export default function ProductsPage() {
               sold: Boolean(p.sold),
               measured: Boolean(p.measured),
               needsMeasuring: Boolean(p.needsMeasuring),
+              missingDimensions: Boolean(p.missingDimensions),
               standInPhoto: Boolean(p.standInPhoto),
               category: p.category
                 ? { id: p.category.id, name: p.category.name }
@@ -129,6 +132,17 @@ export default function ProductsPage() {
                 // should not have to open an order to discover that.
                 <span className="ml-2 inline-flex rounded-full bg-terracotta/10 px-2 py-1 text-xs font-medium text-terracotta">
                   Sold
+                </span>
+              )}
+              {p.missingDimensions && (
+                // Published before the rule that refuses to publish without a
+                // size. It is on sale and a buyer cannot tell how big it is;
+                // this is the only list that will ever show that.
+                <span
+                  className="ml-2 inline-flex rounded-full bg-sindoor/10 px-2 py-1 text-xs font-medium text-sindoor"
+                  title="This work is live with no dimensions. Add them on its edit page — publishing without a size is now refused."
+                >
+                  No size
                 </span>
               )}
               {p.needsMeasuring && (

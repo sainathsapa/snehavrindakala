@@ -61,6 +61,10 @@ export async function GET(req: Request) {
         measured,
         // Only a work that states a size can be waiting to have it confirmed.
         needsMeasuring: hasDimensions && !measured,
+        // Published with no size at all. These predate the rule that refuses to
+        // publish without dimensions, so they are live and unmeasurable to a
+        // buyer — the one class of product that is both on sale and incomplete.
+        missingDimensions: product?.status === "published" && !hasDimensions,
         // A generated image in place of a photograph. The product page says so;
         // the studio needs to see which ones are still outstanding.
         standInPhoto: isStandInImage(product?.thumbnail),

@@ -305,6 +305,9 @@ services:
       NEXT_PUBLIC_SOCIAL_X: ${NEXT_PUBLIC_SOCIAL_X:-}
       FROM_EMAIL: ${FROM_EMAIL:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
+      # Optional. A checkout that fails after a card is charged must reach a
+      # human, not just the container log.
+      ERROR_WEBHOOK_URL: ${ERROR_WEBHOOK_URL:-}
       RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
       # Notification retry + verified delivery events (see backend anchor).
       NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-5}
