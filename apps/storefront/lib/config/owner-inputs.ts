@@ -125,20 +125,27 @@ export const OWNER_INPUT_FIELDS: Record<
     {
       key: "fromEmail",
       envVar: "FROM_EMAIL",
-      label: "Verified SES sender address",
+      label: "Verified sender address (no-reply@…)",
       requiredFor: ALWAYS,
     },
     {
       key: "awsRegion",
       envVar: "AWS_REGION",
       label: "AWS region for SES",
-      requiredFor: ALWAYS,
+      requiredFor: feature("FEATURE_SES"),
     },
     {
-      key: "sesTransport",
-      envVar: "AWS_SES_ROLE_ARN",
-      alternatives: ["AWS_SES_ACCESS_KEY_ID"],
-      label: "SES transport (IAM role, or access key plus secret)",
+      // Resend is a complete transport on its own: one key, one HTTPS call. SES
+      // stays supported for deployments that already have it, so either one
+      // satisfies this group instead of the checklist demanding AWS forever.
+      key: "emailTransport",
+      envVar: "RESEND_API_KEY",
+      alternatives: [
+        "AWS_SES_ROLE_ARN",
+        "AWS_SES_ACCESS_KEY_ID",
+        "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+      ],
+      label: "Email transport (Resend key, or SES role/keys)",
       requiredFor: ALWAYS,
     },
     {

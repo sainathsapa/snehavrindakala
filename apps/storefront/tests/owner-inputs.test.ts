@@ -102,7 +102,18 @@ describe("validateOwnerInputs — missing groups", () => {
     });
     expect(result.present.some((p) => p.key === "razorpayKeyId")).toBe(true);
     expect(result.present.some((p) => p.key === "sessionSecret")).toBe(true);
-    expect(result.present.some((p) => p.key === "sesTransport")).toBe(true);
+    // The transport group accepts either provider; the key is named for the
+    // group rather than for SES, so Resend can satisfy it on its own.
+    expect(result.present.some((p) => p.key === "emailTransport")).toBe(true);
+  });
+
+  it("accepts a Resend key as a complete email transport", () => {
+    const result = validateOwnerInputs({
+      FROM_EMAIL: "no-reply@snehavrinda.in",
+      RESEND_API_KEY: "re_key",
+    });
+    expect(result.present.some((p) => p.key === "emailTransport")).toBe(true);
+    expect(result.configuredGroups.Email).toBe(true);
   });
 });
 
