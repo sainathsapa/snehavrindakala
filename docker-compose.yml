@@ -245,6 +245,9 @@ services:
         # BEFORE the first build, not after.
         NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-http://localhost:3000}
         NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID:-}
+        # GA4 id is inlined into the client bundle at build time too (gtag loader).
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
+        NEXT_PUBLIC_ZOHO_SALESIQ_CODE: ${NEXT_PUBLIC_ZOHO_SALESIQ_CODE:-}
     environment:
       # Server-side calls use the Docker network hostname.
       MEDUSA_BACKEND_URL: http://backend:9000
@@ -266,6 +269,8 @@ services:
       # passed into the container, so the split silently fell back to defaults.
       SELLER_HOME_STATE: ${SELLER_HOME_STATE:-Karnataka}
       SELLER_CITY: ${SELLER_CITY:-}
+      SELLER_AREA: ${SELLER_AREA:-}
+      SELLER_COUNTRY: ${SELLER_COUNTRY:-}
       SELLER_POSTCODE: ${SELLER_POSTCODE:-}
       SELLER_PHONE: ${SELLER_PHONE:-}
       SELLER_WEBSITE: ${SELLER_WEBSITE:-}

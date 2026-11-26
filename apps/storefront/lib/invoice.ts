@@ -51,30 +51,43 @@ export interface OrderLikeForInvoice {
 }
 
 /**
- * The registered address, laid out for the masthead.
+ * The registered address, laid out the way an invoice should print it: one
+ * fact per line.
  *
- * The owner writes SELLER_ADDRESS as one free-form line and usually includes the
- * city, state and postcode in it. Appending a composed "city, state, postcode"
- * line printed the same place twice on the invoice, so the second line is only
- * added when the address does not already carry the postcode.
+ * The owner writes the address in pieces (street, area, city, state, postcode,
+ * country) rather than as one long sentence, because a single line either wraps
+ * at arbitrary points or runs into the invoice number block. Line order is
+ * street → area → "City, State PIN" → country, which is the Indian postal order.
  */
 function sellerAddressLines(): string[] {
-  const address = (process.env.SELLER_ADDRESS || "").trim();
-  if (!address) return [];
+  const pick = (...keys: string[]) =>
+    keys
+      .map((key) => (process.env[key] || "").trim())
+      .filter(Boolean);
 
-  const postcode = (process.env.SELLER_POSTCODE || "").trim();
-  if (postcode && address.includes(postcode)) return [address];
+  const street = clean(process.env.SELLER_ADDRESS);
+  const area = clean(process.env.SELLER_AREA);
+  const city = clean(process.env.SELLER_CITY);
+  const state = clean(process.env.SELLER_HOME_STATE);
+  const postcode = clean(process.env.SELLER_POSTCODE);
+  const country = clean(process.env.SELLER_COUNTRY) || "India";
 
-  const tail = [
-    process.env.SELLER_CITY,
-    process.env.SELLER_HOME_STATE,
-    process.env.SELLER_POSTCODE,
-  ]
-    .map((part) => (part || "").trim())
-    .filter(Boolean)
-    .join(", ");
+  const lines: string[] = [];
+  if (street) lines.push(street);
+  if (area) lines.push(area);
 
-  return tail ? [address, tail] : [address];
+  const cityState = [city, state].filter(Boolean).join(", ");
+  const lastLine = [cityState, postcode].filter(Boolean).join(" – ");
+  if (lastLine) lines.push(lastLine);
+
+  if (!lines.length) return [];
+  lines.push(country);
+  return lines;
+}
+
+/** Trims a value and drops stray punctuation an owner may have left behind. */
+function clean(value: string | undefined): string {
+  return (value || "").replace(/\s+/g, " ").replace(/^[,\s]+|[,\s]+$/g, "");
 }
 
 function nameOf(address: any): string {

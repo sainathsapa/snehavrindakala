@@ -80,12 +80,12 @@ const nextConfig = {
           // "This content is blocked. Contact the site owner to fix the issue."
           // and left the buyer unable to pay — a total checkout failure caused
           // by our own header, with no server error to point at it.
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com; " +
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-          "font-src 'self' data: https://fonts.gstatic.com https://cdn.razorpay.com; " +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://salesiq.zohopublic.in https://*.zohopublic.in https://*.zohocdn.com; " +
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.zohopublic.in https://*.zohocdn.com; " +
+          "font-src 'self' data: https://fonts.gstatic.com https://cdn.razorpay.com https://*.zohopublic.in https://*.zohocdn.com; " +
           "img-src 'self' data: https://*.razorpay.com https:; " +
-          "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com https://cdn.razorpay.com https://apiv2.shiprocket.in https://www.google-analytics.com https://www.googletagmanager.com; " +
-          "frame-src https://checkout.razorpay.com https://api.razorpay.com; " +
+          "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com https://cdn.razorpay.com https://apiv2.shiprocket.in https://www.google-analytics.com https://www.googletagmanager.com https://salesiq.zohopublic.in https://*.zohopublic.in https://*.zohocdn.com wss://*.zohopublic.in; " +
+          "frame-src https://checkout.razorpay.com https://api.razorpay.com https://*.zohopublic.in; " +
           "worker-src 'self' blob:; " +
           "object-src 'none'; " +
           "base-uri 'self';",

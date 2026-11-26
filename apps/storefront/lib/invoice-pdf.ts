@@ -170,7 +170,7 @@ function buildPages(facts: InvoiceFacts): string[] {
   // block on the right, however long the registered address is.
   push({ x: MARGIN, y, size: 18, bold: true, text: facts.seller.name || "Seller" });
   y -= 22;
-  for (const line of facts.seller.addressLines.slice(0, 2)) {
+  for (const line of facts.seller.addressLines) {
     y = pushWrapped(MARGIN, y, 9, line, 300);
   }
   // Contact details are what a customer actually needs from the masthead. The

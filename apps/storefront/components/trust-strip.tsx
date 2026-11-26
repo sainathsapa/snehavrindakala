@@ -4,8 +4,12 @@
  * Buyer anxiety peaks the moment money is about to move. These are the four
  * facts that answer it — and each is a real policy of this store, not a
  * marketing badge: works are shipped with a certificate, payment runs through
- * Razorpay, returns are accepted per the published policy, and every piece is
- * packed by the studio.
+ * Razorpay, the studio reviews damage claims on approved returns, and every
+ * piece is packed by the studio.
+ *
+ * The returns badge used to read "Easy returns", which contradicted the published
+ * policy (all sales final, damage claims only, approved in writing). A store that
+ * advertises easy returns and then refuses them loses the customer twice.
  */
 import { Link } from "@/i18n/routing";
 
@@ -24,7 +28,7 @@ const ITEMS = [
     ),
   },
   {
-    label: "Easy returns",
+    label: "Damage claims reviewed",
     href: "/policies/returns",
     icon: <path d="M4 12a8 8 0 1014-5.3M4 4v4h4" />,
   },

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { GoogleAnalytics } from "@/components/google-analytics";
+import { ZohoSalesIQ } from "@/components/zoho-salesiq";
 import "./globals.css";
 
 /**
@@ -40,7 +42,14 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
-      <body className={`${bodyFont} antialiased`}>{children}</body>
+      <body className={`${bodyFont} antialiased`}>
+        {children}
+        {/* GA4, consent-gated. Rendered at the root so every locale and every
+            route is measured by one tag rather than per-layout copies. */}
+        <GoogleAnalytics />
+        {/* Support chat. Loads only when NEXT_PUBLIC_ZOHO_SALESIQ_CODE is set. */}
+        <ZohoSalesIQ />
+      </body>
     </html>
   );
 }
