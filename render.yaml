@@ -1,0 +1,54 @@
+# Render blueprint — Medusa backend only.
+#
+# Postgres and Redis are NOT declared here on purpose: Render's free Postgres
+# expires after 30 days, so the database lives on Neon (free, permanent) and the
+# cache/queue on Upstash. Both are set as secret env vars below.
+#
+# Deploy with: Render dashboard -> New -> Blueprint -> pick this repository.
+# Free web services sleep after 15 idle minutes; the first request cold-starts
+# in roughly 30-60s. Shiprocket retries webhooks, so the first callback after
+# idle still lands.
+services:
+  - type: web
+    name: snehavrinda-medusa
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./apps/backend/Dockerfile
+    # The Dockerfile copies the whole workspace, so build from the repo root.
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Neon pooled connection string, add ?sslmode=require
+      - key: REDIS_URL
+        sync: false # Upstash rediss:// URL
+      - key: STOREFRONT_BASE_URL
+        value: https://www.snehavrinda.in
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: COOKIE_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SHIPROCKET_EMAIL
+        sync: false
+      - key: SHIPROCKET_PASSWORD
+        sync: false
+      - key: SHIPROCKET_PICKUP_LOCATION
+        value: home
+      - key: SHIPROCKET_PICKUP_POSTCODE
+        value: "334801"
+      - key: SHIPROCKET_WEBHOOK_TOKEN
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
