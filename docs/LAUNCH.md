@@ -104,7 +104,7 @@ certbot standalone **first**, then binds the proxy.
 
 ```bash
 sudo bash deploy/tls-init.sh snehavrinda.in admin@snehavrinda.in
-docker compose up -d proxy
+docker compose --profile proxy up -d
 docker compose logs -f proxy        # nginx -t passes, no "unknown host"
 ```
 
@@ -205,11 +205,16 @@ If any box is unchecked, that is the release blocker. Nothing else is.
 
 ```bash
 cd /srv/snehavrinda
-docker compose down
+docker compose --profile proxy down
 git checkout <last-good-sha>
 docker compose build storefront backend
-docker compose up -d
+docker compose --profile proxy up -d
 ```
+
+> The proxy lives in the `proxy` profile. A plain `docker compose up -d` starts
+> Postgres, Redis, the backend and the storefront — and **not** nginx, so the
+> site comes back with nothing listening on 80/443. Always pass the profile, or
+> the stack looks deployed and serves nothing.
 
 The database is untouched by a rollback. **Take a backup before every deploy**:
 

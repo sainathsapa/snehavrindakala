@@ -207,11 +207,11 @@ export function Header({
   return (
     <header className="sticky top-0 z-40 border-b border-sand-border/70 bg-rang-paper/95 backdrop-blur supports-[backdrop-filter]:bg-rang-paper/85">
       <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
-        <div className="flex h-[88px] items-center gap-6">
+        <div className="flex h-[88px] items-center gap-3 sm:gap-6">
           {/* Brand cluster: sprig + rule, then the lotus mark and wordmark. */}
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-4"
+            className="flex min-w-0 shrink items-center gap-2 sm:gap-4"
             aria-label="SnehaVrinda Kala home"
           >
             <span className="hidden flex-col items-center gap-1 text-terracotta sm:flex">
@@ -484,8 +484,8 @@ export function Header({
           </nav>
 
           {/* Utilities: thin-line icons, per the reference. */}
-          <div className="ml-auto flex shrink-0 items-center gap-4 lg:ml-0">
-            <div className="relative">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-4 lg:ml-0">
+            <div className="relative hidden sm:block">
               <form onSubmit={handleSearchSubmit} role="search">
                 <input
                   ref={searchInputRef}
@@ -626,6 +626,28 @@ export function Header({
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-ink"
               />
             </div>
+            {searchResults.length > 0 && (
+              <ul className="mb-3 divide-y divide-sand-border/60 border-y border-sand-border/60">
+                {searchResults.slice(0, 5).map((result: any) => (
+                  <li key={`${result.type}-${result.id}`}>
+                    <Link
+                      href={result.url}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setSearchQuery("");
+                        setSearchResults([]);
+                      }}
+                      className="flex items-baseline justify-between gap-3 py-2.5 font-sans text-[14px] text-deep-ink"
+                    >
+                      <span className="truncate">{result.title}</span>
+                      <span className="shrink-0 font-sans text-[11px] uppercase tracking-[0.12em] text-muted-ink">
+                        {result.type}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
             {visibleLinks.map((link) => (
               <div key={link.href}>
                 <Link

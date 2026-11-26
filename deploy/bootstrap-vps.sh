@@ -116,6 +116,9 @@ grep -q '^STOREFRONT_BASE_URL=https://' "$ENV_FILE" ||
 say "5/7 starting the stack"
 cd "$APP_DIR"
 $DOCKER compose up -d --build postgres redis backend storefront
+# The proxy is intentionally NOT started here: nginx refuses to boot without a
+# certificate, and TLS comes after DNS. Run deploy/tls-init.sh, then:
+#   docker compose --profile proxy up -d
 
 # The public front door is nginx on 80/443, and it only starts once certificates
 # exist — so TLS is provisioned before the proxy is brought up. This step needs
