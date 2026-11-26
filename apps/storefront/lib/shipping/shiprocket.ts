@@ -91,7 +91,7 @@ async function getAuthToken(): Promise<string> {
   return token;
 }
 
-async function shiprocketRequest(
+export async function shiprocketRequest(
   path: string,
   body?: any,
   method: "GET" | "POST" = "POST",

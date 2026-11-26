@@ -163,7 +163,104 @@ ON CONFLICT (email) DO UPDATE
   runSql(`CREATE EXTENSION IF NOT EXISTS pgcrypto;\n${ownerSql}`);
 }
 
-// ── 4. Report ───────────────────────────────────────────────────────────────
+// ── 4. Gift wrapping ────────────────────────────────────────────────────────
+//
+// A charge needs a real line on the cart, and Medusa only puts real things on a
+// cart: so wrapping is a product — hidden from the shop, one variant, created on
+// every deploy. Done here, over the admin API, rather than inside the backend
+// image: provisioning that needs a rebuilt container is provisioning that will
+// not happen on the box at 2am.
+const MEDUSA = (
+  env.MEDUSA_BACKEND_URL ||
+  env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+  "http://127.0.0.1:9000"
+).replace(/\/+$/, "");
+
+async function medusaAdminToken() {
+  const res = await fetch(`${MEDUSA}/auth/user/emailpass`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(env.MEDUSA_PUBLISHABLE_KEY
+        ? { "x-publishable-api-key": env.MEDUSA_PUBLISHABLE_KEY }
+        : {}),
+    },
+    body: JSON.stringify({ email: env.ADMIN_EMAIL, password: env.ADMIN_PASSWORD }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!res.ok) return null;
+  const body = await res.json().catch(() => ({}));
+  return body?.token ?? null;
+}
+
+async function ensureGiftWrap() {
+  const token = await medusaAdminToken();
+  if (!token) {
+    console.warn("[seed] gift wrap skipped: could not authenticate to Medusa");
+    return;
+  }
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+  const existing = await fetch(`${MEDUSA}/admin/products?fields=id,handle&limit=200`, {
+    headers,
+    signal: AbortSignal.timeout(20000),
+  }).then((r) => r.json()).catch(() => ({ products: [] }));
+
+  if ((existing.products ?? []).some((p) => p.handle === "gift-wrap")) {
+    console.log("[seed] gift wrap already present");
+    return;
+  }
+
+  const channelId = env.MEDUSA_SALES_CHANNEL_ID;
+  const payload = {
+    title: "Gift wrapping",
+    handle: "gift-wrap",
+    subtitle: "Hand-wrapped in kraft paper with a cloth ribbon",
+    description:
+      "Wrapped by the studio: kraft paper, a cloth ribbon, and the card written in your words.",
+    status: "published",
+    options: [{ title: "Wrap", values: ["Standard"] }],
+    variants: [
+      {
+        title: "Standard",
+        sku: "GIFT-WRAP",
+        manage_inventory: false,
+        allow_backorder: true,
+        options: { Wrap: "Standard" },
+        prices: [
+          {
+            currency_code: (env.MEDUSA_CURRENCY_CODE || "inr").toLowerCase(),
+            amount: Number(env.GIFT_WRAP_PRICE || 15000),
+          },
+        ],
+      },
+    ],
+    metadata: { hidden: true, kind: "service" },
+    ...(channelId ? { sales_channels: [{ id: channelId }] } : {}),
+  };
+
+  const res = await fetch(`${MEDUSA}/admin/products`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(20000),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.warn(`[seed] gift wrap not created (${res.status}): ${text.slice(0, 160)}`);
+    return;
+  }
+  console.log("[seed] gift wrap created");
+}
+
+try {
+  await ensureGiftWrap();
+} catch (error) {
+  console.warn(`[seed] gift wrap step failed: ${error.message.slice(0, 120)}`);
+}
+
+// ── 5. Report ───────────────────────────────────────────────────────────────
 runSql(
   `SELECT
      (SELECT count(*) FROM site_room WHERE published)  AS rooms_published,

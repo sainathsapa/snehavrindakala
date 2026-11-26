@@ -264,6 +264,22 @@ function liveToItem(product: any): CatalogueItem {
   };
 }
 
+/**
+ * Whether a product is a work the shop sells.
+ *
+ * Gift wrapping is a product because Medusa can only put products on a cart, and
+ * it has to sit in the sales channel to be purchasable — so it arrives in every
+ * catalogue response. It is a service, never a work, and must not appear in the
+ * shop, a category listing, the home page or search results.
+ *
+ * The check lives here rather than inside the Medusa client on purpose: filtering
+ * a shared response object there confused the build's page-data collection and
+ * stalled it indefinitely. At the point of display it is both obvious and safe.
+ */
+export function isSellableWork(product: { handle?: string | null }): boolean {
+  return product.handle !== "gift-wrap";
+}
+
 async function loadCatalogueFor(currency: string, locale = "en"): Promise<CatalogueItem[]> {
   let live: CatalogueItem[] = [];
   try {
@@ -272,7 +288,7 @@ async function loadCatalogueFor(currency: string, locale = "en"): Promise<Catalo
     // store default and the currency switcher changes nothing.
     const regionId = await medusa.regionIdForCurrency(currency);
     const { products } = await medusa.listProducts({ limit: 100, regionId });
-    live = (products ?? []).map(liveToItem);
+    live = (products ?? []).filter(isSellableWork).map(liveToItem);
   } catch (err) {
     // An empty shop is the honest result when the backend is unreachable. The
     // old sample catalogue would have rendered instead, showing works that do

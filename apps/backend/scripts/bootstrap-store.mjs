@@ -728,6 +728,7 @@ async function main() {
     log("SEED_CATALOGUE=0 — catalogue left untouched");
   }
 
+
   console.log("");
   console.log("  SnehaVrinda Kala is provisioned");
   console.log("  ----------------------------------------------");

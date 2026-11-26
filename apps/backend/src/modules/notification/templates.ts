@@ -711,6 +711,52 @@ function commissionStatusChanged(
  * email promises it is the only one, so the shop has to keep that promise —
  * `cart_reminders` allows exactly one send per cart.
  */
+/**
+ * A work the buyer saved has become cheaper.
+ *
+ * Wishlists were a private list only the admin could see as demand. The buyer
+ * who pressed the heart had no way of being told the one thing that would bring
+ * them back: the price moved. This is that message — one work, the old price and
+ * the new one, no urgency theatre.
+ */
+function priceDrop(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const title = String(data.title || "A work you saved");
+  const was = Number(data.was ?? 0);
+  const now = Number(data.now ?? 0);
+  const currency = data.currency || ctx.currency || "INR";
+  const url = data.url || `${ctx.storefrontUrl}/wishlist`;
+  const money = (minor: number) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(minor / 100);
+
+  const html = layout(
+    ctx,
+    "The price has changed",
+    paragraph(
+      `<strong>${escapeHtml(title)}</strong> is now ${escapeHtml(money(now))}` +
+        (was > now ? `, down from ${escapeHtml(money(was))}` : "") +
+        `. You saved it to your wishlist, so we thought you would want to know.`
+    ) +
+      button(ctx, url, "See the work"),
+    `The price of ${title} has changed`
+  );
+
+  const text = [
+    `${title} is now ${money(now)}${was > now ? ` (was ${money(was)})` : ""}.`,
+    "",
+    `See it: ${url}`,
+    `Questions? ${ctx.contactEmail}`,
+  ].join("\n");
+
+  return { subject: `${title} — now ${money(now)}`, html, text };
+}
+
 function cartReminder(
   ctx: TemplateContext,
   data: Record<string, any>
@@ -1229,6 +1275,7 @@ const RENDERERS: Record<string, Renderer> = {
   commission_quote_sent: quoteSent,
   commission_status_changed: commissionStatusChanged,
   cart_reminder: cartReminder,
+  price_drop: priceDrop,
   contact_enquiry: contactEnquiry,
   contact_received: contactReceived,
 };
