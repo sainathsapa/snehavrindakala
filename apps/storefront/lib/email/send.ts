@@ -16,6 +16,7 @@
 
 type Template =
   | "welcome"
+  | "account_created"
   | "login_alert"
   | "password_changed"
   | "order_cancelled"
@@ -27,6 +28,8 @@ interface SendArgs {
   data?: Record<string, unknown>;
   /** Makes a retried call idempotent on the backend. */
   eventKey?: string;
+  /** Base64 file attachments, e.g. the invoice PDF. */
+  attachments?: { filename: string; content: string; contentType?: string }[];
 }
 
 function backendUrl(): string {
@@ -59,6 +62,7 @@ export async function sendAccountEmail({
   template,
   data = {},
   eventKey,
+  attachments,
 }: SendArgs): Promise<boolean> {
   const recipient = String(to || "").trim();
   if (!recipient || !EMAIL_RE.test(recipient)) {
@@ -87,6 +91,7 @@ export async function sendAccountEmail({
         template,
         data,
         ...(eventKey ? { eventKey } : {}),
+        ...(attachments?.length ? { attachments } : {}),
       }),
     });
 

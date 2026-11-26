@@ -22,6 +22,8 @@ import { issueOrderToken } from "@/lib/order-token";
 import { issueCertificatesForOrder } from "@/lib/certificates";
 import { saveGiftForOrder } from "@/lib/gift";
 import { sendOrderConfirmation } from "@/lib/email";
+import { ensureAccountForGuestOrder, type GuestAccountResult } from "@/lib/guest-account";
+import { AUTH_COOKIE } from "@/lib/auth";
 import { isSold, soldVariantIds } from "@/lib/sold-works";
 import {
   consumeReservation,
@@ -298,6 +300,42 @@ export async function POST(req: Request) {
       confirmationSent = await sendOrderConfirmation(fullOrder);
     } catch (err) {
       console.error("Order confirmation email failed:", err);
+    }
+
+    // A guest has just paid and has no way back in. Create their account and
+    // mail the order details plus the invoice, with a temporary password and a
+    // one-click set-your-own-password link. Never fatal: the order is paid.
+    let guestAccount: GuestAccountResult | null = null;
+    try {
+      const jar = await cookies();
+      const signedIn = Boolean(jar.get(AUTH_COOKIE)?.value);
+      guestAccount = await ensureAccountForGuestOrder(fullOrder as never, {
+        signedIn,
+      });
+
+      // Sign the new account in on this browser. The customer just proved they
+      // own the inbox by paying for the order; asking them to retype the
+      // temporary password we mailed a second ago is friction with no security
+      // value. The password stays valid for them to use elsewhere.
+      if (guestAccount.outcome === "created" && guestAccount.password && fullOrder?.email) {
+        try {
+          const session = await medusa.loginCustomer(
+            String(fullOrder.email),
+            guestAccount.password
+          );
+          jar.set(AUTH_COOKIE, session.token, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 7,
+          });
+        } catch (err) {
+          console.error("Could not sign the new guest account in:", err);
+        }
+      }
+    } catch (err) {
+      console.error("Guest account provisioning failed:", err);
     }
 
     // A guest has no session, so give them a signed link to their own order.

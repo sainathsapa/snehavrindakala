@@ -14,6 +14,30 @@ interface OrderNotificationPayload {
   order: Record<string, unknown>;
 }
 
+/** The subset of an order the confirmation template renders. */
+function payloadFor(order: Record<string, unknown>): Record<string, unknown> {
+  const anyOrder = order as any;
+  return {
+    id: anyOrder.id,
+    display_id: anyOrder.display_id,
+    email: anyOrder.email,
+    currency_code: anyOrder.currency_code,
+    total: anyOrder.total,
+    subtotal: anyOrder.subtotal,
+    shipping_total: anyOrder.shipping_total,
+    discount_total: anyOrder.discount_total,
+    created_at: anyOrder.created_at,
+    items: (anyOrder.items || []).map((item: any) => ({
+      title: item.title || item.product_title,
+      variant_title: item.variant_title,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      total: item.total,
+    })),
+    shipping_address: anyOrder.shipping_address || null,
+  };
+}
+
 export async function sendOrderConfirmation(
   order: OrderNotificationPayload["order"] & { email?: string | null }
 ): Promise<boolean> {
@@ -24,6 +48,61 @@ export async function sendOrderConfirmation(
       (order as any)?.id
     );
     return false;
+  }
+
+  // The invoice rides along with the confirmation: every paid order gets a PDF
+  // of what was bought, at what price, from whom.
+  let attachments: { filename: string; content: string; contentType: string }[] | undefined;
+  try {
+    const { invoiceFactsFromOrder } = await import("@/lib/invoice");
+    const { buildInvoicePdf, invoiceFileName } = await import("@/lib/invoice-pdf");
+    const facts = invoiceFactsFromOrder(order as never);
+    attachments = [
+      {
+        filename: invoiceFileName(facts.invoiceNumber),
+        content: buildInvoicePdf(facts).toString("base64"),
+        contentType: "application/pdf",
+      },
+    ];
+  } catch (err) {
+    // A missing attachment must not cost the customer their confirmation.
+    console.error("[email] could not build the invoice PDF", err);
+  }
+
+  // Prefer the internal route: it can carry the attachment and does not depend
+  // on the publishable key that ships in the browser bundle.
+  const internalSecret = process.env.INTERNAL_NOTIFY_SECRET;
+  if (internalSecret) {
+    const backendUrl = (
+      process.env.MEDUSA_BACKEND_URL ||
+      process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+      "http://localhost:9000"
+    ).replace(/\/+$/, "");
+    try {
+      const res = await fetch(`${backendUrl}/internal/notifications/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-secret": internalSecret,
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
+        body: JSON.stringify({
+          to,
+          template: "order_confirmation",
+          eventKey: `order_confirmation:${(order as any).id}`,
+          data: { order: payloadFor(order) },
+          ...(attachments ? { attachments } : {}),
+        }),
+      });
+      if (res.ok) {
+        const result = (await res.json().catch(() => ({}))) as { status?: string };
+        return result.status === "sent";
+      }
+      console.error(`[email] internal confirmation failed: ${res.status}`);
+    } catch (err) {
+      console.error("[email] internal confirmation unreachable", err);
+    }
   }
 
   const backendUrl = (
@@ -49,25 +128,7 @@ export async function sendOrderConfirmation(
       body: JSON.stringify({
         to,
         template: "order_confirmation",
-        data: {
-          order: {
-            id: order.id,
-            display_id: (order as any).display_id,
-            email: order.email,
-            currency_code: (order as any).currency_code,
-            total: (order as any).total,
-            subtotal: (order as any).subtotal,
-            shipping_total: (order as any).shipping_total,
-            items: ((order as any).items || []).map((item: any) => ({
-              title: item.title || item.product_title,
-              variant_title: item.variant_title,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              total: item.total,
-            })),
-            shipping_address: (order as any).shipping_address || null,
-          },
-        },
+        data: { order: payloadFor(order) },
       }),
     });
 

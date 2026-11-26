@@ -81,11 +81,20 @@ export interface SendReceipt {
   messageId?: string | null;
 }
 
+export interface EmailAttachment {
+  filename: string;
+  /** Base64 of the file bytes. */
+  content: string;
+  contentType?: string;
+}
+
 export interface EmailPayload {
   to: string;
   subject: string;
   html: string;
   text: string;
+  /** Optional file attachments. Resend delivers them; SES ignores them. */
+  attachments?: EmailAttachment[];
 }
 
 export interface TransportConfig {
@@ -206,6 +215,13 @@ export async function sendEmailWithReceipt(
   const result = await getClient(config.region).send(command);
   // SES has ACCEPTED/QUEUED the message; this is not proof of delivery. Only a
   // verified delivery event may advance the row to `delivered`.
+  if (payload.attachments?.length) {
+    // SESv2 SendEmail has no attachment field — that needs a raw MIME body. Say
+    // so out loud rather than silently dropping the invoice.
+    console.warn(
+      `[email] SES transport sent without ${payload.attachments.length} attachment(s); use Resend for invoices`
+    );
+  }
   return { status: "sent", messageId: result.MessageId || null };
 }
 
@@ -236,6 +252,15 @@ async function sendViaResend(
       subject: payload.subject,
       html: payload.html,
       text: payload.text,
+      ...(payload.attachments?.length
+        ? {
+            attachments: payload.attachments.map((file) => ({
+              filename: file.filename,
+              content: file.content,
+              ...(file.contentType ? { content_type: file.contentType } : {}),
+            })),
+          }
+        : {}),
     }),
   });
 

@@ -45,6 +45,14 @@ export default async function passwordResetSubscriber(args: any): Promise<void> 
     return;
   }
 
+  // A caller that requested the token for its own email marks the event silent.
+  // Sending here as well would deliver two contradictory messages: their "your
+  // account is ready" and our "someone asked to reset your password".
+  if (data.metadata?.silent === true) {
+    console.log("[password-reset] silent event; the caller is sending its own mail");
+    return;
+  }
+
   // Resolve the address. A reset for an unknown identity must not throw: the
   // request path already answered 201 to avoid leaking which emails exist.
   let email = "";

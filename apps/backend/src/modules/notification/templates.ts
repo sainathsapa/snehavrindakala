@@ -831,6 +831,150 @@ function loginAlert(
   };
 }
 
+/**
+ * Sent to a guest whose account we created because they ordered.
+ *
+ * Deliberately not a password-reset email: they never asked to reset anything,
+ * and an unrequested "reset your password" message from a shop is
+ * indistinguishable from phishing. This one says what happened, why, and what to
+ * do next — with the same single-use token link.
+ */
+function accountCreated(
+  ctx: TemplateContext,
+  data: Record<string, any>
+): RenderedEmail {
+  const token = String(data.token || "");
+  const email = String(data.email || "");
+  const tempPassword = String(data.temp_password || "");
+  const ttlMinutes = Number(data.expires_in_minutes || 60);
+  const orderRef = data.order_reference
+    ? String(data.order_reference)
+    : null;
+  const order = data.order || {};
+  const currency = order.currency_code || ctx.currency || "INR";
+  const items: any[] = Array.isArray(order.items) ? order.items : [];
+  const link = token
+    ? `${ctx.storefrontUrl}/account/reset-password?token=${encodeURIComponent(
+        token
+      )}&email=${encodeURIComponent(email)}`
+    : `${ctx.storefrontUrl}/account/forgot-password`;
+
+  const itemRows = items
+    .map(
+      (item) => `<tr>
+        <td style="padding:8px 0;border-bottom:1px solid #DCCBB4;font-size:14px;color:#2B211E;">
+          ${escapeHtml(item.title || "Item")}${
+            item.variant_title
+              ? `<br /><span style="font-size:12px;color:#675A52;">${escapeHtml(
+                  item.variant_title
+                )}</span>`
+              : ""
+          }
+        </td>
+        <td style="padding:8px 0;border-bottom:1px solid #DCCBB4;font-size:14px;color:#675A52;text-align:center;">×${Number(
+          item.quantity || 1
+        )}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #DCCBB4;font-size:14px;color:#2B211E;text-align:right;white-space:nowrap;">${formatMoney(
+          item.total ?? 0,
+          currency
+        )}</td>
+      </tr>`
+    )
+    .join("");
+
+  const address = order.shipping_address;
+  const addressName = address
+    ? [address.first_name, address.last_name].filter(Boolean).join(" ")
+    : "";
+
+  const orderBlock = orderRef
+    ? `<div style="margin:22px 0 8px;padding-top:16px;border-top:1px solid #E8DCC8;">
+         <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#C84636;">Order #${escapeHtml(
+           orderRef
+         )}</p>` +
+      (itemRows
+        ? `<table style="width:100%;border-collapse:collapse;">${itemRows}</table>`
+        : "") +
+      `<p style="margin:12px 0 0;font-size:15px;font-weight:600;color:#2B211E;text-align:right;">Total ${formatMoney(
+        order.total ?? 0,
+        currency
+      )}</p>` +
+      (addressName
+        ? `<p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:#675A52;">Shipping to ${escapeHtml(
+            addressName
+          )}, ${escapeHtml(address?.address_1 || "")}, ${escapeHtml(
+            address?.city || ""
+          )} ${escapeHtml(address?.postal_code || "")}</p>`
+        : "") +
+      `<p style="margin:10px 0 0;font-size:12px;color:#675A52;">The invoice is attached to this email as a PDF.</p>
+       </div>`
+    : "";
+
+  const credentials = tempPassword
+    ? factsBlock("Temporary password", tempPassword) +
+      muted(
+        "Sign in with your email address and this password, then change it from Account → Password. It is a one-time convenience, not a secret we keep."
+      )
+    : "";
+
+  return {
+    subject: orderRef
+      ? `Your account and order #${orderRef} — SnehaVrinda Kala`
+      : "Your SnehaVrinda Kala account is ready",
+    html: layout(
+      ctx,
+      "Your account is ready",
+      paragraph(
+        `We created an account for you when you placed${
+          orderRef ? ` order #${escapeHtml(orderRef)}` : " your order"
+        }, so you can follow it and keep your details for next time.`
+      ) +
+        orderBlock +
+        paragraph(
+          "Prefer to choose your own password? Use the button below — it is the safer of the two options."
+        ) +
+        credentials +
+        button(ctx, link, token ? "Set my own password" : "Set my password") +
+        muted(
+          `The link works once and expires in ${ttlMinutes} minutes. If the button does not open, paste this address into your browser:`
+        ) +
+        `<p style="margin:0 0 16px;font-size:12px;word-break:break-all;color:#675A52;">${escapeHtml(
+          link
+        )}</p>` +
+        muted(
+          `Not expecting this? The order is already confirmed and nothing else changes — write to ${escapeHtml(
+            ctx.contactEmail
+          )} and we will remove the account.`
+        ),
+      orderRef
+        ? `Order #${orderRef} confirmed — invoice attached, account ready.`
+        : "Your account is ready."
+    ),
+    text: [
+      orderRef ? `Order #${orderRef} is confirmed.` : "Your account is ready.",
+      "We created it when you placed your order; the invoice is attached.",
+      "",
+      ...items.map(
+        (item) =>
+          `${item.quantity || 1} x ${item.title || "Item"} — ${formatMoney(
+            item.total ?? 0,
+            currency
+          )}`
+      ),
+      `Total: ${formatMoney(order.total ?? 0, currency)}`,
+      "",
+      tempPassword ? `Temporary password: ${tempPassword}` : "",
+      tempPassword ? "Change it after signing in, or set your own with the link below." : "",
+      `Set your password (single use, ${ttlMinutes} minutes):`,
+      link,
+      "",
+      `Questions? ${ctx.contactEmail}`,
+    ]
+      .filter((line) => line !== "")
+      .join("\n"),
+  };
+}
+
 const RENDERERS: Record<string, Renderer> = {
   order_confirmation: orderConfirmation,
   order_placed: orderConfirmation,
@@ -838,6 +982,7 @@ const RENDERERS: Record<string, Renderer> = {
   shipment_confirmed: shipmentConfirmed,
   order_cancelled: orderCancelled,
   welcome: welcome,
+  account_created: accountCreated,
   password_reset: passwordReset,
   password_changed: passwordChanged,
   login_alert: loginAlert,

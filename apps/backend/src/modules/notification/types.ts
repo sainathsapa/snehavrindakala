@@ -3,6 +3,8 @@ export interface SendNotificationInput {
   template: string;
   data?: Record<string, any>;
   channel?: "email" | "whatsapp" | "sms";
+  /** Files to attach (base64 content). Used for invoice PDFs. */
+  attachments?: { filename: string; content: string; contentType?: string }[];
 }
 
 /** Fine-grained delivery state from migration 005. `sent` (the historical

@@ -168,6 +168,7 @@ export class NotificationService {
       data: templateData,
       channel = "email",
       eventKey,
+      attachments,
     } = data;
     const key = eventKey || deriveEventKey(template, templateData || {});
 
@@ -206,7 +207,12 @@ export class NotificationService {
 
     try {
       if (channel === "email") {
-        const receipt = await this.sendViaSES(to, template, templateData || {});
+        const receipt = await this.sendViaSES(
+          to,
+          template,
+          templateData || {},
+          attachments
+        );
         // "skipped" means SES is not configured (development). That is not a
         // failure — recording it as one would make the admin queue look broken.
         outcome = {
@@ -292,7 +298,8 @@ export class NotificationService {
   private async sendViaSES(
     to: string,
     template: string,
-    templateData: Record<string, any>
+    templateData: Record<string, any>,
+    attachments?: { filename: string; content: string; contentType?: string }[]
   ): Promise<SendReceipt> {
     if (!to) {
       throw new Error(
@@ -311,6 +318,7 @@ export class NotificationService {
       subject: rendered.subject,
       html: rendered.html,
       text: rendered.text,
+      ...(attachments?.length ? { attachments } : {}),
     });
   }
 

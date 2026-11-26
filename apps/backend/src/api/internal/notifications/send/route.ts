@@ -25,6 +25,7 @@ import { hasTemplate } from "../../../../modules/notification/templates";
 /** Templates the storefront may trigger from a server-side code path. */
 const STOREFRONT_SERVER_TEMPLATES = new Set([
   "welcome",
+  "account_created",
   "login_alert",
   "password_changed",
   "order_cancelled",
@@ -45,11 +46,12 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { to, template, data, eventKey } = (req.body || {}) as {
+  const { to, template, data, eventKey, attachments } = (req.body || {}) as {
     to?: string;
     template?: string;
     data?: Record<string, any>;
     eventKey?: string;
+    attachments?: { filename?: string; content?: string; contentType?: string }[];
   };
 
   if (!to || !template) {
@@ -62,6 +64,33 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
       .json({ error: `Template "${template}" cannot be sent from this endpoint` });
   }
 
+  // Attachments are accepted here (never on the public store route) because this
+  // caller holds a server-only secret. Still bounded: an invoice is a few KB, so
+  // a 5 MB ceiling stops this from becoming a file relay.
+  const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+  let cleanAttachments: { filename: string; content: string; contentType: string }[] | undefined;
+  if (Array.isArray(attachments) && attachments.length) {
+    if (attachments.length > 3) {
+      return res.status(400).json({ error: "At most 3 attachments" });
+    }
+    cleanAttachments = [];
+    for (const file of attachments) {
+      const filename = String(file?.filename || "").replace(/[^\w.\- ]/g, "").slice(0, 120);
+      const content = String(file?.content || "");
+      if (!filename || !content) {
+        return res.status(400).json({ error: "Each attachment needs a filename and content" });
+      }
+      if (content.length * 0.75 > MAX_ATTACHMENT_BYTES) {
+        return res.status(413).json({ error: "Attachment too large" });
+      }
+      cleanAttachments.push({
+        filename,
+        content,
+        contentType: String(file?.contentType || "application/pdf"),
+      });
+    }
+  }
+
   const notificationService = req.scope.resolve(
     NOTIFICATION_MODULE
   ) as NotificationService;
@@ -72,6 +101,7 @@ async function POST(req: MedusaRequest, res: MedusaResponse) {
       template,
       data: data || {},
       ...(eventKey ? { eventKey } : {}),
+      ...(cleanAttachments ? { attachments: cleanAttachments } : {}),
     });
 
     return res.status(202).json({
