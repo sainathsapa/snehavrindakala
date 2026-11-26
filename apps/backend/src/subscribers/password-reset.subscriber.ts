@@ -55,18 +55,29 @@ export default async function passwordResetSubscriber(args: any): Promise<void> 
 
   // Resolve the address. A reset for an unknown identity must not throw: the
   // request path already answered 201 to avoid leaking which emails exist.
+  //
+  // `entity_id` is not always a customer id. Medusa emits the address itself for
+  // an email/password identity, and this subscriber spent its whole life trying
+  // to look "info.djsai@gmail.com" up as a customer id, failing, and returning
+  // early — so every reset request was accepted, logged and dropped. A reset
+  // link that never arrives is the worst failure in the shop: the customer is
+  // locked out and has been told to wait.
   let email = "";
-  try {
-    const customerService = container.resolve("customer");
-    const customer = await customerService.retrieveCustomer(entityId, {
-      select: ["id", "email"],
-    });
-    email = String(customer?.email || "");
-  } catch (err) {
-    console.log(
-      `[password-reset] no customer for ${entityId.slice(0, 8)}…; skipping`
-    );
-    return;
+  if (entityId.includes("@")) {
+    email = entityId.trim();
+  } else {
+    try {
+      const customerService = container.resolve("customer");
+      const customer = await customerService.retrieveCustomer(entityId, {
+        select: ["id", "email"],
+      });
+      email = String(customer?.email || "");
+    } catch (err) {
+      console.log(
+        `[password-reset] no customer for ${entityId.slice(0, 8)}…; skipping`
+      );
+      return;
+    }
   }
 
   if (!email) {

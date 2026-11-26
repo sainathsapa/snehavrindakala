@@ -604,6 +604,16 @@ export function CheckoutClient({
                       currency={currency}
                       name="SnehaVrinda Kala"
                       description={`Order · ${formatPrice(grandTotal, currency)}`}
+                      // The buyer typed their name, email and phone one step ago.
+                      // Prefilling them means Razorpay opens on the method list
+                      // instead of stopping to ask for a number we already have,
+                      // and the number it does receive is the one the courier
+                      // will call rather than a second, possibly wrong, one.
+                      prefill={{
+                        name: initialAddress?.full_name || addressSummary?.name,
+                        email: lockedEmail ?? initialAddress?.email,
+                        contact: initialAddress?.phone,
+                      }}
                       onSuccess={handlePaid}
                       onError={(message) => setError(message)}
                       createSession={async () => {
