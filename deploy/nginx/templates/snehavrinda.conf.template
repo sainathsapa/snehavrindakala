@@ -36,8 +36,23 @@ server {
         try_files $uri =404;
     }
 
+    # The app is served here as well as on :443.
+    #
+    # Some hosts close 443 at their firewall (Lightsail does until a rule is added),
+    # and a bare redirect makes that look like a dead site: the browser is sent to a
+    # port that never answers. Serving the shop on :80 means the site is reachable
+    # while that rule is missing, and Cloudflare's "Always Use HTTPS" still keeps the
+    # visitor on TLS — the edge terminates the certificate either way.
+    #
+    # The cost is honest: traffic between Cloudflare and this origin is unencrypted
+    # on this path. Set Cloudflare to Full (strict) once :443 is reachable and the
+    # redirect can come back.
     location / {
-        return 301 https://$host$request_uri;
+        proxy_pass $storefront_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 
