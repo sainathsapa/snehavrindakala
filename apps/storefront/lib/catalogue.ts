@@ -214,12 +214,23 @@ export function specsFromProduct(product: any, stockType: string): ArtworkSpecs 
 
 function liveToItem(product: any): CatalogueItem {
   const variant = product.variants?.[0];
-  const price =
-    typeof variant?.calculated_price?.calculated_amount === "number"
-      ? variant.calculated_price.calculated_amount
-      : typeof variant?.prices?.[0]?.amount === "number"
-        ? variant.prices[0].amount
+
+  // A work offered in two sizes is two prices. A card has room for one, and the
+  // honest one is the cheapest: quoting variant[0] would show a figure a buyer
+  // might not be able to pay, depending on which row Medusa happened to return
+  // first.
+  const priceOf = (item: any): number | null =>
+    typeof item?.calculated_price?.calculated_amount === "number"
+      ? item.calculated_price.calculated_amount
+      : typeof item?.prices?.[0]?.amount === "number"
+        ? item.prices[0].amount
         : null;
+
+  const allPrices = (product.variants ?? [])
+    .map((item: any) => priceOf(item))
+    .filter((value: number | null): value is number => value != null);
+
+  const price = allPrices.length ? Math.min(...allPrices) : priceOf(variant);
 
   const categories = product.categories ?? [];
   const inventory = variant?.inventory_quantity;

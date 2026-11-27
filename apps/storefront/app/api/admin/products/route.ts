@@ -97,6 +97,8 @@ export async function POST(req: Request) {
       description,
       specs,
       measured,
+      variants,
+      option_title,
     } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
     const productStatus = validStatuses.includes(status) ? status : "draft";
@@ -170,7 +172,53 @@ export async function POST(req: Request) {
       payload.thumbnail = all[0];
       payload.images = all.map((url) => ({ url }));
     }
-    if (amount > 0) {
+    // Sizes, framing, or anything else the buyer chooses between.
+    //
+    // A work that exists in two sizes is two prices, and until now the form could
+    // only express one: the studio either made two products that are obviously the
+    // same work, or turned buyers away. Each row here becomes a real Medusa variant
+    // with its own price, so the product page can offer the choice and the cart can
+    // charge the right amount.
+    //
+    // A single row keeps the old default shape, so nothing that worked before
+    // changes.
+    const rows = Array.isArray(variants)
+      ? variants
+          .map((row: any) => ({
+            title: String(row?.title ?? "").trim(),
+            amount: Math.trunc(Number(row?.amount ?? 0)),
+          }))
+          .filter((row: any) => row.title && row.amount > 0)
+      : [];
+    const optionTitle = String(option_title ?? "").trim() || "Size";
+
+    if (rows.length > 1) {
+      payload.options = [
+        { title: optionTitle, values: rows.map((row: any) => row.title) },
+      ];
+      payload.variants = rows.map((row: any) => ({
+        title: row.title,
+        // A SKU per variant, derived from the slug, so two sizes of one work are
+        // never the same line in a shipping manifest.
+        sku: slug
+          ? `${slug}-${row.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`
+          : undefined,
+        options: { [optionTitle]: row.title },
+        prices: [{ amount: row.amount, currency_code: currency_code || "inr" }],
+      }));
+    } else if (rows.length === 1) {
+      payload.options = [{ title: optionTitle, values: [rows[0].title] }];
+      payload.variants = [
+        {
+          title: rows[0].title,
+          sku: slug || undefined,
+          options: { [optionTitle]: rows[0].title },
+          prices: [
+            { amount: rows[0].amount, currency_code: currency_code || "inr" },
+          ],
+        },
+      ];
+    } else if (amount > 0) {
       payload.options = [{ title: "Default", values: ["Default"] }];
       payload.variants = [
         {

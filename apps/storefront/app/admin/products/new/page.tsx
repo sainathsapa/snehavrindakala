@@ -15,6 +15,13 @@ export default function NewProductPage() {
   const slugState = useAutoSlug();
   const [status, setStatus] = useState("draft");
   const [price, setPrice] = useState("");
+  // Sizes, framing, or whatever the buyer chooses between. Each row is a real
+  // Medusa variant with its own price; one row (or none) keeps the old single
+  // price, so nothing that worked before changes.
+  const [optionTitle, setOptionTitle] = useState("Size");
+  const [variants, setVariants] = useState<
+    Array<{ title: string; amount: string }>
+  >([{ title: "", amount: "" }]);
   const [currency, setCurrency] = useState("inr");
   const [categoryId, setCategoryId] = useState("");
   const [images, setImages] = useState<ProductImage[]>([]);
@@ -85,6 +92,15 @@ export default function NewProductPage() {
           slug: slugState.value,
           status,
           total: price ? parseInt(price) * 100 : 0,
+          // Only rows with both a label and a price are sent. A half-filled row
+          // would otherwise create a variant that cannot be bought.
+          variants: variants
+            .map((row) => ({
+              title: row.title.trim(),
+              amount: row.amount ? parseInt(row.amount, 10) * 100 : 0,
+            }))
+            .filter((row) => row.title && row.amount > 0),
+          option_title: optionTitle.trim() || "Size",
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
           ...(images.length ? { images: images.map((item) => item.url) } : {}),
@@ -178,6 +194,96 @@ export default function NewProductPage() {
               {/* Specifications. Each renders as its own row on the product page
                   and only when it has a value, so an empty box means a silent
                   absence rather than a blank line on the page. */}
+              {/* Sizes and framing. A work in two sizes is two prices, and the
+                  studio could previously only express one — so buyers either
+                  saw two products that are obviously the same work, or the
+                  choice was not offered at all. */}
+              <fieldset className="rounded-md border border-sand-border p-5">
+                <legend className="px-2 font-sans text-sm font-medium text-deep-ink">
+                  Sizes &amp; framing
+                </legend>
+                <p className="mb-4 font-sans text-xs text-muted-ink">
+                  Optional. Leave one row empty for a single price. Each row
+                  becomes a choice on the product page, with its own price.
+                </p>
+
+                <div className="mb-3">
+                  <label className="block font-sans text-sm font-medium text-deep-ink mb-1">
+                    What the buyer chooses
+                  </label>
+                  <input
+                    type="text"
+                    value={optionTitle}
+                    onChange={(event) => setOptionTitle(event.target.value)}
+                    placeholder="Size"
+                    className="w-full md:w-64 rounded-md border border-sand-border px-3 py-2 font-sans text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  {variants.map((row, index) => (
+                    <div key={index} className="flex flex-wrap items-end gap-3">
+                      <div className="flex-1 min-w-[12rem]">
+                        <label className="block font-sans text-xs text-muted-ink mb-1">
+                          Choice {index + 1}
+                        </label>
+                        <input
+                          type="text"
+                          value={row.title}
+                          onChange={(event) => {
+                            const next = [...variants];
+                            next[index] = { ...next[index], title: event.target.value };
+                            setVariants(next);
+                          }}
+                          placeholder={index === 0 ? "Framed, 40 × 50 cm" : "Unframed, 30 × 40 cm"}
+                          className="w-full rounded-md border border-sand-border px-3 py-2 font-sans text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                        />
+                      </div>
+                      <div className="w-36">
+                        <label className="block font-sans text-xs text-muted-ink mb-1">
+                          Price ({currency.toUpperCase()})
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={row.amount}
+                          onChange={(event) => {
+                            const next = [...variants];
+                            next[index] = { ...next[index], amount: event.target.value };
+                            setVariants(next);
+                          }}
+                          className="w-full rounded-md border border-sand-border px-3 py-2 font-sans text-sm text-deep-ink focus:outline-none focus:ring-2 focus:ring-sindoor"
+                        />
+                      </div>
+                      {variants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setVariants(variants.filter((_, i) => i !== index))}
+                          className="pb-2 font-sans text-xs text-kumkum hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setVariants([...variants, { title: "", amount: "" }])}
+                  className="mt-4 rounded-md border border-sand-border px-3 py-2 font-sans text-sm text-deep-ink hover:border-terracotta"
+                >
+                  Add another choice
+                </button>
+
+                {variants.filter((row) => row.title.trim() && row.amount).length > 1 && (
+                  <p className="mt-3 font-sans text-xs text-muted-ink">
+                    The lowest price is used for the card and any listing, so a buyer
+                    is never quoted a figure they cannot pay.
+                  </p>
+                )}
+              </fieldset>
+
               <fieldset className="rounded-md border border-sand-border p-5">
                 <legend className="px-2 font-sans text-sm font-medium text-deep-ink">
                   Specifications
