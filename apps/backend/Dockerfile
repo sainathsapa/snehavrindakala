@@ -43,6 +43,14 @@ COPY apps/backend/ ./
 COPY scripts/security/verify-runtime-secrets.mjs /app/scripts/security/verify-runtime-secrets.mjs
 
 # Medusa build → dist/ (backend server + admin UI in dist/public/admin)
+#
+# The heap ceiling is set explicitly. Node derives its default old-space limit from
+# the host's total memory and container limits, and on a 2 GB build box that limit
+# sat below what this build needs: it aborted with "Ineffective mark-compacts near
+# heap limit" (exit 134) after 76 seconds, while the same build succeeds on a laptop
+# with no flag at all. 1536 MB fits inside a 2 GB box with the OS and Postgres on it.
+ARG BUILD_HEAP_MB=1536
+ENV NODE_OPTIONS="--max-old-space-size=${BUILD_HEAP_MB}"
 RUN pnpm exec medusa build && apk del python3 make g++
 
 # ── runtime: minimal production image ──────────────────────────────────────────
