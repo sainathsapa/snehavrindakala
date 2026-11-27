@@ -7,6 +7,7 @@ import {
 import { localeAlternates } from "@/lib/seo";
 import { whatsappLink } from "@/lib/contact-links";
 import { ShareRow } from "@/components/share-row";
+import { recordProductView } from "@/lib/product-views";
 import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/product-options";
 import { ProductStory } from "@/components/product-story";
@@ -202,6 +203,10 @@ export default async function ProductDetailPage({
   const whatsappHref = whatsappLink(
     `Hello — I would like to ask about "${catalogueTitle}" (${siteUrl}/products/${handle}).`
   );
+
+  // Counted per work per day, never per visitor: the studio needs to know
+  // whether a piece is noticed, not who looked at it.
+  await recordProductView(product.handle ?? medusaHandle);
 
   const reviewData = await medusa.listReviews(product.id).catch(() => null);
   const customer = await getCurrentCustomer().catch(() => null);

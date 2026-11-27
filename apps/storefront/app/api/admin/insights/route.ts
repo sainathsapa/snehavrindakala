@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/app/admin/actions";
 import { query } from "@/lib/db";
 import { topSearches, unansweredSearches, type SearchStat } from "@/lib/search-log";
+import { topViewed, type ViewedWork } from "@/lib/product-views";
 
 export interface InsightsPayload {
   days: number;
@@ -35,6 +36,8 @@ export interface InsightsPayload {
     refunded: number;
     orders: number;
   } | null;
+  /** Works opened most often: notice, as opposed to demand. */
+  viewed: ViewedWork[];
 }
 
 async function scalar(sql: string, params: any[] = []): Promise<number | null> {
@@ -113,6 +116,8 @@ export async function GET(req: Request) {
     window
   );
 
+  const viewed = await topViewed(days, 10);
+
   const payload: InsightsPayload = {
     days,
     searches: {
@@ -126,6 +131,7 @@ export async function GET(req: Request) {
       captured == null
         ? null
         : { captured: captured / 100, refunded: (refunded ?? 0) / 100, orders: orders ?? 0 },
+    viewed,
   };
 
   return NextResponse.json(payload);

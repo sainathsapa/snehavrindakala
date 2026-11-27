@@ -25,6 +25,7 @@ interface Payload {
   searches: { total: number; answered: number; top: SearchStat[]; unanswered: SearchStat[] };
   basket: { created: number; converted: number; abandoned: number; conversion: number | null } | null;
   money: { captured: number; refunded: number; orders: number } | null;
+  viewed: { handle: string; views: number }[];
 }
 
 const rupees = (value: number) =>
@@ -202,6 +203,37 @@ export default function InsightsPage() {
                 )}
               </section>
             </div>
+
+            {data.viewed?.length > 0 && (
+              <section className="mt-6 rounded-xl border border-sand-border bg-surface p-6">
+                <h2 className="font-sans text-sm font-semibold uppercase tracking-wider text-muted-ink">
+                  Looked at most
+                </h2>
+                <p className="mt-1 font-sans text-xs text-muted-ink">
+                  Notice, which is not the same as demand: a work seen by many and bought
+                  by none is a question about price or photographs, not about making more
+                  of it.
+                </p>
+                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {data.viewed.map((row) => (
+                    <li
+                      key={row.handle}
+                      className="flex items-baseline justify-between gap-3 border-b border-sand-border/60 pb-2"
+                    >
+                      <a
+                        href={`/products/${row.handle}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-sans text-sm text-terracotta underline-offset-4 hover:underline"
+                      >
+                        {row.handle}
+                      </a>
+                      <span className="font-sans text-xs text-muted-ink">{row.views}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             {data.basket && data.basket.abandoned > 0 && (
               <p className="mt-6 font-sans text-xs text-muted-ink">
