@@ -98,7 +98,7 @@ export async function PATCH(
       measured,
     } = body;
     const validStatuses = ["draft", "published", "proposed", "rejected"];
-    const amount = Number(total) || 0;
+    const amountOverride = Number(total) || 0;
 
     const update: Record<string, unknown> = {};
     if (title !== undefined) update.title = title;
@@ -173,13 +173,63 @@ export async function PATCH(
       update.categories = ids.map((id: string) => ({ id }));
     }
 
-    if (amount > 0) {
-      const { product } = await getAdminProduct(id);
-      const variant = (product as any).variants?.[0];
-      if (variant?.id) {
+    // Prices. Two shapes arrive here:
+    //
+    //  - `variants: [{ id, amount }]` from the edit form, one row per size;
+    //  - `total` from anything older, applied only when there is a single variant.
+    //
+    // Medusa treats the variants array as the product's complete variant set: any
+    // variant it lists without being named and priced in the update is deleted.
+    // Sending only the rows that changed therefore removed the other sizes — the
+    // probe that found this left one variant where two had been. So the update
+    // always carries every variant, each with its current price unless the form
+    // supplied a new one.
+    const { product: existing } = await getAdminProduct(id);
+    const existingVariants = ((existing as any).variants ?? []) as Array<{
+      id: string;
+      title?: string;
+      prices?: Array<{ amount?: number | string | null; currency_code?: string | null }>;
+      calculated_price?: { calculated_amount?: number | null } | null;
+    }>;
+
+    const currentAmount = (variant: (typeof existingVariants)[number]): number => {
+      const calculated = variant.calculated_price?.calculated_amount;
+      if (typeof calculated === "number") return calculated;
+      const stored = variant.prices?.[0]?.amount;
+      const num = Number(stored ?? 0);
+      return Number.isFinite(num) ? Math.trunc(num) : 0;
+    };
+
+    const incoming = Array.isArray(body?.variants) ? body.variants : null;
+    const wanted = new Map<string, number>();
+    for (const row of incoming ?? []) {
+      const variantId = String((row as any)?.id ?? "").trim();
+      const rowAmount = Math.trunc(Number((row as any)?.amount ?? 0));
+      if (variantId && rowAmount > 0) wanted.set(variantId, rowAmount);
+    }
+
+    if (existingVariants.length > 1) {
+      // Every variant, priced: changed where asked, otherwise unchanged.
+      update.variants = existingVariants
+        .filter((variant) => variant?.id)
+        .map((variant) => ({
+          id: variant.id,
+          prices: [
+            {
+              amount: wanted.get(variant.id) ?? currentAmount(variant),
+              currency_code:
+                variant.prices?.[0]?.currency_code || currency_code || "inr",
+            },
+          ],
+        }))
+        .filter((variant) => (variant.prices[0]?.amount ?? 0) > 0);
+    } else if (existingVariants.length === 1 && existingVariants[0]?.id) {
+      const only = existingVariants[0];
+      const amount = wanted.get(only.id) ?? (amountOverride > 0 ? amountOverride : 0);
+      if (amount > 0) {
         update.variants = [
           {
-            id: variant.id,
+            id: only.id,
             prices: [{ amount, currency_code: currency_code || "inr" }],
           },
         ];

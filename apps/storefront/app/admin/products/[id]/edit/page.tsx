@@ -36,6 +36,11 @@ export default function EditProductPage() {
   const [slug, setSlug] = useState("");
   const [productStatus, setProductStatus] = useState("draft");
   const [price, setPrice] = useState("0");
+  // One price per size. Empty for a single-variant work, which keeps the old
+  // single price field exactly as it was.
+  const [variantRows, setVariantRows] = useState<
+    Array<{ id: string; title: string; amount: string }>
+  >([]);
   const [currency, setCurrency] = useState("inr");
   const [images, setImages] = useState<ProductImage[]>([]);
   // Maker and stock terms live in product metadata; they are editable here so
@@ -87,6 +92,24 @@ export default function EditProductPage() {
         setSlug(loaded.slug);
         setProductStatus(loaded.status || "draft");
         setPrice((loaded.total / 100).toString());
+
+        // Two sizes are two prices, and the single `total` is only one of them.
+        const loadedVariants = ((data.variants ?? []) as any[])
+          .filter((variant) => variant?.id)
+          .map((variant) => ({
+            id: String(variant.id),
+            title: String(variant.title || "Default"),
+            amount: String(
+              Math.round(
+                Number(
+                  variant.calculated_price?.calculated_amount ??
+                    variant.prices?.[0]?.amount ??
+                    0
+                ) / 100
+              )
+            ),
+          }));
+        setVariantRows(loadedVariants.length > 1 ? loadedVariants : []);
         setCurrency(loaded.currency_code || "inr");
         setCategoryId(loaded.category_id || "");
         const galleryUrls = ((data.images ?? []) as any[])
@@ -162,6 +185,16 @@ export default function EditProductPage() {
           slug,
           status: productStatus,
           total: price ? parseInt(price) * 100 : 0,
+          // Sent only for a multi-size work: the API writes each row to its own
+          // variant, so saving a description cannot reset a price.
+          ...(variantRows.length
+            ? {
+                variants: variantRows.map((row) => ({
+                  id: row.id,
+                  amount: row.amount ? parseInt(row.amount, 10) * 100 : 0,
+                })),
+              }
+            : {}),
           currency_code: currency,
           ...(categoryId ? { category_id: categoryId } : {}),
           images: images.map((item) => item.url),
@@ -403,6 +436,42 @@ export default function EditProductPage() {
                     <option value="rejected">Rejected</option>
                   </select>
                 </div>
+                {variantRows.length > 1 ? (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
+                      Prices, one per size
+                    </label>
+                    <p className="mb-3 font-sans text-xs text-muted-ink">
+                      Each size has its own price. Changing one here does not touch
+                      the others.
+                    </p>
+                    <div className="space-y-3">
+                      {variantRows.map((row, index) => (
+                        <div key={row.id} className="flex flex-wrap items-end gap-3">
+                          <span className="flex-1 min-w-[10rem] pb-2 font-sans text-sm text-deep-ink">
+                            {row.title}
+                          </span>
+                          <div className="w-36">
+                            <input
+                              type="number"
+                              min="0"
+                              value={row.amount}
+                              onChange={(event) => {
+                                const next = [...variantRows];
+                                next[index] = { ...next[index], amount: event.target.value };
+                                setVariantRows(next);
+                              }}
+                              className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
+                            />
+                          </div>
+                          <span className="pb-2 font-sans text-xs text-muted-ink">
+                            {currency.toUpperCase()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
                 <div>
                   <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
                     Price
@@ -410,11 +479,13 @@ export default function EditProductPage() {
                   <input
                     type="number"
                     name="price"
+
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     className="w-full px-3 py-2 rounded-md border border-sand-border bg-surface text-sm font-sans focus:ring-2 focus:ring-sindoor"
                   />
                 </div>
+                )}
                 <div>
                   <label className="block text-sm font-sans font-medium text-deep-ink mb-2">
                     Currency
