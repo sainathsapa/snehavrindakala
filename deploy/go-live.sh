@@ -102,12 +102,12 @@ say "7/10 configuration check"
 # --prod refuses test payment keys, a localhost storefront URL, or a missing mail
 # transport. This is the step that catches a shop which boots and cannot sell.
 if [ "$ALLOW_TEST_KEYS" = "1" ]; then
-  PREFLIGHT_BASE_URL="http://127.0.0.1:3000" node scripts/preflight.mjs --prod --allow-test-keys \
+  PREFLIGHT_BASE_URL="http://127.0.0.1:3000" MEDUSA_BACKEND_URL="http://127.0.0.1:9000" node scripts/preflight.mjs --prod --allow-test-keys \
     || die "preflight failed — see the failures above. Nothing has been exposed yet."
   printf '   \033[33m!! REHEARSAL BOX: test payment keys. It cannot take real money.\033[0m\n'
   printf '   \033[33m!! Put live keys in the env files and re-run before telling anyone.\033[0m\n'
 else
-  PREFLIGHT_BASE_URL="http://127.0.0.1:3000" node scripts/preflight.mjs --prod \
+  PREFLIGHT_BASE_URL="http://127.0.0.1:3000" MEDUSA_BACKEND_URL="http://127.0.0.1:9000" node scripts/preflight.mjs --prod \
     || die "preflight failed — see the failures above. Nothing has been exposed yet."
 fi
 ok "preflight passed"
