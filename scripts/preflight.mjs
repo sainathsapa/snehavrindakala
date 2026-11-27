@@ -6,6 +6,8 @@
  *
  *   node scripts/preflight.mjs           # local env
  *   node scripts/preflight.mjs --prod    # expects live payment keys
+ *   node scripts/preflight.mjs --prod --allow-test-keys
+ *                                       # a rehearsal box: warns instead of failing
  *
  * It answers the question a launch review actually needs answered, in the order
  * the failure would hurt: can we reach the database, can we take money, can we
@@ -23,6 +25,10 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PROD = process.argv.includes("--prod");
+// A rehearsal on a real server is a legitimate thing to do: it proves the box
+// builds, boots, issues a certificate and serves pages. What it must never do is
+// pass silently, so this only forgives the test-key failure and says so loudly.
+const ALLOW_TEST_KEYS = process.argv.includes("--allow-test-keys");
 
 const {
   cooldownStatus: srCooldown,
@@ -148,7 +154,12 @@ if (!razorpayId || !razorpaySecret) {
     pass("Razorpay webhook secret");
   }
 } else if (razorpayId.startsWith("rzp_test_")) {
-  if (PROD) {
+  if (PROD && ALLOW_TEST_KEYS) {
+    warn(
+      "Razorpay keys",
+      "test keys, allowed by --allow-test-keys — this server takes NO real money"
+    );
+  } else if (PROD) {
     fail("Razorpay keys", "still test keys — a --prod release would take no real money");
   } else {
     warn("Razorpay keys", "test keys — fine locally, not for launch");

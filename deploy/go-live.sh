@@ -27,6 +27,14 @@ set -euo pipefail
 DOMAIN="${1:-}"
 EMAIL="${2:-}"
 
+# --allow-test-keys brings up a real server that cannot take money, on purpose:
+# useful for proving the box, the certificate and the pages work before live keys
+# exist. It is loud, it skips exactly one check, and it is never the default.
+ALLOW_TEST_KEYS=0
+for arg in "${@:3}"; do
+  [ "$arg" = "--allow-test-keys" ] && ALLOW_TEST_KEYS=1
+done
+
 say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 ok() { printf '   \033[32mok\033[0m %s\n' "$*"; }
 die() { printf '\n\033[31mstopped:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -37,11 +45,11 @@ cd "$ROOT"
 [ -n "$DOMAIN" ] || die "usage: sudo bash deploy/go-live.sh <domain> <email>"
 [ -n "$EMAIL" ] || die "usage: sudo bash deploy/go-live.sh <domain> <email>"
 
-say "1/9  the environment file exists"
+say "1/10 the environment file exists"
 [ -f .env ] || die "no .env — copy the three env files up before deploying"
 ok ".env found"
 
-say "2/9  the domain resolves to this machine"
+say "2/10 the domain resolves to this machine"
 IP="$(curl -fsS --max-time 10 https://api.ipify.org || true)"
 [ -n "$IP" ] || die "could not determine this machine's public IP"
 RESOLVED="$(getent hosts "$DOMAIN" | awk '{print $1}' | head -1 || true)"
@@ -49,11 +57,25 @@ RESOLVED="$(getent hosts "$DOMAIN" | awk '{print $1}' | head -1 || true)"
 [ "$RESOLVED" = "$IP" ] || die "$DOMAIN resolves to $RESOLVED, but this machine is $IP. Fix the A record before TLS — certbot will fail otherwise."
 ok "$DOMAIN -> $IP"
 
-say "3/9  the stack is running without the proxy"
+say "3/10 memory headroom"
+# A 2 GB box builds a Next.js image and runs Postgres, Redis, Medusa and the
+# storefront on it. Without swap the build is killed by the kernel and the operator
+# sees "exit 137" with no explanation.
+mem_mb=$(awk '/MemTotal/ {printf "%d", $2/1024}' /proc/meminfo 2>/dev/null || echo 0)
+if [ "$mem_mb" -lt 3000 ] && ! swapon --show 2>/dev/null | grep -q '/swapfile'; then
+  fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
+  chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile
+  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  ok "2 GB swap added (RAM is ${mem_mb} MB)"
+else
+  ok "enough memory (${mem_mb} MB)"
+fi
+
+say "4/10 the stack is running without the proxy"
 docker compose up -d --build postgres redis backend storefront
 ok "postgres, redis, backend and storefront are up"
 
-say "4/9  storefront schema"
+say "5/10 storefront schema"
 # Medusa's own migrations create Medusa's tables. Everything the shop built on top
 # of them — orders' public references, the payment event log, tickets, returns,
 # wishlists, the search log, product views — lives in apps/storefront/db/migrations
@@ -68,7 +90,7 @@ docker compose run --rm --entrypoint node storefront \
   || die "storefront migrations failed — nothing has been exposed yet"
 ok "storefront schema applied"
 
-say "5/9  seeding owners and launch content"
+say "6/10 seeding owners and launch content"
 # Owner accounts and the two editorial sections lived only in the developer's
 # database. On a fresh box the panel would have had no way in and the nav would
 # have pointed at empty rooms, so the content is seeded here, idempotently.
@@ -76,14 +98,21 @@ node scripts/seed-launch-content.mjs --docker \
   || die "seeding failed — nothing has been exposed yet"
 ok "owners and content seeded"
 
-say "6/9  configuration check"
+say "7/10 configuration check"
 # --prod refuses test payment keys, a localhost storefront URL, or a missing mail
 # transport. This is the step that catches a shop which boots and cannot sell.
-PREFLIGHT_BASE_URL="http://127.0.0.1:3000" node scripts/preflight.mjs --prod \
-  || die "preflight failed — see the failures above. Nothing has been exposed yet."
+if [ "$ALLOW_TEST_KEYS" = "1" ]; then
+  PREFLIGHT_BASE_URL="http://127.0.0.1:3000" node scripts/preflight.mjs --prod --allow-test-keys \
+    || die "preflight failed — see the failures above. Nothing has been exposed yet."
+  printf '   \033[33m!! REHEARSAL BOX: test payment keys. It cannot take real money.\033[0m\n'
+  printf '   \033[33m!! Put live keys in the env files and re-run before telling anyone.\033[0m\n'
+else
+  PREFLIGHT_BASE_URL="http://127.0.0.1:3000" node scripts/preflight.mjs --prod \
+    || die "preflight failed — see the failures above. Nothing has been exposed yet."
+fi
 ok "preflight passed"
 
-say "7/9  certificates"
+say "8/10 certificates"
 if [ -d "/etc/letsencrypt/live/$DOMAIN" ] || docker compose run --rm --entrypoint sh proxy -c "test -d /etc/letsencrypt/live/$DOMAIN" 2>/dev/null; then
   ok "certificate already present for $DOMAIN"
 else
@@ -92,7 +121,7 @@ else
   ok "certificate issued"
 fi
 
-say "8/9  the front door comes up"
+say "9/10 the front door comes up"
 # The proxy lives in a compose profile. A plain `up -d` starts everything except
 # nginx, which leaves a healthy-looking stack with nothing on 80/443.
 docker compose --profile proxy up -d
@@ -101,7 +130,7 @@ docker compose exec -T proxy nginx -t >/dev/null 2>&1 \
   || die "nginx rejected its own configuration — run: docker compose logs proxy"
 ok "nginx accepted its configuration"
 
-say "9/9  smoke test from the outside"
+say "10/10 smoke test from the outside"
 code_https="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$DOMAIN/" || true)"
 [ "$code_https" = "200" ] || die "https://$DOMAIN/ returned $code_https"
 ok "https://$DOMAIN/ 200"
