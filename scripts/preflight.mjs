@@ -384,10 +384,15 @@ if (!db) {
 } else {
   // Works on sale with no size. The route refuses to publish one now, so any
   // that exist predate the rule — they are live and a buyer cannot judge them.
+  //
+  // Gift wrapping is excluded: it is a service the shop sells as a product only
+  // because Medusa can put nothing else on a cart, and asking a service to state
+  // its dimensions is a check that will warn forever and teach nobody anything.
   const sizeless = sql(
     db,
     `SELECT coalesce(string_agg(p.title, ', '), '') FROM product p
       WHERE p.status = 'published' AND p.deleted_at IS NULL
+        AND p.handle <> 'gift-wrap'
         AND NOT EXISTS (
           SELECT 1 FROM product_tags pt
           JOIN product_tag t ON t.id = pt.product_tag_id
