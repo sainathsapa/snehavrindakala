@@ -48,7 +48,9 @@ server {
     # on this path. Set Cloudflare to Full (strict) once :443 is reachable and the
     # redirect can come back.
     location / {
-        proxy_pass $storefront_backend;
+        # Literal, not $storefront_backend: that variable is set inside the :443
+        # server block, and an unset variable here made every request a 500.
+        proxy_pass http://storefront:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
