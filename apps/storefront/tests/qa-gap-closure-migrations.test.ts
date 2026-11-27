@@ -37,6 +37,8 @@ describe("migrations 005-009 — presence and form", () => {
       "009_reservation_hardening.sql",
       "010_commercial_readiness_and_shipping.sql",
       "011_payment_event_amounts.sql",
+      "012_search_log.sql",
+      "013_product_views.sql",
     ]);
   });
 

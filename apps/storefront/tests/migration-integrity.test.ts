@@ -66,6 +66,8 @@ describe("migration files", () => {
       "009_reservation_hardening",
       "010_commercial_readiness_and_shipping",
       "011_payment_event_amounts",
+      "012_search_log",
+      "013_product_views",
     ]);
     const orders = files.map((f) => f.order);
     expect([...orders].sort((a, b) => a - b)).toEqual(orders);

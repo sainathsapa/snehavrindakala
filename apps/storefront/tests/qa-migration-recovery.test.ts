@@ -32,6 +32,8 @@ const EXPECTED_MIGRATIONS = [
   "009_reservation_hardening.sql",
   "010_commercial_readiness_and_shipping.sql",
   "011_payment_event_amounts.sql",
+  "012_search_log.sql",
+  "013_product_views.sql",
 ];
 
 /** Drop SQL comments so prose can neither trigger nor hide a rule. */

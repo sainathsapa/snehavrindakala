@@ -145,6 +145,14 @@ Restart, then the money test:
 will tell you whether mail is configured; the Resend dashboard tells you whether
 it was accepted.
 
+### Optional: counting purchases that never reach the browser
+
+GA4 → Admin → Data streams → your stream → Measurement Protocol API secrets →
+create one, then set `GA4_API_SECRET` alongside `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
+The payment webhook then reports each captured payment from the server, so a buyer
+who pays and closes the tab is still counted. Without the secret nothing breaks and
+nothing is sent — the feature is inert until both are present.
+
 ---
 
 ## 5. The two things only you can decide (10 minutes)

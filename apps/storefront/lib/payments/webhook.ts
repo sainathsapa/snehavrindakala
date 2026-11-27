@@ -29,6 +29,7 @@ import {
   type DbExecutor,
   type ProviderEventInput,
 } from "./events";
+import { sendPurchaseToGA4 } from "@/lib/analytics-server";
 import {
   classifyMismatch,
   deriveOrderState,
@@ -562,6 +563,19 @@ export async function handleRazorpayWebhook(
     }
 
     const derivedState = deriveOrderState(providerState);
+
+    // The browser reported this purchase already, in most cases. This is the copy
+    // that survives a closed tab and an ad-blocker. Fire-and-forget on purpose: a
+    // slow analytics endpoint must never delay a payment's confirmation.
+    if (derivedState === "paid") {
+      void sendPurchaseToGA4({
+        orderId: localOrder.id,
+        value: localOrder.amount,
+        currency: localOrder.currency ?? null,
+        transactionId: paymentId,
+      });
+    }
+
     await markEvent(claim.eventId, "processed", null, executor);
     return ok(
       {
