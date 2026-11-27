@@ -51,7 +51,9 @@ for name in "$STOREFRONT_DOMAIN" "www.${STOREFRONT_DOMAIN}" "$API_DOMAIN"; do
 done
 
 echo "→ making sure the volumes exist"
-$COMPOSE create --profile proxy proxy >/dev/null
+# `--profile` is a global flag: it must precede the subcommand, or Compose rejects it
+# with "unknown flag: --profile" — which is how this script first failed on a real box.
+$COMPOSE --profile proxy create proxy >/dev/null
 
 # nginx must not be holding :80 while certbot's standalone plugin uses it.
 $COMPOSE --profile proxy stop proxy >/dev/null 2>&1 || true
