@@ -58,11 +58,21 @@ $COMPOSE --profile proxy create proxy >/dev/null
 # nginx must not be holding :80 while certbot's standalone plugin uses it.
 $COMPOSE --profile proxy stop proxy >/dev/null 2>&1 || true
 
+# The certificate volume's real name is "<compose project>_letsencrypt", and the
+# project name follows the directory the repository was cloned into — so hardcoding
+# "snehavrinda_letsencrypt" writes certificates into a volume nginx never mounts.
+# On a real box that produced "cannot load certificate ... No such file or directory"
+# with the certificate sitting happily in a neighbouring volume.
+project=$(docker inspect snehavrinda-postgres --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null || true)
+CERT_VOLUME="${project:-snehavrinda-kala}_letsencrypt"
+docker volume inspect "$CERT_VOLUME" >/dev/null 2>&1 || docker volume create "$CERT_VOLUME" >/dev/null
+echo "  certificates live in volume: $CERT_VOLUME"
+
 echo "→ requesting certificates (standalone on :80)"
 for name in "$STOREFRONT_DOMAIN" "www.${STOREFRONT_DOMAIN}" "$API_DOMAIN"; do
   docker run --rm \
     -p 80:80 \
-    -v snehavrinda_letsencrypt:/etc/letsencrypt \
+    -v "$CERT_VOLUME":/etc/letsencrypt \
     certbot/certbot certonly \
       --standalone \
       --email "$EMAIL" --agree-tos --no-eff-email \
@@ -90,7 +100,7 @@ Renewal: certificates last 90 days and this script is not a scheduler.
 Add this to the host crontab (crontab -e), twice a day as Let's Encrypt advises:
 
   17 3,15 * * * cd /opt/snehavrinda && docker run --rm \
-    -v snehavrinda_letsencrypt:/etc/letsencrypt \
+    -v "$CERT_VOLUME":/etc/letsencrypt \
     certbot/certbot renew --standalone --quiet \
     && docker exec snehavrinda-proxy nginx -s reload
 
