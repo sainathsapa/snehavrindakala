@@ -5,6 +5,7 @@ import { artFormSlugs } from "@/lib/slugs";
 import { getTranslations, getLocale } from "next-intl/server";
 import { productTranslationsFor } from "@/lib/site-content";
 import { PeacockMark } from "@/components/grounds";
+import { logSearch } from "@/lib/search-log";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ interface SearchPageProps {
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q } = await searchParams;
   const query = (q || "").trim();
+  const locale = await getLocale();
   const t = await getTranslations("searchPage");
 
   let results: SearchResult[] = [];
@@ -62,6 +64,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       console.error("Failed to load search results", error);
       failed = true;
     }
+  }
+
+  // A search that finds nothing is the most useful thing this page ever learns:
+  // somebody just said what they wanted to buy and the shop could not answer.
+  // Recorded after the results are known, and never allowed to break the page.
+  if (query) {
+    await logSearch(query, locale, failed ? 0 : results.length);
   }
 
   const typeIcons: Record<string, string> = {
