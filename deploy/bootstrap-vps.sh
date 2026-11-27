@@ -142,6 +142,15 @@ done
 echo "   Postgres ready"
 $DOCKER compose run --rm backend pnpm migrations:run
 
+# Medusa's migrations do not create this shop's own tables (references, payment
+# events, tickets, returns, wishlists, search log, product views). They live in
+# apps/storefront/db/migrations and are applied by their own runner — a fresh box
+# with only Medusa's schema comes up with half a shop.
+$DOCKER compose run --rm --entrypoint node storefront \
+  apps/storefront/scripts/migrate.mjs \
+  || die "storefront migrations:run failed - check: $DOCKER compose logs storefront"
+echo "   storefront schema applied"
+
 say "7/7 verification"
 base=$(grep '^STOREFRONT_BASE_URL=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | sed 's:/*$::')
 token=$(grep '^SHIPROCKET_WEBHOOK_TOKEN=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")

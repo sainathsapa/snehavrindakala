@@ -37,11 +37,11 @@ cd "$ROOT"
 [ -n "$DOMAIN" ] || die "usage: sudo bash deploy/go-live.sh <domain> <email>"
 [ -n "$EMAIL" ] || die "usage: sudo bash deploy/go-live.sh <domain> <email>"
 
-say "1/8  the environment file exists"
+say "1/9  the environment file exists"
 [ -f .env ] || die "no .env — copy the three env files up before deploying"
 ok ".env found"
 
-say "2/8  the domain resolves to this machine"
+say "2/9  the domain resolves to this machine"
 IP="$(curl -fsS --max-time 10 https://api.ipify.org || true)"
 [ -n "$IP" ] || die "could not determine this machine's public IP"
 RESOLVED="$(getent hosts "$DOMAIN" | awk '{print $1}' | head -1 || true)"
@@ -49,11 +49,26 @@ RESOLVED="$(getent hosts "$DOMAIN" | awk '{print $1}' | head -1 || true)"
 [ "$RESOLVED" = "$IP" ] || die "$DOMAIN resolves to $RESOLVED, but this machine is $IP. Fix the A record before TLS — certbot will fail otherwise."
 ok "$DOMAIN -> $IP"
 
-say "3/8  the stack is running without the proxy"
+say "3/9  the stack is running without the proxy"
 docker compose up -d --build postgres redis backend storefront
 ok "postgres, redis, backend and storefront are up"
 
-say "4/8  seeding owners and launch content"
+say "4/9  storefront schema"
+# Medusa's own migrations create Medusa's tables. Everything the shop built on top
+# of them — orders' public references, the payment event log, tickets, returns,
+# wishlists, the search log, product views — lives in apps/storefront/db/migrations
+# and was applied by hand during development. Nothing in this script ever ran it, so
+# a fresh box would have come up with a shop whose order pages, admin ledger and
+# insights had no tables at all.
+#
+# The runner is idempotent and records each file's checksum, so re-running after a
+# deploy applies only what is new.
+docker compose run --rm --entrypoint node storefront \
+  apps/storefront/scripts/migrate.mjs \
+  || die "storefront migrations failed — nothing has been exposed yet"
+ok "storefront schema applied"
+
+say "5/9  seeding owners and launch content"
 # Owner accounts and the two editorial sections lived only in the developer's
 # database. On a fresh box the panel would have had no way in and the nav would
 # have pointed at empty rooms, so the content is seeded here, idempotently.
@@ -61,14 +76,14 @@ node scripts/seed-launch-content.mjs --docker \
   || die "seeding failed — nothing has been exposed yet"
 ok "owners and content seeded"
 
-say "5/8  configuration check"
+say "6/9  configuration check"
 # --prod refuses test payment keys, a localhost storefront URL, or a missing mail
 # transport. This is the step that catches a shop which boots and cannot sell.
 PREFLIGHT_BASE_URL="http://127.0.0.1:3000" node scripts/preflight.mjs --prod \
   || die "preflight failed — see the failures above. Nothing has been exposed yet."
 ok "preflight passed"
 
-say "6/8  certificates"
+say "7/9  certificates"
 if [ -d "/etc/letsencrypt/live/$DOMAIN" ] || docker compose run --rm --entrypoint sh proxy -c "test -d /etc/letsencrypt/live/$DOMAIN" 2>/dev/null; then
   ok "certificate already present for $DOMAIN"
 else
@@ -77,7 +92,7 @@ else
   ok "certificate issued"
 fi
 
-say "7/8  the front door comes up"
+say "8/9  the front door comes up"
 # The proxy lives in a compose profile. A plain `up -d` starts everything except
 # nginx, which leaves a healthy-looking stack with nothing on 80/443.
 docker compose --profile proxy up -d
@@ -86,7 +101,7 @@ docker compose exec -T proxy nginx -t >/dev/null 2>&1 \
   || die "nginx rejected its own configuration — run: docker compose logs proxy"
 ok "nginx accepted its configuration"
 
-say "8/8  smoke test from the outside"
+say "9/9  smoke test from the outside"
 code_https="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$DOMAIN/" || true)"
 [ "$code_https" = "200" ] || die "https://$DOMAIN/ returned $code_https"
 ok "https://$DOMAIN/ 200"
